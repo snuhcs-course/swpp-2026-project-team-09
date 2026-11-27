@@ -44,7 +44,7 @@ import { MENU_ANSWER_REPLY, MENU_CLOSED_REPLY } from './data/menu-answer';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
 import { isStepsAsk, stepsReplyOn } from './data/steps-answer';
-import { studyCopyFor } from './data/study-group-answers';
+import { studyCopyFor, studyGroupReplyTo } from './data/study-group-answers';
 import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_ASKED, NOT_NOW_REPLY } from './data/unmet-plans';
@@ -254,8 +254,8 @@ function hungryReplyOf({ locationMissing }: RequestContext): AssistantReply {
   return withMealSet(reply, mockMadeQuests());
 }
 
-// The stored refusal of a board of row 8, answers of 배고파, and Lookups of 301동식당's menu, of a place to study near
-// here, of where 민수 is, and of a way with a deadline.
+// The stored refusal of a board of row 8, answers of 배고파 and of studying together, and Lookups of 301동식당's menu,
+// of a place to study near here, of where 민수 is, and of a way with a deadline.
 function drawnReplyOf(last: string, context: RequestContext): AssistantReply | null {
   const refused = refusalReplyTo(last);
   if (refused !== null) {
@@ -295,7 +295,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes('민수') && last.includes('어디')) {
     return FRIEND_LOOKUP_REPLY;
   }
-  return priceReplyOf(last) ?? rowFourReplyOf(last) ?? wayReplyOf(last);
+  return studyGroupReplyTo(last) ?? priceReplyOf(last) ?? rowFourReplyOf(last) ?? wayReplyOf(last);
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context: RequestContext): AssistantReply {

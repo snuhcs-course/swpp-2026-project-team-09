@@ -22,6 +22,9 @@ import { attend, connectToDatabase, getQuests, makeQuest, place132, storeEvent }
 import { ANY_STRING, refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
+// A Quest with no room request and no room booked (P05 ticket 68).
+const NO_ROOMS = { roomRequest: null, bookedRoom: null };
+
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
 let watcher: SignalWatcher;
@@ -84,7 +87,7 @@ describe('Making a Quest of one’s own', () => {
       takenAlone: false,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
-      roomRequest: null,
+      ...NO_ROOMS,
     });
     expect((await getQuests(app, user)).body).toEqual([response.body]);
   });

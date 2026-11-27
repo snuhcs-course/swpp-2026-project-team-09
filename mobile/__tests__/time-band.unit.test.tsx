@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -216,5 +217,31 @@ describe('TimeBand stepped', () => {
     await step('until', 'increment');
 
     expect(onDrop).not.toHaveBeenCalled();
+  });
+});
+
+// P01 ticket 17, from the pictures: a band too short for its two handles keeps its fill between them, and each handle
+// stands a hair outside it with a grip, so that the band is plainly the block in the middle. A band wide enough, a
+// meal's among them, keeps its handles as they were.
+describe('TimeBand too short for its handles', () => {
+  it('draws its handles a hair outside it, each with its grip', async () => {
+    await show();
+    // The band's 26 minutes of the range's 120 are 26 points on a track of 120: under the two handles' 32.
+    await fireEvent(screen.getByTestId('time-band-track'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 120, height: 60 } },
+    });
+
+    expect(handle('from')).toHaveStyle({ marginLeft: -18 });
+    expect(handle('until')).toHaveStyle({ marginLeft: 2 });
+    expect(screen.getByTestId('time-band-grip-from')).toBeOnTheScreen();
+    expect(screen.getByTestId('time-band-grip-until')).toBeOnTheScreen();
+  });
+
+  it("draws a meal's band wide enough with its handles on its ends as before, and no grip", async () => {
+    await show();
+
+    expect(handle('from')).toHaveStyle({ marginLeft: -8 });
+    expect(screen.queryByTestId('time-band-grip-from')).toBeNull();
+    expect(screen.queryByTestId('time-band-grip-until')).toBeNull();
   });
 });

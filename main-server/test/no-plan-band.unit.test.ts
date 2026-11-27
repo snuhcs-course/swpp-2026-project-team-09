@@ -61,3 +61,11 @@ describe('The band of an answer without a plan', () => {
     expect(withBand(null, () => band)).toBeNull();
   });
 });
+
+describe('The band of an answer without a plan, given a later end', () => {
+  it('reaches its range over a later end it is given, such as the item that ends the window (P05 ticket 67)', () => {
+    const band = windowBand({ start: at('11:56'), end: at('12:00') }, at('11:56'), NO_ROWS, at('13:00'));
+
+    expect(band).toMatchObject({ range: { startAt: said('11:30'), endAt: said('13:00') }, endAt: said('12:00') });
+  });
+});
