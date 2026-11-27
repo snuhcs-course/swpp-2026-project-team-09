@@ -7,6 +7,7 @@
 import { render, screen } from '@testing-library/react-native';
 import { color, font, text } from '@/design-system';
 import { AnswerLines } from '@/screens/main/answer/answer-lines';
+import { FailedLines } from '@/screens/main/answer/failed-and-waiting';
 import { ReplyLines } from '@/screens/main/answer/refusal-reply';
 import { Notes, Said } from '@/screens/main/library/library-parts';
 
@@ -68,5 +69,18 @@ describe("a library card's words", () => {
     expect(screen.getByText('예약을 취소했어요.')).toHaveStyle(SENTENCE);
     expect(screen.getByText('취소하지 못했어요')).toHaveStyle({ ...text.body, color: color.danger });
     expect(screen.getByText(/30분 안에/u)).toHaveStyle({ ...text.caption, color: color.inkMuted });
+  });
+});
+
+describe("a request's failure in the answer's place", () => {
+  it('says its first line in red, as every failure line, and the rest as the note under it', async () => {
+    await render(<FailedLines text={'답을 가져오지 못했어요.\n쓴 말은 입력칸에 그대로 있어요.'} />);
+
+    // Each line is a Text over its one run: the line's style is on the run's parent.
+    expect(screen.getByText('답을 가져오지 못했어요.').parent).toHaveStyle({ ...text.body, color: color.danger });
+    expect(screen.getByText('쓴 말은 입력칸에 그대로 있어요.').parent).toHaveStyle({
+      ...text.body,
+      color: color.inkMuted,
+    });
   });
 });

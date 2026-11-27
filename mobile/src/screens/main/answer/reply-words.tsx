@@ -32,7 +32,7 @@ import { StepsTop } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 import { offeredAnswer } from '@/features/assistant/meal-offered';
-import { SENTENCE } from './sentence-type';
+import { SENTENCE } from './line-types';
 
 // Which card a reply's words are: the Plan's, or the made Quest's once its Plan was made into one, for the reply the
 // answer on screen came from, the Lookup on screen for its reply, or the reply's own.

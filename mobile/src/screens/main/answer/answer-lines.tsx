@@ -11,7 +11,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AnswerLine } from '@/api/assistant-types';
 import { color, font, Icon, space, text } from '@/design-system';
-import { SENTENCE } from './sentence-type';
+import { NOTE, SENTENCE } from './line-types';
 
 const ICON = 16;
 
@@ -57,7 +57,7 @@ export function AnswerLines({
 const styles = StyleSheet.create({
   line: SENTENCE,
   strong: { fontFamily: font.bold, color: color.snuBlue },
-  note: { ...text.body, color: color.inkMuted },
+  note: NOTE,
   way: { flexDirection: 'row', gap: space[2] },
   // As high as the first line, so that the arrow stands at its middle.
   icon: { height: text.body.lineHeight, justifyContent: 'center' },

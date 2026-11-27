@@ -11,6 +11,7 @@ import type { TutorialQuest } from '@/api/tutorial-types';
 import { color, font, Icon, radius, space, text } from '@/design-system';
 import type { ShownBooking } from '@/features/tutorial/kwanjeong-check';
 import type { SheetView } from './use-tutorial-flow';
+import { FAILURE } from '../answer/line-types';
 
 // The Assistant's bubble at the foot of a quest's sheet (MainTutorialOk and MainTutorialFail): a button quest's
 // completionMessage, and the 관정 check: running, a booking found with 확인됨, nothing found, the library not reached.
@@ -50,7 +51,11 @@ function bubbleOf(shown: SheetView, quest: TutorialQuest): ReactElement | null {
     );
   }
   if (shown.mode === 'notFound' || shown.mode === 'failed') {
-    return <Text style={styles.bubbleWords}>{shown.mode === 'notFound' ? KWANJEONG_NOT_FOUND : KWANJEONG_FAILED}</Text>;
+    return shown.mode === 'notFound' ? (
+      <Text style={styles.bubbleWords}>{KWANJEONG_NOT_FOUND}</Text>
+    ) : (
+      <Text style={styles.failed}>{KWANJEONG_FAILED}</Text>
+    );
   }
   if (shown.mode === 'message') {
     return (
@@ -101,6 +106,8 @@ const styles = StyleSheet.create({
     backgroundColor: color.blue50,
   },
   bubbleWords: { ...text.body, color: color.ink },
+  // A failure, as every failure line is (P01 ticket 19).
+  failed: FAILURE,
   checking: { ...text.body, fontFamily: font.medium, color: color.inkMuted },
   ellipsis: { fontFamily: font.bold, letterSpacing: 3 },
   found: {

@@ -32,7 +32,7 @@ import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
-import { SENTENCE } from './sentence-type';
+import { SENTENCE } from './line-types';
 
 interface CardProps {
   shown: ShownAnswer;

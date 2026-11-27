@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -49,7 +50,8 @@ describe('the lines', () => {
     const [first, second] = screen.getAllByTestId('refusal-line');
     expect(first).toHaveTextContent('과제는 도와 드릴 수 없어요.');
     expect(second).toHaveTextContent('캠퍼스에서 먹을 곳, 공부할 자리, 행사, 파티, 길을 찾아 드려요.');
-    expect(first).toHaveStyle({ fontSize: 18 });
+    // The first is the answer's sentence (P01 ticket 19), the second the note under it.
+    expect(first).toHaveStyle({ fontSize: 16 });
     expect(second).toHaveStyle({ fontSize: 15 });
   });
 });

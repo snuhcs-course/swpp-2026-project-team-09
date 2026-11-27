@@ -24,7 +24,7 @@ import { FollowUpChips } from './follow-up-chips';
 import { LeaveRow } from './leave-button';
 import { pressOffer } from './refusal-reply';
 import { QuestionList, questionRowsOf } from './question-list';
-import { SENTENCE } from './sentence-type';
+import { SENTENCE } from './line-types';
 
 // Whether the list of questions is open in the card, and what opens and closes it.
 export interface QuestionsOpen {

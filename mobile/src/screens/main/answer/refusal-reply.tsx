@@ -15,7 +15,7 @@ import { ChoiceGrid, color, font, type GridChoice, radius, size, space, text } f
 import { profileLabel } from '@/features/friends/profile';
 import { useOpenFriendProfile } from '../friend-profile';
 import { offerLocation } from './location-offer';
-import { SENTENCE } from './sentence-type';
+import { FAILURE, NOTE, SENTENCE } from './line-types';
 
 // What cannot be answered (row 8): the server's lines in place of the model's sentence, and under them its offers as
 // buttons of one width in one row, in the board's order. The Friends of the question of which Friend stand as the
@@ -139,13 +139,23 @@ interface RefusalReplyProps {
 
 // The lines of a reply that is no answer, as row 8 draws them: the first as the answer's sentence (P01 ticket 19), the
 // second smaller and muted.
-export function ReplyLines({ lines, testID }: { lines: readonly AnswerLine[]; testID?: string }): ReactElement {
+export function ReplyLines({
+  lines,
+  testID,
+  failure = false,
+}: {
+  lines: readonly AnswerLine[];
+  testID?: string;
+  // A request that failed: its first line is the failure line, in red (P01 ticket 19).
+  failure?: boolean;
+}): ReactElement {
+  const first = failure ? styles.failure : styles.first;
   return (
     <View>
       {lines.map((line, row) => (
         // The lines have no id, and their order is their meaning.
         // oxlint-disable-next-line react/no-array-index-key
-        <Text key={row} style={row === 0 ? styles.first : styles.second} testID={testID}>
+        <Text key={row} style={row === 0 ? first : styles.second} testID={testID}>
           {line.map(({ text: words, strong }, part) => (
             // oxlint-disable-next-line react/no-array-index-key
             <Text key={part} style={strong ? styles.strong : undefined}>
@@ -181,7 +191,8 @@ export function RefusalReply({ refusal, onAsk }: RefusalReplyProps): ReactElemen
 const styles = StyleSheet.create({
   reply: { gap: space[3] },
   first: SENTENCE,
-  second: { ...text.body, color: color.inkMuted },
+  second: NOTE,
+  failure: FAILURE,
   strong: { fontFamily: font.bold, color: color.snuBlue },
   offers: { flexDirection: 'row', gap: space[2] },
   cell: {

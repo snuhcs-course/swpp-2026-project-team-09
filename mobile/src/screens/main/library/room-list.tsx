@@ -16,6 +16,7 @@ import { rangeWords } from '@/library/cards/times';
 import { LOG_IN_FOR_SEATS } from '../study-rows';
 import type { RoomCounting } from './room-counting';
 import { type Rooms, useRooms } from './use-room-counts';
+import { FAILURE } from '../answer/line-types';
 
 // The seat card's room list, under its ticket (P01 ticket 09, board 다): the time the free seats are for, then one row
 // per floor of equal cells, each one line with the kind of room and the free seats of the seat space a tap fills.
@@ -100,7 +101,7 @@ export function RoomList({
     <View style={styles.list}>
       <Text style={styles.basis}>{`${rangeWords(slot.start, slot.minutes)}에 빈 자리`}</Text>
       {rooms.state === 'listed' && rooms.counts === null ? <Text style={styles.basis}>{LOG_IN_FOR_SEATS}</Text> : null}
-      {rooms.state === 'unlisted' ? <Text style={styles.basis}>열람실 목록을 불러오지 못했어요</Text> : null}
+      {rooms.state === 'unlisted' ? <Text style={styles.failed}>열람실 목록을 불러오지 못했어요</Text> : null}
       {rooms.state === 'listed' ? <Floors inUse={inUse} onPick={onPick} rooms={rooms} /> : null}
     </View>
   );
@@ -187,6 +188,8 @@ const styles = StyleSheet.create({
   // The room on screen: the study colour's border.
   inUse: { borderWidth: 1.5, borderColor: color.svcStudy },
   full: { backgroundColor: color.surfaceSunken, borderColor: color.surfaceSunken },
+  // A failure, as every failure line is (P01 ticket 19).
+  failed: FAILURE,
   cellName: { flexShrink: 1, ...text.label, color: color.ink },
   cellCount: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 20, color: color.svcStudy },
   few: { color: color.danger },
