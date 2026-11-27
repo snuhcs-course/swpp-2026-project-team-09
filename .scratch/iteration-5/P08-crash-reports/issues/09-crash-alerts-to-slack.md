@@ -1,7 +1,7 @@
 # 09: A new crash in Sentry is posted to the team's Slack channel by the main server
 
 Parent: [P08 spec](../spec.md)
-Status: ready-for-human
+Status: done
 Blocked by: None (the main server only; it needs nothing of tickets 02 to 05)
 
 Native files: none. Releases: the main server. A person adds two settings before the Release, and the alert in Sentry
@@ -75,7 +75,7 @@ webhook: the main server holds no channel name and cannot post anywhere else.
 - [x] Neither secret appears in a log line or an answer. (Test on the captured log.)
 - [x] The READMEs, `.env.example` and the infra README say the above.
 - [x] Lint, format and types of the main server pass.
-- [ ] After the Release and the people's steps: the app's test error is posted in `#team9-app-crash`. (A person
+- [x] After the Release and the people's steps: the app's test error is posted in `#team9-app-crash`. (A person
       checks it and writes the result here.)
 
 ## Comments
@@ -155,3 +155,9 @@ request from Sentry, which the last criterion's check will show.
 
 - Agent time: about 1 hour (an estimate), in one session.
 - Tokens: 237,758 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available when this was written.
+
+### The check (2026-11-26)
+
+The people's steps were done: the Slack channel and its Incoming Webhook, the internal integration with the Issues
+webhook (Created, Unresolved), both values in Parameter Store, and the Release `snunow/main-server/26.11.25-1`. The
+owner sent the app's test error from a phone, and its post appeared in `#team9-app-crash`.

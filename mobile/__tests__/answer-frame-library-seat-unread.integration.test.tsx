@@ -3,6 +3,8 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { color } from '@/design-system';
@@ -69,7 +71,7 @@ describe('the seat book card whose seats could not be read', () => {
 
     expect(library.requestsTo('getSeatBookingList')).toHaveLength(2);
     expect(seatCard().queryByText(UNREAD)).toBeNull();
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(seatCard().getByText('7193번')).toBeVisible();
     expectNoWrite(library);
   });
 

@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { UNHURRIED_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -60,7 +61,7 @@ const clockOf = (at: string): string => at.slice(11, 16);
 const UNHURRIED_MINUTES = UNHURRIED_MEAL_SECONDS / 60;
 
 // The User's next item in words, "15:30 302동 수업", from the first plan's part and its mark on the map; null for none.
-function nextItemWords({ scene }: OrderedPlan, { next }: Pick<PlanPart, 'next'>): string | null {
+export function nextItemWords({ scene }: OrderedPlan, { next }: Pick<PlanPart, 'next'>): string | null {
   if (next === null || next.place === null) {
     return null;
   }
@@ -69,7 +70,7 @@ function nextItemWords({ scene }: OrderedPlan, { next }: Pick<PlanPart, 'next'>)
 }
 
 // The walking a plan shows: everyone's way there, and the User's on to their next item.
-function shownWalk({ parts, scene }: OrderedPlan): number {
+export function shownWalk({ parts, scene }: OrderedPlan): number {
   const there = parts.reduce((sum, { walkMinutes }) => sum + (walkMinutes ?? 0), 0);
   const me = parts.find((part) => part.me);
   const on = scene.routes.find(({ role, userId }) => role === 'next' && userId === me?.userId)?.minutes;

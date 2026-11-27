@@ -5,6 +5,8 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, PlanInput, PlanPerson } from '@/api/assistant-types';
@@ -14,18 +16,25 @@ const NO_WINDOW: MealInput['window'] = { from: null, until: null };
 type WithPeople = Extract<PlanInput, { people: PlanPerson[] }>;
 
 export function hasPeople(input: PlanInput): input is WithPeople {
-  return input.kind === 'meal' || input.kind === 'new-quest' || input.kind === 'meet';
+  return input.kind === 'meal' || input.kind === 'new-quest' || input.kind === 'meet' || input.kind === 'study';
 }
 
-// The people of the conditions: a meal's, a meet's, or a new recruiting Quest's, the asker first; none for events and
-// Quests.
+// The people of the conditions: a meal's, a meet's, a study's, or a new recruiting Quest's, the asker first; none for
+// events and Quests.
 export function peopleOf(input: PlanInput): readonly PlanPerson[] {
   return hasPeople(input) ? input.people : [];
 }
 
-// The window the User fixed: a meal's or a meet's; nothing fixed for the other kinds.
+// The kinds whose window the User fixes on the band: a meal, a meet, and a study answer.
+type Windowed = Extract<PlanInput, { kind: 'meal' | 'meet' | 'study' }>;
+
+function isWindowed(input: PlanInput): input is Windowed {
+  return input.kind === 'meal' || input.kind === 'meet' || input.kind === 'study';
+}
+
+// The window the User fixed; nothing fixed for the other kinds.
 export function windowOf(input: PlanInput): MealInput['window'] {
-  return input.kind === 'meal' || input.kind === 'meet' ? input.window : NO_WINDOW;
+  return isWindowed(input) ? input.window : NO_WINDOW;
 }
 
 // The changes the card makes to the conditions of a Plan before it asks for a recalculation. Each returns new
@@ -50,14 +59,12 @@ export function withPerson(input: PlanInput, userId: string): PlanInput {
 }
 
 export function withBound(input: PlanInput, bound: 'from' | 'until', time: string | null): PlanInput {
-  return input.kind === 'meal' || input.kind === 'meet'
-    ? { ...input, window: { ...input.window, [bound]: time } }
-    : input;
+  return isWindowed(input) ? { ...input, window: { ...input.window, [bound]: time } } : input;
 }
 
 // The band moved whole: its start fixed, and its end left to the server, which plans the longest time from then.
 export function withStart(input: PlanInput, time: string): PlanInput {
-  return input.kind === 'meal' || input.kind === 'meet' ? { ...input, window: { from: time, until: null } } : input;
+  return isWindowed(input) ? { ...input, window: { from: time, until: null } } : input;
 }
 
 export function withOrigin(input: PlanInput, placeId: string): PlanInput {
@@ -74,4 +81,15 @@ export function withOrigin(input: PlanInput, placeId: string): PlanInput {
     { kind: 'from' as const, placeId, source: 'asker' as const },
   ];
   return { ...input, people: [{ ...asker, constraints }, ...others] };
+}
+
+// A meal's conditions with that Class back in the plan (P04 ticket 93): without the field once none is left out, so
+// that a main server before the field is sent nothing new. Other conditions, or a Class not left out, are unchanged.
+export function withoutSkipped(input: PlanInput, classId: string): PlanInput {
+  if (input.kind !== 'meal' || !(input.skipped ?? []).includes(classId)) {
+    return input;
+  }
+  const { skipped = [], ...rest } = input;
+  const left = skipped.filter((id) => id !== classId);
+  return left.length === 0 ? rest : { ...rest, skipped: left };
 }

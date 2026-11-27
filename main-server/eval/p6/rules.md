@@ -9,7 +9,7 @@ The rules come from the P06 spec (`.scratch/iteration-3/P06-tutorial-and-kwanjeo
 - **Space**: one entry of the catalogue, by its `id`: a reading-room sector (7층, 8층), a group-study-room size on a floor (2층, 4층), or a media room (6층). A space's **name** is the catalogue's `name`.
 - **Seat space**: a reading-room sector (`common: reading_room`): 7F-7A-zone1-notebook, 7F-7A-zone2, 7F-notebook-171, 7F-7B-notebook, 8F-8A-zone1-quiet, 8F-8A-zone2-notebook, 8F-notebook-181 and 8F-grad-reading-room. One person per seat.
 - **Room space**: a group study room (`common: group_study_room`) or a media room (`common: media_room`).
-- **Library card**: a card of the reply that the phone fills from the library. Its **action** is `book`, `cancel`, `return`, `seats` or `myBookings`. A book, cancel or return card only proposes: nothing happens at the library until the User presses its button (예약하기, 취소하기, 반납하기).
+- **Library card**: a card of the reply that the phone fills from the library. Its **action** is `book`, `cancel`, `return`, `seats` or `myBookings`. A book, cancel or return card only proposes: nothing happens at the library until the User presses its button (예약하기, 취소하기, 반납하기). _Superseded 2026-11-27 (P05 tickets 62 and 63), after the freeze:_ the cancel button is named 예약 취소, as on the phone; the frozen labels that mention 취소하기 stay (`suite.yaml`, `supersededAfterFreeze`).
 - **People** of a booking: the asker plus the Friends named in the request, or the asker and the other Holders of a Quest the asker holds.
 - **The asker**: the User who asks, 김새봄 unless the case names another (world.yaml). `now` is Wednesday 2026-11-04 at 10:05 in Korea.
 
@@ -138,6 +138,7 @@ A book card holds the space, the date, the start, the minutes, and when given th
 - "내 예약" shows a **myBookings** card. "예약 취소해줘" shows a **cancel** card, "반납해줘" a **return** card. Each card loads the bookings on the phone and is confirmed by its button.
 - A request that names the booking ("오늘 3시 예약 취소") gives the card that target: date 11/4, start 15:00.
 - The Assistant cannot see the User's bookings, seats or rooms. "반납했어?" asks about what it cannot see: a CHAT that says so, with no tool and no library card at all, not even 내 예약.
+  - _Superseded 2026-11-27 (P05 ticket 59), after the freeze:_ the Assistant now answers "반납했어?" with the **myBookings** card, which shows each booking's state, and never says whether the return went through. The frozen label stays (`suite.yaml`, `supersededAfterFreeze`).
 - The done message after a booking ("…예약되었어요!", "사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!", the kiosk within 30 minutes) is the app's own bubble after the press, not the Assistant's reply. A reply that proposes a booking need not say it, and must not say the booking is made.
 
 ## 14. The tutorial and campus facilities
@@ -180,7 +181,7 @@ What the spec and the catalogue left open, as the PM ruled on the blind draft, n
 3. 스튜디오 and 라이브 방송 fit 6F-studio and Creative Media Studio: an ASK (section 3).
 4. "중앙도서관 열람실" is an ASK between 7층 and 8층 that says 본관 is 미구현 (section 3).
 5. "내 공강에 7층 열람실" asks which space first, with no tool and no slot times (section 12; ruling 17 replaces the earlier free-slots ASK).
-6. "반납했어?" is a CHAT with no card at all (section 13).
+6. "반납했어?" is a CHAT with no card at all (section 13). Superseded 2026-11-27 by P05 ticket 59: a **myBookings** card.
 7. No weekday names: 오늘, 내일, 모레, N일 뒤 (section 1).
 8. Information questions search in a fixed order: getTutorial, the app's other data, the official link (section 14).
 9. "아무 자리(나)" is the default seat space 7F-7A-zone2; a missing time is still asked (section 3).

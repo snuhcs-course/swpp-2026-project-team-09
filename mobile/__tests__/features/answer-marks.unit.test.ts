@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -29,7 +30,7 @@ describe('the marks of the answer for two people, its first Plan', () => {
     expect(seen(drawing, 'answer:candidate:301동식당')).toEqual({
       name: '후보 2 · 301동식당 · 12:18',
       symbol: null,
-      label: label('left', 'candidate', '301동식당', { line: '12:18', number: 2 }),
+      label: label('left', 'candidate', '301동식당', { line: '12:18', number: 2, meal: true }),
       planId: '301동식당',
     });
   });
@@ -45,7 +46,7 @@ describe('the marks of the answer for two people, its first Plan', () => {
     expect(seen(drawing, 'answer:pick')).toEqual({
       name: '302동식당 · 12:15 점심',
       symbol: null,
-      label: label('below', 'pick', '302동식당 ›', { line: '12:15 점심', number: 1 }),
+      label: label('below', 'pick', '302동식당 ›', { line: '12:15 점심', number: 1, meal: true }),
       planId: null,
     });
   });
@@ -59,8 +60,8 @@ describe('the marks of the answer for two people, its first Plan, away from the 
   it('puts 학생회관식당 at the right, since 24동 stands 61 metres to its left', () => {
     expect(seen(drawing, 'answer:candidate:학생회관식당')).toEqual({
       name: '후보 3 · 학생회관식당 · 12:33',
-      symbol: { type: 'dot', role: 'candidate', number: 3 },
-      label: label('right', 'candidate', '학생회관식당', { line: '12:33', number: 3 }),
+      symbol: { type: 'dot', role: 'candidate', number: 3, meal: true },
+      label: label('right', 'candidate', '학생회관식당', { line: '12:33', number: 3, meal: true }),
       planId: '학생회관식당',
     });
   });
@@ -172,8 +173,8 @@ describe('the marks of the answer for two people, its third Plan', () => {
   it("at 학생회관: the pick's own dot with its number, and its words below", () => {
     expect(seen(drawing, 'answer:pick')).toEqual({
       name: '학생회관식당 · 12:33 점심',
-      symbol: { type: 'dot', role: 'pick', number: 3 },
-      label: label('below', 'pick', '학생회관식당 ›', { line: '12:33 점심' }),
+      symbol: { type: 'dot', role: 'pick', number: 3, meal: true },
+      label: label('below', 'pick', '학생회관식당 ›', { line: '12:33 점심', meal: true }),
       planId: null,
     });
     expect(seen(drawing, 'answer:candidate:3식당')).toMatchObject({ symbol: { number: 4 }, label: { side: 'left' } });
@@ -290,7 +291,7 @@ describe("the pick's day", () => {
     expect(seen(drawingOf(tomorrow, 0), 'answer:pick')).toEqual({
       name: '302동식당 · 내일(화) 12:15 점심',
       symbol: null,
-      label: label('below', 'pick', '302동식당 ›', { line: '내일(화) 12:15 점심', number: 1 }),
+      label: label('below', 'pick', '302동식당 ›', { line: '내일(화) 12:15 점심', number: 1, meal: true }),
       planId: null,
     });
   });

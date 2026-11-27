@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { isLibraryLoggedIn } from '@/library/flag';
@@ -112,6 +114,6 @@ describe('a login opened again while the closed one still waits on its checks', 
 
     expect(screen.queryByTestId('library-login-view')).toBeNull();
     await expect(isLibraryLoggedIn()).resolves.toBe(true);
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(seatCard().getByText('7193번')).toBeVisible();
   });
 });

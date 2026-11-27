@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -16,6 +17,8 @@ interface MapMarkBadgeProps {
   fresh?: boolean;
   // Drawn faint: shown for want of anything the User watches.
   faded?: boolean;
+  // A tag with its name in it: faded less, so that the name stays readable over the map's own words.
+  named?: boolean;
   children: ReactNode;
 }
 
@@ -25,14 +28,20 @@ const BADGE = 14;
 const BADGE_ROOM = 6;
 
 // An interest mark around a place's pin or dot, or a group's, on the everyday map.
-export function MapMarkBadge({ form, fresh = false, faded = false, children }: MapMarkBadgeProps): ReactElement {
+export function MapMarkBadge({
+  form,
+  fresh = false,
+  faded = false,
+  named = false,
+  children,
+}: MapMarkBadgeProps): ReactElement {
   const room = fresh ? BADGE_ROOM : 0;
   return (
     <View
       style={[
         styles.box,
         { paddingTop: room, paddingHorizontal: room, paddingBottom: form === 'dot' ? room : 0 },
-        faded && styles.faded,
+        faded && (named ? styles.namedFaded : styles.faded),
       ]}
     >
       {children}
@@ -48,6 +57,7 @@ export function MapMarkBadge({ form, fresh = false, faded = false, children }: M
 const styles = StyleSheet.create({
   box: { alignSelf: 'flex-start' },
   faded: { opacity: 0.5 },
+  namedFaded: { opacity: 0.75 },
   badge: {
     position: 'absolute',
     top: 0,

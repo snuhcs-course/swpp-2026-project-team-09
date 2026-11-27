@@ -13,6 +13,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -58,8 +59,6 @@ const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['map-sources', 'right'],
   ['room/[questId]', 'right'],
   ['place-map', 'right'],
-  ['boards/index', 'right'],
-  ['boards/[board]', 'right'],
   ['post/[questId]', 'right'],
   ['party-form', 'right'],
 ];

@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -79,7 +80,7 @@ function beside(): ReturnType<typeof within> {
   return within(screen.getByTestId('ai-input-beside'));
 }
 
-// Partitions: the first Plan; the third from its flag; the last from its flag; the row with "되돌리기" after a drag.
+// Partitions: the first Plan; the third from its flag; the last from its flag; the card after a drag.
 describe('the candidates on the map', () => {
   it('number the other Plans, with no arrows or count in the card', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -111,16 +112,14 @@ describe('the candidates on the map', () => {
     expect(mapThings()).toContain('자하연식당 2층 · 12:35 점심');
   });
 
-  it('leave "되돌리기" alone in the row after a drag, the main button beside the input', async () => {
+  it('leave no row of buttons under the card after a drag, the main button beside the input (P04 ticket 86)', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await step('from', 'increment');
 
-    const row = within(card().getByTestId('plan-steps'));
-    const undo = row.getByRole('button', { name: '되돌리기' });
-    expect(row.getAllByRole('button')).toEqual([undo]);
-    expect(undo.parent).toHaveStyle({ width: 96 });
-    expect(row.queryByText('1/2')).toBeNull();
+    expect(card().queryByTestId('plan-steps')).toBeNull();
+    expect(card().queryByRole('button', { name: '되돌리기' })).toBeNull();
+    expect(card().queryByText('1/2')).toBeNull();
     expect(beside().getByRole('button', { name: INVITE })).toBeEnabled();
   });
 });

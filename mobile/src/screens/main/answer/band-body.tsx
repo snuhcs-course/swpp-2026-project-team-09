@@ -114,8 +114,6 @@ interface BandProps {
   band: TimeBand;
   // Where the band is drawn.
   shown: Stretch;
-  // Where the band was before the last drag, drawn as a dashed outline.
-  ghost: Stretch | null;
   // The band's place while it is moved whole, or null.
   moving: Stretch | null;
   disabled: boolean;
@@ -143,11 +141,11 @@ function Body({ band, shown, disabled, onMove }: BandProps & { onMove: OnMove })
   );
 }
 
-// The band where it is drawn, and the dashed outline of where it was before a drag: while it is moved whole, its own
-// place.
+// The band where it is drawn, and while it is moved whole the dashed outline of its own place. Once let go nothing of
+// the place before stays: a drag is undone by dragging back (P04 ticket 86).
 export function BandOnTrack(props: BandProps): ReactElement {
-  const { band, ghost, moving, shown, onMove } = props;
-  const outline = moving === null ? ghost : { startAt: band.startAt, endAt: band.endAt };
+  const { band, moving, shown, onMove } = props;
+  const outline = moving === null ? null : { startAt: band.startAt, endAt: band.endAt };
   return (
     <>
       {outline === null ? null : <View style={[styles.ghost, placeOf(outline, band.range)]} testID="time-band-ghost" />}

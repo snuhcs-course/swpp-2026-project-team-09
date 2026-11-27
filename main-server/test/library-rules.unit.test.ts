@@ -4,18 +4,38 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
-import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../src/assistant/library/library-rules.js';
+import { LIBRARY_ANSWER_RULES, LIBRARY_RULES, LIBRARY_STUDY_RULES } from '../src/assistant/library/library-rules.js';
 
-// The text chat's 관정도서관 rules stay as they were before an app drew answers; the fixture is that text.
+// The text chat's 관정도서관 rules, character for character; the fixture is that text. It changes only with the rules
+// every app shares.
 const TEXT_CHAT_RULES = readFileSync(new URL('fixtures/library/text-chat-rules.txt', import.meta.url), 'utf8');
+
+const EVERY_APP = { text: LIBRARY_RULES, answer: LIBRARY_ANSWER_RULES, study: LIBRARY_STUDY_RULES };
 
 describe('The 관정도서관 rules', () => {
   it('of the text chat are those of today, character for character', () => {
     expect(LIBRARY_RULES).toBe(TEXT_CHAT_RULES);
   });
+
+  // On the user's phone (2026-11-27), "반납 잘 됐니?" was refused, and "반납해줘" for a seat not yet in use was answered
+  // with a return card that found no seat, named in the reply (P05 ticket 59).
+  it.each(Object.entries(EVERY_APP))(
+    'of the %s app show the bookings for "반납 됐어?", and cancel a seat not in use',
+    (_app, rules) => {
+      expect(rules).not.toContain('answered by saying that you cannot see the User');
+      expect(rules).toContain(
+        '("예약 됐어?", "취소 됐어?", "반납 됐어?", "반납했어?"), call showMyLibraryBookings, and say in one sentence, naming no card, that each booking\'s state is shown below',
+      );
+      expect(rules).toContain('never say whether it went through');
+      expect(rules).toContain('반납 is only for a seat confirmed at the 좌석배정기');
+      expect(rules).toContain('When proposeLibraryReturn answers notInUse');
+      expect(rules).toContain('say in one sentence, naming no card, that nothing is booked until');
+    },
+  );
 
   it('of an app that draws answers fill the first of several seat spaces and still ask among rooms', () => {
     expect(LIBRARY_ANSWER_RULES).not.toContain('When the words fit several bookable spaces, ask which one');
@@ -27,6 +47,15 @@ describe('The 관정도서관 rules', () => {
   it('of an app that draws answers say to sign in first when the card shows 로그인, and name the library one way', () => {
     expect(LIBRARY_ANSWER_RULES).toContain('they sign in first when the card shows 로그인');
     expect(LIBRARY_ANSWER_RULES).toContain('Call the library 관정도서관 in replies, not 관정관.');
+  });
+
+  // On the phone (2026-11-27) the User switched a card from 7층 7A to 8층 and booked it, and the next reply called the
+  // Assistant's 7A words wrong.
+  it('of both chats say that a card sent back is as the User left it, and a difference is no error', () => {
+    const line = 'Where it differs from your earlier words, the User changed it: it is not your error';
+    expect(LIBRARY_RULES).toContain(line);
+    expect(LIBRARY_ANSWER_RULES).toContain(line);
+    expect(LIBRARY_ANSWER_RULES).toContain('A seat item in [Ahead: …] at the card');
   });
 
   // "내일 공부할 자리" asked "몇 시부터 몇 시까지 예약할까요?" and refused the answer: seats are booked on their day only.

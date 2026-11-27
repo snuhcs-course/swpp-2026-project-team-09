@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, AnswerReply, MapScene, Plan, TimeBand } from '@/api/assistant-types';
@@ -21,6 +22,7 @@ import { isInput, isOneOf } from './plan-inputs';
 import { hasRelax } from './relax-answers';
 import { isKeptOneOrAbsent, isKeptOrAbsent } from './kept-answers';
 import { isPlanMenuOrAbsent } from './plan-menu-answers';
+import { isStudyOrAbsent } from './study-plan-answers';
 
 // The check of a Place, used beside these by other answers' checks.
 export { isPlacePoint } from './place-answers';
@@ -198,11 +200,17 @@ function isLane(value: unknown): value is TimeBand['lanes'][number] {
   return hasTexts(value, ['userId', 'name']) && listOf(isBusy)(field(value, 'busy'));
 }
 
+function isSkipped(value: unknown): value is NonNullable<TimeBand['skipped']>[number] {
+  return hasTexts(value, ['id', 'startAt', 'endAt', 'label']);
+}
+
 export function isBand(value: unknown): value is TimeBand {
+  const skipped = field(value, 'skipped');
   return (
     isSpan(field(value, 'range')) &&
     hasTexts(value, ['now', 'startAt', 'endAt', 'text']) &&
-    listOf(isLane)(field(value, 'lanes'))
+    listOf(isLane)(field(value, 'lanes')) &&
+    (skipped === undefined || listOf(isSkipped)(skipped))
   );
 }
 
@@ -267,7 +275,8 @@ export function isPlan(value: unknown): value is Plan {
     isBand(field(value, 'band')) &&
     isOfQuest(value) &&
     isEventTimesOrAbsent(field(value, 'event')) &&
-    isPlanMenuOrAbsent(field(value, 'menu'))
+    isPlanMenuOrAbsent(field(value, 'menu')) &&
+    isStudyOrAbsent(field(value, 'study'))
   );
 }
 

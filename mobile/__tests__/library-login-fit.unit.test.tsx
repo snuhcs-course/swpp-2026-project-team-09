@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -89,7 +90,7 @@ describe('the login view', () => {
   });
 
   it('gives its pages the fit and nothing that could send the app a message', async () => {
-    await render(<LibraryLogin onDone={noop} onLanded={noop} onLeft={noop} visible />);
+    await render(<LibraryLogin checking={false} onDone={noop} onLanded={noop} onLeft={noop} visible />);
 
     const web = webViewAt(LIBRARY_MAIN_URL);
     expect(web?.props.testID).toBe('library-login-view');

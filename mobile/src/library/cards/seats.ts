@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySeat } from '../replies';
@@ -22,12 +23,21 @@ export function seatState({ STATUS, USECNT }: Pick<LibrarySeat, 'STATUS' | 'USEC
   return STATUS === 1 && USECNT === 0 ? 'free' : 'taken';
 }
 
+// One collator for every comparison: `localeCompare` with a locale builds one per call, and a sector of 560 seats is
+// sorted with thousands of them (P01 ticket 08).
+const LABELS = new Intl.Collator('ko', { numeric: true });
+
 function byLabel(one: LibrarySeat, other: LibrarySeat): number {
-  return one.VNAME.localeCompare(other.VNAME, 'ko', { numeric: true });
+  return LABELS.compare(one.VNAME, other.VNAME);
 }
 
 export function freeSeats(seats: readonly LibrarySeat[]): LibrarySeat[] {
   return seats.filter((seat) => seatState(seat) === 'free').toSorted(byLabel);
+}
+
+// How many seats are free, with no order needed: what a room's count shows.
+export function freeSeatCount(seats: readonly LibrarySeat[]): number {
+  return seats.filter((seat) => seatState(seat) === 'free').length;
 }
 
 // The seat a book card offers: the named or tapped one while it is free, else the first free seat in label order.
@@ -40,7 +50,7 @@ export function chooseSeat(seats: readonly LibrarySeat[], named: string | null):
 // The next free seat after `label` in label order, else the first: what a card offers when its seat was just taken.
 export function nextFreeSeat(seats: readonly LibrarySeat[], label: string): LibrarySeat | null {
   const free = freeSeats(seats);
-  return free.find(({ VNAME }) => VNAME.localeCompare(label, 'ko', { numeric: true }) > 0) ?? free[0] ?? null;
+  return free.find(({ VNAME }) => LABELS.compare(VNAME, label) > 0) ?? free[0] ?? null;
 }
 
 export interface SeatBox {

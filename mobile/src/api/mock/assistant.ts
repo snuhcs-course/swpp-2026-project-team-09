@@ -12,6 +12,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -31,7 +32,9 @@ import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { CROWDED_ASKED, crowdedMealAnswer, crowdedMealReply, crowdedWithFriend } from './data/crowded-meal';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
+import { skippedReplyTo } from './data/skipped-classes';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
+import { pricedCopy, priceReplyOf } from './data/meal-price-answer';
 import { asksUnnamedCompany, UNNAMED_COMPANY_REPLY } from './data/unnamed-company';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { cancelReplyTo } from './data/cancel-quest';
@@ -41,6 +44,7 @@ import { MENU_ANSWER_REPLY, MENU_CLOSED_REPLY } from './data/menu-answer';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
 import { isStepsAsk, stepsReplyOn } from './data/steps-answer';
+import { studyCopyFor } from './data/study-group-answers';
 import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_ASKED, NOT_NOW_REPLY } from './data/unmet-plans';
@@ -222,9 +226,9 @@ function copyFor(input: PlanInput): AnswerReply {
 
 // A recalculation without a main server: the mock does not calculate, so it answers with the stored copy of the main
 // server's real answer that fits who is in the conditions, whether the window's start is fixed, and where the User
-// sets out from, holding the input it was given.
+// sets out from, holding the input it was given; a study input, with a copy of studying together (P10 ticket 09).
 export function mockRecalculation(input: PlanInput): AnswerReply {
-  return { ...copyFor(input), input };
+  return input.kind === 'study' ? { ...studyCopyFor(input), input } : { ...pricedCopy(copyFor(input), input), input };
 }
 
 // A press without a main server: the stored card of that building or Friend. The mock does not calculate, so a building
@@ -260,7 +264,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes(NOT_NOW_ASKED)) {
     return NOT_NOW_REPLY;
   }
-  const cancel = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last);
+  const cancel = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last) ?? skippedReplyTo(last);
   if (cancel !== null) {
     return cancel;
   }
@@ -274,7 +278,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
     return UNNAMED_COMPANY_REPLY;
   }
   if (last.includes('뭐 먹을까')) {
-    return MEAL_ANSWER_MENUS_REPLY;
+    return priceReplyOf(last) ?? MEAL_ANSWER_MENUS_REPLY;
   }
   if (last.includes('배고파')) {
     return hungryReplyOf(context);
@@ -291,7 +295,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes('민수') && last.includes('어디')) {
     return FRIEND_LOOKUP_REPLY;
   }
-  return rowFourReplyOf(last) ?? wayReplyOf(last);
+  return priceReplyOf(last) ?? rowFourReplyOf(last) ?? wayReplyOf(last);
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context: RequestContext): AssistantReply {

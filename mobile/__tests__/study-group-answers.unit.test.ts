@@ -1,0 +1,125 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import { ANSWER_CAPABILITIES } from '@/api/capabilities';
+import { mockRecalculation } from '@/api/mock/assistant';
+import { STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
+import { isAnswerReply } from '@/api/server/plan-answers';
+import { hasPeople, windowOf, withBound, withoutPerson, withPerson, withStart } from '@/features/assistant/plan-input';
+import { addNameOf } from '@/screens/main/answer/who-words';
+import alone from '@/api/mock/data/study-answer.json';
+import gathering from '@/api/mock/data/study-group-gathering.json';
+import moreNeeded from '@/api/mock/data/study-group-more-needed.json';
+import ready from '@/api/mock/data/study-group-ready.json';
+import toSend from '@/api/mock/data/study-group-to-send.json';
+
+// The app reads a study answer with Friends (P10 ticket 09): the main server's copies of its own fixtures
+// (`main-server/test/fixtures/study-answer.ts` and `study-group-answers.ts`, PR 643), as JSON.
+
+const FIXTURES = { alone, gathering, moreNeeded, ready, toSend };
+
+function firstGroupOf(copy: unknown): unknown {
+  if (!isAnswerReply(copy)) {
+    throw new Error('not an answer');
+  }
+  return copy.plans[0]?.study?.group;
+}
+
+// A copy of the answer to send with one change in its first plan's group.
+function withGroup(change: Record<string, unknown>): unknown {
+  const [plan, ...rest] = toSend.plans;
+  return {
+    ...toSend,
+    plans: [{ ...plan, study: { ...plan?.study, group: { ...plan?.study.group, ...change } } }, ...rest],
+  };
+}
+
+// Partitions: the answer alone, and the four answers together. Expected values: the server's fixtures.
+describe('A study answer from the main server', () => {
+  it.each(Object.entries(FIXTURES))('is read whole: %s', (_name, copy) => {
+    expect(isAnswerReply(copy)).toBe(true);
+  });
+
+  it('keeps the group of the room to send: the kind, the people, the key, and no request yet', () => {
+    expect(firstGroupOf(toSend)).toMatchObject({
+      room: { spaceId: '4F-group-6', floor: 4, name: '6인실' },
+      people: 4,
+      moreNeeded: 0,
+      key: 'book:4F-group-6:2026-11-05:1500:120',
+      request: null,
+    });
+  });
+
+  it('keeps the request of the answer rebuilt from it, and the missing person of three', () => {
+    expect(firstGroupOf(gathering)).toMatchObject({
+      request: { status: 'gathering', consented: 1, asked: 3, waiting: ['박민수', '이서연'] },
+    });
+    expect(firstGroupOf(moreNeeded)).toMatchObject({ people: 3, moreNeeded: 1, key: null });
+  });
+});
+
+// Partitions: a group missing its key, a count that is not a number, an unknown request status, a kind without its
+// floor, and an input without `together`. Expected values: the server's DTO, which every one breaks.
+describe('A study answer that breaks the contract', () => {
+  it.each([
+    ['a group without its key', withGroup({ key: undefined })],
+    ['a count that is not a number', withGroup({ moreNeeded: '1' })],
+    ['an unknown request status', withGroup({ request: { ...ready.plans[0]?.study.group.request, status: 'held' } })],
+    ['a room kind without its floor', withGroup({ room: { spaceId: '4F-group-6', name: '6인실' } })],
+    ['an input without together', { ...toSend, input: { ...toSend.input, together: undefined } }],
+  ])('is refused: %s', (_case, copy) => {
+    expect(isAnswerReply(copy)).toBe(false);
+  });
+});
+
+const STUDY = STUDY_GROUP_TO_SEND.input;
+const FRIEND = '9f9f9f9f-0000-4000-8000-0000000000ff';
+
+// Partitions: adding and removing a person, and fixing the window. Expected values: the meal's helpers, which carry
+// the rest of the conditions over.
+describe('A study input changed on the card', () => {
+  it('has people, and "＋ 같이" names the Friend to study with', () => {
+    expect(hasPeople(STUDY)).toBe(true);
+    expect(addNameOf('study')).toBe('같이 공부할 친구 추가');
+  });
+
+  it('takes a Friend in and out, keeping together, the choice, and the length', () => {
+    const added = withPerson(STUDY, FRIEND);
+    expect(added).toMatchObject({ together: true, chosen: STUDY.chosen, minutes: 120 });
+    expect(hasPeople(added) ? added.people.map(({ userId }) => userId) : []).toContain(FRIEND);
+
+    const [, firstFriend] = STUDY.people;
+    const removed = withoutPerson(STUDY, firstFriend?.userId ?? '');
+    expect(removed).toMatchObject({ together: true, chosen: STUDY.chosen, minutes: 120 });
+    expect(hasPeople(removed) ? removed.people : []).toHaveLength(3);
+  });
+
+  it('fixes its window from the band', () => {
+    expect(windowOf(withBound(STUDY, 'from', '15:30'))).toEqual({ from: '15:30', until: null });
+    expect(windowOf(withStart(STUDY, '16:00'))).toEqual({ from: '16:00', until: null });
+  });
+});
+
+// Partitions: the capabilities sent today. Expected values: P10 ticket 16 turns study-group on, last.
+describe('The capabilities the app sends', () => {
+  it('say neither study-group nor study-plan yet', () => {
+    expect(ANSWER_CAPABILITIES).not.toContain('study-group');
+    expect(ANSWER_CAPABILITIES).not.toContain('study-plan');
+  });
+});
+
+// Partitions: four people and three. Expected values: the mock's copies of the server's answers, which it does not
+// calculate.
+describe('A study input asked again without a main server', () => {
+  it('answers with the room to send for four people, and with one more needed for three', () => {
+    const four = mockRecalculation(STUDY);
+    expect(four.input).toBe(STUDY);
+    expect(four.plans[0]?.study?.group).toMatchObject({ people: 4, moreNeeded: 0 });
+
+    const three = withoutPerson(STUDY, STUDY.people[1]?.userId ?? '');
+    expect(mockRecalculation(three).plans[0]?.study?.group).toMatchObject({ people: 3, moreNeeded: 1 });
+  });
+});

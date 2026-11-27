@@ -72,7 +72,8 @@ interface AnswerCardProps {
 // card is raised (board 6).
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, stepsTop, list } = props;
-  const card = { barRoom, onHeight, raising, stageHeight, stepsTop };
+  const skippedLine = (control.answer.plan?.band.skipped?.length ?? 0) > 0;
+  const card = { barRoom, onHeight, raising, stageHeight, stepsTop, skippedLine };
   const typing = keyboardUp && raising.level === 'low';
   const top = useCardTop(control, raising, list, { onClose });
   const { waiting } = control.chat;

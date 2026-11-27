@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryErrorKind } from '@/library/call-script';
@@ -101,9 +102,18 @@ export class FakeLibrary {
     this.seatsHeld = true;
   }
 
+  // From now on a read of the User's bookings, a login's check, is answered only on `release` (P01 ticket 13).
+  private readonly heldReads: (() => void)[] = [];
+  private bookingsHeld = false;
+
+  holdBookingReads(): void {
+    this.bookingsHeld = true;
+  }
+
   release(): void {
-    const waiting = this.held ?? [];
+    const waiting = [...(this.held ?? []), ...this.heldReads.splice(0)];
     this.held = null;
+    this.bookingsHeld = false;
     for (const answer of waiting) {
       answer();
     }
@@ -114,6 +124,13 @@ export class FakeLibrary {
     if (this.seatsHeld && endpoint === 'getSeatBookingList') {
       return new Promise(() => {
         // Never answered.
+      });
+    }
+    if (this.bookingsHeld && endpoint === 'getMyBookingList') {
+      return new Promise((resolve) => {
+        this.heldReads.push(() => {
+          resolve(this.answer(endpoint, body));
+        });
       });
     }
     const waiting = this.held;

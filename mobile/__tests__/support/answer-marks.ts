@@ -51,7 +51,14 @@ export function label(
   side: AnswerLabel['side'],
   tone: AnswerLabel['tone'],
   title: string,
-  more: { line?: string; number?: number } = {},
+  more: { line?: string; number?: number; meal?: boolean } = {},
 ): AnswerLabel {
-  return { side, tone, title, line: more.line ?? null, number: more.number ?? null };
+  return {
+    side,
+    tone,
+    title,
+    line: more.line ?? null,
+    number: more.number ?? null,
+    ...(more.meal === true ? { meal: true } : {}),
+  };
 }

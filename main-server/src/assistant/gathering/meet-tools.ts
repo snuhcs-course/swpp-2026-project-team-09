@@ -3,13 +3,14 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type AnswerReply, type MeetInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Tool } from '../feature.js';
 import { onDay } from '../free-time/free-time.js';
-import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { busyAt } from './busy-at.js';
 import { relatedWords } from './meal-tool-words.js';
@@ -103,7 +104,7 @@ export function planMeet(plans: MeetPlanService): Tool {
       { userId, now, context, capabilities, found, presented },
     ) => {
       if (outOfReach(date, now)) {
-        return noDay(date);
+        return outOfReachDay(date, presented);
       }
       const seen = seenIds(context);
       askedBy('planMeet', friendIds, found, presented);

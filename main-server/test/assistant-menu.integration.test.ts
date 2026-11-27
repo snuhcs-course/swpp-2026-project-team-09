@@ -130,7 +130,9 @@ describe('The menu of 301동식당 with the location missing', () => {
       context: { locationMissing: 'permission' },
     });
 
-    expect(answerIn(response.body).offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
+    expect(answerIn(response.body).offers).toEqual([
+      { kind: 'open', label: '위치 켜기', screen: 'location', hint: '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요' },
+    ]);
   });
 });
 

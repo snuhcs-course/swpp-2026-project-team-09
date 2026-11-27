@@ -1,0 +1,119 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-27  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Studying together answered on the map (P10 ticket 07), in the P6 world on Wednesday 2026-11-04 at 10:05, from the
+# app that says `study-group` (`capabilities: study-group-app`) and from the one that says it and `study-plan`
+# (`study-both-app`). 같이, 친구랑, 스터디, 조모임 or 팀플 with a place or a time to study goes to planStudyGroup, each
+# Friend named resolved first, never to proposeStudyRoom, which neither app is offered. Named nobody, the plan is the
+# asker's alone and needs three more; one name, two more; three names, the full plan with its key. 혼자 is the answer
+# alone: planStudy with both, the library's seat with study-group only. Written, and not run: no model key on the
+# machine they were written on.
+
+- id: study-group-together-no-names
+  category: study-group
+  world: p6-answer
+  capabilities: study-group-app
+  repeat: 3
+  turns:
+    - user: 같이 공부할 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudyGroup]
+      forbidden: [resolveFriend, proposeStudyRoom, findLibrarySpace, proposeLibraryBooking, planStudy, showOnMap]
+    text:
+      absent: [빈 방, 몇 시부터]
+
+- id: study-group-one-friend
+  category: study-group
+  world: p6-answer
+  capabilities: study-group-app
+  repeat: 3
+  turns:
+    - user: 민수랑 같이 공부할 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, planStudyGroup]
+      forbidden: [proposeStudyRoom, findLibrarySpace, proposeLibraryBooking]
+    args:
+      resolveFriend: { name: 민수 }
+
+- id: study-group-two-friends-tomorrow
+  category: study-group
+  world: p6-answer
+  capabilities: study-group-app
+  repeat: 3
+  turns:
+    - user: 민수, 지은이랑 내일 스터디
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, planStudyGroup]
+      forbidden: [proposeStudyRoom, findLibrarySpace, proposeLibraryBooking, planStudy]
+    args:
+      resolveFriend: [{ name: 민수 }, { name: 지은 }]
+      planStudyGroup: { date: '2026-11-05' }
+
+- id: study-group-three-friends
+  category: study-group
+  world: p6-answer
+  capabilities: study-both-app
+  repeat: 3
+  turns:
+    - user: 민수, 지은, 하람이랑 내일 스터디
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, planStudyGroup]
+      forbidden: [proposeStudyRoom, planStudy, findLibrarySpace, proposeLibraryBooking]
+    args:
+      resolveFriend: [{ name: 민수 }, { name: 지은 }, { name: 하람 }]
+      planStudyGroup: { date: '2026-11-05' }
+
+- id: study-group-this-week
+  category: study-group
+  world: p6-answer
+  capabilities: study-group-app
+  repeat: 3
+  turns:
+    - user: 민수, 지은이랑 이번 주에 조모임할 데 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, planStudyGroup]
+      forbidden: [proposeStudyRoom, findLibrarySpace]
+    args:
+      planStudyGroup: { firstDay: '2026-11-04', lastDay: '2026-11-08' }
+
+- id: study-group-alone-with-both
+  category: study-group
+  world: p6-answer
+  capabilities: study-both-app
+  repeat: 3
+  turns:
+    - user: 혼자 공부할 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [planStudyGroup, resolveFriend, proposeStudyRoom, findLibrarySpace]
+
+# With study-group only, studying alone is the library's seat path, as before: "공부할 자리" is 7F-7A-zone2.
+- id: study-group-alone-with-group-only
+  category: study-group
+  world: p6-answer
+  capabilities: study-group-app
+  repeat: 3
+  turns:
+    - user: 혼자 공부할 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      forbidden: [planStudyGroup, planStudy, resolveFriend]
+    args:
+      proposeLibraryBooking: { spaceId: 7F-7A-zone2 }
