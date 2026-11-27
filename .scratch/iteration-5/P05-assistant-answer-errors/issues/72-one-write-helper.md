@@ -19,3 +19,8 @@ Native files: none. Releases: the main server; no contract change.
 - [x] The integration tests of every site touched pass unchanged.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 15 minutes, an estimate from this session's transcript (gaps under 5 minutes), including its share of the design message for tickets 72–74. The 22 integration files ran one at a time in the background for about 55 minutes besides, while the session worked on ticket 73.
+- Tokens: input 13.9M, of which 13.7M cache reads, 0.18M cache writes and about 150 uncached; output 47k. No subagents.
