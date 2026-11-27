@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { caseSchema } from '../eval/cases.ts';
@@ -226,6 +227,17 @@ describe('No words at all', () => {
 
     expect(failedChecks(wayDrawn(''), none)).toEqual([]);
     expect(failedChecks(wayDrawn('문화관은 여기예요.'), none)).toEqual(['text.none']);
+  });
+});
+
+describe('The length of the words', () => {
+  const short = { actions: ['CHAT'], text: { maxChars: 12 } };
+
+  it('passes a reply of at most that many characters, and fails a longer one', () => {
+    expect(failedChecks(turn({ text: '8층이에요.' }), short)).toEqual([]);
+    expect(failedChecks(turn({ text: '관정도서관 8층이에요. 예약하기를 눌러야 예약돼요.' }), short)).toEqual([
+      'text.maxChars',
+    ]);
   });
 });
 
