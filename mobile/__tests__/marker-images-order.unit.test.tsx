@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -170,8 +171,13 @@ describe('the numbered dots made ahead on the everyday map', () => {
     await screen.rerender(<Everyday asks={[asked]} />);
 
     expect(screen.getByText(`${lookName(asked)} 있음`)).toBeVisible();
+    // A meal answer's candidate round, in the meal's kind as it carries it since PR 726.
     expect(lookName(asked)).toBe(
-      lookName({ kind: 'answer', symbol: { type: 'dot', role: 'candidate', number: 3, meal: true }, label: null }),
+      lookName({
+        kind: 'answer',
+        symbol: { type: 'dot', role: 'candidate', number: 3, meal: true, kind: 'meal' },
+        label: null,
+      }),
     );
   });
 });
