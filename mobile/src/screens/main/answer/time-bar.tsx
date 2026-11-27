@@ -175,7 +175,7 @@ function TimeCard({
       style={[styles.bar, { top: under === undefined ? barY : barY - frameTop(top) }, grip.moved, grip.rested]}
       testID="time-bar"
     >
-      <View style={styles.face}>
+      <View style={styles.face} testID="time-card-face">
         <View onLayout={onBand} testID="time-card-head">
           <TimeBand
             {...band}

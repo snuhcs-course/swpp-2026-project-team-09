@@ -17,8 +17,8 @@ import { STRIP_SLOP, type TimeCardGrip } from './time-card-grip';
 // The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
 export const STRIP_TOP = space[1];
 
-// The caret's side: a square turned 45°, as the approved page draws it.
-const CARET = 13;
+// The caret's side: a square turned 45°, as the approved page draws it (15 there, 13 on the page before it).
+const CARET = 15;
 
 // The caret on the card's top edge, half over the card, at `at` (0–100) across the track's width, the card's padding
 // left out as the steps card's is (P01 ticket 23). It is the card's own part, so it moves with the card.

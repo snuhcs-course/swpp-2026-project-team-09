@@ -13,7 +13,7 @@ On an answer to several requests the steps card draws the chosen step's words an
 ## What changes
 
 - The steps card draws the chosen step in the time card's gold: its words in `color.quest`, its span filled `color.questSoft` with a 2-wide `color.quest` border, as the time card's band.
-- The time card carries a caret on its top edge, under the chosen span's centre: a small white square turned 45°, half over the card, pointing at the span.
+- The time card carries a caret on its top edge, under the chosen span's centre: a white square of 15 turned 45°, half over the card, pointing at the span, with the approved page's soft shadow.
 - Pressing a step's words on the steps card, or its flag on the map, moves both the gold and the caret.
 - The caret is part of the time card: it moves with the card's grip, and the card's place and height do not change.
 - A step with no time card (a seat or a room) has its span in gold and no caret.
@@ -24,7 +24,7 @@ On an answer to several requests the steps card draws the chosen step's words an
 - [x] The caret stands under the chosen span's middle, at the share of the bar's range that middle takes. (Unit test `steps-caret`; the same integration test.)
 - [x] A press on another step's flag moves the gold; at a seat step there is no caret. (The same integration test.)
 - [x] The caret is drawn outside the card's layout (absolute, `time-card-strip.tsx`), so the card's place and told height are as before.
-- [x] The caret shows on Android. On the emulator (2026-11-28), as a child of the rounded face it was clipped at the face's edge, and only its half hidden on the white was drawn. It now stands beside the face, in the card's moving place, which draws outside itself (`overflow: 'visible'`). It has the approved page's soft shadow, so it reads over a light map. (`answer-steps-gold` pins where it stands; the emulator pictures show it.)
+- [x] The caret shows on Android. On the emulator (2026-11-28), as a child of the rounded face it was clipped at the face's edge, and only its half hidden on the white was drawn. It now stands beside the face, in the card's moving place, which draws outside itself (`overflow: 'visible'`). It has the approved page's soft shadow and size (15; 13 came from the page before it), so it reads over a light map. The card's face holds the padding now (`time-card-face`, which `answer-dock-and-head` checks). (`answer-steps-gold` pins where it stands; the emulator pictures show it.)
 - [ ] Pictures at 1.0 and 1.3 with ① and with ② chosen. (Waiting on the emulator.)
 
 ## Comments
