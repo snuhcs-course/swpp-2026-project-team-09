@@ -193,7 +193,7 @@ Decided on 2026-11-22:
   - 모집글 보기 goes. Under the title stand the 모집글's Leader row (no "· 모집자", no other mark), the text for every Quest (no quote box), the tags, and the time-and-place box with no map button. The event is a blue line with › in that box, opening the event sheet. The badges and the separate event card go.
   - Not running, 파티 활성화 has a ? with its help. Running, a white card with 내 파티's blinking red dot shows who is in by name: 나도 참여 when out, with no 거절; the live outline and 활성화 끄기 / 나가기 when in. The 내 위치 공유 switch goes, since Party sight is mutual.
   - With 전체 위치 공유 off the User counts as not in. Activating or joining first asks to turn it on, then goes ahead at once. `GET /parties` names a held Quest's Party's members.
-  - `openAsk` and the toast stop promising a notice to n members; activation sends no push, and none is added yet.
+  - The toast stops promising a notice to n members. Activation rings each other Holder (item 21, agreed with ticket 19's owner on 2026-11-28), so `openAsk` says "멤버 N명에게 알림이 가요.".
   - 일정 loses ✓. A step is grey once a later one starts, its end passes or it is cancelled; the first other step is orange. The same rule replaces `done` in 내 파티's time and place and in the 파티 form's edited step. 일정 has a ? with its help.
   - 신청 rows lose their line, 멤버 shows 찾기's orange "3/4명" and loses the lock line and the location-off toast, the Leader keeps only the crown, 초대 중 loses '응답 대기', and the lists' titles get icons and lose their last line.
 

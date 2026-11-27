@@ -7,10 +7,11 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { clockOf } from '../assistant/free-time/free-time.js';
-import { withCopula, withSubject } from '../assistant/gathering/answer-words.js';
+import { withCopula, withObject, withSubject } from '../assistant/gathering/answer-words.js';
 import { koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
@@ -26,7 +27,9 @@ function timesWords({ date, start, minutes }: { date: string; start: string; min
 }
 
 // A room request's Notifications ring, with the line as the push's body.
-function roomWords(told: Of<'room-declined'> | Of<'room-agreed'> | Of<'room-ending'>): NotificationWords {
+type RoomTold = Of<'room-declined'> | Of<'room-agreed'> | Of<'room-ending'>;
+
+function roomWords(told: RoomTold): NotificationWords {
   const card = { kind: 'party', id: told.questId };
   if (told.kind === 'room-declined') {
     const plan = told.moreNeeded > 0 ? `${String(told.moreNeeded)}명 더 필요해요` : '계획은 그대로예요';
@@ -221,6 +224,28 @@ function newLeaderWords({ questId, questTitle, formerName, how }: Of<'became-lea
   };
 }
 
+// A 파티's activation rings each other Holder, in the words of its card in the room, and opens the 파티.
+function activationWords({ questId, questTitle, byName }: Of<'party-activated'>): NotificationWords {
+  const line = '나도 참여하면 서로 위치를 볼 수 있어요';
+  return {
+    title: `${byName}님이 ${withObject(questTitle)} 활성화했어요`,
+    ahead: null,
+    line,
+    card: { kind: 'party', id: questId },
+    about: null,
+    rings: true,
+    body: `${line}.`,
+  };
+}
+
+// The kinds about who leads and who is in a 파티, else a room request's.
+function partyOrRoomWords(told: Of<'became-leader'> | Of<'party-activated'> | RoomTold): NotificationWords {
+  if (told.kind === 'became-leader') {
+    return newLeaderWords(told);
+  }
+  return told.kind === 'party-activated' ? activationWords(told) : roomWords(told);
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
@@ -268,5 +293,5 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       body: null,
     };
   }
-  return told.kind === 'became-leader' ? newLeaderWords(told) : roomWords(told);
+  return partyOrRoomWords(told);
 }

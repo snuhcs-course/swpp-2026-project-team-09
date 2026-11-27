@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -135,7 +136,7 @@ describe('활성화 while none runs', () => {
     await user.press(screen.getByRole('button', { name: '파티 활성화' }));
 
     expect(screen.getByRole('header', { name: '파티를 활성화할까요?' })).toBeVisible();
-    expect(screen.getByText('다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.')).toBeVisible();
+    expect(screen.getByText('멤버 2명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.')).toBeVisible();
     await answer(user, '활성화');
 
     expect(server.received('POST /parties').map(({ body }) => body)).toEqual([
@@ -196,7 +197,7 @@ describe('opening 활성화 beside another Party', () => {
 
     expect(
       screen.getByText(
-        '다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘저녁 먹으러 가요’ 활성화에서는 나가게 돼요.',
+        '멤버 2명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘저녁 먹으러 가요’ 활성화에서는 나가게 돼요.',
       ),
     ).toBeVisible();
     await answer(user, '활성화');

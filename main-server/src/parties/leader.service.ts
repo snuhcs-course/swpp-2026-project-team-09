@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { Party, Prisma } from '../generated/prisma/client.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
+import { QuestParty } from '../quests/quest-party.js';
 import { UsersService } from '../users/users.service.js';
 import { type UpdatePartyDto } from './dto/party-requests.dto.js';
 import { PartyDto } from './dto/party.dto.js';
@@ -41,6 +43,7 @@ export class LeaderService {
     private readonly parties: PartiesService,
     private readonly signals: SignalsService,
     private readonly visibility: VisibilityService,
+    private readonly questParty: QuestParty,
   ) {}
 
   // The Party the User leads, read without a lock, so that the Leader's actions are refused in the same order whatever
@@ -111,7 +114,7 @@ export class LeaderService {
         }
         const party = await this.lockLed(partyId, userId, tx);
         const told = await this.parties.audienceOf(party, tx);
-        await tx.party.delete({ where: { id: party.id } });
+        await this.questParty.delete(party, tx);
         return told;
       }),
     );

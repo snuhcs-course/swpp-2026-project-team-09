@@ -7,6 +7,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -107,6 +108,30 @@ describe('알림', () => {
     await pass(5000);
 
     expect(shownRows()).toEqual(ROWS.slice(1));
+  });
+});
+
+describe('a running Party in 알림', () => {
+  it("shows once, though the main server also keeps its push's copy (P06 ticket 21)", async () => {
+    server.on('GET /notifications', {
+      status: 200,
+      body: [
+        {
+          id: `party-activated:party:${DINNER.id}`,
+          kind: 'party-activated',
+          title: '김민준님이 저녁 약속을 활성화했어요',
+          ahead: null,
+          line: '나도 참여하면 서로 위치를 볼 수 있어요',
+          at: '2026-10-06T12:50:00+09:00',
+          url: `/main?card=party:${DINNER.id}`,
+        },
+      ],
+    });
+
+    await openNotifications();
+
+    expect(shownRows()).toEqual(ROWS);
+    expect(screen.queryByText('김민준님이 저녁 약속을 활성화했어요')).toBeNull();
   });
 });
 

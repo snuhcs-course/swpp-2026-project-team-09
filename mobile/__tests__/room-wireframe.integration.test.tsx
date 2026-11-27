@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -208,7 +209,7 @@ describe('switching from another Party', () => {
 
     expect(
       screen.getByText(
-        '다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 내가 켠 ‘저녁 먹으러 가요’ 활성화는 꺼져요.',
+        '멤버 2명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 내가 켠 ‘저녁 먹으러 가요’ 활성화는 꺼져요.',
       ),
     ).toBeVisible();
     await answer(user, '활성화');

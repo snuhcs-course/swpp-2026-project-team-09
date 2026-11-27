@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Card } from './card-address.js';
@@ -41,6 +42,8 @@ export type Told =
   | { kind: 'join-asked'; questId: string; questTitle: string; name: string; waiting: number }
   | PartyGone
   | NewLeader
+  // The Quest's Party opened, told to each other Holder by the one who opened it.
+  | { kind: 'party-activated'; questId: string; questTitle: string; byName: string }
   // Given for a Plan taken alone: `toward`, the next item the walk is for, "13:00 수업"; `by`, a way by shuttle.
   | {
       kind: 'leave-by';

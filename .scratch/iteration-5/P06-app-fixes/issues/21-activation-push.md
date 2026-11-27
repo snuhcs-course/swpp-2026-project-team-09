@@ -1,8 +1,8 @@
 # 21: Activating a 파티 rings its members (a change to ticket 19's decision)
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built; needs the agreement of ticket 19's owner)
-Blocked by: 19 (PR 688, the room as one page), and agreement with its owner on this change.
+Status: ready-for-agent
+Blocked by: 19 (PR 688, the room as one page). Its owner agreed to this change on 2026-11-28.
 
 Native files: none. Releases: a main server Release and an app OTA update.
 
