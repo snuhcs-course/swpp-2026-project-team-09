@@ -93,7 +93,9 @@ describe("a press on the event's line in a Quest's room", () => {
     expect(shownAddress()).toBe(`/room/${MY_CAREER.id}`);
     expect(screen.getByRole('button', { name: `행사 · ${CAREER.title}` })).toBeVisible();
   });
+});
 
+describe("a press on the event's line, for an event without a page", () => {
   it('has neither 원문 보기 nor the party button without a page, and the back button closes it', async () => {
     const back = holdBackButton();
     answerRoom(server, MY_MAJOR);
