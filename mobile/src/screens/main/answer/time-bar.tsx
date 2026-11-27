@@ -8,6 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
@@ -29,9 +30,10 @@ import { koreaDayWord } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
 import { ANSWER_TOP, listsTop } from '../layout';
 import type { ShownBooking } from '@/features/assistant/booking-scene';
+import { leftOutOf } from '@/features/assistant/left-out';
 import type { Chat } from '@/features/assistant/use-chat';
-import { bookingKept } from '../library/booking-kept';
-import { useBookingBand } from './booking-band';
+import { bookingBarOf } from '../library/booking-kept';
+import { leftOutIdsOn, useBookingBand } from './booking-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { mealDayOf } from './meal-day';
 import { type Picking, PersonRows } from './person-rows';
@@ -264,16 +266,19 @@ export function BookingBar({
   onHeight,
 }: {
   booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'leftOut' | 'putBack'>;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'bubbles' | 'putBack'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
-  const { kept, keep, live } = bookingKept(booking, chat);
-  // The conversation's Classes left out on the booking's day, which its ✕ puts back (P01 ticket 40).
-  const skipped = { ids: chat.leftOut().flatMap(({ date, classId }) => (date === live?.date ? [classId] : [])) };
-  const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
+  const bar = bookingBarOf(booking, chat);
   // The User's Classes and Quests of the slot's date, which the band shows and names (P01 ticket 05).
   const quests = useQuery(questsQuery).data ?? NO_QUESTS;
-  return live === null || pending || booking.booked ? null : (
+  if (bar === null) {
+    return null;
+  }
+  const { kept, keep, live } = bar;
+  // The conversation's Classes left out on the booking's day, which its ✕ puts back (P01 ticket 40).
+  const skipped = { ids: leftOutIdsOn(leftOutOf(chat.bubbles), live.date), putBack: chat.putBack };
+  return (
     <BookingCard
       // A new answer's card sets its range anew (P01 ticket 17).
       key={booking.place}
@@ -282,7 +287,7 @@ export function BookingBar({
       }}
       onHeight={onHeight}
       quests={quests}
-      skipped={{ ...skipped, putBack: chat.putBack }}
+      skipped={skipped}
       slot={live}
       space={kept.space}
     />

@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Quest, SubQuest } from '@/api/types';
@@ -131,16 +132,19 @@ describe('stretchesOn', () => {
 // The seat's band with a Class the conversation leaves out (P01 ticket 40): free, off the lane and out of the card's
 // words, and drawn apart as every answer's band draws it. Partitions: none left out; the 15:30 Class left out.
 // Expected values: the booking 14:00–17:00, which runs into the 15:30 Class at 302동.
+// The labels of the User's busy stretches on the band's lane.
+function busyOf(band: ReturnType<typeof bookingBandOf>): (string | undefined)[] {
+  return (band.lanes[0]?.busy ?? []).map(({ label }) => label);
+}
+
 describe("A seat's band, a Class left out", () => {
   const slot = { date: DATE, start: '14:00', minutes: 180 };
   const now = new Date(at('13:00'));
-  const busy = (band: ReturnType<typeof bookingBandOf>): string[] =>
-    (band.lanes[0]?.busy ?? []).map(({ label }) => label);
 
   it('keeps the Class on the lane and the clash in the words with none left out', () => {
     const band = bookingBandOf(slot, READING_ROOM, QUESTS, now);
 
-    expect(busy(band)).toContain('302동 수업');
+    expect(busyOf(band)).toContain('302동 수업');
     expect(band.text).toContain('수업과 겹쳐요');
     expect(band).not.toHaveProperty('skipped');
   });
@@ -148,7 +152,7 @@ describe("A seat's band, a Class left out", () => {
   it('draws it apart, off the lane and out of the words, when it is left out', () => {
     const band = bookingBandOf(slot, READING_ROOM, QUESTS, now, now, [CLASS_302]);
 
-    expect(busy(band)).not.toContain('302동 수업');
+    expect(busyOf(band)).not.toContain('302동 수업');
     expect(band.text).not.toContain('겹쳐요');
     expect(band.skipped).toEqual([{ id: CLASS_302, startAt: at('15:30'), endAt: at('17:15'), label: '302동 수업' }]);
   });

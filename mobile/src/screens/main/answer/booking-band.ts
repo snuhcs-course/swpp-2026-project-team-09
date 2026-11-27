@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
-import type { LibrarySpace, MealInput, TimeBand } from '@/api/assistant-types';
+import type { LeftOutClass, LibrarySpace, MealInput, TimeBand } from '@/api/assistant-types';
 import type { Quest } from '@/api/types';
 import { now } from '@/clock';
-import { fixedOnDay, wordsOn } from '@/features/assistant/booking-day';
+import { type FixedThing, fixedOnDay, wordsOn } from '@/features/assistant/booking-day';
 import type { BandBound, Stretch } from '@/features/assistant/time-band';
 import { koreaClock, koreaDateKey, koreaMinutes } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
@@ -46,6 +47,16 @@ function rangeOf(limits: SpanLimits, span: Span, date: string, shownAt: Date): S
   return { start: Math.max(limits.open, start), end: limits.close };
 }
 
+// The ids of the conversation's Classes left out on `date` (P01 ticket 40).
+export function leftOutIdsOn(leftOut: readonly LeftOutClass[], date: string): string[] {
+  return leftOut.flatMap((one) => (one.date === date ? [one.classId] : []));
+}
+
+// What of the day the band draws apart: its Classes whose ids the conversation leaves out (P01 ticket 40).
+export function leftOutOfDay(day: readonly FixedThing[], ids: readonly string[]): FixedThing[] {
+  return day.filter(({ id, isClass }) => isClass && ids.includes(id));
+}
+
 // `shownAt`, the moment the answer came, sets the range, which stays while the card is open; `at`, now, sets the line
 // of now and the earliest start. The Classes the conversation leaves out (`skipped`, their ids, P01 ticket 40) are
 // free: off the lane and out of the card's words, drawn apart as every answer's band draws them.
@@ -61,7 +72,7 @@ export function bookingBandOf(
   const limits = limitsOf(space, date, at);
   const span = spanOf(slot);
   const day = fixedOnDay(quests, date, span);
-  const leftOut = day.filter(({ id, isClass }) => isClass && skipped.includes(id));
+  const leftOut = leftOutOfDay(day, skipped);
   const fixed = day.filter((thing) => !leftOut.includes(thing));
   const range = rangeOf(limits, span, date, shownAt);
   return {
