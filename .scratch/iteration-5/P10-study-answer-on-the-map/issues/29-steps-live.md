@@ -27,7 +27,7 @@ Keep it thin, an override where the steps are made: the main server is making st
 - [x] Another candidate on the meal's step moves its flag and span. (Unit and integration tests.)
 - [x] An answer with no Plan on screen makes the answer's step not done, with its reasons. (Unit test.)
 - [x] The seat's time changed on its card moves its flag and span. (Unit and integration tests.)
-- [ ] Pictures of the seat booked inside a steps reply, the meal still there and the right main button, at font scale 1.0 and 1.3. (In #706; the booked one to be taken again for the sentence.)
+- [x] Pictures of the seat booked inside a steps reply, the meal still there and the right main button, and of ② after another candidate, at font scale 1.0 and 1.3. (In #706.)
 - [x] Whole lint, format and types.
 
 ## How it is built
@@ -48,3 +48,4 @@ Keep it thin, an override where the steps are made: the main server is making st
 
 - Agent time: about 45 minutes (an estimate), in one session: about 33 minutes from reading the review to the pull request (23:26 to 23:59 KST), then about 12 minutes on the emulator pictures, in a sitting shared with P10 ticket 15's.
 - Tokens: input about 140 uncached, with cache reads about 40.4M and cache writes about 125k; output about 57k. No subagents.
+- The sentence slot's fix after review, its test and the pictures taken again: about 40 minutes more (an estimate), from 00:53 to 01:35 KST. Tokens: input 166 uncached, with cache reads 57,260,276 and cache writes 108,724; output 46,344. No subagents.
