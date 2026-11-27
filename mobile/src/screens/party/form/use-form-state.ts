@@ -10,6 +10,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -76,6 +77,8 @@ export interface FormState {
   // The edited Quest is made for an event, which the main server cannot change.
   eventLocked: boolean;
   editing: boolean;
+  // Something differs from what the form opened with: an edit's 수정 완료 waits for it.
+  changed: boolean;
 }
 
 // The event of `/party-form?eventId=`, chosen once the Global Events are there.
@@ -211,6 +214,7 @@ export function useFormState(props: FormProps): FormState {
   const holders = quest?.holders ?? [];
   const friends = (useQuery(friendsQuery).data ?? []).filter(({ id }) => !holders.some((holder) => holder.id === id));
   const [form, setForm] = useState<PartyForm>(() => startForm(props));
+  const [opened] = useState(form);
   const [chosen, setChosen] = useState<string[]>(() => startChosen(props));
   const where = useWhere(quest, props.proposal);
   const [saving, setSaving] = useState(false);
@@ -251,6 +255,7 @@ export function useFormState(props: FormProps): FormState {
     pickEvent,
     eventLocked: (quest?.globalEvent ?? null) !== null,
     editing,
+    changed: shownChosen.length > 0 || where.changed || JSON.stringify(form) !== JSON.stringify(opened),
   };
 }
 

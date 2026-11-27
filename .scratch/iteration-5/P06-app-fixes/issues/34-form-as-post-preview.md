@@ -219,14 +219,50 @@ Rows of 52, each with an 18 icon, the label (15 Medium) and a line under it.
 - `useBoardRows` and `boardPosts`, which only the board sheet used, and `listMyTags` / `myTagsQuery`, which only the tag field and 찾기's order used, went with them. The phone's old `snunow.quest-entries` key and any `documents/quest-photos` files stay where they are, read by nothing.
 - `party-form-fields.tsx` went over the 300-line lint limit, so the toggle and the stepper's buttons are in `small-controls.tsx`.
 
+## 리뷰 후 변경 (2026-11-28)
+
+The user checked the pull request on 2026-11-28 and approved these changes. The place sheet follows `~/Downloads/snu-now-party-event-wireframes/08-1-place-typed-options.jpg`.
+
+1. **The edit's 수정 완료** is grey and takes no press until something differs from what the form opened with: the fields, a Friend chosen or the place. Undoing the change greys it again. Back still leaves the changes unsent.
+2. **The place row's tag** is centred on the row (the old `Badge` stood at the row's top).
+3. **Hangul in search fields.** `design-system/search-field.tsx` no longer sets `autoCorrect={false}`. On Android that set `TYPE_TEXT_FLAG_NO_SUGGESTIONS`, under which Samsung Keyboard typed '공학' as 'ㄱㅗㅇㅎㅏㄱ'. It was the only such setting in the app, so every `SearchField` is fixed at once: events-bar, friends-screen, friend-panel, find-bar, event-field, friend-picker, place-picker and the place sheet. No other input setting in the app has the same effect: `secureTextEntry` and `keyboardType="visible-password"` are unused, and `autoComplete="off"` only turns autofill off.
+4. **The keyboard** goes down once a place is set.
+5. **The place sheet:**
+   - The title '장소' with a ?. It opens the room's dark bubble (`HelpButton`, now in `screens/help-bubble.tsx`, with lines that start with a tag and a note under a rule) titled '장소 종류':
+     - the three tags, each with its line;
+     - under the rule, '이름만은 지도·도보 시간·도착 알림에 쓰이지 않아요'.
+   - One search field. After the buildings found come '지도에서 직접 고르기' and "‘…’ 이름만 쓰기", rows of the same rank. There is no big map button.
+   - A press only chooses a row: ✓ and a light blue ground, no outline. '선택 · name · [kind]' shows right above the button. **이 장소로 정하기** sets the place and drops the keyboard; with nothing chosen it is grey.
+   - A point inside a building on the map is that building (`toPlaceAt` 'inside' → `placeId`): 학교 건물. One near a building is '○○ 근처': 지도 위치.
+   - **The kind tags** are one grey style everywhere: 학교 건물 / 지도 위치 / 이름만. They replace 건물 / 지도 / 직접 입력 on the box's row too (`place-kind.tsx`).
+   - The line under 이름만 went from the box's row ('지도·도보 시간·도착 알림에 쓰이지 않아요').
+   - The small words under "‘…’ 이름만 쓰기" read '지도에 없거나 더 구체적인 곳(카페, 301동 203호 등)'.
+6. **Decided while making these changes:**
+   - The sheet opens on the place's words with nothing chosen.
+   - Back from the map view without a place leaves the sheet closed.
+   - The bubble's tags are light on its navy. The sheet's and the row's tags are grey on white.
+   - The room's help texts moved to `screens/room/room-help.ts`, unchanged.
+7. **Tests.** These failed before the changes and pass after them:
+   - `party-form-place-sheet.integration` (new, 6 tests);
+   - `party-form-preview`'s 수정 완료 test;
+   - `design-system/search-field.unit`'s Hangul test.
+
+   Also passing: `party-form`, `party-form-preview`, `party-form-edit`, `events-party-form`, `room-activation` and `room-done`.
+
 ## Comments
 
 ### Agent usage (2026-11-28)
 
-Estimates. Agent time is this session's wall clock from start to this entry, about 2 hours (2026-11-27 23:05 to 2026-11-28 01:02, Korea time). About 70 minutes of that were Jest runs, mostly in the background and slowed by a machine load average above 20. No subagents. Tokens are counted up to this entry, so this commit is left out.
+Estimates. Agent time is this session's working time from 2026-11-27 23:05 to 2026-11-28 03:54 (Korea time), with every pause of more than 15 minutes left out as waiting for another session or the user: about 4 hours 15 minutes. It covers:
+- the build and the pull request (about 2 hours, of which some 70 minutes were Jest runs slowed by a load average above 20);
+- the nightly-level CI run and its triage;
+- four merges of `5.0/Main`;
+- the changes after the user's review.
+
+No subagents. Tokens are counted up to this entry, so this commit is left out.
 
 | Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
-| Ticket 34 (tests first, the preview, the place sheet, '파티 설정', the marks, the photo and tag removal, the merge of `5.0/Main`, the pull request) | about 2 hours | 74,792,338 | 74,338,954 | 452,942 | 442 | 177,262 |
+| Ticket 34 (tests first, the preview, the place sheet, '파티 설정', the marks, the photo and tag removal, the pull request, CI triage, four merges of `5.0/Main`, the changes after review) | about 4 hours 15 minutes | 159,798,632 | 159,161,866 | 636,016 | 750 | 279,094 |
 
-Without cache reads, the input is 453,384.
+Without cache reads, the input is 636,766.

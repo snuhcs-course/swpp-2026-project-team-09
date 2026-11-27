@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -10,18 +11,18 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { pass, screen, shownAddress } from './support/app';
+import { pass, screen } from './support/app';
 import { CAREER, MY_CAREER, pickEvent } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { MIN_JUN_HOLDER, answer } from './support/room';
-import { openAt } from './support/party';
-import { answerForm, FESTIVAL, fillPublic, pressTimes, submit } from './support/party-form';
+import { MIN_JUN_HOLDER } from './support/room';
+import { MY_HIKE, openAt } from './support/party';
+import { answerForm, FESTIVAL, pressTimes, submit } from './support/party-form';
 import { askMainServer, PHONE_NOW } from './support/server';
 
 // 파티 만들기 as a preview of its 모집글 (P06 ticket 34): the title and the text typed in place, the box of the time, the
-// place and the event, the place sheet's building search, '파티 설정' changed in place, the required marks and the
-// event's sheet, against the fake main server.
+// place and the event, '파티 설정' changed in place, the required marks, the event's sheet and the edit's 수정 완료,
+// against the fake main server. The place sheet has its own file.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -37,9 +38,6 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const ENGINEERING_1 = { id: 'p301', number: '301', name: '제1공학관', latitude: 37.45016, longitude: 126.95259 };
-const ENGINEERING_2 = { id: 'p302', number: '302', name: '제2공학관', latitude: 37.44885, longitude: 126.95252 };
-const PLACES = [ENGINEERING_1, ENGINEERING_2];
 const HIDDEN = { includeHiddenElements: true };
 
 let server: FakeServer;
@@ -50,11 +48,6 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerForm(server);
-  server.on('GET /places', { status: 200, body: PLACES });
-  server.on('GET /places/search', ({ query }) => ({
-    status: 200,
-    body: PLACES.filter(({ name }) => name.includes(query.q ?? '')),
-  }));
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -62,18 +55,6 @@ afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
 });
-
-function placeRow(): ReturnType<typeof within> {
-  return within(screen.getByTestId('place-row'));
-}
-
-// The place sheet with the words typed into its search, once the search, asked after the typing stops, has answered.
-async function searchPlace(user: Awaited<ReturnType<typeof openAt>>, words: string): Promise<void> {
-  await user.press(screen.getByRole('button', { name: /^어디서 /u }));
-  await user.type(screen.getByLabelText('장소 검색'), words);
-  await pass(500);
-  await pass(500);
-}
 
 describe('the preview', () => {
   it('opens as the 모집글 it makes: the title and the text typed in place, the poster, the box and 파티 설정', async () => {
@@ -108,72 +89,6 @@ describe('the preview', () => {
     expect(screen.getByLabelText('본문')).toHaveDisplayValue('천천히 뛰어요');
     expect(screen.queryByText(/^제목을 입력하세요/u, HIDDEN)).toBeNull();
     expect(screen.queryByRole('button', { name: '확인' })).toBeNull();
-  });
-});
-
-describe('the place sheet', () => {
-  it('lists the buildings matching the words, and a building picked is sent as itself with 건물', async () => {
-    const user = await openAt('/party-form');
-    await fillPublic(user);
-
-    await searchPlace(user, '공학');
-
-    expect(screen.getByRole('button', { name: '제1공학관 301동' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '‘공학’ 그대로 쓰기' })).toBeVisible();
-    expect(screen.getByText('건물 목록에 없는 장소')).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '제2공학관 302동' }));
-
-    expect(screen.queryByLabelText('장소 검색')).toBeNull();
-    expect(screen.getByRole('button', { name: '어디서 제2공학관 302동' })).toBeVisible();
-    expect(placeRow().getByText('건물')).toBeVisible();
-    await user.press(submit('파티 올리기'));
-    await pass(500);
-
-    expect(server.received('POST /quests/own')[0]?.body).toMatchObject({ subQuest: { place: { placeId: 'p302' } } });
-  });
-});
-
-describe('a place not of the list', () => {
-  it.each([
-    ['공학관 앞 벤치', '직접 입력', { label: '공학관 앞 벤치' }],
-    ['301동', '건물', { placeId: 'p301' }],
-  ])('keeps %j as typed, marked %j, and sends it as before', async (words, badge, place) => {
-    const user = await openAt('/party-form');
-    await fillPublic(user);
-
-    await searchPlace(user, words);
-    await user.press(screen.getByRole('button', { name: `‘${words}’ 그대로 쓰기` }));
-    await pass(500);
-
-    expect(screen.getByRole('button', { name: `어디서 ${words}` })).toBeVisible();
-    expect(placeRow().getByText(badge)).toBeVisible();
-    const line = '지도·도보 시간·도착 알림에 쓰이지 않아요';
-    expect(placeRow().queryByText(line) !== null).toBe(badge === '직접 입력');
-    await user.press(submit('파티 올리기'));
-    await pass(500);
-
-    expect(server.received('POST /quests/own')[0]?.body).toMatchObject({ subQuest: { place } });
-  });
-
-  it('picks a point on the map with 지도에서 고르기, marked 지도', async () => {
-    server.on('GET /places/at', { status: 200, body: { place: ENGINEERING_1, relation: 'near' } });
-    const user = await openAt('/party-form');
-    await fillPublic(user);
-
-    await user.press(screen.getByRole('button', { name: '어디서 장소 검색' }));
-    await user.press(screen.getByRole('button', { name: '지도에서 고르기' }));
-    await pass(500);
-    expect(shownAddress()).toBe('/place-map');
-    await answer(user, '이 위치로 정하기');
-
-    expect(screen.getByRole('button', { name: '어디서 제1공학관 근처' })).toBeVisible();
-    expect(placeRow().getByText('지도')).toBeVisible();
-    await user.press(submit('파티 올리기'));
-    await pass(500);
-
-    expect(server.received('POST /quests/own')[0]?.body).toMatchObject({
-      subQuest: { place: { label: '제1공학관 근처' } },
-    });
   });
 });
 
@@ -284,5 +199,23 @@ describe('관련 행사', () => {
     expect(within(screen.getByTestId('plan-box')).getByText(CAREER.title)).toBeVisible();
     expect(screen.getByLabelText('바꿀 수 없어요')).toBeVisible();
     expect(screen.queryByRole('button', { name: /^관련 행사/u })).toBeNull();
+  });
+});
+
+describe('수정 완료', () => {
+  it('stays grey and takes no press until something changed, and greys again when the change is undone', async () => {
+    server.on(`GET /quests/${MY_HIKE.id}`, { status: 200, body: MY_HIKE });
+    server.on(`PATCH /quests/${MY_HIKE.id}`, { status: 200, body: MY_HIKE });
+    const user = await openAt(`/party-form?questId=${MY_HIKE.id}`);
+
+    expect(submit('수정 완료')).toBeDisabled();
+    await user.type(screen.getByLabelText('제목'), '!');
+    expect(submit('수정 완료')).toBeEnabled();
+    await user.clear(screen.getByLabelText('제목'));
+    await user.type(screen.getByLabelText('제목'), MY_HIKE.title);
+    expect(submit('수정 완료')).toBeDisabled();
+
+    await user.press(screen.getByRole('button', { name: '인원 늘리기' }));
+    expect(submit('수정 완료')).toBeEnabled();
   });
 });

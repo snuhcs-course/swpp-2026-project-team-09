@@ -154,7 +154,8 @@ describe('어디서, typed', () => {
 
     await user.press(screen.getByRole('button', { name: '어디서 장소 검색' }));
     await user.type(screen.getByLabelText('장소 검색'), words);
-    await user.press(screen.getByRole('button', { name: `‘${words}’ 그대로 쓰기` }));
+    await user.press(screen.getByRole('button', { name: `‘${words}’ 이름만 쓰기` }));
+    await user.press(screen.getByRole('button', { name: '이 장소로 정하기' }));
     await user.press(submit('파티 올리기'));
     await pass(500);
 

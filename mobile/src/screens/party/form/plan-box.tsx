@@ -2,18 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { Keyboard, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { placesQuery } from '@/api/queries';
-import { Badge, color, font, Icon, type IconName, radius, space } from '@/design-system';
+import { color, font, Icon, type IconName, radius } from '@/design-system';
 import type { FormEvent } from '@/features/party/making';
 import type { PickedPlace } from '@/features/places/picked-place';
-import { type PlaceKind, placeKindOf, placeToSend } from '@/features/places/typed-place';
 import { DateTimeSheet, whenWords } from '../../date-time-sheet';
+import { KindTag, usePlaceKind } from './place-kind';
 import { PlaceSheet } from './place-sheet';
+import { usePlaceSheet } from './use-place-sheet';
 
 // The 파티 form's box of the time, the place and the event, as the 모집글 shows them: a row each, an icon and the value
 // with no label, which opens its sheet.
@@ -83,29 +83,6 @@ function TimeRow({ startsAt, onPick }: { startsAt: string | null; onPick: (insta
   );
 }
 
-const BADGES: Record<PlaceKind, ReactElement> = {
-  building: (
-    <Badge icon="check" tone="official">
-      건물
-    </Badge>
-  ),
-  point: (
-    <Badge icon="map" tone="official">
-      지도
-    </Badge>
-  ),
-  words: <Badge tone="neutral">직접 입력</Badge>,
-};
-
-// What the place will be sent as, which its badge says. Typed words are named against the list of Places, asked only
-// for them.
-function usePlaceKind(words: string, picked: PickedPlace | null): PlaceKind | null {
-  const typedAlone = picked === null && words.trim() !== '';
-  const places = useQuery({ ...placesQuery, enabled: typedAlone }).data ?? [];
-  const sent = placeToSend(words, picked, places);
-  return sent === undefined ? null : placeKindOf(sent);
-}
-
 interface PlaceRowProps {
   words: string;
   picked: PickedPlace | null;
@@ -113,39 +90,25 @@ interface PlaceRowProps {
   onPicked: (place: PickedPlace | null) => void;
 }
 
-// The place with its badge: 건물, 지도, or 직접 입력 with the line that says what words alone cannot do.
+// The place with the grey tag of its kind, 학교 건물, 지도 위치 or 이름만, centred on the row.
 function PlaceRow({ words, picked, onWords, onPicked }: PlaceRowProps): ReactElement {
-  const [picking, setPicking] = useState(false);
   const kind = usePlaceKind(words, picked);
+  const { open, sheet } = usePlaceSheet(words, (set, place) => {
+    onPicked(place);
+    onWords(set);
+  });
   const shown = words.trim() === '' ? '장소 검색' : words;
   return (
     <View testID="place-row">
       <Row
-        badge={kind === null ? null : BADGES[kind]}
+        badge={kind === null ? null : <KindTag kind={kind} />}
         icon="pin"
         label={`어디서 ${shown}`}
-        onPress={() => {
-          setPicking(true);
-        }}
+        onPress={open}
         unset={kind === null}
         words={shown}
       />
-      {kind === 'words' ? <Text style={styles.under}>지도·도보 시간·도착 알림에 쓰이지 않아요</Text> : null}
-      <PlaceSheet
-        onClose={() => {
-          setPicking(false);
-        }}
-        onPicked={(place) => {
-          onPicked(place);
-          onWords(place.words);
-        }}
-        onTyped={(typed) => {
-          onPicked(null);
-          onWords(typed);
-        }}
-        open={picking}
-        words={words}
-      />
+      <PlaceSheet sheet={sheet} />
     </View>
   );
 }
@@ -212,14 +175,4 @@ const styles = StyleSheet.create({
   words: { flex: 1, minWidth: 0, fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: color.ink },
   navy: { color: color.snuBlue },
   unset: { fontFamily: font.regular, color: color.inkSubtle },
-  under: {
-    marginTop: -space[2],
-    paddingBottom: space[2],
-    paddingLeft: 14 + ICON + 10,
-    paddingRight: 14,
-    fontFamily: font.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    color: color.inkMuted,
-  },
 });

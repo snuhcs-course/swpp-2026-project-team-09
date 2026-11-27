@@ -9,6 +9,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -175,8 +176,8 @@ interface PageProps {
   onChooseEvent: () => void;
 }
 
-// The form's page, its button always pressable: with a required field left empty, it marks them and scrolls to the
-// first.
+// The form's page. Its button is always pressable, but in an edit only once something changed: with a required field
+// left empty, it marks them and scrolls to the first. Back leaves an edit's changes unsent.
 function Page({ state, props, onChooseEvent }: PageProps): ReactElement {
   const scroll = useRef<ScrollView>(null);
   const body = useRef<View>(null);
@@ -193,7 +194,7 @@ function Page({ state, props, onChooseEvent }: PageProps): ReactElement {
   return (
     <FullScreenPanel
       footer={
-        <Button busy={state.saving} full onPress={submit} size="lg">
+        <Button busy={state.saving} disabled={state.editing && !state.changed} full onPress={submit} size="lg">
           {words.submit}
         </Button>
       }
