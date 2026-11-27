@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { myPartyQuery } from '@/api/queries';
-import { leaveAsk } from '@/screens/room/activation-box';
+import { leaveAsk } from '@/screens/room/party-asks';
 import { type Ask, ConfirmSheet } from '@/screens/room/confirm-sheet';
 import { useRoomActions } from '@/screens/room/use-room-actions';
 

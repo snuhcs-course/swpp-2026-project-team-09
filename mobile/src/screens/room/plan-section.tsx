@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -12,7 +13,9 @@ import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { SubQuest } from '@/api/types';
 import { color, font, Icon, type IconName, radius, space } from '@/design-system';
 import type { PlanStepView, RoomView } from '@/features/quests/room-adapter';
+import { HelpButton, PLAN_HELP } from './help-bubble';
 import { PlanForm } from './plan-form';
+import { SectionTitle } from './section-title';
 import type { RoomActions } from './use-room-actions';
 
 interface PlanSectionProps {
@@ -25,9 +28,7 @@ type Editing = { kind: 'add'; key: string } | { kind: 'edit'; subQuest: SubQuest
 
 interface StepProps {
   step: PlanStepView;
-  last: boolean;
   editsPlan: boolean;
-  onDone: () => void;
   onEdit: () => void;
   onCancel: () => void;
 }
@@ -36,10 +37,9 @@ interface SmallButtonProps {
   icon: IconName;
   label: string;
   onPress: () => void;
-  tint?: string;
 }
 
-function SmallButton({ icon, label, onPress, tint = color.inkFaint }: SmallButtonProps): ReactElement {
+function SmallButton({ icon, label, onPress }: SmallButtonProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={label}
@@ -48,29 +48,22 @@ function SmallButton({ icon, label, onPress, tint = color.inkFaint }: SmallButto
       onPress={onPress}
       style={styles.small}
     >
-      <Icon color={tint} name={icon} size={15} />
+      <Icon color={color.inkFaint} name={icon} size={15} />
     </Pressable>
   );
 }
 
-function Step({ step, last, editsPlan, onDone, onEdit, onCancel }: StepProps): ReactElement {
+// A step after its clock, orange for the step now or next and grey once behind (`plan-steps`).
+function Step({ step, editsPlan, onEdit, onCancel }: StepProps): ReactElement {
   const { subQuest, time, place, next, over } = step;
   return (
     <View style={[styles.step, over && styles.over]} testID="plan-step">
-      <View style={styles.rail}>
-        <View style={[styles.dot, next && styles.nextDot]} />
-        <View style={[styles.line, last && styles.lineEnd]} />
-      </View>
+      <Icon color={next ? color.party : color.inkFaint} name="clock" size={18} />
       <View style={styles.words}>
         {time === '' ? null : <Text style={[styles.time, next && styles.nextTime]}>{time}</Text>}
         <Text style={styles.what}>{subQuest.title}</Text>
         {place === '' ? null : <Text style={styles.place}>{place}</Text>}
       </View>
-      {subQuest.done ? (
-        <SmallButton icon="check" label="완료 취소" onPress={onDone} tint={color.snuBlue} />
-      ) : over ? null : (
-        <SmallButton icon="check" label="완료로 표시" onPress={onDone} />
-      )}
       {editsPlan && !subQuest.attending ? (
         <>
           <SmallButton icon="edit" label="일정 수정" onPress={onEdit} />
@@ -95,20 +88,18 @@ interface StepsProps extends PlanSectionProps {
   onCancel: (subQuest: SubQuest) => void;
 }
 
-function Steps({ room, actions, onEdit, onCancel }: StepsProps): ReactElement {
-  const { quest, plan, editsPlan } = room;
+function Steps({ room, onEdit, onCancel }: StepsProps): ReactElement {
+  const { plan, editsPlan } = room;
   return (
-    <View>
+    <View style={styles.steps}>
       {plan.length === 0 ? <Text style={styles.empty}>일정 없음</Text> : null}
-      {plan.map((step, index) => (
+      {plan.map((step) => (
         <Step
           editsPlan={editsPlan}
           key={step.subQuest.id}
-          last={index === plan.length - 1}
           onCancel={() => {
             onCancel(step.subQuest);
           }}
-          onDone={() => void actions.toggleDone(quest.id, step.subQuest)}
           onEdit={() => {
             onEdit(step.subQuest);
           }}
@@ -146,25 +137,28 @@ function Form({ room, actions, editing, onClose }: FormProps): ReactElement {
   );
 }
 
-// The room's `일정`: the Sub Quests on a timeline, the Leader's controls and the inline form. A step is deleted at once,
-// without a question and without an undo, as `PartyDetail` draws it.
+// The room's `일정`: the Sub Quests, each after a clock, the Leader's controls and the inline form. A step is deleted at
+// once, without a question and without an undo, as `PartyDetail` draws it.
 export function PlanSection({ room, actions }: PlanSectionProps): ReactElement {
   const { quest, editsPlan } = room;
   const [editing, setEditing] = useState<Editing>(null);
   return (
     <View accessibilityLabel="일정" style={styles.section}>
-      <View style={styles.header}>
-        <Text accessibilityRole="header" style={styles.heading}>
-          일정
-        </Text>
-        {editsPlan ? (
-          <AddButton
-            onPress={() => {
-              setEditing({ kind: 'add', key: newIdempotencyKey() });
-            }}
-          />
-        ) : null}
-      </View>
+      <SectionTitle
+        after={<HelpButton help={PLAN_HELP} size={18} />}
+        end={
+          editsPlan ? (
+            <AddButton
+              onPress={() => {
+                setEditing({ kind: 'add', key: newIdempotencyKey() });
+              }}
+            />
+          ) : null
+        }
+        icon="clock"
+      >
+        일정
+      </SectionTitle>
       <Steps
         actions={actions}
         onCancel={(subQuest) => void actions.cancelSubQuest(quest.id, subQuest)}
@@ -187,12 +181,8 @@ export function PlanSection({ room, actions }: PlanSectionProps): ReactElement {
   );
 }
 
-const DOT = 12;
-
 const styles = StyleSheet.create({
   section: { gap: space[3] },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  heading: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, color: color.ink },
   add: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -213,22 +203,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: color.inkFaint,
   },
+  steps: { gap: space[4] },
   step: { flexDirection: 'row', gap: space[3] },
   over: { opacity: 0.45 },
-  rail: { alignItems: 'center', width: 20 },
-  dot: {
-    width: DOT,
-    height: DOT,
-    marginTop: space[1],
-    borderWidth: 2,
-    borderColor: color.inkFaint,
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-  },
-  nextDot: { borderWidth: 0, backgroundColor: color.party, boxShadow: `0 0 0 4px ${color.partySoft}` },
-  line: { flexGrow: 1, width: 2, marginTop: space[1], backgroundColor: color.border },
-  lineEnd: { backgroundColor: 'transparent' },
-  words: { flex: 1, paddingBottom: space[4] },
+  words: { flex: 1 },
   time: { fontFamily: font.bold, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   nextTime: { color: color.party },
   what: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
