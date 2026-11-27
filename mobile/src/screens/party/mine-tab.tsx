@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -138,8 +139,9 @@ export function MineTab(): ReactElement {
   );
 }
 
+// A group's last card stands 20 from the next group's header words: this gap and the header's 12 above them.
 const styles = StyleSheet.create({
-  body: { gap: space[5], paddingHorizontal: space[4], paddingBottom: space[6] },
+  body: { gap: space[2], paddingHorizontal: space[4], paddingBottom: space[6] },
   group: { gap: space[3] },
   liveHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });
