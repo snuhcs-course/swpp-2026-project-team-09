@@ -3,11 +3,12 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-07  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, font, radius, space } from '@/design-system';
+import { BottomSheet, Button, color, font, radius, SheetScrollView, space } from '@/design-system';
 import { now } from '@/clock';
 import {
   koreaClock,
@@ -139,7 +140,7 @@ function openingAt(index: number): { x: number; y: number } {
 function Times({ choice, onChange }: Omit<PartsProps, 'today'>): ReactElement {
   return (
     <View style={styles.lists}>
-      <ScrollView accessibilityLabel="시" contentOffset={openingAt(choice.hour)} style={styles.list}>
+      <SheetScrollView accessibilityLabel="시" contentOffset={openingAt(choice.hour)} style={styles.list}>
         {HOURS.map((hour) => (
           <Cell
             key={hour}
@@ -150,8 +151,12 @@ function Times({ choice, onChange }: Omit<PartsProps, 'today'>): ReactElement {
             selected={hour === choice.hour}
           />
         ))}
-      </ScrollView>
-      <ScrollView accessibilityLabel="분" contentOffset={openingAt(MINUTES.indexOf(choice.minute))} style={styles.list}>
+      </SheetScrollView>
+      <SheetScrollView
+        accessibilityLabel="분"
+        contentOffset={openingAt(MINUTES.indexOf(choice.minute))}
+        style={styles.list}
+      >
         {MINUTES.map((minute) => (
           <Cell
             key={minute}
@@ -162,7 +167,7 @@ function Times({ choice, onChange }: Omit<PartsProps, 'today'>): ReactElement {
             selected={minute === choice.minute}
           />
         ))}
-      </ScrollView>
+      </SheetScrollView>
     </View>
   );
 }

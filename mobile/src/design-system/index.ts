@@ -29,6 +29,7 @@ export { Avatar, initials, type PresenceStatus } from './avatar';
 export { Badge, type BadgeTone } from './badge';
 export { BottomNav, type BottomNavItem } from './bottom-nav';
 export { BottomSheet } from './bottom-sheet';
+export { SheetScrollView } from './sheet-scroll-view';
 export { Button } from './button';
 export { cardStyles } from './card';
 export { DayTile } from './day-tile';

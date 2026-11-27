@@ -7,8 +7,19 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, eventText, eventTone, Icon, type IconName, radius, space } from '@/design-system';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import {
+  BottomSheet,
+  Button,
+  color,
+  eventText,
+  eventTone,
+  Icon,
+  type IconName,
+  radius,
+  SheetScrollView,
+  space,
+} from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
 import { type DescriptionLine, descriptionLines } from './description-lines';
 import { FavoriteToggle } from './favorite-toggle';
@@ -53,7 +64,7 @@ function Description({ lines }: { lines: DescriptionLine[] }): ReactElement {
 function Details({ event }: { event: EventView }): ReactElement {
   const lines = descriptionLines(event.description);
   return (
-    <ScrollView contentContainerStyle={styles.details} style={styles.scroll} testID="event-detail">
+    <SheetScrollView contentContainerStyle={styles.details} style={styles.scroll} testID="event-detail">
       <View style={styles.head}>
         <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
           {event.title}
@@ -65,7 +76,7 @@ function Details({ event }: { event: EventView }): ReactElement {
         {event.place === null ? null : <Fact icon="pin" name="어디" words={event.place} />}
       </View>
       {lines.length === 0 ? null : <Description lines={lines} />}
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 

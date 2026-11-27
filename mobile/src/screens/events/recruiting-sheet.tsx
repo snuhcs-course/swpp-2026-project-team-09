@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { eventRecruitingQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
@@ -21,6 +22,7 @@ import {
   font,
   Icon,
   LoadingState,
+  SheetScrollView,
   space,
   text,
 } from '@/design-system';
@@ -87,7 +89,7 @@ function Rows({
       {rows.length === 0 ? (
         <EmptyState words="아직 모집 중인 파티가 없어요" />
       ) : (
-        <ScrollView style={styles.list}>
+        <SheetScrollView style={styles.list}>
           {rows.map((row) => (
             <Row
               key={row.questId}
@@ -97,7 +99,7 @@ function Rows({
               row={row}
             />
           ))}
-        </ScrollView>
+        </SheetScrollView>
       )}
     </>
   );

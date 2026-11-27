@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -14,11 +15,10 @@ import { koreaDateKey } from '@/korea-time';
 import type { ChatSheetControl } from '../chat-sheet';
 import { restOf } from './answer-rest';
 import { DockChip } from './dock-chips';
-import { PickTimeSheet } from './pick-time-sheet';
 
 // A question back's pickers (P04 ticket 26), "지도에서 고르기" and "시간 고르기", as the chips the dock had, under the
 // reply's words in the open card now that the dock is gone (P04 ticket 61); while a Place is picked, the line says what
-// to do and its chip stops the picking. The time's wheel opens over the card.
+// to do and its chip stops the picking. The time's wheel opens over the card, from `OpenAnswer`.
 
 const PICKING_PLACE = '지도에서 건물을 눌러 주세요';
 
@@ -63,7 +63,6 @@ export function ReplyPicks({ control }: { control: ChatSheetControl }): ReactEle
           />
         ))}
       </ScrollView>
-      {pick.time === null ? null : <PickTimeSheet offer={pick.time} onClose={pick.stop} onPick={pick.chooseTime} />}
     </View>
   );
 }

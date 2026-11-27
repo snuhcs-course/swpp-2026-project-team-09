@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, Text, View } from 'react-native';
 import type { PickTimeOffer } from '@/api/pick-types';
 import { now } from '@/clock';
-import { BottomSheet, Button, color, font, radius, space, text } from '@/design-system';
+import { BottomSheet, Button, color, font, radius, SheetScrollView, space, text } from '@/design-system';
 import { isFreeAt, wheelTimes } from '@/features/assistant/use-picking';
 import { koreaClock, koreaDateKey, koreaDayWord, koreaWeekdayName } from '@/korea-time';
 
@@ -43,7 +44,7 @@ function Wheel({ times, free, first, index, onIndex, onMoving }: WheelProps): Re
   return (
     <View style={styles.wheel}>
       <View pointerEvents="none" style={styles.middle} />
-      <ScrollView
+      <SheetScrollView
         contentContainerStyle={styles.rows}
         contentOffset={{ x: 0, y: first * ROW }}
         decelerationRate="fast"
@@ -74,21 +75,22 @@ function Wheel({ times, free, first, index, onIndex, onMoving }: WheelProps): Re
             </View>
           );
         })}
-      </ScrollView>
+      </SheetScrollView>
     </View>
   );
 }
 
 interface PickTimeSheetProps {
-  offer: PickTimeOffer;
+  // The time asked back, null while the wheel is closed.
+  offer: PickTimeOffer | null;
   onPick: (clock: string) => void;
   onClose: () => void;
 }
 
-// 시간 고르기 (P04 ticket 26): a wheel of the day's times every 10 minutes, which stops on a row; the asker's Free Time is
-// in the Quest blue with "빈 시간", the rest grey and still pickable. It opens on the first free time, and its button
-// sends the time in the middle as "HH:MM에".
-export function PickTimeSheet({ offer, onPick, onClose }: PickTimeSheetProps): ReactElement {
+function PickTime({
+  offer,
+  onPick,
+}: Omit<PickTimeSheetProps, 'offer' | 'onClose'> & { offer: PickTimeOffer }): ReactElement {
   const at = now();
   const times = wheelTimes(offer.date, koreaDateKey(at), koreaClock(at.toISOString()));
   const first = Math.max(
@@ -103,34 +105,43 @@ export function PickTimeSheet({ offer, onPick, onClose }: PickTimeSheetProps): R
   };
   const chosen = times[index] ?? null;
   return (
-    <BottomSheet label="시간 고르기" onClose={onClose} open>
-      <View style={styles.sheet} testID="pick-time-sheet">
-        <Text accessibilityRole="header" style={styles.title}>
-          {`${dayWords(offer.date)} 몇 시에?`}
-        </Text>
-        <Wheel
-          first={first}
-          free={offer.free}
-          index={index}
-          onIndex={settled}
-          onMoving={() => {
-            setMoving(true);
-          }}
-          times={times}
-        />
-        <Button
-          disabled={chosen === null || moving}
-          full
-          onPress={() => {
-            if (chosen !== null) {
-              onPick(chosen);
-            }
-          }}
-          size="lg"
-        >
-          {chosen === null ? '고를 시간이 없어요' : `${chosen}에`}
-        </Button>
-      </View>
+    <View style={styles.sheet} testID="pick-time-sheet">
+      <Text accessibilityRole="header" style={styles.title}>
+        {`${dayWords(offer.date)} 몇 시에?`}
+      </Text>
+      <Wheel
+        first={first}
+        free={offer.free}
+        index={index}
+        onIndex={settled}
+        onMoving={() => {
+          setMoving(true);
+        }}
+        times={times}
+      />
+      <Button
+        disabled={chosen === null || moving}
+        full
+        onPress={() => {
+          if (chosen !== null) {
+            onPick(chosen);
+          }
+        }}
+        size="lg"
+      >
+        {chosen === null ? '고를 시간이 없어요' : `${chosen}에`}
+      </Button>
+    </View>
+  );
+}
+
+// 시간 고르기 (P04 ticket 26): a wheel of the day's times every 10 minutes, which stops on a row; the asker's Free Time is
+// in the Quest blue with "빈 시간", the rest grey and still pickable. It opens on the first free time, and its button
+// sends the time in the middle as "HH:MM에". It stays mounted, so that it slides down when it closes (P06 ticket 35).
+export function PickTimeSheet({ offer, onPick, onClose }: PickTimeSheetProps): ReactElement {
+  return (
+    <BottomSheet label="시간 고르기" onClose={onClose} open={offer !== null}>
+      {offer === null ? null : <PickTime offer={offer} onPick={onPick} />}
     </BottomSheet>
   );
 }

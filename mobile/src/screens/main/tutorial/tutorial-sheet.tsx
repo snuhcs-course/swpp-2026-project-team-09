@@ -5,12 +5,24 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
-import { BottomSheet, Button, color, font, Icon, radius, space, text, tutorialTone } from '@/design-system';
+import {
+  BottomSheet,
+  Button,
+  color,
+  font,
+  Icon,
+  radius,
+  SheetScrollView,
+  space,
+  text,
+  tutorialTone,
+} from '@/design-system';
 import { kickerOf } from '@/features/tutorial/rules';
 import { Places } from './tutorial-places';
 import { Said } from './tutorial-said';
@@ -188,7 +200,7 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
   return (
     <BottomSheet label="새내기 튜토리얼 퀘스트" onClose={close} open={shown !== null && quest !== undefined}>
       {shown === null || quest === undefined || tutorial === undefined ? null : (
-        <ScrollView contentContainerStyle={styles.body}>
+        <SheetScrollView contentContainerStyle={styles.body}>
           <View style={styles.head}>
             <View style={styles.kicker}>
               <Icon color={tutorialTone.ink} name="flag" size={14} />
@@ -210,7 +222,7 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
           <Places onShowOnMap={onShowOnMap} quest={quest} />
           <Said quest={quest} shown={shown} />
           <Buttons flow={flow} onAskAssistant={onAskAssistant} quest={quest} shown={shown} />
-        </ScrollView>
+        </SheetScrollView>
       )}
     </BottomSheet>
   );

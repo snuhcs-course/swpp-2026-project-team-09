@@ -14,6 +14,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -39,6 +40,7 @@ import { drawsWords, SlotHeld } from './sentence-slot';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
+import { PickTimeSheet } from './pick-time-sheet';
 import { ReplyPicks } from './reply-picks';
 import { SetQuestLine } from './set-quest-line';
 import { LeaveRow } from './leave-button';
@@ -116,6 +118,18 @@ function slotHeld({ chat }: ChatSheetControl): boolean {
   return chat.waiting || (turnOf(chat.bubbles)?.after.some(({ text }) => text !== '') ?? false);
 }
 
+// Under the turn: the dots with 그만 while a reply is on its way, else the row that leaves. The time's wheel is
+// mounted here, outside the turn's bubbles, so that it slides down when a time is sent (P06 ticket 35).
+function AnswerEnd({ control }: { control: ChatSheetControl }): ReactElement {
+  const { chat, pick } = control;
+  return (
+    <>
+      {chat.waiting ? <WaitingReply onStop={chat.stop} /> : <LeaveRow control={control} />}
+      <PickTimeSheet offer={pick.time} onClose={pick.stop} onPick={pick.chooseTime} />
+    </>
+  );
+}
+
 // The open card's content: the turn's bubbles, each under its steps, and the dots with 그만 while a reply is on its way.
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
   const { control, cardActions, focus, onClose, room } = props;
@@ -163,7 +177,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
           {bubble === last && !picking ? <ReplyPicks control={control} /> : null}
         </View>
       ))}
-      {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}
+      <AnswerEnd control={control} />
     </>
   );
 }
