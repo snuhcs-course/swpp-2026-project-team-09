@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -23,6 +24,7 @@ import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid } from './gather
 import { basisOf, meetingOf, originChip, personChips, subQuestsOf, untilChip } from './meal-answer.js';
 import { halfHoursAround, lanesOf, othersOf, sceneOf } from './meal-scene.js';
 import { meetHours, meetWindow } from './meet-gathering.js';
+import { meetNoPlanBand, withBand } from './no-plan-band.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
 
 // The words of a calculated meet, drawn as a meal's are. Nothing here is sent to the model.
@@ -136,6 +138,6 @@ export function meetAnswer(args: MeetAnswerArgs): AnswerReply {
     chips: chipsOf(naming),
     plans,
     dropped: droppedOf(naming),
-    noPlan: plans.length > 0 ? null : noPlanOf(naming),
+    noPlan: plans.length > 0 ? null : withBand(noPlanOf(naming), () => meetNoPlanBand(naming)),
   };
 }

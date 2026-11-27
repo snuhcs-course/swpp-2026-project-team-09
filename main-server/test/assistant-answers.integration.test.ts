@@ -17,6 +17,7 @@ import { REDIS } from '../src/common/redis.module.js';
 import { keptButHidden, keptPositionIn } from './location-sharing.js';
 import { MealPlanStage, type Named, planMeal, resolve } from './meal-plan.js';
 import { withAccessToken } from './sign-in.js';
+import { withoutBand } from './no-plan.js';
 
 // The recalculation of a meal's plan from its input, at POST /assistant/answers over the started server with the
 // scripted model, the seed's walking table, and Places: the design's worked example (a Tuesday at 11:50) under what the
@@ -111,7 +112,7 @@ describe('What the User fixed', () => {
     const nowhere = await recalculate({ input: inputOf(date, [friend.id], { placeId: science.id }) });
 
     expect(answerIn(there.body).plans.map(({ id }) => id)).toEqual(['학생회관식당']);
-    expect(answerIn(nowhere.body).noPlan).toEqual({
+    expect(withoutBand(answerIn(nowhere.body).noPlan)).toEqual({
       reason: 'no-fit',
       lines: [[{ text: '그곳에는 여는 식당이 없어요', strong: false }]],
     });
@@ -177,7 +178,7 @@ describe('"여기면 어때?": a Place pressed during the Plan with 민수 and �
     expect(answer.dropped.map(({ place, parts }) => [place.label, parts?.map(({ arriveAt }) => arriveAt)])).toEqual([
       ['301동식당', [time('11:50'), time('12:18'), time('12:31')]],
     ]);
-    expect(answer.noPlan).toEqual({
+    expect(withoutBand(answer.noPlan)).toEqual({
       reason: 'no-fit',
       lines: [
         [{ text: '지은은 12:31에 도착해 13분만 먹어요', strong: false }],
