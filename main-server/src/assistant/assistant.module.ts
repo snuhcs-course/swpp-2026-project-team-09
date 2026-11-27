@@ -108,7 +108,8 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
       useFactory: (days: UserDayService): FreeTimePort => userDayFreeTime(days),
     },
   ],
-  // The making of a Quest from a Plan plans through the same service as the tool and the recalculation.
-  exports: [MealPlanService, PlanAnswersService, UserDayService],
+  // The making of a Quest from a Plan plans through the same service as the tool and the recalculation, and a room
+  // request's answer is rebuilt by the study answer together.
+  exports: [MealPlanService, PlanAnswersService, UserDayService, StudyGroupService],
 })
 export class AssistantModule {}

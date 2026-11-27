@@ -10,7 +10,8 @@
 import { contextLines } from './context-lines.js';
 import { type CardReference, type ChatMessage, type Request } from './feature.js';
 import { clockOfMinutes, minutesOfClock } from './library/booking-rules.js';
-import { type Catalogue, roomLabelOf } from './library/catalogue.js';
+import { appTitleOf } from './library/app-names.js';
+import { type Catalogue } from './library/catalogue.js';
 import { bookKeyOf } from './library/library-card.js';
 import { mentionLines } from './mentions.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
@@ -41,7 +42,7 @@ function cardWords({ kind, id }: CardReference, catalogue: Catalogue | undefined
   const { date, start, minutes, seat } = book;
   const seatWords = seat === undefined ? [] : [`${space.unit === 'room' ? 'room' : 'seat'} ${seat}`];
   const time = `${date.slice(5).replace('-', '/')} ${start}–${clockOfMinutes(minutesOfClock(start) + minutes)}`;
-  return [`library card for ${roomLabelOf(space, space.id)}`, ...seatWords, time, 'as the User left it'].join(', ');
+  return [`library card for ${appTitleOf(space)}`, ...seatWords, time, 'as the User left it'].join(', ');
 }
 
 // What the model reads of a message: an Assistant's carries a line naming the cards it showed, and one with the values

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -65,12 +66,12 @@ function depsOf(): CountingDeps {
     slot: () => SLOT,
     loggedIn: () => true,
     sectors: () => Promise.resolve(SECTORS),
-    seats: (sector) =>
+    count: (sector) =>
       new Promise((resolve, reject) => {
         held.push({
           sector: sector.id,
           come: (free) => {
-            resolve(seats(free));
+            resolve(freeSeatCount(seats(free)));
           },
           fail: () => {
             reject(new Error('network'));
