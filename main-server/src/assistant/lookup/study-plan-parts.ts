@@ -25,6 +25,7 @@ import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import { durationWords } from './day-lookup.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
+import { durationWords as lengthWords } from '../library/booking-rules.js';
 import { type Catalogue } from '../library/catalogue.js';
 import { studyBookFor } from './study-book.js';
 import { type StudyDay, type StudyStay } from './study-near.js';
@@ -275,7 +276,7 @@ function bandOf({ stay, end, building }: Ranked, { now, way, input, others }: Pl
     ...studyOthers(others, plan, { from, until, label }),
     startAt: koreaTime(stay.arrival),
     endAt: koreaTime(end),
-    text: `${clockOf(stay.arrival)}–${clockOf(end)}`,
+    text: `${clockOf(stay.arrival)}–${clockOf(end)} · ${lengthWords(Math.round((end.getTime() - stay.arrival.getTime()) / MINUTE_MS))}`,
   };
 }
 

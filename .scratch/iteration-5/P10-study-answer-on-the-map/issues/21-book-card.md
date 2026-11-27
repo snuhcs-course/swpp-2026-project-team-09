@@ -19,11 +19,20 @@ Native files: none. Releases: the main server; the app reads it with its P10 tic
 - Built in `lookup/study-book.ts`. The service gives the planner the 관정 catalogue.
 - The shared fixture is `main-server/test/fixtures/study/kwanjeong-book.json`, 관정관's `study` part for that question. Its byte-for-byte copy, `mobile/__tests__/fixtures/study-kwanjeong-book.json`, is what the app checks its card reading against. Both `fixture-copies` tests check the pair.
 - `test/fixtures/study-answer.ts` takes 관정관's `book` from the fixture.
+- Every study plan's time card text says the stay's length after the range, in the group room card's words (`durationWords` of `library/booking-rules.ts`): "13:20–15:50 · 2시간 30분".
 
 ## Acceptance criteria
 
 - [x] planStudy's 관정관 plan for the fixture's question is the fixture, card included. (Unit test, failing before the change.)
 - [x] Asked later, the card moves with the time, and its key matches its start and length. (Unit test, failing before the change.)
 - [x] A seat space chosen on the answer gives that space's card through the recalculation. (Integration test.)
+- [x] A study plan's time card says its length, "12:18–14:52 · 2시간 34분". (Unit test, failing before the change.)
 - [x] The two copies of the fixture are byte for byte the same. (`fixture-copies` in main-server and mobile.)
 - [x] README; the whole of main-server's and mobile's lint, format and types; the study test files run locally.
+
+## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 1 h 15 min in all, an estimate: about 1 h in the first session (the book card, before an account switch; its share was not measured and is estimated from its notes) and about 15 min in the session that added the band's length and opened the PR.
+- Tokens, the second session only (the first one's were not measured): input 3.8M, of which 3.7M cache reads, 0.09M cache writes and under 1k uncached; output 12k.

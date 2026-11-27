@@ -232,6 +232,14 @@ describe('A study plan before the next Class', () => {
     expect(sinyang?.lines[1]).toEqual([{ text: '13:00 수업 전 34분', strong: false }]);
     expect(sinyang?.parts[0]).toMatchObject({ walkMinutes: 8, leaveBy: '2026-11-17T12:52:00+09:00' });
   });
+
+  it('says the stay’s length on its time card, as the group room’s card does', () => {
+    const items = [classAt(TUESDAY, '11:00', '11:50', '제1공학관'), classAt(TUESDAY, '15:00', '15:50', '자연과학관6')];
+    const { plans } = asked({ clock: '12:10', items });
+    const sinyang = plans.find(({ id: planId }) => planId === '공대 신양학술정보관');
+
+    expect(sinyang?.band.text).toBe('12:18–14:52 · 2시간 34분');
+  });
 });
 
 describe('관정관’s plan', () => {
@@ -269,10 +277,10 @@ describe('When the User is ready', () => {
 // 관정관's plan carries the book card the app opens in it (P10 ticket 21), as proposeLibraryBooking shows it for the
 // plan's day, start and length on the space's steps. The fixture's copy, mobile/__tests__/fixtures/
 // study-kwanjeong-book.json, is what the app checks its card reading against.
-describe("관정관's plan's book card", () => {
-  const kwanjeongOf = (answer: AnswerReply): AnswerReply['plans'][number] | undefined =>
-    answer.plans.find(({ id: planId }) => planId === '관정관');
+const kwanjeongOf = (answer: AnswerReply): AnswerReply['plans'][number] | undefined =>
+  answer.plans.find(({ id: planId }) => planId === '관정관');
 
+describe("관정관's plan's book card", () => {
   it('is the fixture of the app: "공부할 자리 있어?" on Wednesday 2026-11-04 at 19:10 at 301동', () => {
     const fixture: unknown = JSON.parse(
       readFileSync(new URL('fixtures/study/kwanjeong-book.json', import.meta.url), 'utf8'),
