@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { QueryClient } from '@tanstack/react-query';
@@ -40,7 +41,7 @@ export async function readStart(queryClient: QueryClient, onKeptRead: () => void
   identifyUser(myUserId());
   // The phone's copy of the account's consent decides, before the Lobby: a copy without the current version asks,
   // unless the phone kept the earlier consent, which is carried over first (`consentScreenAsks`).
-  if (await consentScreenAsks(consent, consented)) {
+  if (await consentScreenAsks(consent, consented, { carryOver: true })) {
     return behindConsent(
       onboardingCompleted ? { status: 'ready', suggestion: null } : { status: 'onboarding', suggestion },
       true,

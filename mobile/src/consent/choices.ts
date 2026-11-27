@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { apiClient } from '@/api/client';
@@ -32,13 +33,20 @@ export async function chooseUsage(usage: boolean): Promise<void> {
 // account's consent and the earlier phone-only `consented`. A User who agreed on this phone before the account kept a
 // consent (`consented: true`), and whose account holds none, is not asked again (the owner's decision of 2026-11-26):
 // the app agrees for them, quietly, with usage data off, and they may turn it on in 내 정보. A failed send asks nothing
-// either and is tried again at the next sign-in or start; until it goes through the copy holds no version, which reads
-// as usage off.
-export async function consentScreenAsks(consent: Consent, consented: boolean): Promise<boolean> {
+// either and is tried again at the next start; until it goes through the copy holds no version, which reads as usage
+// off. The carry-over happens only at a start with a kept Session (`carryOver`), where the signed-in User is the one
+// who agreed on this phone. At a sign-in the flag may be another User's, kept across a sign-out by the earlier app, so
+// a sign-in into an account that holds no consent is asked: the consent would otherwise be recorded on an account
+// whose User never saw the documents.
+export async function consentScreenAsks(
+  consent: Consent,
+  consented: boolean,
+  { carryOver }: { carryOver: boolean },
+): Promise<boolean> {
   if (!consentAsked(consent)) {
     return false;
   }
-  if (!consented || consent.version !== null) {
+  if (!carryOver || !consented || consent.version !== null) {
     return true;
   }
   await agreeToDocuments(false).catch(() => null);

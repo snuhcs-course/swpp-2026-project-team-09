@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -54,13 +55,23 @@ function DocumentRow({ document }: { document: LegalDocument }): ReactElement {
 }
 
 // The optional item: a box, not ticked at first, with its sentence and a link to the privacy policy's part.
-function UsageItem({ chosen, onToggle }: { chosen: boolean; onToggle: () => void }): ReactElement {
+// Takes no press while "동의하고 시작" is at work, so that what is sent is what the box shows.
+function UsageItem({
+  chosen,
+  disabled,
+  onToggle,
+}: {
+  chosen: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}): ReactElement {
   return (
     <View style={styles.item}>
       <Pressable
         accessibilityLabel={USAGE_ITEM.label}
         accessibilityRole="checkbox"
-        accessibilityState={{ checked: chosen }}
+        accessibilityState={{ checked: chosen, disabled }}
+        disabled={disabled}
         onPress={onToggle}
         style={styles.choose}
       >
@@ -130,6 +141,7 @@ export function ConsentScreen(): ReactElement {
           <Text style={styles.note}>{CONSENT_ERROR_REPORTS}</Text>
           <UsageItem
             chosen={usage}
+            disabled={working}
             onToggle={() => {
               setUsage((now) => !now);
             }}
