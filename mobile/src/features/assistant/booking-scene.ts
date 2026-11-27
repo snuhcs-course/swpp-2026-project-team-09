@@ -5,7 +5,8 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { LibraryCardData, LibrarySpace, MapScene, PlacePoint } from '@/api/assistant-types';
+import type { AnswerReply, LibraryCardData, LibrarySpace, MapScene, Plan, PlacePoint } from '@/api/assistant-types';
+import { withLibraryDefaults } from '@/api/server/library-card-answers';
 import type { LatLng, Place } from '@/api/types';
 import { koreaDateKey, koreaDayWord } from '@/korea-time';
 import { seatWords } from '@/library/cards/bookings';
@@ -28,6 +29,9 @@ export interface ShownBooking {
   point: PlacePoint;
   // Booked: the map keeps it with "· 예약됨" until 확인 closes the answer (P01 ticket 03).
   booked: boolean;
+  // The card is a study answer's 관정관 opened (P10 ticket 27): the opened place holds it, not the reply's cards, so the
+  // reply's words stay.
+  inPlan?: true;
 }
 
 // The seat card the turn on screen replied with alone, while it is open and its space's building is in the list of
@@ -53,12 +57,22 @@ export function shownBookingOf(
   if (!aStep && ((reply.answer ?? null) !== null || (reply.lookup ?? null) !== null || reply.steps !== undefined)) {
     return null;
   }
-  const { library } = card;
-  const { space } = library;
-  if (library.action !== 'book' || space === null || space.unit !== 'seat') {
+  return seatBookingOf(reply.id, card.library, places, outcomeOf);
+}
+
+// A book card of a seat, of the reply `replyId`, as the booking the map draws: while its booking is pending or booked,
+// and its space's building is in the list of Places. Null for any other card.
+function seatBookingOf(
+  replyId: number,
+  card: LibraryCardData,
+  places: readonly Place[],
+  outcomeOf: (place: string) => CardOutcome | null,
+): ShownBooking | null {
+  const { space } = card;
+  if (card.action !== 'book' || space === null || space.unit !== 'seat') {
     return null;
   }
-  const place = cardPlace(reply.id, library.key);
+  const place = cardPlace(replyId, card.key);
   const outcome = outcomeOf(place);
   const building = places.find(({ number }) => number === space.placeNumber);
   const booked = outcome?.kind === 'booked';
@@ -66,14 +80,28 @@ export function shownBookingOf(
     return null;
   }
   const { id, latitude, longitude } = building;
-  return {
-    bubbleId: reply.id,
-    place,
-    card: library,
-    space,
-    point: { placeId: id, label: building.name, latitude, longitude },
-    booked,
-  };
+  const point = { placeId: id, label: building.name, latitude, longitude };
+  return { bubbleId: replyId, place, card, space, point, booked };
+}
+
+// 관정관 opened from a study answer alone (P10 tickets 22 and 27): its Plan's book card is the booking on the map, as
+// a seat card the reply gave alone is, so that the opened place is the framed seat answer's: the one time card on top,
+// which the ticket books, the ticket, and 예약하기 beside the input. Null for any other place, or the list.
+export function studyBookingOf(
+  shown: { plan: Plan | null; menuFor: string | null; source: AnswerReply | null },
+  bubbles: readonly ChatBubble[],
+  places: readonly Place[],
+  outcomeOf: (place: string) => CardOutcome | null,
+): ShownBooking | null {
+  const { plan, menuFor, source } = shown;
+  const book = plan?.study?.book ?? null;
+  if (plan === null || menuFor !== plan.id || book === null || source === null) {
+    return null;
+  }
+  const reply = bubbles.findLast(({ answer }) => answer === source);
+  const booking =
+    reply === undefined ? null : seatBookingOf(reply.id, withLibraryDefaults(book.card), places, outcomeOf);
+  return booking === null ? null : { ...booking, inPlan: true };
 }
 
 // "관정 7층 열람실": the room's chip words, or its floor and short name.
