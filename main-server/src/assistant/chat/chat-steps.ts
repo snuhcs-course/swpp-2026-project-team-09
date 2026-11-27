@@ -30,7 +30,7 @@ const kwanjeongOf =
     places.numbered(KWANJEONG_PLACE_NUMBER);
 
 // The meal's conditions set out from the step before it among this message's bookings and answers, as planMeal plans it;
-// for an app before `answers` too, which is shown the meal alone (P05 ticket 77).
+// for an app before `answers` too, which is shown the meal alone (P05 ticket 78).
 export function mealStartAfter(
   freeTime: FreeTimeServices,
 ): (input: MealInput, context: ToolContext) => Promise<MealInput> {

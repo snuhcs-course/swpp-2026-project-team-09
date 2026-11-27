@@ -72,7 +72,7 @@ describe('"아침 7시에 도서관 갔다가 점심" from an app that says answ
   });
 });
 
-// The fault P05 ticket 77 removes: for such an app the lunch was planned from nowhere, since only a booking was a step
+// The fault P05 ticket 78 removes: for such an app the lunch was planned from nowhere, since only a booking was a step
 // before it, and the model said it did not know where the User starts.
 describe('"아침 7시에 도서관 갔다가 점심" from an app before it', () => {
   it('stays one answer, lunch, and no steps', async () => {

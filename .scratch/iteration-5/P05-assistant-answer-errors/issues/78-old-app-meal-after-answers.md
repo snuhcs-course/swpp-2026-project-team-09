@@ -1,4 +1,4 @@
-# 77: For an app before `answers`, a meal sets out from another answer of the message before it
+# 78: For an app before `answers`, a meal sets out from another answer of the message before it
 
 Parent: [P05 spec](../spec.md). Follows ticket 76, which pinned "아침 7시에 도서관 갔다가 점심" on `5.0/Main`.
 Status: ready-for-human

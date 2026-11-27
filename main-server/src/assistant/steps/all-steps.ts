@@ -218,7 +218,7 @@ const sameConstraints = (a: Movable, b: Movable): boolean => constraintsOf(a) ==
 // when a chain of an earlier step is dropped with it; so is a chain over a start the User named. When an item of the
 // asker's day lies between the step before's end and their start, they set out from no step: the planner sets the asker
 // out from that item itself. A Class left out is no such item. An app before `answers` reads the chain as the asker's
-// own (`source`, P05 ticket 77).
+// own (`source`, P05 ticket 78).
 export async function startAfter<Input extends Movable>(
   input: Input,
   before: ReplyStep | null,
@@ -245,7 +245,7 @@ export async function startAfter<Input extends Movable>(
 // The meal's conditions set out from the step before it while the model plans it, so that the plan the model reads and
 // words is the one the app shows: a meal on screen follows the step before it there; a new one, by time, the step a
 // meal follows (`stepBeforeMeal`), among this message's bookings and answers. So does it for an app before `answers`,
-// which is shown that meal alone and reads the chain as the asker's own (P05 ticket 77).
+// which is shown that meal alone and reads the chain as the asker's own (P05 ticket 78).
 export function mealAfterSteps(
   input: MealInput,
   asking: Asking,
