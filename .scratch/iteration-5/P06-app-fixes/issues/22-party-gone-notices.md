@@ -1,4 +1,4 @@
-# 21: A 파티 that ends and a member who is removed are told apart, by a push and in 알림
+# 22: A 파티 that ends and a member who is removed are told apart, by a push and in 알림
 
 Parent: [P06 spec](../spec.md)
 Status: needs-triage (written for the team's review on 2026-11-27; not built)

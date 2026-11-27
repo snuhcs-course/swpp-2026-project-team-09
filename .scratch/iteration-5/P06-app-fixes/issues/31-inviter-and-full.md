@@ -1,4 +1,4 @@
-# 30: An invitation names who invited, and a full 파티 cannot invite
+# 31: An invitation names who invited, and a full 파티 cannot invite
 
 Parent: [P06 spec](../spec.md)
 Status: needs-triage (written for the team's review on 2026-11-27; not built)

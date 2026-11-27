@@ -1,4 +1,4 @@
-# 25: A time away from today says its day
+# 26: A time away from today says its day
 
 Parent: [P06 spec](../spec.md)
 Status: needs-triage (written for the team's review on 2026-11-27; not built)
@@ -12,10 +12,12 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 - Times shown as a clock alone, read as today's:
   - an interest's Notification "재즈 공연이 떴어요 · 14:00 301동 대강당" (`main-server/src/notifications/notification-words.ts`, `clockOf`);
-  - a changed step's words (ticket 24);
+  - a changed step's words (ticket 25);
   - the room's 일정 (`mobile/src/features/quests/room-adapter.ts`, `mobile/src/screens/room/plan-section.tsx`);
   - the map card of the User's own 공개 파티: "14:00 301동에서 출발" (`mobile/src/features/map/adapter.ts`, `openPartyCard`).
 - Others already say the day, such as the map's recruiting cards ("내일 14:00").
+
+- Check this again against the code once ticket 19 (PR 688) has merged: 19 rewrites the room's files this ticket names.
 
 ## What to build
 

@@ -1,4 +1,4 @@
-# 26: A place picked on the map opens a map with its pin
+# 27: A place picked on the map opens a map with its pin
 
 Parent: [P06 spec](../spec.md)
 Status: needs-triage (written for the team's review on 2026-11-27; not built)
@@ -15,7 +15,7 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## What to build
 
-- A 파티's place with a position and no Place is pressable where it is shown (모집글 and its sheet, the room's 일정, the invitation card of ticket 23), and opens a small map sheet with a pin at the point and its words.
+- A 파티's place with a position and no Place is pressable where it is shown (모집글 and its sheet, the room's 일정, the invitation card of ticket 24), and opens a small map sheet with a pin at the point and its words.
 - The 근처 rule and its distance stay. A place typed as words with no position (e.g. "서울대입구") stays words and is not pressable (decided 2026-11-27).
 
 ## Must not break

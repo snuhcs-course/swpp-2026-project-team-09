@@ -1,4 +1,4 @@
-# 23: An invitation card says when and where the 파티 meets
+# 24: An invitation card says when and where the 파티 meets
 
 Parent: [P06 spec](../spec.md)
 Status: needs-triage (written for the team's review on 2026-11-27; not built)
@@ -16,7 +16,7 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 ## What to build
 
 - The main server's received invitations carry the Quest's next Sub Quest: its start and its place (label, and the position or Place when there is one).
-- The card shows the time (with its date, ticket 25) and the place under the title, or "시간 미정" / "장소 미정".
+- The card shows the time (with its date, ticket 26) and the place under the title, or "시간 미정" / "장소 미정".
 - The mock stand-ins are no longer read in the server build; the mock keeps its own.
 
 ## Must not break

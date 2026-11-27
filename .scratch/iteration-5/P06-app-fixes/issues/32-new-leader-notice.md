@@ -1,8 +1,8 @@
-# 31: The member who becomes Leader is told, in 알림
+# 32: The member who becomes Leader is told, in 알림
 
 Parent: [P06 spec](../spec.md)
 Status: needs-triage (written for the team's review on 2026-11-27; not built)
-Blocked by: 21 (the gone kinds sit beside it).
+Blocked by: 22 (the gone kinds sit beside it).
 
 Native files: none. Releases: a main server Release and an app OTA update.
 

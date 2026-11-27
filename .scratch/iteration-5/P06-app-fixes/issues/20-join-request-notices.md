@@ -1,4 +1,4 @@
-# 19: A request to join is answered in 알림 and by a push, and a new one reaches the Leader by a push
+# 20: A request to join is answered in 알림 and by a push, and a new one reaches the Leader by a push
 
 Parent: [P06 spec](../spec.md)
 Status: needs-triage (written for the team's review on 2026-11-27; not built)
