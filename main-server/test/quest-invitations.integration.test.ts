@@ -12,6 +12,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { befriend, signInUser, TestUser } from './friends.js';
+import { placeNumbered } from './friend-levels.js';
 import {
   answerInvitation,
   getInvitations,
@@ -117,6 +118,23 @@ describe('An invitation as the invited User lists it', () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject([
       { nextSubQuest: { title: '저녁', startsAt, place: { placeId: null, ...place } } },
+    ]);
+  });
+
+  it('carries a Place from the list with its id, its name and its point', async () => {
+    const [leader, friend] = await friends();
+    const library = await placeNumbered(app, leader, '62');
+    const questId = await ownQuest(app, leader, { subQuest: { title: '공부', place: { placeId: library.id } } });
+    await invite(app, leader, questId, friend.id).expect(204);
+
+    const response = await getInvitations(app, friend);
+
+    expect(response.body).toMatchObject([
+      {
+        nextSubQuest: {
+          place: { placeId: library.id, label: library.name, latitude: library.latitude, longitude: library.longitude },
+        },
+      },
     ]);
   });
 

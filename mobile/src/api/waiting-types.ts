@@ -45,10 +45,12 @@ export interface QuestInvitation {
   sentAt: string;
   // When and where its Quest next meets: the first Sub Quest ahead, as the recruiting list carries it. Null for a Quest
   // with none ahead, which the main server leaves out of the list.
-  nextSubQuest: InvitationNextSubQuest | null;
+  nextSubQuest: NextSubQuest | null;
 }
 
-export type InvitationNextSubQuest = Pick<SubQuest, 'id' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
+// The first Sub Quest ahead of a Quest, in the Quest's order, which tells one who does not hold it when and where it
+// meets: in an invitation and in the recruiting list.
+export type NextSubQuest = Pick<SubQuest, 'id' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
 
 // GET /quest-join-requests, the newest first: the User's waiting requests to join an Approval Quest.
 export interface MyJoinRequest {

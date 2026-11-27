@@ -12,21 +12,12 @@
 
 import type { ApiClient } from '@/api/client';
 import type { RecruitingQuest } from '@/api/party-types';
-import { field, isNothing, isPlace, hasTexts, isTextOrNull, listOf } from './answers';
+import { field, isNothing, listOf } from './answers';
 import { isQuest } from './quest-answers';
-import { isMyJoinRequests, isQuestRemovals, isQuestSummary, isQuestWaiting } from './waiting-answers';
+import { isMyJoinRequest, isMyJoinRequests, isNextSubQuest, isQuestRemovals, isQuestSummary } from './waiting-answers';
 import { call } from './http';
 
 // The operations of the 파티 tab, each from its route of the main server.
-
-function isNextSubQuest(value: unknown): value is RecruitingQuest['nextSubQuest'] {
-  return (
-    hasTexts(value, ['id', 'title']) &&
-    isTextOrNull(field(value, 'startsAt')) &&
-    isTextOrNull(field(value, 'endsAt')) &&
-    isPlace(field(value, 'place'))
-  );
-}
 
 export function isRecruitingQuest(value: unknown): value is RecruitingQuest {
   return isQuestSummary(value) && isNextSubQuest(field(value, 'nextSubQuest'));
@@ -59,7 +50,7 @@ export const partyClient: PartyClient = {
     }),
   joinQuest: (questId) => call('POST', path('quests', questId, 'join'), isQuest),
   askToJoinQuest: async (questId) => {
-    await call('POST', '/quest-join-requests', isQuestWaiting, { body: { questId } });
+    await call('POST', '/quest-join-requests', isMyJoinRequest, { body: { questId } });
   },
   listMyJoinRequests: () => call('GET', '/quest-join-requests', isMyJoinRequests),
   listQuestRemovals: () => call('GET', '/quest-removals', isQuestRemovals),

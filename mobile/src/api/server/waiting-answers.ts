@@ -12,10 +12,10 @@
 
 import type {
   FriendRequests,
-  InvitationNextSubQuest,
   JoinRequest,
   KeptNotification,
   MyJoinRequest,
+  NextSubQuest,
   QuestInvitation,
   QuestRemoval,
   QuestSummary,
@@ -67,13 +67,13 @@ export function isQuestSummary(value: unknown): value is QuestSummary {
 }
 
 // A request to join as its User lists it.
-export function isQuestWaiting(value: unknown): value is MyJoinRequest {
+export function isMyJoinRequest(value: unknown): value is MyJoinRequest {
   return hasTexts(value, ['id', 'sentAt']) && isQuestSummary(field(value, 'quest'));
 }
 
-export const isMyJoinRequests = listOf(isQuestWaiting);
+export const isMyJoinRequests = listOf(isMyJoinRequest);
 
-function isInvitationNextSubQuest(value: unknown): value is InvitationNextSubQuest {
+export function isNextSubQuest(value: unknown): value is NextSubQuest {
   return (
     hasTexts(value, ['id', 'title']) &&
     isTextOrNull(field(value, 'startsAt')) &&
@@ -85,7 +85,7 @@ function isInvitationNextSubQuest(value: unknown): value is InvitationNextSubQue
 // An invitation as its User lists it, with when and where its Quest next meets.
 function isQuestInvitation(value: unknown): value is QuestInvitation {
   const next = field(value, 'nextSubQuest');
-  return isQuestWaiting(value) && (next === null || isInvitationNextSubQuest(next));
+  return isMyJoinRequest(value) && (next === null || isNextSubQuest(next));
 }
 
 export const isQuestInvitations = listOf(isQuestInvitation);
