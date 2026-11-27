@@ -11,6 +11,7 @@ import { markLibraryLoggedIn } from '@/library/flag';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
+import { mapThings } from './support/answer-map';
 import { PLACES } from './support/dining';
 import { layStage } from './support/lists';
 import type { FakeServer } from './support/fake-server';
@@ -68,14 +69,17 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-async function opened(row: number): Promise<void> {
+// The everyday map's things before the question, and the User to press with after it.
+async function opened(row: number): Promise<{ user: Awaited<ReturnType<typeof openMain>>; everyday: string[] }> {
   await markLibraryLoggedIn();
   server.on('POST /assistant/messages', { status: 200, body: STUDY_PLAN_REPLY });
   const user = await openMain();
+  const everyday = mapThings();
   await sendFromBar(user, '공부할 자리 있어?');
   await user.press(inFrame().getByTestId(`meal-row-${String(row)}`));
   await layStage(390, 760);
   await pass(500);
+  return { user, everyday };
 }
 
 // Partitions: 관정관; 관정관 with its end moved on the top card; another place. Expected values: the stored answer and its
@@ -117,5 +121,20 @@ describe('a study place opened from the list', () => {
 
     expect(inFrame().getByTestId('study-spaces')).toBeVisible();
     expect(inFrame().queryByTestId(`library-book-${KEY}`)).toBeNull();
+  });
+});
+
+// Partitions: 관정관 opened, then the answer hidden (✕; "←" and a drag down hide it as ✕ does). Expected values: the
+// everyday map's things before the question.
+describe('a study place opened from the list, then the answer hidden', () => {
+  it('gives the map back to the everyday map once the answer is hidden', async () => {
+    const { user, everyday } = await opened(2);
+    expect(mapThings()).not.toEqual(everyday);
+
+    await user.press(inFrame().getByRole('button', { name: '답 닫기' }));
+    await pass(500);
+
+    expect(screen.queryByTestId('answer-card')).toBeNull();
+    expect(mapThings()).toEqual(everyday);
   });
 });

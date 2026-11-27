@@ -18,20 +18,22 @@ Native files: none. Releases: an app OTA update.
 
 ## Where else a bubble-era library card is drawn inside the answer frame
 
-| Place | Its own band or button pair | Now |
-|---|---|---|
-| 관정관 opened from a study answer | both | the framed seat answer's parts (this ticket) |
-| A seat card the reply gave alone | none on the map | unchanged: this is the shared form |
-| A seat card that is one of several requests | its own band in the card | unchanged: the bar holds the steps (P04 ticket 09) |
-| A seat card in a reply that also draws a Plan or a Lookup, without steps | both | unchanged; noted. No such reply is known in use |
-| A room card (스터디룸, 스튜디오, `BookRoomCard`) | both | unchanged: rooms are not on the map |
+| Place                                                                    | Its own band or button pair | Now                                                |
+| ------------------------------------------------------------------------ | --------------------------- | -------------------------------------------------- |
+| 관정관 opened from a study answer                                        | both                        | the framed seat answer's parts (this ticket)       |
+| A seat card the reply gave alone                                         | none on the map             | unchanged: this is the shared form                 |
+| A seat card that is one of several requests                              | its own band in the card    | unchanged: the bar holds the steps (P04 ticket 09) |
+| A seat card in a reply that also draws a Plan or a Lookup, without steps | both                        | unchanged; noted. No such reply is known in use    |
+| A room card (스터디룸, 스튜디오, `BookRoomCard`)                         | both                        | unchanged: rooms are not on the map                |
 
 ## Acceptance criteria
 
 - [x] 관정관 opened from the list: one time card on top, the ticket with no slider, no 예약 안 함, 예약하기 beside the input, and its head says the way alone. (Integration test, failing before the change.)
 - [x] The booking sent to the library is the top card's time, moved there. (Integration test, failing before the change.)
 - [x] Another place still opens its spaces. (Integration test.)
-- [ ] Emulator pictures at font scale 1.0 and 1.3.
+- [x] Hidden with 관정관 open (✕, "←", a drag down), the map is the everyday map again: the booking is part of the scene only while the answer is framed, as every other part is. (Integration test, failing before the fix: the booking's flag and walk stayed.)
+- [x] One function finds the booking for a seat card the reply gave alone and for 관정관 opened (`seatBookingOf`), nothing copied.
+- [x] Emulator pictures at font scale 1.0 and 1.3.
 - [x] No native file changes; lint, format and types pass on the app.
 
 ## Comments

@@ -57,12 +57,22 @@ export function shownBookingOf(
   if (!aStep && ((reply.answer ?? null) !== null || (reply.lookup ?? null) !== null || reply.steps !== undefined)) {
     return null;
   }
-  const { library } = card;
-  const { space } = library;
-  if (library.action !== 'book' || space === null || space.unit !== 'seat') {
+  return seatBookingOf(reply.id, card.library, places, outcomeOf);
+}
+
+// A book card of a seat, of the reply `replyId`, as the booking the map draws: while its booking is pending or booked,
+// and its space's building is in the list of Places. Null for any other card.
+function seatBookingOf(
+  replyId: number,
+  card: LibraryCardData,
+  places: readonly Place[],
+  outcomeOf: (place: string) => CardOutcome | null,
+): ShownBooking | null {
+  const { space } = card;
+  if (card.action !== 'book' || space === null || space.unit !== 'seat') {
     return null;
   }
-  const place = cardPlace(reply.id, library.key);
+  const place = cardPlace(replyId, card.key);
   const outcome = outcomeOf(place);
   const building = places.find(({ number }) => number === space.placeNumber);
   const booked = outcome?.kind === 'booked';
@@ -70,14 +80,8 @@ export function shownBookingOf(
     return null;
   }
   const { id, latitude, longitude } = building;
-  return {
-    bubbleId: reply.id,
-    place,
-    card: library,
-    space,
-    point: { placeId: id, label: building.name, latitude, longitude },
-    booked,
-  };
+  const point = { placeId: id, label: building.name, latitude, longitude };
+  return { bubbleId: replyId, place, card, space, point, booked };
 }
 
 // 관정관 opened from a study answer alone (P10 tickets 22 and 27): its Plan's book card is the booking on the map, as
@@ -95,21 +99,9 @@ export function studyBookingOf(
     return null;
   }
   const reply = bubbles.findLast(({ answer }) => answer === source);
-  const card = withLibraryDefaults(book.card);
-  const { space } = card;
-  if (reply === undefined || card.action !== 'book' || space === null || space.unit !== 'seat') {
-    return null;
-  }
-  const place = cardPlace(reply.id, card.key);
-  const outcome = outcomeOf(place);
-  const building = places.find(({ number }) => number === space.placeNumber);
-  const booked = outcome?.kind === 'booked';
-  if ((outcome !== null && outcome.kind !== 'pending' && !booked) || building === undefined) {
-    return null;
-  }
-  const { id, latitude, longitude } = building;
-  const point = { placeId: id, label: building.name, latitude, longitude };
-  return { bubbleId: reply.id, place, card, space, point, booked, inPlan: true };
+  const booking =
+    reply === undefined ? null : seatBookingOf(reply.id, withLibraryDefaults(book.card), places, outcomeOf);
+  return booking === null ? null : { ...booking, inPlan: true };
 }
 
 // "관정 7층 열람실": the room's chip words, or its floor and short name.

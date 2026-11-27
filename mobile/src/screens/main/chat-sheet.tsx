@@ -37,7 +37,7 @@ import { type ShownProposal, shownProposalOf } from '@/features/assistant/propos
 import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/steps-scene';
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
-import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
+import type { CardOutcome, Chat, ChatBubble } from '@/features/assistant/use-chat';
 import { useAskedAgain } from '@/features/assistant/use-asked-again';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type Picking, usePicking } from '@/features/assistant/use-picking';
@@ -179,19 +179,20 @@ function useAnswerOnScreen(
   return { answer: shown, invitation };
 }
 
-// The booking on the map: the seat card the reply gave alone, else a study answer's 관정관 opened (P10 ticket 27).
+// The booking on the map: the seat card the reply gave alone, else a study answer's 관정관 opened (P10 ticket 27). None
+// while the answer is hidden, as every part of the scene (`useShownOnMap`), though the opened place stays open.
 function useStudyBooking(
   replied: ShownBooking | null,
   shown: ShownAnswer,
-  bubbles: readonly ChatBubble[],
+  { bubbles, framed }: { bubbles: readonly ChatBubble[]; framed: boolean },
   { outcomes }: Pick<Chat, 'outcomes'>,
 ): ShownBooking | null {
   const places = useQuery(placesQuery).data ?? NO_PLACES;
   const { plan, menuFor, source } = shown;
-  return useMemo(
-    () => replied ?? studyBookingOf({ plan, menuFor, source }, bubbles, places, (place) => outcomes.get(place) ?? null),
-    [replied, plan, menuFor, source, bubbles, places, outcomes],
-  );
+  return useMemo(() => {
+    const outcomeOf = (place: string): CardOutcome | null => outcomes.get(place) ?? null;
+    return framed ? (replied ?? studyBookingOf({ plan, menuFor, source }, bubbles, places, outcomeOf)) : null;
+  }, [framed, replied, plan, menuFor, source, bubbles, places, outcomes]);
 }
 
 // What the seat card whose booking the map draws learns of it: its place, how it tells what it offers, whether it is
@@ -225,7 +226,8 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const libraryAct = useActStage();
   const card = useCardRaise(kept.framed);
   const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
-  const shown = { ...onMap, booking: useStudyBooking(onMap.booking, onScreen.answer, sceneBubbles, chat) };
+  const scene = { bubbles: sceneBubbles, framed: kept.framed };
+  const shown = { ...onMap, booking: useStudyBooking(onMap.booking, onScreen.answer, scene, chat) };
   const booking = useBookingLeaving(shown, bookingStage);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const pick = usePicking(chat);
