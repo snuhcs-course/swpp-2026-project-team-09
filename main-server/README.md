@@ -2993,6 +2993,11 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       - The model chooses a plan of a study answer on screen with `choosePlan`, by number or by building, as for a
         meal (P10 ticket 05). With 관정관's plan shown alone, the study line gives `book` (7F-7A-zone2 for a quiet place
         or any), and "예약해 줘" books it through the library tools; 관정관's plan alone carries the same `study.book`.
+        It is `{ spaceId, card }`, `card` being the book card `proposeLibraryBooking` shows for that space at the plan's
+        day, start and length, the start moved up and the length down onto the space's steps, which the app opens in
+        the plan (P10 ticket 21, `lookup/study-book.ts`). A recalculation that moves the time builds it again.
+      - Each plan's time card says the stay and its length, in the group room card's words ("13:20–15:50 · 2시간
+        30분", P10 ticket 21).
       - A reply with no words of the model's says the first plan and why ("열려 있는 곳 중 가장 가까운 공대
         신양학술정보관을 추천해요.", `lookup/study-plan-words.ts`).
     - `planStudyGroup(friendIds?, date?, firstDay? + lastDay?, from?, until?, minutes?)` and `STUDY_GROUP_RULES` join
@@ -4100,8 +4105,10 @@ part of the Plan sets out, with the Plan's Place and the minutes of the Leader's
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
 
-A Plan taken alone ("여기로": an events Plan, or a meal's whose people are the asker only) is a Quest taken alone
-(`takenAlone`), which the asker holds alone with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). Its `leave-by` is kept, awaited, for the first walk
+A Plan taken alone ("여기로": an events Plan, or a meal's, a meet's or a study's whose people are the asker only; a
+study's since P10 ticket 24, its step being the stay at its building, "공대 신양학술정보관에서 공부") is a Quest taken alone
+(`takenAlone`), which the asker holds alone with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). A study together
+or with a Friend is the group study room's request and is refused with 400 `PLAN_KIND`. Its `leave-by` is kept, awaited, for the first walk
 of 5 minutes or more whose time is still ahead: to the Plan's Place, else on from it to the next item
 (`plans/alone-plan.ts`). Such a `leave-by` carries the next item, " 13:00 수업에 맞아요.", and says a way by shuttle
 as one. The reply's `alone` holds the card's two lines and `remindAt`. Entering a Shared Quest for a Global Event that

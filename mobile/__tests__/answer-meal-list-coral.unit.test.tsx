@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, within } from '@testing-library/react-native';
@@ -18,7 +19,7 @@ import { freshWrapper } from './support/queries';
 // and its ground soft coral with a coral border in place of the gold; every other number soft coral with a coral rim
 // and number.
 
-const SHOWN = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark, change: ignoreMark };
+const SHOWN = { index: 0, openMenu: ignoreMark, show: ignoreMark, chooseKind: ignoreMark, change: ignoreMark };
 const MENU_SHOWN = { index: 0, closeMenu: ignoreMark };
 const [PLAN] = MEAL_ANSWER_MENUS.plans;
 if (PLAN === undefined) {

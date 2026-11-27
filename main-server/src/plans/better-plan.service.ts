@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
@@ -34,7 +35,8 @@ import { type BetterPlanDto } from './dto/better-plan.dto.js';
 import { type PlanQuestBody } from './dto/plan-quest.dto.js';
 import { placePoint } from './own-way.js';
 import { OwnWayReader } from './own-way-reader.service.js';
-import { mealOrMeetInputOf, PlansService, subQuestsOf } from './plans.service.js';
+import { mealOrMeetInputOf } from './plan-kinds.js';
+import { PlansService, subQuestsOf } from './plans.service.js';
 
 const MEALS = ['lunch', 'dinner'] as const;
 
