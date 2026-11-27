@@ -159,6 +159,18 @@ describe('the room list', () => {
   });
 });
 
+describe('the room list that could not be read', () => {
+  it('says so in red, as every failure line (P01 ticket 19)', async () => {
+    world.server.on('GET /study-spaces', { status: 500, body: {} });
+    await askTicket(world);
+
+    await pressIn(seatCard(), ROOM);
+    await pass(500);
+
+    expect(seatCard().getByText('열람실 목록을 불러오지 못했어요')).toHaveStyle({ color: color.danger });
+  });
+});
+
 describe("a room's count in the list", () => {
   it('says few free seats in the danger colour and the rest in the study colour', async () => {
     await askTicket(world, { free: { ...EXAMPLE, 18201: 3 } });
