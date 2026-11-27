@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -119,6 +120,16 @@ describe('an invitation in the build that asks the main server', () => {
     expect(invitation.getByText('301동 앞')).toBeVisible();
     expect(invitation.getByText('3명 참여 중')).toBeVisible();
     expect(invitation.queryByText(/함께/u)).toBeNull();
+  });
+
+  it('says 시간 미정 and 장소 미정 for an invitation from a main server that sends no next Sub Quest', async () => {
+    const { nextSubQuest: _next, ...before } = INVITATION;
+    server.on('GET /quest-invitations', { status: 200, body: [before] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('시간 미정')).toBeVisible();
+    expect(invitation.getByText('장소 미정')).toBeVisible();
   });
 
   it('says 시간 미정 and 장소 미정 for a next Sub Quest with neither', async () => {

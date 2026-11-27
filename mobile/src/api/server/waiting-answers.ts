@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type {
@@ -82,13 +83,21 @@ export function isNextSubQuest(value: unknown): value is NextSubQuest {
   );
 }
 
-// An invitation as its User lists it, with when and where its Quest next meets.
-function isQuestInvitation(value: unknown): value is QuestInvitation {
+// An invitation as the main server sends it, with when and where its Quest next meets. A main server before P06
+// ticket 24 sends no `nextSubQuest`, so that an app updated over the air before it still lists its invitations.
+type SentInvitation = Omit<QuestInvitation, 'nextSubQuest'> & { nextSubQuest?: NextSubQuest | null };
+
+function isSentInvitation(value: unknown): value is SentInvitation {
   const next = field(value, 'nextSubQuest');
-  return isMyJoinRequest(value) && (next === null || isNextSubQuest(next));
+  return isMyJoinRequest(value) && (next === undefined || next === null || isNextSubQuest(next));
 }
 
-export const isQuestInvitations = listOf(isQuestInvitation);
+export const isQuestInvitations = listOf(isSentInvitation);
+
+// An invitation without `nextSubQuest` says neither when nor where, as one whose Quest has neither.
+export function toQuestInvitation({ nextSubQuest = null, ...invitation }: SentInvitation): QuestInvitation {
+  return { ...invitation, nextSubQuest };
+}
 
 function isJoinRequest(value: unknown): value is JoinRequest {
   const removedBefore = field(value, 'removedBefore');
