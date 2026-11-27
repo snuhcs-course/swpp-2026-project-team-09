@@ -292,7 +292,8 @@ export function planOf(ranked: Ranked, index: number, context: PlanContext): Pla
     togetherMinutes: stay.minutes,
     meeting: null,
     parts: [partOf(ranked, context)],
-    subQuests: [],
+    // The stay at the building, the step of the Quest the Plan is saved as alone (P10 ticket 24), as a meal's.
+    subQuests: [{ at: koreaTime(stay.arrival), placeId: building.place.id, title: `${building.name}에서 공부` }],
     lines: linesOf(ranked, context),
     basis: basisOf(ranked, context),
     scene: sceneOf(ranked, index, context),
