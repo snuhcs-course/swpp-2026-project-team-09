@@ -107,3 +107,13 @@ All in `BottomSheet` and what it offers, so that every sheet gets it at once.
 - **Ticket 34's sheets** (장소, 친구 초대) should use `SheetScrollView` for their lists when they merge `5.0/Main`.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+Estimates. Agent time is this session's wall clock from its start to this entry, about 1 hour 30 minutes. About 55 minutes of that went to Jest runs: a new worktree's cold cache, and another session's Jest on the same machine. No subagents. Tokens are counted up to this entry, so this commit and the pull request's last edit are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 35 (tests first, `sheet-pull`, `SheetScrollView`, `BottomSheet`, the six scrolling sheets, two merges of `5.0/Main`, checks) | about 1 hour 30 minutes | 39,726,271 | 39,415,934 | 310,029 | 308 | 146,021 |
+
+Without cache reads, the input is 310,337.
