@@ -61,8 +61,15 @@ export interface AnswerReply extends WithMissing {
   // A meal's: the Restaurants closed for the meal by their menu's notice, which the list names apart (P04 ticket 71).
   // Absent when none, and from other answers.
   closed?: ClosedPlace[];
-  // `relax` when nothing fits 지금: one button for each condition to ease.
-  noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[]; relax?: RelaxOffer[] } | null;
+  // `relax` when nothing fits 지금: one button for each condition to ease. `band`, for the time card of a meal's, a
+  // meeting's, a study together's or a new party's (P05 ticket 65): everyone's lanes over the window asked, from now
+  // when it has begun, and the window as its stretch. An app before it reads none.
+  noPlan: {
+    reason: 'no-menu' | 'no-shared-time' | 'no-fit';
+    lines: AnswerLine[];
+    relax?: RelaxOffer[];
+    band?: TimeBand;
+  } | null;
   // A meal's: the other meal of the day and when it starts ("HH:MM", now when it is under way), which the app's bar
   // offers; null when it is over or no Restaurant serves it that day. Absent from other answers.
   otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;

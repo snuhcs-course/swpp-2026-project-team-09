@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
@@ -78,6 +79,7 @@ export function useSeatCalls({ card, actions, place, room, slot, setNamed }: Sea
   const readFor = loaded.state === 'ready' ? key : null;
   const booking: Booking = {
     card,
+    place,
     space: shown,
     slot,
     actions,

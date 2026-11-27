@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
@@ -16,15 +17,32 @@ import { libraryMessage, type PendingMark, useWrite, type Write } from './use-li
 
 export type Act = 'cancel' | 'return';
 
+// No seat or room booked or in use: what a return card and 내 예약 say (P01 ticket 15).
+export const NOTHING_HELD = '지금 예약이나 사용 중인 자리가 없어요.';
+
+// A return card that found a seat booked, not yet confirmed at the 좌석배정기, which is cancelled instead.
+export const NOT_YET_USED = '아직 쓰기 전이라 반납 대신 예약을 취소할 수 있어요.';
+
+// How a ticket reads once its booking ended here.
+export const ENDED_WORDS: Record<Act, string> = { cancel: '취소됨', return: '반납함' };
+
 export const ACT_WORDS: Record<Act, { confirm: string; done: string; none: string; failed: string }> = {
-  cancel: { confirm: '취소하기', done: '예약을 취소했어요', none: '취소할 예약이 없어요', failed: '취소하지 못했어요' },
+  cancel: {
+    confirm: '예약 취소',
+    done: '예약을 취소했어요.',
+    none: '취소할 예약이 없어요.',
+    failed: '취소하지 못했어요',
+  },
   return: {
     confirm: '반납하기',
     done: '반납했어요. 이용해 주셔서 고마워요!',
-    none: '지금 사용 중인 좌석이 없어요',
+    none: NOTHING_HELD,
     failed: '반납하지 못했어요',
   },
 };
+
+// What a cancel or a return sends: the booking's number alone, which the done message also holds (P01 ticket 15).
+export type Acted = Pick<LibraryBooking, 'BSEQNO'>;
 
 export type Outcome = 'idle' | 'done' | 'stopped';
 export type Ended = Exclude<Outcome, 'idle'>;
@@ -41,13 +59,13 @@ export function useConfirming(
     onEnd = (): void => undefined,
     mark = null,
   }: { reloadAfter?: boolean; onEnd?: (outcome: Ended) => void; mark?: PendingMark | null } = {},
-): { outcome: Outcome; setOutcome: (outcome: Ended) => void; write: Write<LibraryBooking> } {
+): { outcome: Outcome; setOutcome: (outcome: Ended) => void; write: Write<Acted> } {
   const [outcome, setShown] = useState<Outcome>('idle');
   const setOutcome = (next: Ended): void => {
     setShown(next);
     onEnd(next);
   };
-  const write = useWrite<LibraryBooking>(
+  const write = useWrite<Acted>(
     async (booking, press) => {
       const result = await library.cancel(booking.BSEQNO, press);
       if (result.successYN === 'N') {

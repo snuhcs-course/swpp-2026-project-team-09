@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCardData } from '@/api/assistant-types';
@@ -36,6 +37,7 @@ function booking(readFor: string | null, space = READING_ROOM, slot = SLOT): Boo
   return {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- only its notes are read
     card: { notes: [] } as unknown as LibraryCardData,
+    place: '1:book',
     space,
     slot,
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- only addOwn is called

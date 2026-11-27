@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { postHogModule } from '../support/posthog';
@@ -188,6 +189,39 @@ describe('the switch', () => {
     loaded.usage.allowUsage(true);
     loaded.usage.allowUsage(true);
     expect(client.events()).toEqual(['app_opened']);
+  });
+});
+
+describe('a press of the switch while its request is on its way', () => {
+  it('pressed off, holds off against a late copy that still says on, until the press is answered', async () => {
+    const loaded = loadLayer(TOKEN);
+    const client = signIn(loaded);
+
+    const release = loaded.usage.holdUsage(false);
+    await Promise.resolve();
+    // A Lobby read before the account took the press writes its copy, still "on".
+    loaded.usage.allowUsage(true);
+    loaded.usage.noteScreen('/map');
+    // The account answered and its copy, now "off", was kept; the hold ends.
+    loaded.usage.allowUsage(false);
+    release();
+    loaded.usage.track('app_opened');
+
+    expect(client.sent).toEqual([]);
+    expect(client.queue).toEqual([]);
+  });
+
+  it("lets a later press's hold stand when an earlier press is answered", () => {
+    const loaded = loadLayer(TOKEN);
+    const client = signIn(loaded);
+    const first = loaded.usage.holdUsage(false);
+    loaded.usage.holdUsage(true);
+    const before = client.events().length;
+
+    first();
+    loaded.usage.noteScreen('/map');
+
+    expect(client.events().slice(before)).toContain('screen_viewed');
   });
 });
 

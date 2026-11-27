@@ -33,16 +33,68 @@ const ROOMS: readonly Room[] = [
 // The list's rows, top to bottom.
 const KIND_ORDER = ['reading-room', 'notebook-zone', 'grad-reading-room'];
 
-// Each seat space's short name, and its seats in the catalogue, which say the largest of a room.
-const SEAT_SPACES: Readonly<Record<string, { short: string; tag: string; seats: number }>> = {
-  '7F-7A-zone2': { short: '7층 열람실', tag: '7층', seats: 478 },
-  '7F-7A-zone1-notebook': { short: '7A 노트북존', tag: '7A', seats: 192 },
-  '7F-notebook-171': { short: '171호 노트북존', tag: '171호', seats: 128 },
-  '7F-7B-notebook': { short: '7B 노트북존', tag: '7B', seats: 194 },
-  '8F-8A-zone1-quiet': { short: '8층 정숙 열람실', tag: '8층', seats: 168 },
-  '8F-8A-zone2-notebook': { short: '8A 노트북존', tag: '8A', seats: 560 },
-  '8F-notebook-181': { short: '181호 노트북존', tag: '181호', seats: 128 },
-  '8F-grad-reading-room': { short: '대학원 열람실', tag: '대학원', seats: 194 },
+// Each seat space's short name, its seats in the catalogue, which say the largest of a room, and its sector, floor and
+// kind, by which a booking the library lists is named as its card names it (P01 ticket 15).
+interface SeatSpace {
+  short: string;
+  tag: string;
+  seats: number;
+  sector: number;
+  floor: number;
+  kind: LibrarySpace['kind'];
+}
+
+const SEAT_SPACES: Readonly<Record<string, SeatSpace>> = {
+  '7F-7A-zone2': { short: '7층 열람실', tag: '7층', seats: 478, sector: 17202, floor: 7, kind: 'reading-room' },
+  '7F-7A-zone1-notebook': {
+    short: '7A 노트북존',
+    tag: '7A',
+    seats: 192,
+    sector: 17201,
+    floor: 7,
+    kind: 'notebook-zone',
+  },
+  '7F-notebook-171': {
+    short: '171호 노트북존',
+    tag: '171호',
+    seats: 128,
+    sector: 17101,
+    floor: 7,
+    kind: 'notebook-zone',
+  },
+  '7F-7B-notebook': { short: '7B 노트북존', tag: '7B', seats: 194, sector: 17301, floor: 7, kind: 'notebook-zone' },
+  '8F-8A-zone1-quiet': {
+    short: '8층 정숙 열람실',
+    tag: '8층',
+    seats: 168,
+    sector: 18201,
+    floor: 8,
+    kind: 'reading-room',
+  },
+  '8F-8A-zone2-notebook': {
+    short: '8A 노트북존',
+    tag: '8A',
+    seats: 560,
+    sector: 18202,
+    floor: 8,
+    kind: 'notebook-zone',
+  },
+  '8F-notebook-181': {
+    short: '181호 노트북존',
+    tag: '181호',
+    seats: 128,
+    sector: 18101,
+    floor: 8,
+    kind: 'notebook-zone',
+  },
+  '8F-grad-reading-room': {
+    short: '대학원 열람실',
+    tag: '대학원',
+    seats: 194,
+    sector: 18301,
+    floor: 8,
+    kind: 'grad-reading-room',
+  },
 };
 
 // A seat space's free seats for the card's time: counted, still being read, or not read.
@@ -62,7 +114,23 @@ export function roomOf(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind'>): Room
 // "관정 7층 열람실": the room's chip words, or its floor and short name; the room's one name on the map and in the done
 // message (P01 ticket 03).
 export function roomTitle(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind' | 'name'>): string {
-  return `관정 ${roomOf(space)?.label ?? `${String(space.floor)}층 ${shortName(space)}`}`;
+  return `관정 ${roomLabel(space)}`;
+}
+
+// "7층 열람실": the room's words on the seat ticket, before and after the booking (P01 tickets 09 and 15).
+export function roomLabel(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind' | 'name'>): string {
+  return roomOf(space)?.label ?? `${String(space.floor)}층 ${shortName(space)}`;
+}
+
+// The room's words for a seat space by its sector, as its seat ticket and the map give them (P01 ticket 15); null for
+// a sector of no seat space the phone knows, such as a study room's.
+export function roomLabelOfSector(sector: number): string | null {
+  const found = Object.entries(SEAT_SPACES).find(([, space]) => space.sector === sector);
+  if (found === undefined) {
+    return null;
+  }
+  const [id, { short, floor, kind }] = found;
+  return roomLabel({ id, floor, kind, name: short });
 }
 
 // "7A 노트북존", or the space's own name for one the phone has no short name for.

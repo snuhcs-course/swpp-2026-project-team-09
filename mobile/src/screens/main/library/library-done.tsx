@@ -4,36 +4,116 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { PlacePoint } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { color, font, radius, space, text } from '@/design-system';
-import { KIOSK_SENTENCE, kioskWalkWords, type LibraryDone, RETURN_SENTENCE } from '@/library/cards/done';
+import type { Deadline, TicketView } from '@/library/cards/bookings';
+import { confirmWords, type LibraryDone, RETURN_SENTENCE } from '@/library/cards/done';
 import { useRowFourActions } from '../answer/row-four-actions';
-import { Pill, Pills } from './library-parts';
+import { type ActTold, useTellAct } from './act-stage';
+import { BookedTicket, TicketLine, TicketWithLine } from './booked-ticket';
+import { FailureNote, Pill, Pills, Said } from './library-parts';
+import { ACT_WORDS, type Acted, ENDED_WORDS, useConfirming } from './use-confirming';
+import type { LibraryCardActions, Write } from './use-library-call';
 
-// The walk to the booking on the map: its minutes, null without the User's position, and its building.
-type Walk = { minutes: number | null; to: PlacePoint } | null;
+// The done message of a booking (the MainChatLibReserved frame). A seat's is its ticket, booked, with one faint line:
+// the time to confirm it at the 좌석배정기 and "예약 취소 ›". Its main button, beside the input, is 가는 길 while the
+// booking is on the map and the route guidance can start, or 예약 취소, in red, once that link was pressed; once
+// cancelled the ticket greys, one sentence says so, and the map's mark goes (P01 ticket 15). A room's keeps its rows
+// and 좌석 현황 보기.
 
-// The done message of a booking (the MainChatLibReserved frame), under its "7193번 예약되었어요!": the rows of the
-// booking, the kiosk sentence for a seat, the return sentence, and 좌석 현황 보기.
-export function LibraryDoneRows({
-  done,
-  onSeats,
-  walk = null,
-}: {
+interface DoneProps {
   done: LibraryDone;
+  bubbleId: number;
+  actions: LibraryCardActions;
   onSeats: () => void;
-  // A booking on the map: its kiosk line says the walk, and 길 안내 stands beside 좌석 현황 보기 (P01 ticket 06).
-  walk?: Walk;
-}): ReactElement {
-  const kiosk = kioskWalkWords(done.deadline, walk?.minutes ?? null, now()) ?? done.kiosk ?? KIOSK_SENTENCE;
+}
+
+function ignore(): void {
+  // The done message reads nothing again after a cancel.
+}
+
+type Walk = ReturnType<NonNullable<LibraryCardActions['bookingWalk']>>;
+
+// The main button the done message tells, if any.
+function useDoneAct(cancelling: boolean, write: Write<Acted>, bseqno: string, walk: Walk): ActTold | null {
+  const { guide, cannotGuide } = useRowFourActions();
+  if (cancelling) {
+    return {
+      words: write.busy ? '취소하는 중' : ACT_WORDS.cancel.confirm,
+      onPress: () => {
+        write.run({ BSEQNO: Number(bseqno) });
+      },
+      disabled: write.busy,
+      danger: true,
+    };
+  }
+  if (walk === null || cannotGuide !== null) {
+    return null;
+  }
+  return {
+    words: '가는 길',
+    onPress: () => {
+      guide(walk.to);
+    },
+    disabled: false,
+    danger: false,
+  };
+}
+
+function BookedDone({
+  done,
+  bubbleId,
+  actions,
+  ticket,
+  deadline,
+}: DoneProps & { ticket: TicketView; deadline: Deadline }): ReactElement {
+  const { place } = done;
+  const [cancelling, setCancelling] = useState(false);
+  const { outcome, write } = useConfirming('cancel', ignore, {
+    onEnd: (ended) => {
+      if (ended === 'done' && place !== undefined) {
+        actions.finish(place, { kind: 'cancelled', words: ACT_WORDS.cancel.done });
+      }
+    },
+  });
+  const gone = outcome === 'done' || (place !== undefined && actions.outcomeOf(place)?.kind === 'cancelled');
+  const walk = actions.bookingWalk?.() ?? null;
+  const told = useDoneAct(cancelling, write, done.bseqno, walk);
+  useTellAct(actions.act ?? null, bubbleId, gone ? null : told);
+  if (gone) {
+    return (
+      <View style={styles.done} testID="library-done">
+        <Said>{ACT_WORDS.cancel.done}</Said>
+        <BookedTicket ticket={{ ...ticket, state: 'ended', word: ENDED_WORDS.cancel }} />
+      </View>
+    );
+  }
+  const cancel = {
+    words: ACT_WORDS.cancel.confirm,
+    onPress: (): void => {
+      setCancelling(true);
+    },
+  };
   return (
     <View style={styles.done} testID="library-done">
-      {done.line === undefined ? null : <Text style={styles.sentence}>{done.line}</Text>}
+      <TicketWithLine>
+        <BookedTicket ticket={ticket} />
+        {done.moved === undefined ? null : <TicketLine link={null} words={`도서관이 정한 시작: ${done.moved}`} />}
+        <TicketLine link={cancelling ? null : cancel} words={confirmWords(deadline, walk?.minutes ?? null, now())} />
+      </TicketWithLine>
+      <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
+    </View>
+  );
+}
+
+function RoomDone({ done, onSeats }: Pick<DoneProps, 'done' | 'onSeats'>): ReactElement {
+  return (
+    <View style={styles.done} testID="library-done">
       <View style={styles.rows}>
         {done.rows.map(({ label, value }, index) => (
           <View
@@ -47,38 +127,25 @@ export function LibraryDoneRows({
           </View>
         ))}
       </View>
-      {done.seat ? <Text style={styles.sentence}>{kiosk}</Text> : null}
       <Text style={styles.sentence}>{RETURN_SENTENCE}</Text>
-      <DoneButtons onSeats={onSeats} walk={walk} />
+      <Pills>
+        <Pill label="좌석 현황 보기" onPress={onSeats} />
+      </Pills>
     </View>
   );
 }
 
-// 좌석 현황 보기, and 길 안내 to a booking on the map as a meal's booked card has it: disabled while the guidance cannot
-// start, with the reason under it.
-function DoneButtons({ onSeats, walk }: { onSeats: () => void; walk: Walk }): ReactElement {
-  const { guide, cannotGuide } = useRowFourActions();
-  return (
-    <>
-      <Pills>
-        <Pill label="좌석 현황 보기" onPress={onSeats} />
-        {walk === null ? null : (
-          <Pill
-            disabled={cannotGuide !== null}
-            label="길 안내"
-            onPress={() => {
-              guide(walk.to);
-            }}
-          />
-        )}
-      </Pills>
-      {walk === null || cannotGuide === null ? null : <Text style={styles.why}>{cannotGuide}</Text>}
-    </>
+export function LibraryDoneRows(props: DoneProps): ReactElement {
+  const { ticket, deadline } = props.done;
+  return ticket === undefined || deadline === undefined ? (
+    <RoomDone done={props.done} onSeats={props.onSeats} />
+  ) : (
+    <BookedDone {...props} deadline={deadline} ticket={ticket} />
   );
 }
 
 const styles = StyleSheet.create({
-  done: { gap: space[2], marginTop: space[2] },
+  done: { gap: space[2] },
   rows: { paddingVertical: space[1], paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: color.surface },
   row: {
     flexDirection: 'row',
@@ -100,5 +167,4 @@ const styles = StyleSheet.create({
     color: color.ink,
   },
   sentence: { ...text.body, color: color.ink },
-  why: { ...text.caption, color: color.inkMuted },
 });

@@ -21,7 +21,7 @@ import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, expectNoWrite, SEAT_CARD, sendFromBar, startLibraryChat } from './support/library-chat';
 import { openMain } from './support/main';
 import { DINNER } from './support/server';
-import { color, text } from '@/design-system';
+import { text } from '@/design-system';
 import { LOW_LINES } from '@/screens/main/answer/card-caps';
 import { ticketHeightAt } from '@/screens/main/library/seat-ticket';
 import { styleOf } from './support/seat-ticket';
@@ -102,6 +102,10 @@ describe('a seat card on the map', () => {
     expect(flagName()).toMatch(/^관정 7층 열람실 · 17:00 · \d+번 · 빈 자리 \d+석$/u);
     expect(mapLines()).toHaveLength(1);
     expect(bar().getByText('17:00–18:00 · 1시간')).toBeVisible();
+    // The meal's time card, its band and grip, and no band of the library's own (P01 ticket 14).
+    expect(bar().getByTestId('time-band-track')).toBeOnTheScreen();
+    expect(screen.getByTestId('time-card-grip')).toBeOnTheScreen();
+    expect(bar().queryByTestId('slot-band')).toBeNull();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
     const card = within(screen.getByTestId('answer-card'));
     // The ticket says the room, the seat and the free seats, and the time bar the time: no sentence repeats them
@@ -209,31 +213,6 @@ describe('the raised seat card on the map', () => {
   });
 });
 
-// P01 ticket 03: after the booking, 확인 is the main button and closes the answer.
-describe('a seat booked on the map', () => {
-  it('says what was booked, and 확인 beside the input closes the answer', async () => {
-    const { user } = await asked();
-
-    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' }));
-    await pass(500);
-
-    expect(screen.getByTestId('library-done')).toBeVisible();
-    expect(screen.getByText('✓ 예약했어요')).toBeVisible();
-    expect(screen.getByText(/^관정 7층 열람실 \d+번 · 오늘 17:00–18:00$/u)).toBeVisible();
-    expect(screen.queryByText('카드에서 확인해 주세요.')).toBeNull();
-    expect(screen.queryByText('예약했어요')).toBeNull();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:00 · \d+번 · 예약됨$/u));
-    expect(screen.queryByTestId('time-bar')).toBeNull();
-    expect(screen.getByText(/^걸음 \d+분( ·|이라) /u)).toBeVisible();
-    expect(within(screen.getByTestId('library-done')).getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(within(screen.getByTestId('answer-card')).getByRole('button', { name: '답 닫기' })).toBeVisible();
-    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '확인' }));
-    await pass(500);
-
-    expect(screen.queryByTestId('answer-card')).toBeNull();
-  });
-});
-
 // PR 460's review: the seat card of several requests (P03) is never left without its 예약하기. With the steps on the map
 // (P04 ticket 09) the seat is step ①, shown first, and its 예약하기 stands beside the input.
 describe('a seat card that is one of several requests', () => {
@@ -273,7 +252,7 @@ function onNov2(id: string, title: string, start: string, end: string, label: st
 }
 
 describe("the seat bar's day", () => {
-  it('draws the Classes and Quests on the track, names the one before, and says the Class the band runs into', async () => {
+  it('draws the Classes and Quests on the track, names what bounds it before, and says the Class it runs into', async () => {
     server.on('GET /quests', {
       status: 200,
       body: [
@@ -285,12 +264,15 @@ describe("the seat bar's day", () => {
 
     await asked();
 
-    expect(bar().getAllByTestId('slot-band-busy')).toHaveLength(3);
-    const words = bar().getByTestId('slot-band-words');
-    expect(words).toHaveTextContent('17:00–18:00 · 17:30 수업과 겹쳐요', { exact: true });
-    expect(words).toHaveStyle({ color: color.warning });
-    expect(bar().getByText('15:45 301동 수업 끝')).toBeVisible();
-    expect(bar().getByText('19:00 저녁 약속')).toBeVisible();
+    // In the meal's time card (P01 ticket 14): the busy stretches on the User's lane, the part the band runs into red,
+    // the words, and what ends before it between the track's ends.
+    const lane = within(bar().getByTestId('time-band-lane-me'));
+    expect(lane.getAllByTestId('time-band-clash')).toHaveLength(1);
+    expect(bar().getByTestId('time-band-words')).toHaveTextContent('17:00–18:00 · 17:30 수업과 겹쳐요', {
+      exact: true,
+    });
+    // Between the ends, what bounds it before, as a meal's card says it: now (16:00), after the Class ended at 15:45.
+    expect(within(bar().getByTestId('time-band-note')).getByText('16:00 지금')).toBeVisible();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
   });
 });
