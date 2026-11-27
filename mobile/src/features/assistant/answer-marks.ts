@@ -257,6 +257,8 @@ export function drawingOfScene(
   setting: SceneSetting = BARE,
 ): AnswerDrawing {
   const meal = setting.meal === true && setting.number !== null ? setting.plans[setting.number - 1] : undefined;
+  // A study answer together is placed as a meal answer is: its labels and its camera (P10 ticket 11).
+  const asMeal = meal !== undefined || setting.studyPick !== undefined;
   const hidden = hiddenRoutes(meal, scene);
   // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
   const drafts = withOpenMarks(
@@ -276,7 +278,7 @@ export function drawingOfScene(
       setting.ways,
     ),
   );
-  const placed = placeAll(drafts, view, meal !== undefined).toSorted(
+  const placed = placeAll(drafts, view, asMeal).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),
   );
@@ -288,7 +290,7 @@ export function drawingOfScene(
     lines: sceneLines(scene, meal !== undefined, setting.ways, hidden),
     points,
     // A meal answer's camera keeps every candidate in view (the answer screen's redesign).
-    ...(meal === undefined ? {} : { keep: points }),
+    ...(asMeal ? { keep: points } : {}),
     own: drafts.filter(({ group }) => OWN.has(group)).map(({ position }) => position),
     pick: destinationOf(drafts),
     userIds: scene.people.map(({ userId }) => userId),

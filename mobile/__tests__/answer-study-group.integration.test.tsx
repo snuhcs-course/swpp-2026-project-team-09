@@ -135,15 +135,25 @@ describe('The study answer together, short of people', () => {
   });
 });
 
-// Partitions: logged out of the library. Expected values: the seat card's way (the ticket's room alone, 로그인).
+// Partitions: logged out of the library. Expected values: the seat answer's way (the ticket's room alone, its red line
+// "관정도서관 로그인이 필요해요" under the ticket, 로그인).
 describe('The study answer together, logged out of the library', () => {
-  it('keeps the room’s label alone, says to log in, and its button logs in', async () => {
+  it('keeps the room’s label alone, says to log in as the seat answer does, and its button logs in', async () => {
     await askTogether({ server, library }, STUDY_GROUP_TO_SEND, { loggedIn: false });
     await pass(500);
 
     expect(within(inFrame().getByTestId('room-ticket-room')).getByText('방')).toBeVisible();
     expect(ticket().queryByText(FIRST_FREE)).toBeNull();
-    expect(inFrame().getByText('로그인하면 빈 방을 볼 수 있어요')).toBeVisible();
+    expect(inFrame().getByText('관정도서관 로그인이 필요해요')).toBeVisible();
+    expect(inFrame().queryByText('로그인하면 빈 방을 볼 수 있어요')).toBeNull();
     expect(inDock().getByRole('button', { name: '로그인' })).toBeOnTheScreen();
+  });
+
+  it('says nothing of the login while people are missing, its button being "+ 같이 한 명 더"', async () => {
+    await askTogether({ server, library }, STUDY_GROUP_MORE_NEEDED, { loggedIn: false });
+    await pass(500);
+
+    expect(inDock().getByRole('button', { name: '+ 같이 한 명 더' })).toBeOnTheScreen();
+    expect(inFrame().queryByText('관정도서관 로그인이 필요해요')).toBeNull();
   });
 });

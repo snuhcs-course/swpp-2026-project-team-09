@@ -16,6 +16,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { freeRooms } from '@/library/cards/rooms';
 import { useLibrarySession } from '@/library/library-session';
 import type { TellAct } from '../library/act-stage';
+import { FailureNote } from '../library/library-parts';
 import { RoomKindChooser } from '../library/room-kind-chooser';
 import { useRoomKindCounts } from '../library/room-kind-counts';
 import { RoomNumberChooser } from '../library/room-number-chooser';
@@ -32,7 +33,6 @@ import { ChatMarkdown } from '../chat-markdown';
 // main button stands beside the input, told as a booking ticket's is: "+ 같이" while people are missing, 로그인 while
 // logged out of the library, and else "동의 요청 보내기", which ticket 12 sends.
 
-export const LOG_IN_FOR_ROOMS = '로그인하면 빈 방을 볼 수 있어요';
 const TELLER = 'study-group';
 
 const COUNTS = ['', '한 명만', '두 명', '세 명'];
@@ -168,17 +168,12 @@ function Choosers(props: {
   return open === 'use' ? <UseChooser chosen={use} onChoose={props.onUse} options={group.useDescOptions} /> : null;
 }
 
-// The sentence, or how many more people the room needs; and the login line while logged out of the library.
-function GroupWords({ group, said, loggedIn }: { group: StudyGroup; said: string; loggedIn: boolean }): ReactElement {
-  return (
-    <>
-      {group.moreNeeded > 0 ? (
-        <Text style={styles.words}>{shortWords(group.moreNeeded)}</Text>
-      ) : (
-        <ChatMarkdown style={styles.words} text={said} />
-      )}
-      {loggedIn ? null : <Text style={styles.login}>{LOG_IN_FOR_ROOMS}</Text>}
-    </>
+// The sentence, or how many more people the room needs.
+function GroupWords({ group, said }: { group: StudyGroup; said: string }): ReactElement {
+  return group.moreNeeded > 0 ? (
+    <Text style={styles.words}>{shortWords(group.moreNeeded)}</Text>
+  ) : (
+    <ChatMarkdown style={styles.words} text={said} />
   );
 }
 
@@ -236,7 +231,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
   const { open, use, toggle } = choices;
   return (
     <View style={styles.body} testID="study-group-body">
-      <GroupWords group={group} loggedIn={loggedIn} said={said} />
+      <GroupWords group={group} said={said} />
       <RoomTicket
         group={group}
         locked={false}
@@ -246,6 +241,10 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
         open={open === 'kind' || open === 'room' ? open : null}
         room={room}
       />
+      {/* The seat answer's line under the ticket, said only where its main button is 로그인. */}
+      {mainOf(group, loggedIn).main !== 'logIn' || open === 'kind' || open === 'room' ? null : (
+        <FailureNote failure="noSession" onLogIn={null} />
+      )}
       {/* A cell's chooser opens right under the ticket, the use's under its line (design group-study-design ④ ⑤). */}
       <Choosers {...choices} group={group} open={open === 'use' ? null : open} room={room} rooms={rooms} slot={slot} />
       <UseLine onPress={toggle('use')} use={use} />
@@ -257,7 +256,6 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
 const styles = StyleSheet.create({
   body: { gap: space[3] },
   words: { ...text.body, color: color.ink },
-  login: { ...text.caption, color: color.danger },
   useLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   hint: { ...text.caption, color: color.inkMuted },
   link: { ...text.caption, fontFamily: font.semiBold, color: color.snuBlue },
