@@ -233,6 +233,15 @@ describe('A study plan before the next Class', () => {
     expect(sinyang?.parts[0]).toMatchObject({ walkMinutes: 8, leaveBy: '2026-11-17T12:52:00+09:00' });
   });
 
+  it('has its stay as its one step, as a meal’s Plan has, for the Quest it is saved as (P10 ticket 24)', () => {
+    const { plans } = asked({ clock: '12:10' });
+    const [first] = plans;
+
+    expect(first?.subQuests).toEqual([
+      { at: first?.startAt, placeId: first?.place.placeId, title: `${first?.id ?? ''}에서 공부` },
+    ]);
+  });
+
   it('says the stay’s length on its time card, as the group room’s card does', () => {
     const items = [classAt(TUESDAY, '11:00', '11:50', '제1공학관'), classAt(TUESDAY, '15:00', '15:50', '자연과학관6')];
     const { plans } = asked({ clock: '12:10', items });

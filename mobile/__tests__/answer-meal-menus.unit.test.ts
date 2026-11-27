@@ -5,6 +5,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -226,7 +227,7 @@ describe('the list without walking', () => {
 
     expect(walksKnown(unknown)).toBe(false);
     expect(rows.map(({ planId }) => planId)).toEqual(plans.map(({ id }) => id));
-    expect(rows.every(({ when }) => /^\d{2}:\d{2} 도착$/u.test(when))).toBe(true);
+    expect(rows.every(({ when }) => /^\d{2}:\d{2} 도착$/u.test(when ?? ''))).toBe(true);
     expect(listOrderWords(unknown)).toBe('일찍 여는 순');
   });
 

@@ -4105,8 +4105,10 @@ part of the Plan sets out, with the Plan's Place and the minutes of the Leader's
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
 
-A Plan taken alone ("여기로": an events Plan, or a meal's whose people are the asker only) is a Quest taken alone
-(`takenAlone`), which the asker holds alone with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). Its `leave-by` is kept, awaited, for the first walk
+A Plan taken alone ("여기로": an events Plan, or a meal's, a meet's or a study's whose people are the asker only; a
+study's since P10 ticket 24, its step being the stay at its building, "공대 신양학술정보관에서 공부") is a Quest taken alone
+(`takenAlone`), which the asker holds alone with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). A study together
+or with a Friend is the group study room's request and is refused with 400 `PLAN_KIND`. Its `leave-by` is kept, awaited, for the first walk
 of 5 minutes or more whose time is still ahead: to the Plan's Place, else on from it to the next item
 (`plans/alone-plan.ts`). Such a `leave-by` carries the next item, " 13:00 수업에 맞아요.", and says a way by shuttle
 as one. The reply's `alone` holds the card's two lines and `remindAt`. Entering a Shared Quest for a Global Event that
