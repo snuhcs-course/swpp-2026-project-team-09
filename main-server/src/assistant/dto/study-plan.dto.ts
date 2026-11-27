@@ -6,6 +6,8 @@
 
 // A study Plan's part (P10): its building's study spaces alone, and the 관정 group study room with Friends.
 
+import { type LibraryCardSpace } from '../library/library-card.js';
+
 export interface PlanStudy {
   // Alone: the building's study spaces that fit, best first. Empty with Friends.
   spaces: StudySpot[];
@@ -13,7 +15,7 @@ export interface PlanStudy {
   book: { spaceId: string } | null;
   // 관정관's free seats and rooms are read on the phone, through the User's own library login; null elsewhere.
   liveSeats: 'kwanjeong' | null;
-  // With Friends: the 관정 group study room (P10, 2026-11-27). Absent alone.
+  // Together (`StudyInput.together`) or with Friends: the 관정 group study room (P10, 2026-11-27). Absent alone.
   group?: StudyGroup;
 }
 
@@ -24,6 +26,9 @@ export interface GroupRoomKind {
   // "6인실"
   name: string;
   capacity: { min: number; max: number };
+  // The library space the phone reads the kind's free rooms from, as the library cards carry it: its roomNo and
+  // sectorNo, the kind's room numbers in seatNos (a sector may hold several kinds), its hours and durations.
+  space: LibraryCardSpace;
 }
 
 // The group study room of a study plan with Friends. The specific room (G412) is the phone's: it reads which rooms of
@@ -31,10 +36,10 @@ export interface GroupRoomKind {
 export interface StudyGroup {
   // The kind picked: studyRoomFor's, or the one the User chose while it fits.
   room: GroupRoomKind;
-  // Every kind, for the ticket's left cell; `reason` says why one does not fit ("6명부터").
+  // Every kind, 2층 first, for the ticket's left cell; `reason` says why one does not fit ("6명부터", "6명까지").
   rooms: (GroupRoomKind & { fits: boolean; reason: string | null })[];
   people: number;
-  // How many more people the smallest room needs; above 0 no request can be sent ("+ 같이").
+  // How many more people the smallest room needs, 3 for the asker alone; above 0 no request can be sent ("+ 같이").
   moreNeeded: number;
   // The book key "동의 요청 보내기" posts to POST /library/room-requests with the Friends ("book:4F-group-6:2026-11-28:
   // 1500:120", ending in ":wait" past the booking window); null while moreNeeded is above 0.

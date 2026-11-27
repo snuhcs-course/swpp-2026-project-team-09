@@ -6,6 +6,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
@@ -20,6 +21,7 @@ import {
 import { useLibrarySession } from '@/library/library-session';
 import type { LibraryWriteResult } from '@/library/replies';
 import type { CardOutcome, CardRoom, OwnBubble } from '@/features/assistant/use-chat';
+import type { TellAct } from './act-stage';
 import type { Tell } from './booking-stage';
 
 // How a library card reads from the library and logs in: what it loaded or why it failed, and 로그인, which opens the
@@ -225,6 +227,8 @@ export interface LibraryCardActions {
   // The booking on the map alone: its building and the minutes of the walk there, null minutes without the User's
   // position (P01 ticket 06). Left out, or null, none.
   bookingWalk?: () => { minutes: number | null; to: PlacePoint } | null;
+  // How a booking's ticket tells its main button beside the input (P01 ticket 15). Left out, none is drawn.
+  act?: TellAct;
 }
 
 // How a card's write is marked with the chat while it is on its way.

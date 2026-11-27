@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -22,6 +23,7 @@ import {
   time,
 } from './meet-example.js';
 import { id, point, position } from './way-example.js';
+import { withoutBand } from './no-plan.js';
 
 // "만나고 싶다" through the calculation and its words, on the seed's Places and walking table: boards a5 and a6 of the
 // design's row 6, a Friend seen through the Timetable only, one whose position is unknown, no time to meet, and the
@@ -193,14 +195,17 @@ describe('No time to meet', () => {
     const answer = meetOf([me(), minsu()], { window: { from: '13:00', until: '13:50' } });
 
     expect(answer.plans).toEqual([]);
-    expect(answer.noPlan).toEqual({ reason: 'no-shared-time', lines: [[plain('같이 비는 시간이 없어요')]] });
+    expect(withoutBand(answer.noPlan)).toEqual({
+      reason: 'no-shared-time',
+      lines: [[plain('같이 비는 시간이 없어요')]],
+    });
   });
 
   it('drops every place when they would be together less than 15 minutes', () => {
     const answer = meetOf([me(), minsu()], { window: { from: '12:45', until: '13:00' } });
 
     expect(answer.plans).toEqual([]);
-    expect(answer.noPlan).toEqual({
+    expect(withoutBand(answer.noPlan)).toEqual({
       reason: 'no-fit',
       lines: [[plain('함께 15분 이상 있을 수 있는 곳이 없어요')]],
     });
@@ -225,7 +230,7 @@ describe('A fixed Place ("여기면 어때?")', () => {
   it("names the User, who stays shortest, and the Class they leave for, with each person's part", () => {
     const answer = meetOf([me(), minsu()], { window: { from: '12:45', until: '13:00' }, placeId: id('학생회관') });
 
-    expect(answer.noPlan).toEqual({
+    expect(withoutBand(answer.noPlan)).toEqual({
       reason: 'no-fit',
       lines: [[plain('12:45부터 14분만 있을 수 있어요')], [plain('13:00 수업에 가려면 12:59엔 나서야 해요')]],
     });

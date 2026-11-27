@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ChatMessage, RequestContext } from '@/api/assistant-types';
-import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
+import { askAssistant } from './tracked-requests';
 import type { ChatBubble, ChatFailure } from './use-chat';
 
 // The Assistant's bubble of a request, as the chat adds it: the reply's words and what it drew, or a failure's words.
@@ -23,7 +24,7 @@ export type NewBubble = Omit<ChatBubble, 'id'>;
 // The Assistant's bubble for the conversation: its reply, or the failure.
 export async function answerTo(messages: ChatMessage[], context: RequestContext): Promise<NewBubble> {
   try {
-    const reply = await apiClient.askAssistant(messages, context);
+    const reply = await askAssistant(messages, context);
     const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers, steps } = reply;
     const chosen = reply.select === undefined ? {} : { select: reply.select.planId };
     const cleared = reply.clears === true && answer === null && lookup === null ? { clears: true as const } : {};

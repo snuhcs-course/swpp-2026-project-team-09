@@ -33,6 +33,7 @@ import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
 import type { SentProposal } from './sent-proposal';
+import type { PlanStudy, StudyInput } from './study-plan-types';
 
 // --- The Assistant (POST /assistant/messages) ---
 
@@ -199,7 +200,7 @@ export interface RequestContext extends WithLocationMissing {
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput | StudyInput;
 
 export interface MealInput extends MealPrice {
   kind: 'meal';
@@ -351,6 +352,8 @@ export interface Plan {
   // from a main server before P05 ticket 12's follow-up. `others`: how many other things are served that meal there,
   // across every corner, the "외 N" of the menu's words (P04 ticket 74); absent from a main server before it.
   menu?: { price: number | null; dishes: MenuDish[]; others?: number };
+  // A study Plan's part (P10): with Friends, its 관정 group study room. Absent from other Plans.
+  study?: PlanStudy;
 }
 
 export interface MenuDish {

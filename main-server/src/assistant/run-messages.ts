@@ -4,10 +4,14 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { contextLines } from './context-lines.js';
-import { type ChatMessage, type Request } from './feature.js';
+import { type CardReference, type ChatMessage, type Request } from './feature.js';
+import { clockOfMinutes, minutesOfClock } from './library/booking-rules.js';
+import { type Catalogue, roomLabelOf } from './library/catalogue.js';
+import { bookKeyOf } from './library/library-card.js';
 import { mentionLines } from './mentions.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
 
@@ -25,16 +29,31 @@ function proposalLine({ madeQuestId, change, ...proposal }: SentProposal): strin
   return `[Proposal shown: ${JSON.stringify(proposalForModel(proposal))}]`;
 }
 
+// A card as the model reads it. The app sends a book card back as the User left it, and on the phone they can change
+// its room, time and seat, so its key is written out in words: the model's own earlier words may name another room
+// (P05 ticket 60). Any other card, and a book card of a space the catalogue lacks, is its kind and id.
+function cardWords({ kind, id }: CardReference, catalogue: Catalogue | undefined): string {
+  const book = kind === 'library' ? bookKeyOf(id) : null;
+  const space = book === null ? undefined : catalogue?.byId.get(book.spaceId);
+  if (book === null || space === undefined) {
+    return `${kind} ${id}`;
+  }
+  const { date, start, minutes, seat } = book;
+  const seatWords = seat === undefined ? [] : [`${space.unit === 'room' ? 'room' : 'seat'} ${seat}`];
+  const time = `${date.slice(5).replace('-', '/')} ${start}–${clockOfMinutes(minutesOfClock(start) + minutes)}`;
+  return [`library card for ${roomLabelOf(space, space.id)}`, ...seatWords, time, 'as the User left it'].join(', ');
+}
+
 // What the model reads of a message: an Assistant's carries a line naming the cards it showed, and one with the values
 // of the Proposal it made, which proposeQuest is given again to change it, or, once the User made it, with the Quest's
 // id, which is no Proposal to change any more.
-function contentOf(message: ChatMessage): string {
+function contentOf(message: ChatMessage, catalogue: Catalogue | undefined): string {
   if (message.role === 'user') {
     return message.text;
   }
   const lines = [message.text];
   if (message.cards.length > 0) {
-    lines.push(`[Cards shown: ${message.cards.map(({ kind, id }) => `${kind} ${id}`).join(', ')}]`);
+    lines.push(`[Cards shown: ${message.cards.map((card) => cardWords(card, catalogue)).join(', ')}]`);
   }
   if (message.proposal !== null) {
     lines.push(proposalLine(message.proposal));
@@ -43,20 +62,21 @@ function contentOf(message: ChatMessage): string {
 }
 
 // The conversation as the model reads it, the lines of the request context after the User's new message for an app
-// that draws answers.
+// that draws answers. The catalogue names the space of a book card sent back.
 export function messagesFor(
   messages: readonly ChatMessage[],
   { context, capabilities, ahead = [] }: Request,
+  catalogue?: Catalogue,
 ): { role: ChatMessage['role']; content: string }[] {
   const last = messages.length - 1;
   const lines = [
     ...mentionLines(context.mentions),
     ...(capabilities.includes('answer') ? [...contextLines(context), ...ahead] : []),
   ];
-  return messages.map((message, index) => ({
-    role: message.role,
-    content: index === last ? [contentOf(message), ...lines].join('\n\n') : contentOf(message),
-  }));
+  return messages.map((message, index) => {
+    const content = contentOf(message, catalogue);
+    return { role: message.role, content: index === last ? [content, ...lines].join('\n\n') : content };
+  });
 }
 
 // The last Proposal of the conversation, which the app sends back on one message at most.

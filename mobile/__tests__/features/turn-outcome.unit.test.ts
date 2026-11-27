@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { READING_ROOM } from '@/api/mock/data/library';
@@ -35,6 +36,7 @@ function turn(...after: ChatBubble[]): Turn {
 
 const BOOKED: LibraryDone = {
   title: '7233번 예약되었어요!',
+  bseqno: '123',
   rows: [
     { label: '장소', value: '관정관 (62동) 7층 노트북존' },
     { label: '좌석', value: '7233번' },

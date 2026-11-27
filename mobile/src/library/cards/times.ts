@@ -3,9 +3,10 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { koreaClock, koreaDateKey, koreaMinutes, WEEKDAYS } from '@/korea-time';
+import { koreaDateKey, koreaMinutes, WEEKDAYS } from '@/korea-time';
 
 // The times of the library cards: the card's "YYYY-MM-DD" and "HH:MM", the site's YYYYMMDD and HHMM-HHMM, and the
 // words a card shows. Every booking steps by 30 minutes.
@@ -72,12 +73,14 @@ export function nextStart(now: Date): string {
   return clockOf(Math.ceil(koreaMinutes(now) / STEP_MINUTES) * STEP_MINUTES);
 }
 
-// A seat is confirmed at the seat kiosk (좌석배정기) within 30 minutes of its booking, or it is returned.
-const KIOSK_MS = 30 * 60_000;
+// A seat is confirmed at the seat kiosk (좌석배정기) within 30 minutes of its start, or it is returned: the site
+// returned a no-show at its start + 30, whenever it was booked (P01 ticket 15).
+const KIOSK_MINUTES = 30;
+const DAY_MINUTES = 24 * 60;
 
-// The latest time a seat booked at `now` is confirmed at the kiosk, in Korea: 13:50 gives "14:20".
-export function kioskDeadline(now: Date): string {
-  return koreaClock(new Date(now.getTime() + KIOSK_MS).toISOString());
+// The latest time a seat starting at `start` is confirmed at the kiosk: "07:00" gives "07:30".
+export function kioskDeadline(start: string): string {
+  return clockOf((minutesOf(start) + KIOSK_MINUTES) % DAY_MINUTES);
 }
 
 // The site's "2026-11-02 17:30:00" as its day and its clock.

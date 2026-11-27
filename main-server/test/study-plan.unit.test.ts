@@ -60,6 +60,7 @@ function asked({
     date: TUESDAY,
     what,
     people: [{ userId: ME, constraints: [] }],
+    together: false,
     window: { from: null, until: null },
     area,
     minutes: null,
@@ -190,6 +191,24 @@ describe('A study plan before the next Class', () => {
     expect(sinyang).toMatchObject({ startAt: '2026-11-17T12:18:00+09:00', endAt: '2026-11-17T12:52:00+09:00' });
     expect(sinyang?.lines[1]).toEqual([{ text: '13:00 수업 전 34분', strong: false }]);
     expect(sinyang?.parts[0]).toMatchObject({ walkMinutes: 8, leaveBy: '2026-11-17T12:52:00+09:00' });
+  });
+});
+
+describe('관정관’s plan', () => {
+  it('books the first 7층 seat for a quiet place or any, and no other plan books', () => {
+    for (const what of ['quiet', 'any'] as const) {
+      const { plans } = asked({ clock: '10:00', what });
+      const booked = plans.flatMap(({ id: planId, study }) => (study?.book === null ? [] : [[planId, study?.book]]));
+
+      expect(booked).toEqual([['관정관', { spaceId: '7F-7A-zone2' }]]);
+      expect(plans.find(({ id: planId }) => planId === '관정관')?.study?.liveSeats).toBe('kwanjeong');
+    }
+  });
+
+  it('is no plan for computers or a group room, whose 관정 bookings take another path', () => {
+    for (const what of ['pc', 'group'] as const) {
+      expect(ids(asked({ clock: '10:00', what }))).not.toContain('관정관');
+    }
   });
 });
 

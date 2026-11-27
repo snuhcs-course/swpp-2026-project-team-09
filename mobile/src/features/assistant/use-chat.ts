@@ -13,6 +13,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -36,6 +37,7 @@ import type { Mention } from '@/api/mention-types';
 import type { Refusal } from '@/api/refusal-types';
 import { now } from '@/clock';
 import type { ShownChatCard } from '@/api/quest-parts-types';
+import type { TicketView } from '@/library/cards/bookings';
 import type { LibraryDone } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
@@ -103,6 +105,8 @@ export interface CardOutcome {
   // button; the card clears it when the write fails.
   kind: 'pending' | 'booked' | 'declined' | 'cancelled' | 'returned' | 'stopped';
   words: string;
+  // The booking cancelled or returned, which the card shows greyed under its words (P01 ticket 15).
+  ticket?: TicketView;
 }
 
 // A library card's place in the chat: its bubble and its key, since the same card may be shown twice.

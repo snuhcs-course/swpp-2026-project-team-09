@@ -15,7 +15,8 @@ import {
   type PlacePoint,
 } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
-import { byStay, edgeTowards, inArea, type StudyArea, studyDayOf, type StudyStay, stayAt } from './study-near.js';
+import { type Opening } from '../../study-spaces/study-hours.js';
+import { byHours, edgeTowards, inArea, type StudyArea, studyDayOf, type StudyStay, stayAt } from './study-near.js';
 import { type WayArgs, type WayStart } from './way.js';
 import { GATE_BASIS } from './way-lookup.js';
 import { dueWords, part, WayNaming } from './way-naming.js';
@@ -44,6 +45,8 @@ export interface StudyArgs {
   buildings: readonly StudyBuildingDto[];
   area: StudyArea | null;
   what: StudyWhat;
+  // Whether a space is open at a time, by its hours as data (P10 ticket 06).
+  hoursOf: (key: string, at: Date) => { opening: Opening };
 }
 
 export interface RestrictedWords {
@@ -63,6 +66,8 @@ export interface StudyWords {
   building: string;
   space: string;
   hours: string | null;
+  // False when the pick's hours are not known then: it is never said to be open.
+  hoursKnown: boolean;
   // The other places the User may use in the area, drawn as candidates after the pick.
   others: OtherWords[];
   from: string;
@@ -76,7 +81,7 @@ export interface StudyWords {
 
 export type StudyAnswer =
   | { result: 'found'; lookup: Lookup; words: StudyWords }
-  | { result: 'none'; reason: 'no-area' | 'nothing-in-area' | 'no-start' }
+  | { result: 'none'; reason: 'no-area' | 'nothing-in-area' | 'no-start' | 'all-closed' }
   | { result: 'none'; reason: 'none-usable'; restricted: RestrictedWords[] };
 
 interface Found {
@@ -86,6 +91,8 @@ interface Found {
 
 interface Picked extends Found {
   stay: StudyStay;
+  // Known open at the arrival; else its hours are not known (one closed then is left out).
+  open: boolean;
 }
 
 const ASK_KWANJEONG: LookupAction = { kind: 'ask', label: '관정 보기', text: '관정 지금 자리 있어?' };
@@ -218,6 +225,7 @@ function wordsOf({ from, next, picked, others, restricted, away }: Drawn): Study
     building: picked.building.name,
     space: picked.space.name,
     hours: picked.space.hours,
+    hoursKnown: picked.open,
     others: others.map(({ building, space, stay }) => ({
       building: building.name,
       space: space.name,
@@ -250,6 +258,7 @@ function studyLookup(way: WayArgs, drawn: Drawn & { start: WayStart; what: Study
         [`${building.name} ${space.name}`, stayWords(stay)].filter(Boolean).join(' · '),
       ),
       ...(restricted.length > 0 ? ['학과 전용 열람실은 흐리게 두었어요'] : []),
+      ...(picked.open ? [] : [`${picked.space.name}은 여는 시간을 몰라요`]),
       ...(start.basis === 'gate' ? [GATE_BASIS] : []),
     ],
     scene: sceneOf(way, { start, picked, others, restricted }, drawn.away),
@@ -259,7 +268,7 @@ function studyLookup(way: WayArgs, drawn: Drawn & { start: WayStart; what: Study
   };
 }
 
-export function studyAnswer({ way, buildings, area, what }: StudyArgs): StudyAnswer {
+export function studyAnswer({ way, buildings, area, what, hoursOf }: StudyArgs): StudyAnswer {
   if (area === null) {
     return { result: 'none', reason: 'no-area' };
   }
@@ -276,16 +285,17 @@ export function studyAnswer({ way, buildings, area, what }: StudyArgs): StudyAns
   if (start === null) {
     return { result: 'none', reason: 'no-start' };
   }
-  const ranked = byStay(
+  const ranked = byHours(
     usable.map(({ building, space }) => ({
       building,
       space,
       stay: stayAt({ ready, start, next }, building.place.id, way.travel),
     })),
+    hoursOf,
   );
   const [picked] = ranked;
   if (picked === undefined) {
-    return { result: 'none', reason: 'nothing-in-area' };
+    return { result: 'none', reason: 'all-closed' };
   }
   const others = othersOf(ranked, picked);
   const drawn = {

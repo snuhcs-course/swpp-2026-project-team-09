@@ -25,6 +25,7 @@ import { type FoundIds } from './found-ids.js';
 import { type TravelBox } from './free-time/candidate-fit.js';
 import { type RestaurantCard } from './free-time/restaurant-card.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
+import { type Catalogue } from './library/catalogue.js';
 import { type LibraryCard } from './library/library-card.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
 import { type Refusal } from './refusals/refusal.dto.js';
@@ -97,6 +98,9 @@ export const CLIENT_CAPABILITIES = [
   'pick',
   // Draws a study answer as ranked study places, the meal answer's way (P10).
   'study-plan',
+  // Draws the study answer together, a 관정 group study room at everyone's free time, with 동의 요청 보내기 (P10 ticket
+  // 07). Without it the group study path is proposeStudyRoom's card.
+  'study-group',
 ] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
@@ -200,6 +204,8 @@ export interface Feature {
   // What a run that answered changes in what was presented once every tool has run, such as the steps of a message
   // that asked for several things (P03).
   afterRun?(context: ToolContext): Promise<void>;
+  // The 관정도서관 catalogue, by which a book card sent back is read in words (run-messages.ts).
+  readonly libraryCatalogue?: Catalogue;
 }
 
 // What a tool answers when nothing matches, so that the model says so instead of answering from elsewhere.

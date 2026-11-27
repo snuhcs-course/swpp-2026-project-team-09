@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, userEvent } from '@testing-library/react-native';
@@ -175,7 +176,9 @@ export async function openMain(
 ): Promise<ReturnType<typeof userEvent.setup>> {
   await keep({
     signedIn: true,
-    consented: true,
+    consent: { version: 1, usage: false },
+    // The mock's account too, so that a sign-in again in the mock build is not asked for the consent.
+    mockAccountConsent: { version: 1, usage: false },
     onboardingCompleted: true,
     suggestion: null,
     answers: {

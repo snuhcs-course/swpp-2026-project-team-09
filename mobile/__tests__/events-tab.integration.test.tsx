@@ -14,7 +14,7 @@
 import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { Linking } from 'react-native';
-import { color } from '@/design-system';
+import { color, font } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -27,6 +27,7 @@ import { answerRoom, openRoom } from './support/room';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
 const MARKED = color.blue50;
+const HIDDEN = { includeHiddenElements: true };
 
 // The 행사 tab's list of Global Events from the main server: the filters, the search, the rows and the detail sheet.
 
@@ -76,13 +77,14 @@ describe('the list', () => {
     await openEvents();
 
     expect(server.received('GET /global-events').length).toBeGreaterThan(0);
-    expect(screen.getByRole('header', { name: '다가오는 행사' })).toBeVisible();
+    // The list starts with its first row (P06 ticket 15).
+    expect(screen.queryByText('다가오는 행사')).toBeNull();
     expect(shownEvents()).toEqual([CAREER.title, MAJOR.title, BOOK_TALK.title]);
     expect(card(CAREER).getByText('6')).toBeVisible();
     expect(card(CAREER).getByText('10월 · 오늘')).toBeVisible();
-    expect(card(CAREER).getByText('컴퓨터공학부 공지')).toBeVisible();
     expect(card(CAREER).getByRole('button', { name: CAREER.title })).toBeVisible();
-    expect(card(CAREER).getByText('18:00–20:00 · 301동 대강당')).toBeVisible();
+    expect(card(CAREER).getByText('18:00–20:00')).toBeVisible();
+    expect(card(CAREER).getByText('301동 대강당')).toBeVisible();
     // The two recruiting Quests the User can join, as the map card counts them; the User's own beside them.
     expect(card(CAREER).getByRole('button', { name: '모집 중인 파티 2' })).toBeVisible();
     expect(card(CAREER).getByText('내 파티')).toBeVisible();
@@ -95,18 +97,10 @@ describe('the list', () => {
     expect(screen.queryByRole('button', { name: /AI 매칭 신청 내역/u })).toBeNull();
     expect(card(MAJOR).getByText('8')).toBeVisible();
     expect(card(MAJOR).getByText('10월 · 목')).toBeVisible();
-    expect(card(MAJOR).getByText('17:00 · 뉴미디어통신공동연구소 (132동)')).toBeVisible();
+    expect(card(MAJOR).getByText('17:00')).toBeVisible();
+    expect(card(MAJOR).getByText('뉴미디어통신공동연구소 (132동)')).toBeVisible();
     expect(card(MAJOR).getByRole('button', { name: '함께 갈 파티 찾기' })).toBeVisible();
     expect(card(MAJOR).queryByText('내 파티')).toBeNull();
-    expect(card(MAJOR).queryByText('컴퓨터공학부 공지')).toBeNull();
-  });
-
-  it('keeps a long title to one line and a long place to two, cut, with the hours before the place', async () => {
-    answerEvents(server, { events: [{ ...CAREER, title: LONG_TITLE, place: LONG_PLACE }] });
-    await openEvents();
-
-    expect(card(CAREER).getByRole('button', { name: LONG_TITLE })).toHaveProp('numberOfLines', 1);
-    expect(card(CAREER).getByText(`18:00–20:00 · ${LONG_PLACE}`)).toHaveProp('numberOfLines', 2);
   });
 
   it("opens 파티 찾기/모집 from a row's party line", async () => {
@@ -118,6 +112,44 @@ describe('the list', () => {
 
     expect(screen.getByRole('header', { name: '모집 중인 파티 0' })).toBeVisible();
     expect(screen.getByText('아직 모집 중인 파티가 없어요')).toBeVisible();
+  });
+});
+
+// As P06 ticket 15's wireframe draws a row.
+describe('a row', () => {
+  it('shows a long title on two lines, then the time and the place after their icons, without the source', async () => {
+    answerEvents(server, {
+      events: [
+        { ...CAREER, title: LONG_TITLE, place: LONG_PLACE },
+        { ...MAJOR, place: null },
+      ],
+    });
+    await openEvents();
+
+    expect(card(CAREER).getByRole('button', { name: LONG_TITLE })).toHaveProp('numberOfLines', 2);
+    expect(card(CAREER).getByTestId('event-icon-clock', HIDDEN)).toBeOnTheScreen();
+    expect(card(CAREER).getByText('18:00–20:00')).toHaveProp('numberOfLines', 1);
+    expect(card(CAREER).getByTestId('event-icon-pin', HIDDEN)).toBeOnTheScreen();
+    expect(card(CAREER).getByText(LONG_PLACE)).toHaveProp('numberOfLines', 2);
+    expect(card(CAREER).queryByText('컴퓨터공학부 공지')).toBeNull();
+    expect(card(MAJOR).getByText('17:00')).toBeVisible();
+    expect(card(MAJOR).queryByTestId('event-icon-pin', HIDDEN)).toBeNull();
+  });
+
+  it('sets the day in 22 Bold, the title in 16 Bold, the time, the place and the party line in 13, 12 inside', async () => {
+    answerEvents(server, { quests: [DINNER, MY_CAREER] });
+    await openEvents();
+
+    const line = { fontFamily: font.medium, fontSize: 13, lineHeight: 18 };
+    expect(screen.getByTestId(`event-${CAREER.id}`)).toHaveStyle({ paddingVertical: 12 });
+    expect(card(CAREER).getByText('6')).toHaveStyle({ fontFamily: font.bold, fontSize: 22, lineHeight: 28 });
+    expect(card(CAREER).getByText('10월 · 오늘')).toHaveStyle({ fontFamily: font.medium, fontSize: 12 });
+    const title = card(CAREER).getByRole('button', { name: CAREER.title });
+    expect(title).toHaveStyle({ fontFamily: font.bold, fontSize: 16, lineHeight: 23 });
+    expect(card(CAREER).getByText('18:00–20:00')).toHaveStyle(line);
+    expect(card(CAREER).getByText('301동 대강당')).toHaveStyle(line);
+    expect(card(CAREER).getByText('모집 중인 파티 2')).toHaveStyle({ fontFamily: font.bold, fontSize: 13 });
+    expect(card(MAJOR).getByText('함께 갈 파티 찾기')).toHaveStyle({ fontFamily: font.semiBold, fontSize: 13 });
   });
 });
 
@@ -136,7 +168,7 @@ describe("the User's own 파티", () => {
 });
 
 describe('the detail sheet', () => {
-  it('opens on a press of the row, with the time, the place, the description and 원문 보기', async () => {
+  it('opens on a press of the row, with the time and the place by their icons, the description and 원문 보기', async () => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
     answerEvents(server, { events: [{ ...CAREER, title: LONG_TITLE, place: LONG_PLACE }, MAJOR] });
     const user = await openEvents();
@@ -145,10 +177,13 @@ describe('the detail sheet', () => {
     await pass(500);
 
     expect(screen.getByRole('header', { name: LONG_TITLE })).toBeVisible();
-    expect(screen.getByText('언제')).toBeVisible();
     expect(screen.getByText('오늘 18:00–20:00')).toBeVisible();
-    expect(screen.getByText('어디')).toBeVisible();
-    expect(screen.getByText(LONG_PLACE)).toBeVisible();
+    expect(within(screen.getByTestId('event-detail')).getByText(LONG_PLACE)).toBeVisible();
+    // No 언제 and 어디 on the screen, where the icons say it; a screen reader still hears them.
+    expect(screen.queryByText('언제')).toBeNull();
+    expect(screen.queryByText('어디')).toBeNull();
+    expect(screen.getByLabelText('언제, 오늘 18:00–20:00')).toBeVisible();
+    expect(screen.getByLabelText(`어디, ${LONG_PLACE}`)).toBeVisible();
     expect(screen.getByText(CAREER.description)).toBeVisible();
     await user.press(screen.getByRole('button', { name: '원문 보기' }));
     expect(openURL).toHaveBeenCalledWith(CAREER.sourceUrl);
@@ -164,11 +199,11 @@ describe('the detail sheet', () => {
     await user.press(screen.getByRole('button', { name: '파티 찾기/모집' }));
     await pass(500);
 
-    expect(screen.queryByText('언제')).toBeNull();
+    expect(screen.queryByTestId('event-detail')).toBeNull();
     expect(screen.getByRole('header', { name: '모집 중인 파티 0' })).toBeVisible();
   });
 
-  it("counts the recruiting Quests on its party button, and marks the User's own 파티", async () => {
+  it('counts the recruiting Quests on its party button', async () => {
     answerEvents(server, { quests: [DINNER, WITH_FRIEND] });
     const user = await openEvents();
 
@@ -176,7 +211,6 @@ describe('the detail sheet', () => {
     await pass(500);
 
     expect(screen.getByRole('button', { name: '모집 중인 파티 2 · 찾기/모집' })).toBeVisible();
-    expect(within(screen.getByTestId('event-detail')).getByText('내 파티')).toBeVisible();
   });
 });
 

@@ -10,6 +10,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +19,9 @@ import { mockClient } from '@/api/mock/client';
 import type { OnboardingAnswers } from '@/api/types';
 import { signIn, signOut } from '@/auth/sign-in';
 import { keep, openKept, readKept } from '@/storage/kept';
+
+const NO_CONSENT = { version: null, usage: null };
+const AGREED = { version: 1, usage: true };
 
 const ANSWERS: OnboardingAnswers = {
   name: '홍길동',
@@ -41,6 +45,8 @@ const NO_BACKGROUND = { masterSwitch: false, backgroundChosen: false, background
 
 // What versions since the location explanation added, which nothing here changes.
 const NOTHING_LATER = {
+  consent: NO_CONSENT,
+  mockAccountConsent: NO_CONSENT,
   ...NO_BACKGROUND,
   declinedParties: [],
   madeQuests: [],
@@ -51,6 +57,8 @@ const NOTHING_LATER = {
 const FIRST_STATE = {
   signedIn: false,
   consented: false,
+  consent: NO_CONSENT,
+  mockAccountConsent: NO_CONSENT,
   suggestion: null,
   onboardingCompleted: false,
   answers: null,
@@ -74,6 +82,8 @@ describe('sign-in', () => {
     expect(await readKept()).toEqual({
       signedIn: true,
       consented: false,
+      consent: NO_CONSENT,
+      mockAccountConsent: NO_CONSENT,
       suggestion: { name: '안진영', department: null },
       onboardingCompleted: false,
       answers: null,
@@ -113,6 +123,8 @@ describe('what the phone keeps', () => {
     expect(await openKept()).toEqual({
       signedIn: true,
       consented: false,
+      consent: NO_CONSENT,
+      mockAccountConsent: NO_CONSENT,
       suggestion: null,
       onboardingCompleted: true,
       answers: ANSWERS,
@@ -186,17 +198,36 @@ describe('what the phone keeps of the consent', () => {
     });
   });
 
-  it('remembers after a sign-out that the User agreed to the legal documents', async () => {
-    await keep({ signedIn: true, consented: true });
-    await signOut();
-
-    expect((await readKept()).consented).toBe(true);
-  });
-
   it('keeps both of two changes made at once', async () => {
     await Promise.all([keep({ signedIn: true }), keep({ onboardingCompleted: true })]);
 
     expect(await readKept()).toMatchObject({ signedIn: true, onboardingCompleted: true });
+  });
+});
+
+describe("the phone's copy of the account's consent", () => {
+  it("empties the copy of the account's consent at a sign-out, and the mock's account keeps its own", async () => {
+    await keep({ signedIn: true, consented: true, consent: AGREED, mockAccountConsent: AGREED });
+    await signOut();
+
+    expect(await readKept()).toMatchObject({ consented: true, consent: NO_CONSENT, mockAccountConsent: AGREED });
+  });
+
+  it("copies the mock's account consent at the mock's sign-in", async () => {
+    await keep({ mockAccountConsent: AGREED });
+    await answered(signIn());
+
+    expect((await readKept()).consent).toEqual(AGREED);
+  });
+
+  it('reads a consent of another shape as none', async () => {
+    const stored = { signedIn: true, suggestion: null, onboardingCompleted: true, answers: null };
+    await AsyncStorage.setItem(
+      'snunow.kept',
+      JSON.stringify({ ...stored, consent: { version: '1', usage: 'yes' }, mockAccountConsent: 'agreed' }),
+    );
+
+    expect(await readKept()).toMatchObject({ consent: NO_CONSENT, mockAccountConsent: NO_CONSENT });
   });
 });
 

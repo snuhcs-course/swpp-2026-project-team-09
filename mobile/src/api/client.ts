@@ -21,6 +21,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -89,6 +90,11 @@ export interface ApiClient {
   updateProfile: (change: ProfileChange) => Promise<Profile>;
   getProfile: () => Promise<Profile>;
   setMasterSwitch: (on: boolean) => Promise<void>;
+  // "동의하고 시작": the account agrees to that version of the legal documents, with the choice on usage data.
+  agreeToConsent: (version: number, usage: boolean) => Promise<void>;
+  // "사용 기록 보내기" in 내 정보: the choice alone, the version as it is. Refused with 409 CONSENT_REQUIRED before any
+  // consent.
+  setUsageConsent: (usage: boolean) => Promise<void>;
   // The phone's Expo push token, for the signed-in Session.
   registerPushToken: (token: string) => Promise<void>;
   // Refused with 409 MASTER_SWITCH_OFF while the Master Switch is off.
@@ -275,6 +281,8 @@ export const apiClient: ShownClient = {
   updateProfile: (change) => chosen().updateProfile(change),
   getProfile: () => chosen().getProfile(),
   setMasterSwitch: (on) => chosen().setMasterSwitch(on),
+  agreeToConsent: (version, usage) => chosen().agreeToConsent(version, usage),
+  setUsageConsent: (usage) => chosen().setUsageConsent(usage),
   registerPushToken: (token) => chosen().registerPushToken(token),
   uploadPosition: (position) => chosen().uploadPosition(position),
   listFriends: () => chosen().listFriends(),

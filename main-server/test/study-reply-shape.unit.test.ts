@@ -7,6 +7,8 @@
 import { contextLines } from '../src/assistant/context-lines.js';
 import { type AnswerReply, NO_CONTEXT, recalculationSchema } from '../src/assistant/dto/answer.dto.js';
 import { CLIENT_CAPABILITIES } from '../src/assistant/feature.js';
+import { type Catalogue, CATALOGUE_FILE, readCatalogue } from '../src/assistant/library/catalogue.js';
+import { cardSpace } from '../src/assistant/library/library-card.js';
 import { STUDY_ANSWER } from './fixtures/study-answer.js';
 import {
   STUDY_GROUP_GATHERING,
@@ -47,6 +49,14 @@ describe("A study plan's input", () => {
     expect(recalculationSchema.safeParse({ input: withoutChosen }).success).toBe(false);
     expect(sent({ meal: 'lunch' })).toBe(false);
   });
+
+  it('says whether it is studying together, a field it cannot lack (P10 ticket 07)', () => {
+    const { together: _together, ...withoutTogether } = input.kind === 'study' ? input : { together: null };
+
+    expect(sent({ together: true })).toBe(true);
+    expect(sent({ together: 'yes' })).toBe(false);
+    expect(recalculationSchema.safeParse({ input: withoutTogether }).success).toBe(false);
+  });
 });
 
 const requestState = (answer: AnswerReply): unknown => answer.plans[0]?.study?.group?.request?.status;
@@ -77,6 +87,26 @@ describe('The study answer with Friends', () => {
   });
 });
 
+let catalogue: Catalogue;
+
+beforeAll(async () => {
+  catalogue = await readCatalogue(CATALOGUE_FILE);
+});
+
+describe("The group fixtures' room kinds", () => {
+  it("carry each kind's library space as the catalogue gives it, for the phone to read free rooms", () => {
+    const kinds = [STUDY_GROUP_TO_SEND, STUDY_GROUP_MORE_NEEDED].flatMap(({ plans }) =>
+      plans.flatMap(({ study }) => (study?.group === undefined ? [] : [study.group.room, ...study.group.rooms])),
+    );
+
+    expect(kinds.length).toBeGreaterThan(0);
+    for (const { spaceId, space } of kinds) {
+      const listed = catalogue.byId.get(spaceId);
+      expect(space).toEqual(listed === undefined ? null : cardSpace(listed, listed.seatNos));
+    }
+  });
+});
+
 describe('The whole study answer', () => {
   const { plans } = STUDY_ANSWER;
 
@@ -103,8 +133,16 @@ describe('The whole study answer', () => {
 });
 
 describe('The capability and the line on screen', () => {
-  it('is study-plan', () => {
+  it('is study-plan alone, and study-group together', () => {
     expect(CLIENT_CAPABILITIES).toContain('study-plan');
+    expect(CLIENT_CAPABILITIES).toContain('study-group');
+  });
+
+  it('gives no seat to book for the plan together, and says it is together', () => {
+    const line = contextLines({ ...NO_CONTEXT, conditions: STUDY_GROUP_MORE_NEEDED.input, planId: '관정관' })[0];
+
+    expect(line).toContain('"together":true');
+    expect(line).not.toContain('"book"');
   });
 
   it('gives the study plan on screen with the places numbered', () => {

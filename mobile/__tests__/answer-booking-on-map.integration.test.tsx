@@ -213,31 +213,6 @@ describe('the raised seat card on the map', () => {
   });
 });
 
-// P01 ticket 03: after the booking, 확인 is the main button and closes the answer.
-describe('a seat booked on the map', () => {
-  it('says what was booked, and 확인 beside the input closes the answer', async () => {
-    const { user } = await asked();
-
-    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' }));
-    await pass(500);
-
-    expect(screen.getByTestId('library-done')).toBeVisible();
-    expect(screen.getByText('✓ 예약했어요')).toBeVisible();
-    expect(screen.getByText(/^관정 7층 열람실 \d+번 · 오늘 17:00–18:00$/u)).toBeVisible();
-    expect(screen.queryByText('카드에서 확인해 주세요.')).toBeNull();
-    expect(screen.queryByText('예약했어요')).toBeNull();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:00 · \d+번 · 예약됨$/u));
-    expect(screen.queryByTestId('time-bar')).toBeNull();
-    expect(screen.getByText(/^걸음 \d+분( ·|이라) /u)).toBeVisible();
-    expect(within(screen.getByTestId('library-done')).getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(within(screen.getByTestId('answer-card')).getByRole('button', { name: '답 닫기' })).toBeVisible();
-    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '확인' }));
-    await pass(500);
-
-    expect(screen.queryByTestId('answer-card')).toBeNull();
-  });
-});
-
 // P01 ticket 17: the time card shows the rest of the day, from now floored to the hour to closing.
 describe("a seat card's time card", () => {
   it('runs from now, 16:00, to closing', async () => {

@@ -4,16 +4,24 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
-import { studyAnswer, type StudyAnswer, type StudyWhat } from '../src/assistant/lookup/study-lookup.js';
+import { type StudyArgs, studyAnswer, type StudyAnswer, type StudyWhat } from '../src/assistant/lookup/study-lookup.js';
 import { type StudyArea } from '../src/assistant/lookup/study-near.js';
 import { GATE_BASIS } from '../src/assistant/lookup/way-lookup.js';
 import { type WayArgs } from '../src/assistant/lookup/way.js';
 import { type StudyBuildingDto } from '../src/study-spaces/dto/study-spaces.dto.js';
-import { A9_AREA, ENGINEERING_AREA, LIBRARY_AREA, MOUNTAIN_AREA, studyBuildingsFor } from './study-area-example.js';
+import {
+  A9_AREA,
+  ENGINEERING_AREA,
+  LIBRARY_AREA,
+  MOUNTAIN_AREA,
+  seedHours,
+  studyBuildingsFor,
+} from './study-area-example.js';
 import { classAt, id, ME, point, position, readCampus, TUESDAY, wayArgs } from './way-example.js';
 
 // "이 근처 조용히 공부할 곳" over the visible area (board a9): on Tuesday 2026-11-17 at 12:10 the User is at 301동 after
@@ -23,10 +31,12 @@ import { classAt, id, ME, point, position, readCampus, TUESDAY, wayArgs } from '
 
 let economics: StudyBuildingDto[] = [];
 let computing: StudyBuildingDto[] = [];
+let hoursOf: StudyArgs['hoursOf'];
 
 beforeAll(async () => {
   await readCampus();
   [economics, computing] = await Promise.all([studyBuildingsFor('경제학부'), studyBuildingsFor('컴퓨터공학부')]);
+  hoursOf = await seedHours();
 });
 
 const strong = (text: string): { text: string; strong: boolean } => ({ text, strong: true });
@@ -61,6 +71,7 @@ function asked(given: Asked = {}): StudyAnswer {
     buildings: given.buildings ?? economics,
     area: given.area === undefined ? A9_AREA : given.area,
     what: given.what ?? 'quiet',
+    hoursOf,
   });
 }
 

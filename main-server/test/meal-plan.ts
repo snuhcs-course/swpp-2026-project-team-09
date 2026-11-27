@@ -7,6 +7,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -19,6 +20,7 @@ import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type TravelProvider } from '../src/travel/travel.js';
 import { type UsageClientFactory } from '../src/usage/usage.service.js';
 import { ask, postAssistantMessages } from './assistant.js';
+import { ownDatabase } from './containers.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
 import { menusMessage, restaurant } from './menus.js';
 import { ScriptedModel, type Step } from './scripted-model.js';
@@ -48,6 +50,15 @@ export type Place = z.infer<typeof placeSchema>;
 
 export type Named = TestUser & { name: string };
 
+// A Tuesday no test uses, for the stage's warm-up round: only the warm-ups post its menus, and no test reads them.
+const WARM_UP_DAY = '2199-01-08';
+
+interface StartOptions {
+  settings?: object;
+  posthog?: UsageClientFactory;
+  ownDatabase?: boolean;
+}
+
 export class MealPlanStage {
   readonly model = new ScriptedModel();
   app!: INestApplication<Server>;
@@ -61,10 +72,18 @@ export class MealPlanStage {
   // A travel provider of the test's own in place of the seed's.
   constructor(private readonly travel?: TravelProvider) {}
 
-  // `settings` over the tests' own, and `posthog` in PostHog's client's place, for a test of the usage events.
-  async start({ settings = {}, posthog }: { settings?: object; posthog?: UsageClientFactory } = {}): Promise<void> {
+  private dropDatabase?: () => Promise<void>;
+
+  // `settings` over the tests' own, `posthog` in PostHog's client's place, for a test of the usage events, and a
+  // database of its own (test/containers.ts) for a file that makes room requests, which a read sweeps by its clock.
+  async start({ settings = {}, posthog, ownDatabase: own = false }: StartOptions = {}): Promise<void> {
     const { model } = this.model;
-    const all = { ...inject('settings'), ...settings };
+    let all = { ...inject('settings'), ...settings };
+    if (own) {
+      const database = await ownDatabase(all);
+      this.dropDatabase = database.drop;
+      all = database.settings;
+    }
     this.app = await startApp(all, [], refuseKakao, model, [], this.travel, undefined, { posthog });
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockImplementation(() => this.now);
     // Imported after startApp, so that it is the class AppModule registers.
@@ -72,10 +91,26 @@ export class MealPlanStage {
     vi.spyOn(this.app.get(RestaurantHours), 'hoursOf').mockImplementation((name, meal) =>
       Promise.resolve(meal === 'lunch' || meal === 'dinner' ? (this.hours[name]?.[meal] ?? null) : null),
     );
+    await this.warmUp();
   }
 
-  stop(): Promise<void> {
-    return this.app.close();
+  // A file's first request down each route costs several times a later one, since nothing on its way has run yet; in
+  // CI, beside files migrating databases of their own, a first test went past its 5 seconds. One round here, under the
+  // hook's minute, leaves each test only the time of its own requests.
+  private async warmUp(): Promise<void> {
+    const before = this.now;
+    await this.asking(WARM_UP_DAY, '12:00', '준비');
+    await this.classAt(this.asker, '09:30', '10:45', '301');
+    await this.menusOn(WARM_UP_DAY, ['301동식당', '학생회관식당']);
+    await this.send([{ text: '…' }], {}, '안녕');
+    await this.send([planMeal(WARM_UP_DAY), { text: '…' }], { context: { locationMissing: 'permission' } }, '점심');
+    this.model.script();
+    this.now = before;
+  }
+
+  async stop(): Promise<void> {
+    await this.app.close();
+    await this.dropDatabase?.();
   }
 
   // Stands the clock on that time of the day, for a new asker of that name.

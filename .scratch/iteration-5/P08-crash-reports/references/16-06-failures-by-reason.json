@@ -1,0 +1,7 @@
+{
+  "kind": "DataTableNode",
+  "source": {
+    "kind": "HogQLQuery",
+    "query": "select toDate(timestamp) as `날짜`, multiIf(event = 'assistant_reply_failed', 'AI 답변', event = 'party_creation_failed', '파티 만들기', event = 'party_join_failed', '파티 참여', event = 'friendship_creation_failed', '친구 맺기', event = 'seat_booking_failed', '관정 좌석 예약', concat('그 밖의 요청 ', toString(properties.method), ' ', toString(properties.route))) as `무엇이`, multiIf(properties.reason = 'network', '네트워크', properties.reason = 'timeout', '시간 초과', properties.reason = 'server_error', '서버 오류', properties.reason = 'refused', '거절', toString(properties.reason)) as `이유`, count() as `횟수` from events where timestamp > now() - interval 14 day and (event in ('assistant_reply_failed','party_creation_failed','party_join_failed','friendship_creation_failed','seat_booking_failed') or (event = 'api_request_failed' and not (properties.route = '/parties/mine' and properties.reason = 'refused'))) group by `날짜`, `무엇이`, `이유` order by `날짜` desc, `횟수` desc"
+  }
+}
