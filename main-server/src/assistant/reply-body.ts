@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type LeftOutClass } from './dto/answer.dto.js';
@@ -15,7 +16,8 @@ import { requestKey } from './presented.js';
 // new one, which the app then opens at it (P05 ticket 51). The Classes left out are given back while the request sent
 // some (`sent`) or a tool changed them (P05 ticket 70). An app that says `answers` also gets every answer of the
 // message with its request's key, the keys of the requests that ended with none, and which request holds the plan
-// chosen (P05 ticket 73).
+// chosen (P05 ticket 73), and never `clears`: the answers on screen may be of other requests than the one that ended
+// with none, so it takes off only the keys `withdrawn` names.
 export function replyBody(
   reply: FeatureReply,
   sent?: readonly LeftOutClass[],
@@ -25,13 +27,7 @@ export function replyBody(
   const answers = capabilities.includes('answers') ? (reply.answers ?? []).map((each) => keyed(each)) : null;
   const withdrawn = answers === null ? [] : (reply.withdrawn ?? []);
   const skipped = reply.leftOut ?? (sent === undefined || sent.length === 0 ? undefined : [...sent]);
-  const drawn =
-    answer !== null ||
-    (answers?.length ?? 0) > 0 ||
-    lookup !== null ||
-    cards.length > 0 ||
-    proposal !== null ||
-    steps !== undefined;
+  const drawn = answer !== null || lookup !== null || cards.length > 0 || proposal !== null || steps !== undefined;
   const chosen = select !== undefined && (answer === null || answer.plans.some(({ id }) => id === select));
   const key = chosen && answers !== null ? holding(answers, select) : null;
   return {
@@ -47,7 +43,7 @@ export function replyBody(
     ...(offers.length === 0 ? {} : { offers }),
     ...(steps === undefined ? {} : { steps }),
     ...(chosen ? { select: { planId: select, ...(key === null ? {} : { key }) } } : {}),
-    ...(clears === true && !drawn && mapButtons.length === 0 ? { clears } : {}),
+    ...(clears === true && answers === null && !drawn && mapButtons.length === 0 ? { clears } : {}),
     ...(skipped === undefined ? {} : { skipped }),
   };
 }

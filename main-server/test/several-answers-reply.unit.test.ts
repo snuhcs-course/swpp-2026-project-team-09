@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { contextLines } from '../src/assistant/context-lines.js';
@@ -107,6 +108,20 @@ describe('The reply of lunch and dinner', () => {
     const before = replyBody(withdrawn, undefined, ['answer']);
     expect(before).toMatchObject({ answer: null, clears: true });
     expect(before).not.toHaveProperty('withdrawn');
+  });
+});
+
+describe('A reply that draws nothing beside a request withdrawn', () => {
+  // Lunch and dinner on screen from an earlier reply; "저녁 다른 데" found nothing, so this reply draws no answer.
+  it('never clears for an app that says answers, so lunch kept from an earlier reply stays', () => {
+    const nothing = reply({ answer: null, answers: [], withdrawn: ['dinner-key'], clears: true });
+    const body = replyBody(nothing, undefined, ['answer', 'answers']);
+    expect(body).not.toHaveProperty('clears');
+    expect(body).toMatchObject({ answers: [], withdrawn: ['dinner-key'] });
+    expect(replyBody(reply({ answer: null, answers: [], clears: true }), undefined, ['answers'])).not.toHaveProperty(
+      'clears',
+    );
+    expect(replyBody(nothing, undefined, ['answer'])).toMatchObject({ clears: true });
   });
 });
 

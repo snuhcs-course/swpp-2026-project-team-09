@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type Lookup, type PlanInput } from './dto/answer.dto.js';
@@ -87,12 +88,16 @@ export function clearDrawn(presented: Drawn): void {
 }
 
 // The answer drawn changed by the server after its tool presented it, such as a meal planned again from the step before
-// it, in both views. Nothing when none is drawn.
+// it, in both views: in the place of the answer it changes, even when the change makes it another request. Nothing when
+// none is drawn.
 export function reviseAnswer(presented: Drawn, change: (answer: AnswerReply) => AnswerReply): void {
-  if (presented.answer === null) {
+  const { answer } = presented;
+  if (answer === null) {
     return;
   }
-  const changed = change(presented.answer);
+  const changed = change(answer);
+  const answers = presented.answers ?? [];
+  const at = answers.findIndex(({ input }) => sameRequest(input, answer.input));
   presented.answer = changed;
-  presented.answers = withAnswer(presented.answers ?? [], changed);
+  presented.answers = at === -1 ? withAnswer(answers, changed) : answers.with(at, changed);
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type Lookup, type MealInput, type PlanInput } from '../src/assistant/dto/answer.dto.js';
@@ -122,6 +123,13 @@ describe('Which request an answer answers', () => {
 });
 
 describe('The answers of a message', () => {
+  it('keep an answer the server changed into another request in its place, never beside it', () => {
+    const presented = fresh();
+    presentAnswer(presented, answerOf(meal('2026-11-27', 'lunch')));
+    reviseAnswer(presented, () => answerOf(meal('2026-11-28', 'lunch')));
+    expect(presented.answers?.map(({ input }) => input)).toEqual([meal('2026-11-28', 'lunch')]);
+  });
+
   it('names a request withdrawn once, and no longer when it is drawn again', () => {
     const presented = fresh();
     withdrawAnswer(presented, meal('2026-11-27', 'dinner'));

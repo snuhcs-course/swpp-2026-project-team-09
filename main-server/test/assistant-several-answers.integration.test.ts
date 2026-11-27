@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import request from 'supertest';
 import { z } from 'zod';
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
 import { type PrismaClient } from '../src/generated/prisma/client.js';
@@ -11,6 +13,7 @@ import { MealPlanStage } from './meal-plan.js';
 import { menusMessage, restaurant } from './menus.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { type Step } from './scripted-model.js';
+import { withAccessToken } from './sign-in.js';
 import { sendAsWorker } from './worker.js';
 
 // One message that asks for two plans (P05 ticket 73), at the Assistant's endpoint with the scripted model, the seed's
@@ -150,5 +153,31 @@ describe('A lookup after a plan in one message', () => {
     expect(before).not.toHaveProperty('answers');
     expect(before.answer).toBeNull();
     expect(before.lookup).not.toBeNull();
+  });
+});
+
+const recalculate = (input: unknown, app: { clientCapabilities: string[] }): request.Test =>
+  withAccessToken(request(stage.app.getHttpServer()).post('/assistant/answers'), stage.asker.accessToken).send({
+    input,
+    clientCapabilities: app.clientCapabilities,
+  });
+
+// The bar's other meal recalculates lunch as dinner through POST /assistant/answers: another request, as a Friend added
+// makes a study place one together.
+describe('An answer recalculated into another request', () => {
+  it('comes back with the key of the request it now answers, the one a later reply gives it; to an app before, none', async () => {
+    const lunch = await asked([meal('lunch'), { text: '점심을 짰어요.' }], ANSWERS_APP, '점심 짜줘');
+    const input = lunch.answers?.[0]?.input;
+    const dinnerInput = input?.kind === 'meal' ? { ...input, meal: 'dinner' } : null;
+
+    const response = await recalculate(dinnerInput, ANSWERS_APP);
+    expect(response.status).toBe(200);
+    const recalculated = z.custom<AnswerReply>().parse(response.body);
+    const dinner = await asked([meal('dinner'), { text: '저녁을 짰어요.' }], ANSWERS_APP, '저녁 짜줘');
+
+    expect(recalculated.key).not.toBe(lunch.answers?.[0]?.key);
+    expect(recalculated.key).toBe(dinner.answers?.[0]?.key);
+    const before = await recalculate(dinnerInput, OLD_APP);
+    expect(before.body).not.toHaveProperty('key');
   });
 });
