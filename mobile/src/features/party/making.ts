@@ -7,6 +7,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { QuestProposal } from '@/api/assistant-types';
@@ -14,7 +15,6 @@ import type { QuestChange, QuestMaking } from '@/api/party-types';
 import type { QuestEntries, QuestPhoto, ShownQuest } from '@/api/quest-parts-types';
 import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
 import type { Board, GlobalEvent, Quest, SubQuest } from '@/api/types';
-import { eventTagsOf } from './event-kinds';
 
 // What 파티 만들기 sends: a new Quest, or the change to one, from what the form holds.
 
@@ -111,9 +111,9 @@ export function eventTitle(event: Pick<GlobalEvent, 'title'>): string {
   return `${event.title} 같이 가요`;
 }
 
-// A chosen event gives its title, unless the User wrote one of their own, its start, which `언제` may move to a meeting
-// before it, and its tags. An edit keeps its title: the event only fills the time, the place and the tags. Taking the
-// event away leaves the title and the tags.
+// A chosen event gives its title, unless the User wrote one of their own, and its start, which `언제` may move to a
+// meeting before it. An edit keeps its title: the event only fills the time and the place. Taking the event away
+// leaves the title.
 export function withEvent(form: PartyForm, event: FormEvent | null, editing = false): PartyForm {
   if (event === null) {
     return { ...form, event, startsAt: editing ? form.startsAt : null };
@@ -125,7 +125,6 @@ export function withEvent(form: PartyForm, event: FormEvent | null, editing = fa
     event,
     title: given ? eventTitle(event) : form.title,
     startsAt: event.startsAt,
-    tags: [...new Set([...form.tags, ...eventTagsOf(event)])],
   };
 }
 

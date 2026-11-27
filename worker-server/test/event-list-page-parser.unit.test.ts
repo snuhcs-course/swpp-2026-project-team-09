@@ -4,6 +4,7 @@
  * 2026-10-02  Opus 5.5   prompted by TaeHyun79
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { parseEventListPage } from '../src/event/event-list-page.parser.js';
@@ -53,5 +54,19 @@ describe('A page of the events list', () => {
     );
 
     expect(() => parseEventListPage(withoutTitle, filter)).toThrow('A post of the events list has no title');
+  });
+});
+
+describe('The first page of the events list on 27 November 2026', () => {
+  it('leaves out its last post, which links out of the board', () => {
+    // The post opens in a new window, and its link is its title where an address should be.
+    const posts = parseEventListPage(savedPage('snu-events-list-page-1-2026-11-27'), {
+      from: '2026.11.27',
+      to: '2027.11.27',
+    });
+
+    expect(posts.map(({ postNumber }) => postNumber)).toEqual([
+      180065, 180059, 180047, 180044, 180041, 179996, 179990, 179984, 179981, 179975, 179969,
+    ]);
   });
 });

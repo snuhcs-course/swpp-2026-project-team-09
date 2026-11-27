@@ -5,6 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
@@ -88,6 +89,12 @@ export interface Draft {
   action?: string | null;
   // A meal candidate that does not fit or is far, drawn pale; left out, not.
   faded?: boolean;
+  // A meal answer's pick or candidate, menus or none: its label in coral (P04 ticket 90); left out, not.
+  coral?: boolean;
+  // A 관정 booking's pick: its label in the study colour (P01 ticket 10); left out, not.
+  study?: boolean;
+  // A meal candidate's title is a clock time, not walking minutes (P04 ticket 88); left out, not.
+  clock?: boolean;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
   // The sides its label may take in place of its group's; left out, its group's.
@@ -234,6 +241,9 @@ export function unplaced(
           ...(note === null ? {} : { note }),
           ...(action === null ? {} : { action }),
           ...(faded ? { faded } : {}),
+          ...(draft.coral === true ? { meal: true } : {}),
+          ...(draft.study === true ? { study: true } : {}),
+          ...(draft.clock === true ? { clock: true } : {}),
           number: group === 'candidate' || symbol === null ? number : null,
         };
   const { sides = SIDES[group], clearOf, either, always = false, overFaces = false } = draft;
@@ -245,6 +255,8 @@ export function unplaced(
     kept: group === 'pick' || held || always,
     // A tag held at a point it shares gives way to the other labels (P04 ticket 51).
     ...(meal && held && group === 'candidate' ? { shrinks: true } : {}),
+    // A meal pick's label keeps clear of the other rounds (P04 ticket 89).
+    ...(meal && group === 'pick' ? { roundsFirst: true } : {}),
     ...(clearOf === undefined ? {} : { clearOf }),
     ...(either === undefined ? {} : { either }),
     ...(overFaces ? { overFaces } : {}),
@@ -257,9 +269,19 @@ export function unplaced(
 export const CAPSULE_SIDES: LabelSide[] = ['right', 'left'];
 
 export function unplacedMinutes(draft: Draft, point: number): Unplaced {
-  const { position, title, faded = false } = draft;
-  const words = title === null ? null : { tone: 'minutes' as const, title, line: null, number: null };
-  return { point, position, words: words !== null && faded ? { ...words, faded } : words, sides: CAPSULE_SIDES };
+  const { position, title, faded = false, clock = false } = draft;
+  const words =
+    title === null
+      ? null
+      : {
+          tone: 'minutes' as const,
+          title,
+          line: null,
+          number: null,
+          ...(faded ? { faded } : {}),
+          ...(clock ? { clock } : {}),
+        };
+  return { point, position, words, sides: CAPSULE_SIDES };
 }
 
 export function eitherOrder(drafts: readonly Draft[], one: Draft, other: Draft): number {

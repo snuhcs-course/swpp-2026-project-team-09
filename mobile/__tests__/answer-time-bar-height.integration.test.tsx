@@ -14,7 +14,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
-import { barShift, barTopOf, layBar, layFolded, layRows, stepGrip } from './support/time-card';
+import { barShift, barTopOf, layFolded, layRows, stepGrip } from './support/time-card';
 
 // The height the time card tells, which the answer sheet's high is measured from (P04 ticket 64), against the fake
 // main server over the stored answer to "배고파, 민수랑 같이".
@@ -58,12 +58,9 @@ describe("the time bar's folded height", () => {
   it('stays its folded parts’ height when the rows are laid out shut while React still holds them open', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await layFolded(100);
-    await layBar(100);
     await layRows(64);
     await press(user, UNFOLD);
-    await layBar(164);
 
-    await layBar(100);
     await stepGrip('tuck');
 
     expect(barShift()).toBe(-(barTopOf() + 100 - 20));

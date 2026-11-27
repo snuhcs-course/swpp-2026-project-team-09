@@ -2377,7 +2377,8 @@ the walk (`seatLeaveBy`); none when that time has passed or comes before the sta
 kept, and a leave-by that fails to be kept never fails the stay. The Quest is marked `seatStay`: the User's day as the
 planners read it (`heldSubQuests`, for `UserDayService.itemsOn`) leaves it out, so a seat is no busy time for the User
 or a Friend planning with them. The phone ends it with `DELETE /quests/:id` when it cancels or returns the seat, and a
-seat it never reports ends at its booked end.
+seat it never reports ends at its booked end. The Assistant's `proposeLibraryReturn` reads it: a stay not yet started
+is a booking to cancel, not a seat to return.
 
 ## Assistant
 
@@ -2440,8 +2441,85 @@ Anthropic API as the AI's key says
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
-  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), and `mentions` (below). Every
-  tool is given it, and `planMeal` reads its `location`.
+  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), `planIds` (below), and
+  `mentions` (below). Every tool is given it, and `planMeal` reads its `location`.
+
+  `planIds` (at most 30) lists the plans of the meal answer on screen in its order, which the app numbers from 1. The
+  model reads them as `numbered` in the line `[Plan on screen: …]`, and `choosePlan` chooses one of them by its number
+  or its Restaurant ("2번으로 할게", "두레미담으로"). A reply that chose one carries `select` (`{ "planId" }`). Beside no
+  answer of its own, the app keeps the answer on screen, its list and its numbers, and shows that plan. Beside a new
+  answer that holds it, such as after a dish picked from the menus or a Friend added with the choice, the app opens the
+  new answer at it. An app that ignores `select` shows the reply's words. A number past the list is asked about again,
+  a Restaurant not in the list is planned as a change of place, and without `planIds` the model plans with `planMeal`
+  as before. The request schema refuses unknown fields, so a main server before `planIds` would answer 400 to a request
+  that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
+  answer that says it, never to an older main server.
+
+  An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered on the map, the meal
+  answer's way (P10), and one that sends `study-group` the study answer together, a 관정 group study room at
+  everyone's free time (P10 ticket 07). Each works without the other.
+  - Its input is a `PlanInput` of kind `study`:
+    - `date`;
+    - `what`: quiet, group, pc or any;
+    - `people`: the asker, and the Friends the time card's "+ 같이" adds, 1 to 8;
+    - `together`: studying together, the group study room answer even with the asker alone;
+    - `window`;
+    - `area` for 근처;
+    - `minutes`: together, the length asked;
+    - `chosen`: the seat space or room kind the User chose, kept across adding and removing Friends.
+  - Each of its Plans carries `study` (`dto/study-plan.dto.ts`).
+    - Alone, `study` holds the building's spaces that fit, with their hours and whether each is open or not known,
+      관정관's seat to book, and `liveSeats`.
+    - Together (`together`, or Friends in `people`), the one plan is 관정관's, and `study.group` holds:
+      - the 관정 group study room kind, and every kind, 2층 first, with whether it fits the head count ("6명부터",
+        "6명까지");
+      - for the room kind and each listed kind, `space`: its library space as the library cards carry it (`roomNo`,
+        `sectorNo`, the kind's room numbers in `seatNos`, its hours and durations), which the phone reads the kind's free
+        rooms from (a sector may hold several kinds);
+      - how many more people are needed, 3 for the asker alone;
+      - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`, null while more are needed;
+      - 사용 용도, when the window opens, and the sent request's state.
+  - The request's context and `POST /assistant/answers` take a `study` input. The recalculation answers one alone
+    again (`lookup/study-plan*.ts`, P10 ticket 03) for an app that says `study-plan`, and one together
+    (`lookup/study-group*.ts`, ticket 07) for an app that says `study-group`; otherwise 422. A day together may be up
+    to 14 days ahead, past the booking window.
+    - One plan per building holding a space of the kind asked that the User may use, within `area` when it is set.
+    - The User is ready at `window.from`, at 09:00 of another day asked without a time, or now. Where they are counts
+      only when they set out now.
+    - Each space's state at the arrival comes from its hours as data (`openAt`). The buildings known open come first,
+      then those whose hours are not known, which say so. Each group is ranked by the longest stay before the next item or
+      `window.until`, a stay of three hours or more counting as long enough, then by the shorter walk.
+    - A stay ends at the next item, at `window.until`, or at the space's closing. With none of them known, or a space
+      open around the clock, it is three hours.
+    - A building whose fitting spaces are all open only to others is `dropped` ("경영대학 학생만 쓸 수 있어요"). One
+      closed then is in `closed` ("09:00에 열어요", "오늘 23:00에 닫았어요").
+    - With no plan, `noPlan` says why: nothing of the kind in the area, all of it open only to others, no time before
+      the next item, or all of it closed, with the building that opens first.
+    - Alone, each plan's time card lists the asker's Friends in `band.others`, with their busy time and walk, for
+      "+ 같이".
+  - Together, the answer is proposeStudyRoom's pick, read from the input:
+    - The people are checked as a meal's are: the asker first, only their Friends, no one twice, constraints the
+      asker's, known Places (400). `notBefore` and `leaveBy` bound a person's day; `from` is where they set out from.
+    - `pickStudyTime` picks over everyone's items, the room kind's hours within `window`, in its steps, with the walks
+      to and from Place 62-1, for `minutes`, else `window`'s span, else 180 minutes. `arrivalsOf` gives each person's
+      arrival, which `parts`, the lines and `basis` say.
+    - The room kind is `studyRoomFor`'s, the smallest that books for fewer than 4, or `chosen.roomSpaceId` while it
+      fits. The key is checked by `checkBooking` and ends in `:wait` past the booking window, with `opens`.
+    - `band.lanes` holds everyone's busy time and `band.others` the asker's other Friends.
+    - `noPlan` is `no-shared-time` when no start keeps everyone for 30 minutes, and `no-fit` with today's refusal for
+      more than 8 people, a length the room does not take, or a day it cannot be booked or waited for.
+  - The chat's tools are `planStudy` (P10 ticket 04) and `planStudyGroup` (ticket 07), below. An app with neither
+    capability gets nothing new.
+
+  A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
+  for it: `planMeal` for a day past or more than a week ahead, for breakfast, or for a meal over for today;
+  `planMeet`, `planEvents`, `planNewQuest` and `findMenu` for a day out of reach; and `refuse` for a request plainly
+  not about the plan on screen (off-campus, general-work, who-looked, past-location, others-sharing,
+  not-watched-friend, not-watched-shuttle). The app then takes the answer on screen off the map, with
+  its time card and button, so that the words are not read over a plan they are not about (P05 ticket 55). A reply of
+  words alone without it, such as one about the plan on screen ("왜 302동은 없어?"), or a refusal of words that are
+  vague or cannot be read (a typo, half a sentence), keeps the answer as before, and so
+  does an app that ignores it. It is left out of a reply that draws something of its own.
 
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend
@@ -2497,7 +2575,13 @@ Anthropic API as the AI's key says
     out, on one message at most). Once 만들기 made the Proposal, it is sent back with `madeQuestId`, the Quest's id.
     The model gets only the latest 20 messages, and of an Assistant's message its text, a line naming its cards and a
     line with its Proposal's values (`[Proposal shown: …]`, or `[Proposal made: …]` with the Quest's id), never an
-    earlier message's tool results.
+    earlier message's tool results. The cards line names each card by its kind and id, except a library book card: the
+    app sends it back as the User left it, and on the phone they can change its room, time and seat, so its key is
+    written out in words from the catalogue, such as
+    `[Cards shown: library card for 관정 8층 8A 열람실 1 구역(QUIET ZONE), 11/27 14:00–17:00, as the User left it]`
+    (`run-messages.ts`, P05 ticket 60). The library rules say that a difference from the earlier text is the User's
+    change, not the Assistant's error, and that a seat item in `[Ahead: …]` at that time is the booking made. Nothing
+    more is sent: no booking number and no flag that the User booked.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, messages over 24,000 characters together, a Proposal's title, description and names included,
@@ -2567,6 +2651,30 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **The kind of food and the price.** A meal's `input` may carry `cuisine` (`한식`, `중식`, `일식`, `양식`, `분식`, or
+    null): the plans of the Restaurants that serve it come first. It may carry `maxPrice`, the highest price per person,
+    a whole number of won from 1 to 100,000, and `cheapFirst: true` (P05 ticket 53); any other value of either is a
+    `400`. A Restaurant fits `maxPrice` when the price its list shows is at or under it: its main corner's own price,
+    else its cheapest dish. The fitting plans come first, each part in its order, and the others follow; when none
+    fits, every plan goes cheapest first; when no plan has a price, as before a meal's menus are posted, the order
+    stays. `cheapFirst` puts the cheapest first, among the fitting plans when there is a `maxPrice`. planMeal keeps
+    both from the conditions on screen until the User lets them go, and the app takes `maxPrice` away with its chip's
+    ✕. This server goes out before the app that shows them; a server reverted to before it answers `400` to an app that
+    sends a `maxPrice` back, until the User starts a new conversation, so it is reverted only together with that app.
+  - **What was missing.** A meal's answer asked with `locationMissing: 'permission'` carries in `offers`
+    `{ "kind": "open", "label": "위치 켜기", "screen": "location", "hint": "위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요" }`,
+    and one for a User with no Class carries `{ "kind": "open", "label": "시간표 넣기", "screen": "timetable", "hint" }`
+    with `note`, the same words as that `hint`. The app draws a meal Plan's offers as the `hint` lines under its words
+    (P04 ticket 86); `note` is kept for the apps before them, which draw the note over their buttons.
+  - **Classes left out.** A meal's `input` may carry `skipped`, the ids of the times of the asker's Classes of that day
+    left out of the plan (P05 ticket 54): the planner takes them out of the asker's day, so the meal may use that
+    time, and where the asker sets out from and the next item come from the items left. An id that is none of the
+    asker's Classes that day is dropped from the answer's `input`, and the field is absent for none. Each Plan's
+    `band.skipped` lists them whole as `{ id, startAt, endAt, label }`, in no lane, and the band's range reaches over
+    the time they free, to the next item left or the meal's end. `planMeal` names them with `skipClasses` and puts one
+    back with `attendClasses`, by start (`HH:MM`) or by name; a word that names none of the day's Classes, or several,
+    answers `{ "result": "unknownClass", "unknown", "classes" }` and plans nothing. Those of the conditions on screen
+    stay left out for any meal of the same day.
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
     earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
     place where they
@@ -2769,7 +2877,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       worker reads today to six days ahead, so a week ahead never has one): the card's `noPlan.lines` say
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
-      and `getMenus` say the same of such a day. A `findMenu` that finds the menu plans the meal for the User alone as
+      and `getMenus` say the same of such a day. `findMenu` takes the meal only when the User names one; with none
+      ("내일 예술계 메뉴") it opens the meal nearest in time, as `planMeal` takes it: today the one being served now or the
+      next, on another day lunch, the other one press away on the app's tabs (P05 ticket 52). A `findMenu` that finds the menu plans the meal for the User alone as
       `planMeal` does; when the Restaurant is one of its Plans, that meal answer is the reply's `answer`, with `opened`
       naming the Plan: the app shows it as that place opened from the answer's list (its menu, when the User arrives,
       the button to make it, and the way back to every place they can eat at), and the model writes nothing (P04
@@ -2830,6 +2940,38 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       (kind `study`) fades the restricted rooms and, when 관정관 is outside the area, flags the area's edge towards it
       (role `away`, with its `placeId`), where the phone adds its free seats. The model gets names, hours, and
       minutes, never the area; without a `viewport` the tool answers `none`.
+      - By the hours as data (P10 ticket 06, `byHours` in `lookup/study-near.ts`), a space closed at the arrival is left
+        out, and one whose hours are not known comes after every known-open one; it is picked only when none is open,
+        with "여는 시간을 몰라요" in the basis and `hoursKnown: false` for the model. A stay ends at the closing when that
+        comes before the next item, or within three hours when nothing follows. With every fitting space closed, the
+        tool answers `none` (`all-closed`). The Lookup's shape is unchanged.
+    - `planStudy(what, date?, from?, until?, near?)` and `STUDY_PLAN_RULES` join for an app that sends both `answer`
+      and `study-plan` (`lookup/study-plan-tools.ts`), in the place of `findStudyNearby` and its rules: "근처" is
+      `planStudy` with `near`, over the request's `viewport`.
+      - It puts the ranked study answer in `presented.answer` and tells the model each plan in words: the building,
+        its first space, whether its hours are known, when it closes, the walk and the stay. It also gives why the first
+        comes first, and the dropped and closed buildings. Never a seat count.
+      - With `study-plan`, the library rules leave "공부할 자리" asked without a booking to `planStudy`
+        (`LIBRARY_STUDY_RULES`). Without it, every prompt and tool is unchanged.
+      - The model chooses a plan of a study answer on screen with `choosePlan`, by number or by building, as for a
+        meal (P10 ticket 05). With 관정관's plan shown alone, the study line gives `book` (7F-7A-zone2 for a quiet place
+        or any), and "예약해 줘" books it through the library tools; 관정관's plan alone carries the same `study.book`.
+      - A reply with no words of the model's says the first plan and why ("열려 있는 곳 중 가장 가까운 공대
+        신양학술정보관을 추천해요.", `lookup/study-plan-words.ts`).
+    - `planStudyGroup(friendIds?, date?, firstDay? + lastDay?, from?, until?, minutes?)` and `STUDY_GROUP_RULES` join
+      for an app that sends both `answer` and `study-group` (`lookup/study-group-tools.ts`), in the place of
+      `proposeStudyRoom` and its rule. 같이, 친구랑, 스터디, 조모임 or 팀플 with a place or a time to study resolves
+      each Friend named, then calls it; named nobody, the plan is the asker's alone with three more needed, and the app
+      opens its picking of Friends from it.
+      - Its days are the one named, a period of at most 7 days from today on, or the days a room can be booked now; it
+        plans the best day and tells the model the other days' best times.
+      - It tells the model the room, the day and time, each person's stay, `moreNeeded` and when the window opens, with
+        Friends' names in delimiters, and the one sentence ("네 명이 모두 비는 내일 15:00에 관정 4층 6인실을
+        추천해요.", or "그룹스터디룸은 네 명부터예요. 한 명만 더 부르면 돼요."), which a reply with no words says too.
+      - The library rules drop the proposeStudyRoom rule and leave studying together to `planStudyGroup`
+        (`LIBRARY_GROUP_RULES`, or `LIBRARY_STUDY_GROUP_RULES` with `study-plan` too, whose study rules then name
+        "혼자 공부할 곳" in the place of "같이 공부할 곳"). Alone, a `study-group` app keeps the library's seat path, and
+        one with both `planStudy`. Without `study-group`, every prompt and tool is unchanged.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
@@ -2856,9 +2998,13 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     answers `found` with only the first of them, in the catalogue's order with `7F-7A-zone2` first, its card's notes
     say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
     are still asked about. The card's space carries the
-    catalogue's `kind`, by which the phone groups the seat spaces of a floor.
-  - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
-    answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
+    catalogue's `kind`, by which the phone groups the seat spaces of a floor. For the same app, a question about the
+    free seats of a seat space ("관정 7층 자리 있어?") or its 좌석 현황 is asked as that seat (P05 ticket 61):
+    `findLibrarySpace`, then `proposeLibraryBooking`, whose book card the phone draws as the seat ticket with its free
+    seats, never `showLibrarySeats`, and a reply of one sentence that names no card. A room space's free rooms still go
+    to `showLibrarySeats`, as every 좌석 현황 does in the text chat.
+  - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers and does not say
+    `study-group`: the answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
     with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one
     named, a period of at most 7 days from today on, or the days a room can be booked now; each must be bookable or
     waitable (at most 14 days ahead). The room is the smallest group study room size whose minimum and maximum hold the
@@ -2877,10 +3023,26 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     `shown` adds `windowOpens`: the room request it makes waits for the window (Group study room requests).
   - `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
     library cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
-    in the history, checked against its grammar. Library cards are attached only for a request with
+    in the history, checked against its grammar; a book card's key reaches the model in words, as the User left it
+    (Shape, above). Library cards are attached only for a request with
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
-    or the User's 소속.
+    or the User's 소속, and no summary names a card: the reply says what the User presses, never that a card was shown.
+  - 반납 is only for a seat confirmed at the 좌석배정기. `proposeLibraryReturn` reads the User's seat stay of today
+    (`library/seat-stay-now.ts`: the one under way, else the next to start; a seat booked through the app's card is
+    one, see A seat's stay). While that stay has not started, the seat is not in use: it shows the cancel card for its
+    day and start (`cancel:-:<date>:<HHMM>`) and answers `notInUse: true`, and the rules have the reply say in one
+    sentence that the seat is not in use yet and 취소하기 cancels it. From the start on, and for a room named, it shows
+    the return card, since the server cannot see whether the seat was confirmed. "내 예약", "예약 됐어?", "취소
+    됐어?", "반납 됐어?" and "반납했어?" call `showMyLibraryBookings`, whose card lists each booking with its state;
+    the reply says in one sentence that the states are shown below and never whether a booking, cancel or return went
+    through (P05 ticket 59). These rules are shared by `LIBRARY_RULES` and the answer-drawing ones.
+  - A space asked for today at or after its closing, by its catalogue hours, gets no card. `showLibrarySeats` and
+    `findLibraryFreeSlots` answer `refused` with `closedToday` (`{ closedAt, opens }`, such as `23:00` and `내일 07:00`),
+    and `findLibrarySpace` marks the space `closedToday`. The refusal draws 관정 as a place with why, a `place` Lookup
+    with one `dropped` mark tagged "관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터", `fact: true` and no actions
+    (`library/closed-today.ts`, P05 ticket 57). For an app that draws answers, `proposeLibraryBooking` answers the
+    same (`refusesClosedToday`, P05 ticket 61); in the text chat it is refused by the hours as before.
   - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
     `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.
@@ -3211,6 +3373,20 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   its spaces is. 관정관's entry lists the seat sectors of the library catalogue the User may book, which the phone reads
   through the User's own Library Session; no count comes back. When the app's department list changes, add the new
   names to `department-colleges.json`: the app's test fails until every name has an entry.
+- **A Study Space's hours as data** (P10): each space's `schedule` gives its hours by day (`weekday`, `saturday`,
+  `sunday`), for the year (`week`) and, when a source gives them apart, a `vacation`, with the column a public holiday
+  takes (`holiday`), 설·추석's own (`lunarHolidays`) and stretches such as an exam period (`periods`). Each day is a list
+  of ranges (a close of `24:00`, or past midnight, allowed), `'closed'`, or `null` when no source gives it. The file's
+  `calendar` gives two things:
+  - the term's vacations, over the span the 학사일정 covers;
+  - the public holidays, with 설·추석 apart, over the range they are filled for (`filled`). Each holiday names its
+    rule ("관공서의 공휴일에 관한 규정 제3조제1항제1호") and the page that states its date: law.go.kr, or KASI's
+    음양력 변환 for a lunar date.
+    A day outside that range, or not listed, reads as a regular day. `study-hours.unit.test.ts` fails once today passes
+    the range's end: fill the next range from the same rules, an election day or a temporary holiday only where an
+    official page states it. A space is open at a time only when every way the calendar allows that day to be says so;
+    else it is closed or not known. Fill only what a source states, from the hours research, and put a conflict or what
+    is not verified in the schedule's `note`. Neither is served by `GET /study-spaces`.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.
@@ -3320,6 +3496,12 @@ Each command fails when it finds a problem. Run all four before opening a pull r
 `pnpm test` needs Docker running. It starts its own PostgreSQL and Redis containers and removes them afterwards. The
 test files run in parallel, except `test/redis-idempotency-store.integration.test.ts`: it waits for Redis to expire
 records in real time, so it runs alone after the others, against a Redis container of its own.
+
+The integration test files share one database. The global setup also keeps a copy of it, as migrated and seeded, as a
+template. A file whose rows must reach no other file starts on a database of its own, which `ownDatabase()` in
+`test/containers.ts` clones from that template in about a second and drops afterwards. Every file that makes room
+requests does: a read of a room request expires and closes every request in its database by that file's own clock.
+`RoomStage` always does, and `MealPlanStage` and `StudyStage` do when started with `ownDatabase: true`.
 
 Each test file is named by its level (ADR 0007): `*.unit.test.ts` or `*.integration.test.ts`. `pnpm test:unit` runs
 the unit tests alone and needs no Docker. `pnpm test:integration` runs the integration tests, which start the

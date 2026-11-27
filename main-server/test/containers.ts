@@ -9,6 +9,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -88,6 +89,40 @@ export async function seededDatabase<Values extends { DATABASE_URL: string }>(
   const { url, drop } = await createDatabase(settings.DATABASE_URL);
   await seed(url);
   return { url, settings: { ...settings, DATABASE_URL: url }, drop };
+}
+
+// The main database as the global setup seeded it, before any test ran. PostgreSQL copies a database only while no
+// other session is connected to it, so no test connects to this one: ownDatabase clones it.
+const TEMPLATE_DATABASE = 'main_template';
+
+async function execute(databaseUrl: string, sql: string): Promise<void> {
+  const prisma = connect(databaseUrl);
+  try {
+    await prisma.$executeRawUnsafe(sql);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// Copies the seeded main database into the template, before any test connects to it.
+export function keepTemplate(mainUrl: string): Promise<void> {
+  return execute(mainUrl, `CREATE DATABASE "${TEMPLATE_DATABASE}" TEMPLATE "${new URL(mainUrl).pathname.slice(1)}"`);
+}
+
+// A database of its own, cloned from the template in about a second, with `settings` pointed at it, for a test file
+// whose rows must reach no other file. Unlike seededDatabase, it runs neither the migrations nor the seed.
+export async function ownDatabase<Values extends { DATABASE_URL: string }>(
+  settings: Values,
+): Promise<SeededDatabase<Values>> {
+  const name = `own_${randomUUID().replaceAll('-', '')}`;
+  await execute(settings.DATABASE_URL, `CREATE DATABASE "${name}" TEMPLATE "${TEMPLATE_DATABASE}"`);
+  const url = new URL(settings.DATABASE_URL);
+  url.pathname = `/${name}`;
+  return {
+    url: url.toString(),
+    settings: { ...settings, DATABASE_URL: url.toString() },
+    drop: () => execute(settings.DATABASE_URL, `DROP DATABASE "${name}" WITH (FORCE)`),
+  };
 }
 
 // What `pnpm db:seed` does, without building the server first.

@@ -2,17 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
 import { type TestUser } from './friends.js';
 import { lunchQuest, NOW, roomRequestSchema, RoomStage } from './room-requests.js';
 
-// A companion who has not answered by 20:00 on the day before the meeting is out at the next read.
-//
-// Every room file shares one database, and any read applies the deadlines of every request by its own file's clock,
-// which stands at Wednesday 2026-11-04 10:05. So a request whose deadline is still to come at a check is due after
-// Wednesday 10:30, and this file's clock stays before Wednesday 20:00, the other files' deadline.
+// A companion who has not answered by 20:00 on the day before the meeting is out at the next read. The stage's
+// database is the file's own, so the clock moves only this file's requests.
 
 // Each test signs in four Users and befriends them over HTTP before it starts, which takes up to 4 s on a loaded
 // runner: close to Vitest's 5 s.

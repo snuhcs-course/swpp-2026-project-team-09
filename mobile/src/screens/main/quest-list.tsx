@@ -5,13 +5,26 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { type ReactElement, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, font, Icon, mapText, radius, shadow, space, text, textHalo, useToast } from '@/design-system';
+import {
+  color,
+  font,
+  Icon,
+  mapText,
+  QuestRound,
+  radius,
+  shadow,
+  space,
+  text,
+  textHalo,
+  useToast,
+} from '@/design-system';
 import type { QuestRowView } from '@/features/quests/adapter';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
 import { questRows, type RowLook } from './quest-list-rows';
@@ -67,10 +80,9 @@ function QuestPill({ count, onFullScreen }: { count: number | null; onFullScreen
   );
 }
 
-// One Quest of today: its words at the left of the round that holds its icon, both in the
-// colour of its tone. The rail runs behind the round.
+// One Quest of today: its words at the left of its round, which tells 공개 from 비공개 by its icon. The rail runs
+// behind the round.
 function QuestRow({ row, first, last }: QuestRowProps): ReactElement {
-  const { tint } = row;
   return (
     <Pressable
       accessibilityLabel={[row.kicker, row.title, row.meta].filter((part) => part !== '').join(' · ')}
@@ -79,7 +91,7 @@ function QuestRow({ row, first, last }: QuestRowProps): ReactElement {
       style={styles.row}
     >
       <View style={styles.words}>
-        <Text numberOfLines={1} style={[styles.kicker, { color: tint }]}>
+        <Text numberOfLines={1} style={[styles.kicker, { color: row.kickerColor }]}>
           {row.kicker}
         </Text>
         <Text numberOfLines={1} style={styles.title}>
@@ -95,9 +107,7 @@ function QuestRow({ row, first, last }: QuestRowProps): ReactElement {
             style={[styles.rail, { top: first ? LISTS.row / 2 : 0, bottom: last ? LISTS.row / 2 : -LISTS.rowGap }]}
           />
         )}
-        <View style={[styles.node, { backgroundColor: tint }]}>
-          <Icon color={color.onPrimary} name={row.icon} size={16} />
-        </View>
+        <QuestRound onMap tone={row.tone} />
       </View>
     </Pressable>
   );
@@ -253,14 +263,6 @@ const styles = StyleSheet.create({
     width: RAIL,
     backgroundColor: color.inkMuted,
     boxShadow: shadow.mapRail,
-  },
-  node: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: NODE,
-    height: NODE,
-    borderRadius: radius.full,
-    boxShadow: shadow.mapMark,
   },
   empty: {
     ...mapText.empty,

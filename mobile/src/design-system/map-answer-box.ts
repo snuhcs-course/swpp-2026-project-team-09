@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLabel } from './map-answer';
@@ -21,10 +22,21 @@ export const SUB_MAX = 260;
 // A meal answer's chosen place (P04 ticket 74): its name and start over its main dish, as wide as its longer line up to
 // about half the map's width, the dish cut short with "…" past it.
 export const MEAL_PICK_MAX = 200;
+// The widest any such label grows with a large font: the narrowest phone laid out for, 360, less the map's margins.
+export const PICK_TIME_CEILING = 320;
+
+// A pick's label with its time is at most `MEAL_PICK_MAX` at the usual font size, and grows with the font scale as its
+// words do, so that a large font does not cut its time (P01 ticket 30), up to `PICK_TIME_CEILING`.
+export function pickTimeMax(fontScale: number): number {
+  return Math.min(Math.round(MEAL_PICK_MAX * fontScale), PICK_TIME_CEILING);
+}
 export const RING = 2;
 export const BADGE = 16;
-// A candidate's numbered round, its white ring included.
+// A candidate's numbered round, its white ring included; a meal candidate's has none, its coral rim its edge (P04
+// ticket 91).
 export const CANDIDATE_ROUND = 20;
+// The number in a meal candidate's round, and in the meal list's badge, which reads as the same mark (P04 ticket 91).
+export const MEAL_NUMBER = 13;
 // A meal candidate's minutes capsule (P04 ticket 83): its height, and the width of its near end, which holds the
 // candidate's numbered round with a little white around it; its edge's width.
 export const CAPSULE = 26;
@@ -68,11 +80,11 @@ function wordsWidth(words: string, size: number): number {
   return width;
 }
 
-// How wide a label may be: a meal pick's (`note`, its time) about half the map, a pick's or one with dishes under it
-// wider, others narrower.
-function widestOf(tone: AnswerLabel['tone'], sub: string | null, note: string | null): number {
+// How wide a label may be: a meal pick's (`note`, its time) about half the map at the usual font size, a pick's or one
+// with dishes under it wider, others narrower.
+function widestOf(tone: AnswerLabel['tone'], sub: string | null, note: string | null, fontScale: number): number {
   if (tone === 'pick' && note !== null) {
-    return MEAL_PICK_MAX;
+    return pickTimeMax(fontScale);
   }
   return sub === null && tone !== 'pick' ? LABEL_MAX : SUB_MAX;
 }
@@ -130,7 +142,7 @@ export function answerLabelBox(
     tone === 'candidate' && line !== null ? titleWidth + space[1] + lineWidth : Math.max(titleWidth, lineWidth);
   const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, rowSize));
   const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
-  const width = Math.ceil(Math.min(widestOf(tone, sub, note), frame + words));
+  const width = Math.ceil(Math.min(widestOf(tone, sub, note, fontScale), frame + words));
   const height = (line === null || tone === 'candidate') && sub === null ? oneLine(fontScale) : twoLines(fontScale);
   return around(side, shift, { width, height });
 }

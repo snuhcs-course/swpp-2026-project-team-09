@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -76,6 +77,20 @@ describe("the Quest list on the whole screen's rows", () => {
     const rows = screen.getAllByRole('button', { name: / · \d\d:\d\d$/u });
     expect(rows.map((row) => String(row.props.accessibilityLabel))).toEqual([CLASS, PARTY, DINNER]);
     expect(within(screen.getByRole('button', { name: CLASS })).getByText('14:00')).toBeVisible();
+  });
+
+  it('tells 공개 from 비공개 by the icon in each round, in one navy for every Party', async () => {
+    await openQuests();
+
+    expect(within(screen.getByRole('button', { name: CLASS })).getByLabelText('강의')).toBeVisible();
+    expect(within(screen.getByRole('button', { name: PARTY })).getByLabelText('공개')).toBeVisible();
+    expect(within(screen.getByRole('button', { name: DINNER })).getByLabelText('비공개')).toBeVisible();
+    for (const [row, kind] of [
+      [PARTY, '공개 파티'],
+      [DINNER, '비공개 파티 · 김민준'],
+    ] as const) {
+      expect(within(screen.getByRole('button', { name: row })).getByText(kind)).toHaveStyle({ color: '#0E1330' });
+    }
   });
 
   it('filters by its chips, whose counts stay', async () => {

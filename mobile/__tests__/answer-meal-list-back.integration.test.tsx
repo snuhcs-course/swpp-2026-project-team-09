@@ -4,8 +4,8 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen, within } from '@testing-library/react-native';
-import { ScrollView } from 'react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
+import { ScrollView, StyleSheet, type ViewStyle } from 'react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { holdBackButton } from './support/back';
@@ -70,6 +70,20 @@ function cardScrolls(scrolled: Scrolled): Parameters<ScrollView['scrollTo']>[0][
   );
 }
 
+// The content's parts laid out at `height`, as the phone tells it.
+async function layParts(height: number): Promise<void> {
+  await fireEvent(screen.getByTestId('answer-card-parts'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 360, height } },
+  });
+}
+
+// The room under the card's content.
+function roomUnder(): number {
+  const style: unknown = screen.getByTestId('answer-card-content').props.contentContainerStyle;
+  const { paddingBottom } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  return Number(paddingBottom ?? 0);
+}
+
 // P04 ticket 78 (the user's words: "뒤로가기를 눌렀을 때, 이전 스크롤 위치로 돌아가면 좋을 것 같아"). The content's scroll runs
 // natively, so here the list's place is its top: `answer-layer-scroll` checks the place kept. Partitions: back by
 // "‹ N곳 목록" and by Android's back button; the menu opened at low.
@@ -117,5 +131,25 @@ describe('the list and a menu opened from it', () => {
 
     expect(screen.getByTestId('meal-menu')).toBeOnTheScreen();
     expect(grip()).toHaveAccessibilityValue({ text: '중간' });
+  });
+});
+
+// Partitions: a menu opened over the list and closed. Expected values: the list's and the menu's laid-out heights.
+describe('the content under a menu opened from the list', () => {
+  // P04 ticket 87, the user's phone: back from the sixth of six places, the list came back near its top. The phone runs
+  // the way back before it lays the list out again, so the content stays as tall as the list while a menu covers it.
+  it('keeps the content as tall as the list while a menu covers it, and no taller once it closes', async () => {
+    const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
+    await raiseCard();
+    await layParts(1400);
+    const before = roomUnder();
+
+    await user.press(list().getByTestId('meal-row-4'));
+    await layParts(380);
+    expect(roomUnder() - before).toBe(1400 - 380);
+
+    await user.press(within(screen.getByTestId('meal-menu')).getByRole('button', { name: '‹ 4곳 목록' }));
+    await layParts(1400);
+    expect(roomUnder()).toBe(before);
   });
 });

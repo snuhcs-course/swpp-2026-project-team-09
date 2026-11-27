@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Test } from '@nestjs/testing';
@@ -14,7 +15,9 @@ import { type PlaceDto } from '../src/places/dto/place.dto.js';
 import { PlaceLookup } from '../src/places/place-lookup.js';
 import { readSeedPlaces } from '../src/places/places.seed.js';
 import { type StudyBuildingDto } from '../src/study-spaces/dto/study-spaces.dto.js';
-import { type Standing } from '../src/study-spaces/study-spaces-file.js';
+import { openAt, type Opening } from '../src/study-spaces/study-hours.js';
+import { type Standing, STUDY_SPACES_FILE, studySpacesSchema } from '../src/study-spaces/study-spaces-file.js';
+import { readSeedFile } from '../src/common/seed-directory.js';
 import { STUDY_CATALOGUE, StudySpacesService } from '../src/study-spaces/study-spaces.service.js';
 import { UsersService } from '../src/users/users.service.js';
 
@@ -58,4 +61,17 @@ export async function studyBuildingsFor(
   const service = moduleRef.get(StudySpacesService);
   await service.onModuleInit();
   return service.listFor('asker');
+}
+
+// Whether a space is open at a time, by the seed's schedules and calendar, as StudySpacesService.hoursOf answers it.
+export async function seedHours(): Promise<(key: string, at: Date) => { opening: Opening }> {
+  const file = await readSeedFile(SEED_DIRECTORY, STUDY_SPACES_FILE, studySpacesSchema);
+  const schedules = new Map(file.buildings.flatMap(({ spaces }) => spaces.map(({ key, schedule }) => [key, schedule])));
+  return (key, at) => {
+    const schedule = schedules.get(key);
+    if (schedule === undefined) {
+      throw new Error(`No hours for ${key}`);
+    }
+    return { opening: openAt(schedule, file.calendar, at) };
+  };
 }

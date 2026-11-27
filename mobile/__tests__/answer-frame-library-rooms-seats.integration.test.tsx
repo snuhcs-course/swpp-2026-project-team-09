@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -216,7 +217,8 @@ describe('the seats card, large and tapped', () => {
     await pressIn(inCard(`library-seats-${SEATS_CARD.library.key}`), '좌석 현황 크게 보기');
     expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
     expect(screen.getByText('밀어서 옮기고, 두 손가락으로 확대해요')).toBeVisible();
-    expect(screen.getByTestId('seat-map-large-map-image')).toHaveStyle({ height: 300, width: (300 * 2529) / 1198 });
+    // Laid out once at 4 times its 300 points and seen at 1 (P01 ticket 11).
+    expect(screen.getByTestId('seat-map-large-map-image')).toHaveStyle({ height: 1200, width: (1200 * 2529) / 1198 });
 
     await pressIn(screen, '7200번 빈 자리');
     await pressIn(screen, '7200번 선택');

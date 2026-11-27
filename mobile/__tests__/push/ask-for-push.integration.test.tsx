@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -46,6 +47,9 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 jest.mock('@/push/device', () => jest.requireActual<typeof PushDevice>('@/push/device'));
 jest.mock('expo', () => jest.requireActual<typeof PushFake>('../support/push').expoModule);
 jest.mock('expo-notifications', () => jest.requireActual<typeof PushFake>('../support/push').notificationsModule);
+
+// Its cases take 20 to 60 seconds each under a CI shard's load, past Jest's 60 by a little now and then.
+jest.setTimeout(150000);
 
 const QUESTION = '나설 시각을 휴대폰으로 알려 드릴까요?';
 

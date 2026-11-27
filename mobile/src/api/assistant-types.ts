@@ -14,23 +14,26 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimeBand } from './time-band-types';
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
-import type { MeetInput } from './meet-plan-types';
+import type { MealPrice, MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { ClosedPlace, DroppedPlace, PlanPart, WithAdding } from './plan-part-types';
 import type { ProposalChange } from './party-change-types';
 import type { ReplyOffer } from './reply-offer-types';
+import type { ReplyStep } from './reply-step-types';
 import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
 import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
 import type { SentProposal } from './sent-proposal';
+import type { PlanStudy, StudyInput } from './study-plan-types';
 
 // --- The Assistant (POST /assistant/messages) ---
 
@@ -42,6 +45,8 @@ export interface CardReference {
 }
 
 export { ANSWER_CAPABILITIES } from './capabilities';
+
+export type { ReplyStep };
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -189,12 +194,15 @@ export interface RequestContext extends WithLocationMissing {
   conditions: PlanInput | null;
   // The plan on screen.
   planId: string | null;
+  // The plans of the meal answer on screen in its order, which the list and the map number from 1, so that "2번으로
+  // 할게" chooses one of them (P05 ticket 51). Left out without a meal answer on screen that says `choosable`.
+  planIds?: string[];
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput | StudyInput;
 
-export interface MealInput {
+export interface MealInput extends MealPrice {
   kind: 'meal';
   // YYYY-MM-DD in Korea.
   date: string;
@@ -205,6 +213,9 @@ export interface MealInput {
   window: MealWindow;
   // The Place the User fixed.
   placeId: string | null;
+  // The asker's Classes of the day left out of the plan, as the ids of their times (P04 ticket 93); absent for none,
+  // and from a main server before it. The app only sends back those the main server gave.
+  skipped?: string[];
   // The kind of food on screen, which the main server keeps and puts first. Absent or null for none.
   cuisine?: Cuisine | null;
 }
@@ -257,6 +268,9 @@ export interface AnswerReply extends WithMissing, WithAdding {
   // A menu question's: the Plan whose Restaurant was asked about, which the answer opens at, its menu shown as from the
   // list (P04 ticket 72). Absent from other answers and from a main server before it.
   opened?: string;
+  // A meal answer from a main server that takes `planIds` (P05 ticket 51): only over such an answer does the app send
+  // them, since an older main server refuses a request that carries them.
+  choosable?: true;
 }
 
 // One of the User's Quests as the main server names it (P05 ticket 17): set aside by a plan, related to one, or asked
@@ -338,6 +352,8 @@ export interface Plan {
   // from a main server before P05 ticket 12's follow-up. `others`: how many other things are served that meal there,
   // across every corner, the "외 N" of the menu's words (P04 ticket 74); absent from a main server before it.
   menu?: { price: number | null; dishes: MenuDish[]; others?: number };
+  // A study Plan's part (P10): with Friends, its 관정 group study room. Absent from other Plans.
+  study?: PlanStudy;
 }
 
 export interface MenuDish {
@@ -377,25 +393,6 @@ export interface MapScene {
   flags: { at: LatLng; text: string; role: FlagRole; placeId?: string }[];
 }
 
-// One request of a message that asked for several (P03): a seat or room booked through a library card, or the plan
-// drawn on the map. A reply carries its steps, in time order, only when there are two or more.
-export interface ReplyStep {
-  kind: 'seat' | 'room' | PlanInput['kind'];
-  // What it is, in words: "7층 7A 열람실 2 구역", "학생회관식당에서 저녁".
-  title: string;
-  place: PlacePoint | null;
-  // Where the User sets out from for it: the place of the step before it, unless they named another.
-  from: PlacePoint | null;
-  // Korea time with the offset; null when the step has no time.
-  startAt: string | null;
-  endAt: string | null;
-  // `shown`: its card or its answer is in the reply. `not-done`: it could not be done, for `reason`.
-  status: 'shown' | 'not-done';
-  reason: string | null;
-  // Where the reply shows it: the library card of that key, or the answer.
-  shows: { kind: 'card'; key: string } | { kind: 'answer' } | null;
-}
-
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
 // cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
 // main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
@@ -410,6 +407,12 @@ export interface AssistantReply extends WithRefusal {
   offers?: ReplyOffer[];
   // Each request of a message that asked for two or more, in time order (P03). A server before P03 leaves it out.
   steps?: ReplyStep[];
+  // The plan the User chose in words (P05 ticket 51): of the meal answer on screen, kept with its list and numbers, or
+  // of the reply's own answer, which then opens at it.
+  select?: { planId: string };
+  // The answer on screen leaves the map, with its time card and button: the User asked for another plan, or something
+  // else, and nothing could be drawn for it (P05 ticket 55). A server before it leaves it out.
+  clears?: true;
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';

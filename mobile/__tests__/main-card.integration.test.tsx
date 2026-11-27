@@ -4,13 +4,14 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BackHandler } from 'react-native';
 import { act, fireEvent } from '@testing-library/react-native';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { CLOSER, DINNER, EVENT, FRIEND, lookOf, MEMBER, PARTY, press, wordsUnder } from './support/markers';
+import { DINNER, EVENT, FRIEND, lookOf, MEMBER, PARTY, press, zoomIn } from './support/markers';
 import { startFresh, withoutInterestMarks } from './support/mocks';
 
 jest.mock('expo-location');
@@ -26,6 +27,8 @@ beforeEach(async () => {
   withoutInterestMarks();
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
+
+const LOOK_CLOSER = '가까이 보기';
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -82,7 +85,7 @@ describe('a press on a marker of the main screen', () => {
       expect(screen.getByText(line)).toBeVisible();
     }
     expect(screen.getByRole('button', { name: button })).toBeVisible();
-    expect(screen.getByRole('button', { name: CLOSER })).toBeVisible();
+    expect(screen.queryByRole('button', { name: LOOK_CLOSER })).toBeNull();
     expect(screen.getByRole('button', { name: '닫기' })).toBeVisible();
   });
 
@@ -140,30 +143,20 @@ describe('an open card', () => {
   });
 });
 
-describe('"가까이 보기"', () => {
-  it('brings the map close to the marker, keeps the card and is no longer offered', async () => {
+// The changelog of 11.24 (§ 4-3) takes "가까이 보기" off every card: the User zooms by hand.
+describe('no "가까이 보기"', () => {
+  it('is on no card, at any level of detail', async () => {
     const user = await openMain();
-    await press(user, FRIEND);
-
-    await press(user, CLOSER);
-
-    expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
-    expect(wordsUnder(FRIEND, '김민준')).toBeVisible();
-    expect(screen.queryByRole('button', { name: CLOSER })).toBeNull();
-  });
-
-  it('is offered while places are pins without names, and not once names are shown', async () => {
-    const user = await openMain();
-    await press(user, '확대');
-    await press(user, '확대');
-    await press(user, EVENT);
-    expect(screen.getByRole('button', { name: CLOSER })).toBeVisible();
-
-    await press(user, '닫기');
-    await press(user, '확대');
-    await press(user, EVENT);
-    expect(screen.queryByRole('button', { name: CLOSER })).toBeNull();
+    for (const presses of [0, 2, 1]) {
+      // oxlint-disable-next-line no-await-in-loop -- one level after the other, as a User zooms
+      await zoomIn(user, presses);
+      // oxlint-disable-next-line no-await-in-loop
+      await press(user, EVENT);
+      expect(screen.getByRole('header', { name: 'AI 커리어 설명회' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: LOOK_CLOSER })).toBeNull();
+      // oxlint-disable-next-line no-await-in-loop
+      await press(user, '닫기');
+    }
   });
 });
 

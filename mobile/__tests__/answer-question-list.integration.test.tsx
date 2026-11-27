@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -41,6 +42,9 @@ jest.mock('@/auth/google', () => ({
 }));
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
+
+// Its cases take up to 40 seconds alone, past Jest's 60 now and then under a CI shard's load.
+jest.setTimeout(150000);
 
 const MEAL = '배고파, 민수랑 같이';
 const SHUTTLE = '셔틀 어디 있어?';

@@ -23,16 +23,33 @@ export function useTopWhen(top: boolean, scroll: { current: Pick<ScrollView, 'sc
   }, [top, scroll]);
 }
 
+// The content's height when a layer opened over it, kept while layers stand over it; null with none.
+function useCovered(layer: string | null, natural: number | null): number | null {
+  const [open, setOpen] = useState<{ layer: string | null; covered: number | null }>({ layer, covered: null });
+  if (layer === open.layer) {
+    return open.covered;
+  }
+  const covered = layer === null ? null : open.layer === null ? natural : open.covered;
+  setOpen({ layer, covered });
+  return covered;
+}
+
 // A layer over the content (`layer`, its id, null with none), such as a restaurant's menu over the list of candidates,
 // opens at its top, and closing it brings the content back to where it was scrolled when the layer opened: the row that
 // was pressed in sight (P04 ticket 78). Another layer over it starts at its top too. Another answer (`of`) keeps the
 // place of none: it starts where a new answer does.
+// While a layer is open, it gives the room to hold under the content (`natural`, as laid out) so that the content
+// stays as tall as the one it covers. Android runs a scroll asked in an update before it lays out that update's views,
+// so the way back ran against the layer's content and stopped at its end: a row further down than the menu is tall came
+// back near the list's top (P04 ticket 87, the user's phone).
 export function useLayerScroll(
   layer: string | null,
   of: object | null,
   scroll: { current: Pick<ScrollView, 'scrollTo'> | null },
   scrollY: { value: number },
-): void {
+  natural: number | null,
+): number {
+  const covered = useCovered(layer, natural);
   const was = useRef(layer);
   const kept = useRef<{ of: object | null; y: number } | null>(null);
   useEffect(() => {
@@ -54,6 +71,7 @@ export function useLayerScroll(
     }
     scroll.current?.scrollTo({ y: 0, animated: false });
   }, [layer, of, scroll, scrollY]);
+  return covered === null || natural === null ? 0 : Math.max(0, covered - natural);
 }
 
 export function useHeldHeight(

@@ -5,6 +5,7 @@
  * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -73,7 +74,7 @@ export const ZOOM_OFFSET = {
   pins: Math.log2(1.6),
   // From here on a pin and an Avatar have a name under them (z 2.4).
   names: Math.log2(2.4),
-  // Where "가까이 보기", a Friend's row and "내 위치로 이동" bring the camera (z 2.6).
+  // Where a Friend's row and "내 위치로 이동" bring the camera (z 2.6).
   close: Math.log2(2.6),
   // One press of the zoom in or the zoom out button (a factor 1.5).
   step: Math.log2(1.5),

@@ -3,12 +3,13 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type HeldMeal } from '../../quests/held-meal.js';
 import { type KeptQuest } from '../../quests/kept-quests.js';
-import { type AnswerReply } from '../dto/answer.dto.js';
-import { clockOf, type DayItem } from '../free-time/free-time.js';
+import { type AnswerReply, type MealInput } from '../dto/answer.dto.js';
+import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
 import { type Interval } from '../free-time/meal-fit.js';
 import { koreaTime } from '../korea-time.js';
 
@@ -21,6 +22,31 @@ export interface BusyItem {
   isClass: boolean;
   start: string;
   end: string;
+}
+
+// The asker's items of the day without the Classes the input leaves out (P05 ticket 54), which are free for the
+// meal, and those Classes in time order; an id that is none of them is dropped.
+export function skippedOut(
+  items: readonly DayItem[],
+  ids: readonly string[] = [],
+): { items: readonly DayItem[]; skipped?: readonly DayItem[] } {
+  const wanted = new Set(ids);
+  const skipped = items.filter(({ id, isClass }) => isClass && wanted.has(id)).toSorted(byStart);
+  return skipped.length === 0 ? { items } : { items: items.filter((item) => !skipped.includes(item)), skipped };
+}
+
+// The input with only the Classes left out that are the asker's that day, and without the field for none.
+export function withSkipped(input: MealInput, skipped: readonly DayItem[]): MealInput {
+  const { skipped: _given, ...rest } = input;
+  return skipped.length === 0 ? rest : { ...rest, skipped: skipped.map(({ id }) => id) };
+}
+
+// How far the time the Classes left out free reaches: to the first item left that starts at or after the first of them,
+// or the meal's end, whichever is sooner.
+export function freedReach(left: readonly DayItem[], skipped: readonly DayItem[], mealEnd: Date): Date {
+  const [first] = skipped;
+  const next = first === undefined ? undefined : left.toSorted(byStart).find(({ start }) => start >= first.start);
+  return next !== undefined && next.start < mealEnd ? next.start : mealEnd;
 }
 
 // Leaves these Sub Quests out of everyone's day.

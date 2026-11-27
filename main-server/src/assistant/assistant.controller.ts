@@ -6,9 +6,19 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { friendNotFound } from '../friends/friends.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
@@ -29,6 +39,7 @@ import {
 import { outOfReach } from './free-time/tool-parts.js';
 import { FriendLookupService } from './lookup/friend.service.js';
 import { PlaceCardService } from './lookup/place.service.js';
+import { studyCapabilityOf, studyOutOfReach } from './lookup/study-group.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
 @Controller('assistant')
@@ -68,8 +79,14 @@ export class AssistantController {
   ): Promise<AnswerReply> {
     const now = this.clock.now();
     // Recruiting Quests are each on the day of their own step.
-    if (input.kind !== 'quests' && outOfReach(input.date, now)) {
+    const reach =
+      input.kind === 'study' ? studyOutOfReach(input, now) : input.kind !== 'quests' && outOfReach(input.date, now);
+    if (reach) {
       throw new BadRequestException('A plan is for a day from today to a week ahead');
+    }
+    // A study answer alone and one together are drawn by apps that say so (P10).
+    if (input.kind === 'study' && !clientCapabilities.includes(studyCapabilityOf(input))) {
+      throw new UnprocessableEntityException(`Only an app that says ${studyCapabilityOf(input)} draws this answer`);
     }
     const setsAside = clientCapabilities.includes('plan-set');
     return this.answers.plan(user.id, input, { now, location, locationMissing, setsAside });

@@ -5,12 +5,19 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { runFeature } from '../src/assistant/adapter.js';
 import { FIXED_SENTENCE } from '../src/assistant/wordless-reply.js';
-import { type AnswerReply, type Lookup, NO_CONTEXT, type RequestContext } from '../src/assistant/dto/answer.dto.js';
+import {
+  type AnswerReply,
+  type Lookup,
+  NO_CONTEXT,
+  type Plan,
+  type RequestContext,
+} from '../src/assistant/dto/answer.dto.js';
 import { defineTool, type Feature, type Request } from '../src/assistant/feature.js';
 import { ScriptedModel } from './scripted-model.js';
 
@@ -32,6 +39,29 @@ const ANSWER: AnswerReply = {
   plans: [],
   dropped: [],
   noPlan: { reason: 'no-menu', lines: [] },
+};
+
+const PLAN_301: Plan = {
+  id: '301동식당',
+  title: '301동식당에서 점심',
+  place: { placeId: '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed', label: '301동식당', latitude: 0, longitude: 0 },
+  startAt: '2027-03-02T11:30:00+09:00',
+  endAt: '2027-03-02T12:30:00+09:00',
+  togetherMinutes: 60,
+  meeting: null,
+  parts: [],
+  subQuests: [],
+  lines: [],
+  basis: [],
+  scene: { people: [], places: [], routes: [], flags: [] },
+  band: {
+    range: { startAt: '2027-03-02T10:30:00+09:00', endAt: '2027-03-02T13:00:00+09:00' },
+    now: '2027-03-02T09:00:00+09:00',
+    lanes: [],
+    startAt: '2027-03-02T11:30:00+09:00',
+    endAt: '2027-03-02T12:30:00+09:00',
+    text: '11:30–12:30 · 식사 60분',
+  },
 };
 
 const LOOKUP: Lookup = {
@@ -118,6 +148,34 @@ describe("A run's request context and answer", () => {
     const reply = await runFeature(model.model, featureAnswering(ANSWER), asker(NO_CONTEXT), ask, LIMITS);
 
     expect(reply).toMatchObject({ text: FIXED_SENTENCE, answer: ANSWER, noTextFinishReason: 'stop' });
+  });
+
+  // The user's phone (2026-11-26): a meal answer with no words went back as the fixed sentence, and the app wrote the
+  // plan's own line in its place, "301동식당 · 11:30 · 걸음 4분 · 돌솥비빔밥 · 6,500원".
+  it("recommends a meal answer's first plan in a sentence when no step wrote text", async () => {
+    const planned = { ...ANSWER, plans: [PLAN_301], noPlan: null };
+    model.script({ tool: 'plan', input: {} }, { text: '' });
+
+    const reply = await runFeature(model.model, featureAnswering(planned), asker(NO_CONTEXT), ask, LIMITS);
+
+    expect(reply).toMatchObject({
+      text: '가장 덜 걷는 301동식당을 추천해요.',
+      answer: planned,
+      noTextFinishReason: 'stop',
+    });
+  });
+});
+
+describe("A menu's answer when no step wrote text", () => {
+  // By the menu rules the model writes nothing beside a menu's answer, opened at its Restaurant: no warning for it, so
+  // that a meal answer left without words stands out in the log (Production, 2026-11-26).
+  it('says the fixed sentence with no warning', async () => {
+    const menu = { ...ANSWER, plans: [PLAN_301], noPlan: null, opened: '301동식당' };
+    model.script({ tool: 'plan', input: {} }, { text: '' });
+
+    const reply = await runFeature(model.model, featureAnswering(menu), asker(NO_CONTEXT), ask, LIMITS);
+
+    expect(reply).toMatchObject({ text: FIXED_SENTENCE, answer: menu, noTextFinishReason: null });
   });
 });
 

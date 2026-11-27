@@ -6,6 +6,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -19,8 +20,8 @@ import {
   FullScreenPanel,
   ListRow,
   LoadingState,
+  QuestRound,
   questTone,
-  RoundIcon,
   SectionHeader,
   space,
   text,
@@ -32,13 +33,12 @@ import { now } from '@/clock';
 type Filter = 'all' | 'class' | 'party';
 
 function QuestRow({ row, onPress }: { row: QuestRowView; onPress: () => void }): ReactElement {
-  const tint = questTone[row.tone];
   return (
     <ListRow
-      kicker={{ words: row.label, color: tint }}
+      kicker={{ words: row.label, color: questTone[row.tone].kicker }}
       label={[row.label, row.title, row.place, row.time].filter((part) => part !== '').join(' · ')}
       large
-      leading={<RoundIcon fill={tint} icon={row.icon} ink={color.onPrimary} />}
+      leading={<QuestRound tone={row.tone} />}
       lines={row.place === '' ? [] : [row.place]}
       onPress={onPress}
       title={row.title}

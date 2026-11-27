@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -10,7 +11,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { CAREER, MY_CAREER } from './support/events';
+import { CAREER, MY_CAREER, pickEvent } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { MY_HIKE, openAt } from './support/party';
@@ -125,7 +126,7 @@ describe('the least 인원', () => {
 });
 
 describe('editing', () => {
-  it('shows 언제, 어디서 and 관련 행사, and an event picked fills the plan’s time and place and its tags, not its title', async () => {
+  it('shows 언제, 어디서 and 관련 행사, and an event picked fills the plan’s time and place, not its title, and adds no tags', async () => {
     const hike = { ...MY_HIKE, holders: [...MY_HIKE.holders] };
     const [step] = hike.subQuests;
     server.on(`GET /quests/${hike.id}`, { status: 200, body: hike });
@@ -136,7 +137,7 @@ describe('editing', () => {
     expect(screen.getByRole('button', { name: '언제 오늘 20:10' })).toBeVisible();
     expect(screen.getByLabelText('어디서')).toHaveDisplayValue('학생회관 (63동)');
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+    await pickEvent(user, CAREER);
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(MY_HIKE.title);
     await answer(user, '수정 완료');
 
@@ -148,7 +149,7 @@ describe('editing', () => {
       },
     ]);
     expect(server.received(`PATCH /quests/${hike.id}`)).toEqual([]);
-    expect((await readQuestEntries())[hike.id]?.tags).toEqual(expect.arrayContaining(['진로', 'AI', '커리어']));
+    expect((await readQuestEntries())[hike.id]?.tags ?? []).toEqual([]);
     expect(toast()).toHaveTextContent('모집글을 수정했어요');
   });
 });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { minutesOfClock, PARTY_MAX, PARTY_REFUSAL, type Refusal } from './booking-rules.js';
@@ -16,9 +17,10 @@ const ARRIVAL_SHOWN_MINUTES = 60;
 
 const WEEKDAYS = '일월화수목금토';
 
-type GroupRoom = LibrarySpace & { capacity: { min: number; max: number } };
+export type GroupRoom = LibrarySpace & { capacity: { min: number; max: number } };
 
-function groupRooms({ spaces }: Catalogue): GroupRoom[] {
+// The group study room sizes a party can book.
+export function groupRooms({ spaces }: Catalogue): GroupRoom[] {
   return spaces.filter(
     (space): space is GroupRoom =>
       space.kind === 'group-study-room' &&

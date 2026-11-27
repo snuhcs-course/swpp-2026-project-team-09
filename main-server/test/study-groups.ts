@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { z } from 'zod';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type TravelProvider } from '../src/travel/travel.js';
 import { ask, postAssistantMessages } from './assistant.js';
+import { ownDatabase } from './containers.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
 import { type LibraryCardBody, libraryCards, resolving } from './library.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -25,8 +27,8 @@ import { refuseKakao } from './walking-route.js';
 // example week: Tuesday 2026-11-03 at 10:00 in Korea, so that a room can be booked up to Friday 2026-11-06. Thursday's
 // Classes are the design's table; 민수 also has Classes from 09:00 to 21:45 on Tuesday, Wednesday and Friday, so that
 // Thursday is the pick, and until 22:50 on Saturday, which leaves him no time that day. On foot to and from 관정관
-// (62-1): 301동 14 minutes, 24동 4, 두산인문관 (8동) 4, 302동 16. The week is the room request files' week, before
-// their Thursday: any read of a room request expires and closes every request by its own file's clock.
+// (62-1): 301동 14 minutes, 24동 4, 두산인문관 (8동) 4, 302동 16. A file that makes room requests starts the stage on a
+// database of its own (test/containers.ts): a read of a room request sweeps every request in it by the file's clock.
 
 export const NOW = new Date('2026-11-03T10:00:00+09:00');
 
@@ -85,8 +87,19 @@ export class StudyStage {
   private readonly walks = new Map<string, number>();
   private places!: Record<'b301' | 'b24' | 'b8' | 'b302', string>;
 
-  async start(settings: Record<string, string | undefined>): Promise<void> {
-    this.app = await startApp(settings, [], refuseKakao, this.model.model, [], walksOf(this.walks));
+  private dropDatabase?: () => Promise<void>;
+
+  async start(
+    settings: { DATABASE_URL: string } & Record<string, string | undefined>,
+    { ownDatabase: own = false } = {},
+  ): Promise<void> {
+    let used = settings;
+    if (own) {
+      const database = await ownDatabase(settings);
+      this.dropDatabase = database.drop;
+      used = database.settings;
+    }
+    this.app = await startApp(used, [], refuseKakao, this.model.model, [], walksOf(this.walks));
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
     const { accessToken } = await signInUser(this.app);
     const listed = await withAccessToken(request(this.app.getHttpServer()).get('/places'), accessToken).expect(200);
@@ -111,8 +124,9 @@ export class StudyStage {
     }
   }
 
-  stop(): Promise<void> {
-    return this.app.close();
+  async stop(): Promise<void> {
+    await this.app.close();
+    await this.dropDatabase?.();
   }
 
   user(name: string): Promise<TestUser> {

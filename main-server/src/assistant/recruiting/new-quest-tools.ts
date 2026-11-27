@@ -3,13 +3,14 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { type NewQuestInput, type Plan, QUEST_IDS_MAX } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
-import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
@@ -129,7 +130,7 @@ export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayServic
     run: async (given, context) => {
       const { userId, now, context: request, presented } = context;
       if (outOfReach(given.date, now)) {
-        return noDay(given.date);
+        return outOfReachDay(given.date, presented);
       }
       refuseUnseen(context, given);
       const placeId = given.globalEventId === undefined ? await placeOf(plans, userId, given, now) : null;

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -32,6 +33,6 @@ export class StudyAreaService {
       this.ways.argsFor(userId, { fromPlaceId: null, toPlaceId: null, by: null }, { now, location }),
       this.studySpaces.listFor(userId),
     ]);
-    return studyAnswer({ way, buildings, area, what });
+    return studyAnswer({ way, buildings, area, what, hoursOf: (key, when) => this.studySpaces.hoursOf(key, when) });
   }
 }

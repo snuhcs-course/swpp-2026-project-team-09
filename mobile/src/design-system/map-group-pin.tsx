@@ -3,13 +3,17 @@
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Glass } from './glass';
 import { Icon } from './icon';
-import { type MapPlaceKind, placeKindLook } from './map-pin';
-import { color, halo, radius, shadow, size as sizes } from './tokens';
+import { type MapPlaceKind, placeKindLook } from './map-kinds';
+import { seeThrough } from './see-through';
+import { TAG, tagStyles } from './map-tag';
+import { color, radius } from './tokens';
 
 interface GroupProps {
   // The kinds of the things at the place, in the order they are drawn.
@@ -24,8 +28,8 @@ function kindNames(kinds: readonly MapPlaceKind[]): string {
   return kinds.map((kind) => placeKindLook(kind).name).join(' · ');
 }
 
-// A small round for each kind, in the kind's colour and with its icon, side by side: inside a group's pin, and at
-// the head of its card. `starred` draws the official round's filled star.
+// A small round for each kind, in the kind's colour and with its icon, side by side, at the head of a group's card.
+// `starred` draws the official round's filled star.
 export function KindRounds({ kinds, starred = false }: Omit<GroupProps, 'selected'>): ReactElement {
   return (
     <>
@@ -42,10 +46,19 @@ export function KindRounds({ kinds, starred = false }: Omit<GroupProps, 'selecte
   );
 }
 
-// Several kinds of things at one place, from close: the pin's white round, with a small round inside it for each
-// kind, in the kind's colour and with its icon. Three or more widen the round into a pill. A selected one is larger,
-// inside a ring of the key colour, as a selected pin is. A screen reader says the kinds' names.
-export function MapGroupPin({ kinds, selected = false, starred = false }: GroupProps): ReactElement {
+interface GroupTagProps extends GroupProps {
+  // The place's short name, beside the rounds from the map's "names" level.
+  label?: string;
+  // From far away, while the whole campus is in view: the smaller rounds.
+  far?: boolean;
+}
+
+// Several kinds of things at one place, as a light tag like a single kind's (`MapPin`): a round for each kind, its
+// line icon in its colour on that colour at 14%, side by side on glass, and the place's name after them from the
+// "names" level. A chosen one has a navy border and ring. It sits on its middle. A screen reader says the kinds' names.
+function GroupTag({ kinds, selected = false, starred = false, label, far = false }: GroupTagProps): ReactElement {
+  const size = far ? TAG.far : TAG.near;
+  const named = label !== undefined && !far;
   return (
     <View
       accessibilityLabel={kindNames(kinds)}
@@ -54,71 +67,56 @@ export function MapGroupPin({ kinds, selected = false, starred = false }: GroupP
       accessible
       style={styles.pin}
     >
-      <View style={[styles.head, selected && styles.selectedHead]}>
-        <KindRounds kinds={kinds} starred={starred} />
+      <View style={[styles.frame, { height: size.box }, named && styles.namedFrame, selected && styles.selectedFrame]}>
+        <Glass level="inner" style={[styles.fill, named && styles.namedTag]}>
+          {kinds.map((kind) => {
+            const { fill, icon } = placeKindLook(kind);
+            const star = starred && kind === 'official';
+            return (
+              <View
+                key={kind}
+                style={[
+                  styles.round,
+                  { width: size.round, height: size.round, backgroundColor: seeThrough(fill, TAG.tint) },
+                ]}
+              >
+                <Icon color={fill} filled={star} name={star ? 'star' : icon} size={size.icon} />
+              </View>
+            );
+          })}
+          {named ? (
+            <Text numberOfLines={1} style={styles.name}>
+              {label}
+            </Text>
+          ) : null}
+        </Glass>
       </View>
-      <View style={styles.tail} />
     </View>
   );
 }
 
-// The same from far away, when the whole campus is in view: a white pill with a dot of each kind's colour.
+// From close: the tag of 26, with the place's name where `label` is given. `starred` draws the official round's star.
+export function MapGroupPin(props: Omit<GroupTagProps, 'far'>): ReactElement {
+  return <GroupTag {...props} />;
+}
+
+// From far away, when the whole campus is in view: the tag of 20.
 export function MapGroupDot({ kinds, selected = false }: GroupProps): ReactElement {
-  return (
-    <View
-      accessibilityLabel={kindNames(kinds)}
-      accessibilityRole="image"
-      accessibilityState={{ selected }}
-      accessible
-      style={[styles.dot, selected && styles.selectedDot]}
-    >
-      {kinds.map((kind) => (
-        <View key={kind} style={[styles.dotKind, { backgroundColor: placeKindLook(kind).fill }]} />
-      ))}
-    </View>
-  );
+  return <GroupTag far kinds={kinds} selected={selected} />;
 }
 
-// As a pin's head: the design system's size inside a white border of 2.
-const HEAD_BORDER = 2;
-const HEAD = sizes.pin + HEAD_BORDER * 2;
 const KIND = 16;
 const KIND_ICON = 10;
 const GAP = 2;
-const DOT_KIND = 8;
 
 const styles = StyleSheet.create({
+  ...tagStyles,
   pin: { alignItems: 'center', alignSelf: 'flex-start' },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: GAP,
-    minWidth: HEAD,
-    height: HEAD,
-    paddingHorizontal: HEAD_BORDER * 2,
-    borderRadius: radius.full,
-    borderWidth: HEAD_BORDER,
-    borderColor: color.surface,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
-  selectedHead: {
-    transform: [{ scale: 1.18 }],
-    boxShadow: `0 0 0 4px ${halo.selected}, ${shadow.float}`,
-  },
+  frame: { ...tagStyles.frame, borderColor: color.border },
+  fill: { ...tagStyles.fill, gap: GAP, paddingHorizontal: GAP },
+  namedTag: { paddingRight: 9 },
+  // As a single kind's named tag: white at 50% under the glass, so that the ground is 95%.
+  namedFrame: { backgroundColor: 'rgba(255, 255, 255, 0.5)' },
+  name: { ...tagStyles.name, marginLeft: 3 },
   kind: { alignItems: 'center', justifyContent: 'center', width: KIND, height: KIND, borderRadius: radius.full },
-  tail: { width: 2, height: 8, marginTop: -1, backgroundColor: color.inkMuted },
-  dot: {
-    flexDirection: 'row',
-    alignSelf: 'flex-start',
-    gap: GAP,
-    padding: HEAD_BORDER,
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.dot,
-  },
-  // A ring of 4 beyond the white, as a selected dot has.
-  selectedDot: { boxShadow: `0 0 0 4px ${halo.selectedDot}, ${shadow.dot}` },
-  dotKind: { width: DOT_KIND, height: DOT_KIND, borderRadius: radius.full },
 });
