@@ -11,9 +11,8 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- 
  * 2026-11-27  Opus 5.5   prompted by fyoon46
-******************************************************************************/
+ ******************************************************************************/
 
 import { z } from 'zod';
 import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer } from '../feature.js';

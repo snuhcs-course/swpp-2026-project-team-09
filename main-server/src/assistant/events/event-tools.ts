@@ -3,9 +3,8 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- 
  * 2026-11-27  Opus 5.5   prompted by fyoon46
-******************************************************************************/
+ ******************************************************************************/
 
 import { z } from 'zod';
 import { EVENT_IDS_MAX, type EventsInput, type Plan } from '../dto/answer.dto.js';

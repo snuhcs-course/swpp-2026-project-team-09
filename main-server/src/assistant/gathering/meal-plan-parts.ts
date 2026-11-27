@@ -4,9 +4,8 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- 
  * 2026-11-27  Opus 5.5   prompted by fyoon46
-******************************************************************************/
+ ******************************************************************************/
 
 import { type HeldMeal } from '../../quests/held-meal.js';
 import { type KeptQuest } from '../../quests/kept-quests.js';

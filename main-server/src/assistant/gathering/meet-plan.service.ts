@@ -5,9 +5,8 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
- 
  * 2026-11-27  Opus 5.5   prompted by fyoon46
-******************************************************************************/
+ ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';

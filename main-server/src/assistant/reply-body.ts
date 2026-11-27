@@ -2,9 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- 
  * 2026-11-27  Opus 5.5   prompted by fyoon46
-******************************************************************************/
+ ******************************************************************************/
 
 import { type LeftOutClass } from './dto/answer.dto.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';

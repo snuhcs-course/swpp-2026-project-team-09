@@ -10,9 +10,8 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- 
  * 2026-11-27  Opus 5.5   prompted by fyoon46
-******************************************************************************/
+ ******************************************************************************/
 
 import { z } from 'zod';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';

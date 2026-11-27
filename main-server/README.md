@@ -2712,6 +2712,16 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     back with `attendClasses`, by start (`HH:MM`) or by name; a word that names none of the day's Classes, or several,
     answers `{ "result": "unknownClass", "unknown", "classes" }` and plans nothing. Those of the conditions on screen
     stay left out for any meal of the same day.
+  - **Classes left out, for the conversation and every kind** (P05 ticket 70, `free-time/left-out-classes.ts` and
+    `left-out-tools.ts`). A Class left out belongs to the conversation, not to one answer. The request context and
+    `POST /assistant/answers` take `skipped: [{ date, classId }]`, and every reply of an app that draws answers gives
+    the conversation's list back as `skipped`, which the app sends with its next message. Every tool that reads the
+    asker's day takes `skipClasses` and `attendClasses`: `planMeal`, `planMeet`, `planStudy`, `planStudyGroup`,
+    `planEvents`, `planQuests`, `planNewQuest`, and `proposeLibraryBooking` for a seat for today without a start, whose
+    arrival and time to leave read the day as left. `leaveClassesOut` names them with nothing to plan. Each band,
+    with a plan or without one, lists them in `skipped` and the asker's lane leaves them out; a Friend's Class is never
+    left out. The model reads `[Classes left out: …]` after the User's message, and one rule, `LEFT_OUT_RULES`, says
+    so for every kind; the meal rules no longer say it. A meal's `input.skipped` is still read for the apps before.
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
     earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
     place where they
