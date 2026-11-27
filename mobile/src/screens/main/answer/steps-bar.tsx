@@ -66,6 +66,22 @@ function percent(share: number): `${number}%` {
   return `${share}%`;
 }
 
+// Where a time falls on the bar, as a share (0–100) of its range, which runs from the first step's start to the last
+// one's end with the margin before and after.
+function shareOf(spans: Span[]): (at: number) => number {
+  const from = Math.min(...spans.map(({ start }) => start)) - MARGIN;
+  const to = Math.max(...spans.map(({ end }) => end)) + MARGIN;
+  return (at) => ((at - from) / (to - from)) * 100;
+}
+
+// Where the time card's caret points (P01 ticket 23): the chosen step's span's middle, as a share of the bar's range;
+// left out when that step has no time.
+export function caretOf(steps: readonly ReplyStep[], active: number): number | undefined {
+  const spans = spansOf(steps);
+  const span = spans.find(({ index }) => index === active);
+  return span === undefined ? undefined : shareOf(spans)((span.start + span.end) / 2);
+}
+
 // The track with one span a step.
 function Track({
   spans,
@@ -111,9 +127,7 @@ export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): Re
   if (first === undefined) {
     return null;
   }
-  const from = Math.min(...spans.map(({ start }) => start)) - MARGIN;
-  const to = Math.max(...spans.map(({ end }) => end)) + MARGIN;
-  const share = (at: number): number => ((at - from) / (to - from)) * 100;
+  const share = shareOf(spans);
   const day = koreaDayWord(first.step.startAt ?? '', now());
   return (
     <View
@@ -167,7 +181,8 @@ const styles = StyleSheet.create({
     columnGap: space[3],
   },
   word: { ...text.label, color: color.inkMuted },
-  wordActive: { fontFamily: font.semiBold, color: color.snuBlue },
+  // The chosen step in the time card's gold, its span drawn as the card's band (P01 ticket 23).
+  wordActive: { fontFamily: font.semiBold, color: color.quest },
   faint: { color: color.inkSubtle },
   track: { height: TRACK, borderRadius: radius.full, backgroundColor: color.border },
   span: {
@@ -178,7 +193,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.snuBlue,
     opacity: 0.55,
   },
-  spanActive: { opacity: 1 },
+  spanActive: { opacity: 1, borderWidth: 2, borderColor: color.quest, backgroundColor: color.questSoft },
   spanNot: { backgroundColor: color.inkSubtle },
   day: { ...text.caption, color: color.inkMuted },
 });
@@ -204,10 +219,7 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
   const { answer, plan } = shown;
   const withPlan = planStepShown(control) && answer !== null && plan !== null;
   const timeCard = stop === 2 && withPlan;
-  const told = toldOf(stop, heights, timeCard);
-  useEffect(() => {
-    onHeight(told);
-  }, [told, onHeight]);
+  useTold(toldOf(stop, heights, timeCard), onHeight);
   useFoldOnHigh(sheet.high, stops);
   if (steps === null) {
     return null;
@@ -231,6 +243,7 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
           answer={answer}
           focus={focus}
           invitation={invitation}
+          caret={caretOf(steps.steps, activeStep)}
           offset={heights.steps + space[2]}
           onClose={onClose}
           onHeight={(height) => {
@@ -288,6 +301,12 @@ function toldOf(stop: TopStop, heights: { steps: number; plan: number }, timeCar
     return TAB.height;
   }
   return heights.steps + (timeCard ? heights.plan + space[2] : TAB.height);
+}
+
+function useTold(told: number, onHeight: (height: number) => void): void {
+  useEffect(() => {
+    onHeight(told);
+  }, [told, onHeight]);
 }
 
 // The sheet rising to high folds the time card behind the steps card (the approved page, section 2 ④); lowering it

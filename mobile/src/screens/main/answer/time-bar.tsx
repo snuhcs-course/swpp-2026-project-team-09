@@ -41,7 +41,7 @@ import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
-import { Grip, STRIP_TOP } from './time-card-strip';
+import { Caret, Grip, STRIP_TOP } from './time-card-strip';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
 import { foldedTo, shownStop, TopTab } from './top-stops';
@@ -73,6 +73,9 @@ interface BarProps {
   onHeight: (height: number) => void;
   // How far below its place under the pill it stands, under the bar of several requests (P04 ticket 09); left out, 0.
   offset?: number;
+  // Under the bar of several requests, where the chosen step's span is centred on that bar, as a share of its range: a
+  // caret on the card's top edge points there (P01 ticket 23). Left out, none.
+  caret?: number;
   // People are picked in its rows (P04 ticket 64), which opens it.
   picking?: Picking | null;
 }
@@ -137,6 +140,7 @@ function TimeCard({
   add = null,
   onHeight,
   offset = 0,
+  caret,
   picking = null,
   fold,
 }: BarProps & { fold: ((long: boolean) => void) | undefined }): ReactElement {
@@ -151,6 +155,7 @@ function TimeCard({
   usePickingPlace(picking !== null, grip, sheet.high);
   return (
     <Reanimated.View style={[styles.bar, { top: barY }, grip.moved, grip.rested]} testID="time-bar">
+      {caret === undefined ? null : <Caret at={caret} />}
       <View onLayout={onBand} testID="time-card-head">
         <TimeBand
           {...band}
@@ -187,6 +192,7 @@ interface PlanBarProps {
   onClose: () => void;
   onHeight: (height: number) => void;
   offset?: number;
+  caret?: number;
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
@@ -194,7 +200,7 @@ interface PlanBarProps {
 // for in words (P04 ticket 82). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
 // the Plan can take more people (P04 ticket 14), so that the dock is the input's row alone.
 export function PlanBar(props: PlanBarProps): ReactElement {
-  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
+  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset, caret } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
   const addName = settled ? null : addNameOf(answer.input.kind);
@@ -230,6 +236,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
       day={mealDayOf(answer, plan)}
       onHeight={onHeight}
       offset={offset}
+      caret={caret}
     />
   );
 }
