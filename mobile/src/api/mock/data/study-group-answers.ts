@@ -4,7 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply } from '@/api/assistant-types';
+import type { AnswerReply, AssistantReply } from '@/api/assistant-types';
 import { isAnswerReply } from '@/api/server/plan-answers';
 import type { StudyInput } from '@/api/study-plan-types';
 import gathering from './study-group-gathering.json';
@@ -30,6 +30,22 @@ export const STUDY_GROUP_TO_SEND = checked(toSend);
 export const STUDY_GROUP_GATHERING = checked(gathering);
 export const STUDY_GROUP_READY = checked(ready);
 export const STUDY_GROUP_MORE_NEEDED = checked(moreNeeded);
+
+// "같이 공부할 자리 있어?" without a main server (P10 ticket 11): the answer to send when 민수 is named with the others,
+// else the one short of one. The mock does not calculate.
+export function studyGroupReplyTo(last: string): AssistantReply | null {
+  if (!last.includes('같이 공부')) {
+    return null;
+  }
+  const named = last.includes('민수');
+  return {
+    text: named ? '네 명이 모두 비는 내일 15:00에 관정 4층 6인실을 추천해요.' : '',
+    mapButtons: [],
+    cards: [],
+    proposal: null,
+    answer: named ? STUDY_GROUP_TO_SEND : STUDY_GROUP_MORE_NEEDED,
+  };
+}
 
 // The copy for a study input: the answer to send with four people or more, and the one of three, short of one,
 // otherwise. The mock does not calculate.
