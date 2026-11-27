@@ -46,23 +46,31 @@ export function pickLine(
   return when === null ? dishes : `${when} · ${dishes}`;
 }
 
+type PickBase = Pick<Draft, 'id' | 'position' | 'planId' | 'group' | 'tone' | 'number'>;
+
+// A study answer's pick (P10 ticket 17): the meal pick's make-up in the study colour, its building with its arrival.
+function studyPickDraft(base: PickBase, plan: Plan, kind: Cuisine | null): Draft {
+  const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number: base.number, meal: true, study: true };
+  const words = { ...mealPickLabel(plan, plan.place.label, kind), action: null };
+  return { ...base, coral: true, study: true, symbol, ...words };
+}
+
+interface PickArgs {
+  title: string;
+  position: LatLng;
+  number: number | null;
+  plan: Plan | undefined;
+  day: string | undefined;
+  kind: Cuisine | null;
+  meal: boolean;
+  coral: boolean;
+  // A 관정 booking's start, which makes its pick the study one (P01 ticket 10); null for any other pick.
+  study: string | null;
+}
+
 // The chosen place of a scene: a meal answer's with menus says its time and main dish (`mealPickLabel`); any other its
 // flag's words, its day, and its first dish (`pickLine`). Any meal answer's, menus or none, is coral (P04 ticket 90).
-export function pickDraft(
-  pick: {
-    title: string;
-    position: LatLng;
-    number: number | null;
-    plan: Plan | undefined;
-    day: string | undefined;
-    kind: Cuisine | null;
-    meal: boolean;
-    coral: boolean;
-    // A 관정 booking's start, which makes its pick the study one (P01 ticket 10); null for any other pick.
-    study: string | null;
-  },
-  flagText: string | null,
-): Draft {
+export function pickDraft(pick: PickArgs, flagText: string | null): Draft {
   const { title, position, number, plan, day, kind, meal, coral, study } = pick;
   const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number, ...(coral ? { meal: true } : {}) };
   const base = {
@@ -74,6 +82,9 @@ export function pickDraft(
     number,
     ...(coral ? { coral } : {}),
   } as const;
+  if (meal && plan?.study !== undefined) {
+    return studyPickDraft(base, plan, kind);
+  }
   if (meal && plan !== undefined) {
     return { ...base, symbol: { ...symbol, meal: true }, ...mealPickLabel(plan, title, kind) };
   }
@@ -119,7 +130,9 @@ function recededDraft(plan: Plan, { place, tag }: MapScene['places'][number]): D
 // User's day ("26분"), or its arrival time when that walking is not known, in a capsule beside the round (P04 ticket
 // 83). A screen reader reads its name too.
 function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'][number]): Draft {
-  const title = tag ?? place.label;
+  // A study answer's place is named by its building, its tag being its best space (P10 ticket 17).
+  const study = plan.study !== undefined;
+  const title = study ? place.label : (tag ?? place.label);
   const walk = addedWalk(plan);
   const value = walk === null ? koreaClock(plan.startAt) : `${String(walk)}분`;
   const said = walk === null ? `${value} 도착` : `걸음 ${value}`;
@@ -132,9 +145,17 @@ function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'
     position: { latitude: place.latitude, longitude: place.longitude },
     planId: plan.id,
     group: 'candidate',
-    symbol: { type: 'dot', role: 'candidate', number, meal: true, ...(faded ? { faded } : {}) },
+    symbol: {
+      type: 'dot',
+      role: 'candidate',
+      number,
+      meal: true,
+      ...(study ? { study } : {}),
+      ...(faded ? { faded } : {}),
+    },
     tone: 'candidate',
     title: value,
+    ...(study ? { study } : {}),
     ...(faded ? { faded } : {}),
     ...(walk === null ? { clock: true } : {}),
     line: null,

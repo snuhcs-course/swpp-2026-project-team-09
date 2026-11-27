@@ -8,12 +8,15 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, type TextStyle, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { Icon } from './icon';
 import type { AnswerLabel } from './map-answer';
 import { BADGE, GAP, LABEL_MAX, pickTimeMax, RING, SUB_MAX } from './map-answer-box';
 import { RoundNumber } from './round-number';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
 const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
+// The 공부공간 layer's book before a study answer's pick's name (P10 ticket 17).
+const STUDY_BOOK = 14;
 // A meal candidate's number badge: its coral rim (P04 ticket 90).
 const MEAL_BADGE_RIM = 1.5;
 
@@ -65,10 +68,38 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
   );
 }
 
+// A label's number before its title, when the mark's own dot is not drawn: a meal's in coral, a study answer's in the
+// study colour (P10 ticket 17), any other the tone's own.
+function NumberBadge({ label, number }: { label: AnswerLabel; number: number }): ReactElement {
+  const { tone, note = null, meal = false, study = false } = label;
+  const studyPlace = meal && study;
+  return (
+    <View
+      style={[
+        styles.badge,
+        tone === 'pick' ? pickBadgeOf(note, meal) : candidateBadgeOf(meal),
+        studyPlace && (tone === 'pick' ? styles.studyPickBadge : styles.studyCandidateBadge),
+      ]}
+    >
+      <RoundNumber
+        inside={meal && tone !== 'pick' ? BADGE - 2 * MEAL_BADGE_RIM : BADGE}
+        number={number}
+        style={[
+          styles.number,
+          meal && tone !== 'pick' && styles.mealNumber,
+          studyPlace && tone !== 'pick' && styles.studyNumber,
+        ]}
+      />
+    </View>
+  );
+}
+
 // The label of an answer's mark (`MapAnswerMark`): its words in a tag beside the symbol box.
 export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { side, tone, line, number, shift, sub = null, note = null, meal = false } = label;
+  const { side, tone, line, number, shift, sub = null, note = null, meal = false, study = false } = label;
   const { fontScale } = useWindowDimensions();
+  // A study answer's place: the meal's make-up in the study colour (P10 ticket 17).
+  const studyPlace = meal && study;
   return (
     <View
       style={[
@@ -80,7 +111,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         (sub !== null || tone === 'pick') && styles.subLabel,
         tone === 'pick' && note !== null && [styles.mealPickLabel, { maxWidth: pickTimeMax(fontScale) }],
         meal && (tone === 'pick' || tone === 'candidate') && styles.mealEdge,
-        label.study === true && tone === 'pick' && styles.studyEdge,
+        study && (tone === 'pick' || (studyPlace && tone === 'candidate')) && styles.studyEdge,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
@@ -89,15 +120,12 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
       ]}
       testID={testID}
     >
-      {number === null ? null : (
-        <View style={[styles.badge, tone === 'pick' ? pickBadgeOf(note, meal) : candidateBadgeOf(meal)]}>
-          <RoundNumber
-            inside={meal && tone !== 'pick' ? BADGE - 2 * MEAL_BADGE_RIM : BADGE}
-            number={number}
-            style={[styles.number, meal && tone !== 'pick' && styles.mealNumber]}
-          />
+      {number === null ? null : <NumberBadge label={label} number={number} />}
+      {studyPlace && tone === 'pick' ? (
+        <View testID={testID === undefined ? undefined : `${testID}:book`}>
+          <Icon color={color.svcStudy} name="bookOpen" size={STUDY_BOOK} />
         </View>
-      )}
+      ) : null}
       <LabelWords {...label} />
     </View>
   );
@@ -155,8 +183,11 @@ const styles = StyleSheet.create({
   mealPickBadge: { backgroundColor: color.meal },
   // A meal answer's candidate's name tag (P04 ticket 90): its number as the candidate's soft coral round.
   mealEdge: { borderColor: color.meal },
-  // A 관정 booking's pick (P01 ticket 10): the study colour's edge.
+  // A 관정 booking's pick (P01 ticket 10), and a study answer's place (P10 ticket 17): the study colour's edge.
   studyEdge: { borderColor: color.svcStudy },
+  studyPickBadge: { backgroundColor: color.svcStudy },
+  studyCandidateBadge: { borderColor: color.svcStudy, backgroundColor: color.svcStudySoft },
+  studyNumber: { color: color.svcStudy },
   mealCandidateBadge: { borderWidth: MEAL_BADGE_RIM, borderColor: color.meal, backgroundColor: color.mealSoft },
   mealNumber: { color: color.meal },
   candidateBadge: { backgroundColor: color.snuBlue },

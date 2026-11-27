@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -84,11 +85,12 @@ export function planPress(
 }
 
 // "메뉴 ›": a press on a meal answer's chosen place, its label included, raises the card to that restaurant's menu
-// (board E4); any other mark opens as before.
+// (board E4); any other mark opens as before. A study answer, drawn as a meal's, opens its place once that view is
+// built (P10 ticket 19).
 export function withMealMenu(control: Pick<ChatSheetControl, 'answer' | 'card'>, onMark: OnMark): OnMark {
   return (id, position, pick) => {
     const { answer, plan } = control.answer;
-    if (id === 'answer:pick' && answer !== null && plan !== null && drawsMeal(answer)) {
+    if (id === 'answer:pick' && answer?.input.kind === 'meal' && plan !== null && drawsMeal(answer)) {
       openMealMenu(control, plan.id);
       return;
     }
