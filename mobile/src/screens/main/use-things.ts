@@ -31,6 +31,13 @@ export interface Things {
 
 // Above the others of its list. The User's own Avatar is 1, so a selected person is above it too, as in the frames.
 export const SELECTED_ORDER = 2;
+// A flag, a Quest made from a Plan's or a booking party's with its room request out (P10 ticket 13): its two lines are
+// what it says, so it is drawn among the Avatars, which the map draws above every marker, and above them.
+export const FLAG_ORDER = SELECTED_ORDER + 1;
+
+function isFlag({ kind, request }: CardView): boolean {
+  return kind === 'made-quest' || request !== undefined;
+}
 
 const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
@@ -144,6 +151,8 @@ export function useThings(
       };
       if (card.mark.type === 'person' || card.glideMs !== undefined) {
         avatars.push({ ...thing, glideMs: card.glideMs ?? POSITION_EVERY_MS });
+      } else if (isFlag(card)) {
+        avatars.push({ ...thing, order: FLAG_ORDER, glideMs: 0 });
       } else {
         markers.push(thing);
       }
