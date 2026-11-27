@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -261,7 +262,9 @@ describe('+ 파티 모집 with a Quest the User holds alone for the event', () =
     await pass(500);
 
     expect(shownAddress()).toBe(`/party-form?questId=${MY_CAREER.id}`);
-    expect(screen.getByRole('header', { name: '모집글 수정' })).toBeVisible();
+    // MY_CAREER is 비공개, whose edit form is 파티 수정; a 공개 one's is 모집글 수정.
+    expect(screen.getByRole('header', { name: '파티 수정' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '수정 완료' })).toBeVisible();
     expect(screen.getByDisplayValue(MY_CAREER.title)).toBeVisible();
   });
 
