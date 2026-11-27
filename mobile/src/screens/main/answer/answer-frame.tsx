@@ -13,6 +13,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -23,6 +24,7 @@ import { turnOf } from '@/features/assistant/turn';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
+import { shownParts, speaksForItself } from '../library/chat-library-cards';
 import type { CardActions } from '../chat-cards';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
@@ -111,13 +113,14 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
   // booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review).
   const docked = control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
   const turn = turnOf(bubbles);
+  const parts = shownParts(turn?.after ?? []);
   const last = bubbles.at(-1);
   // While a Place is picked on the map the card is mostly low: the picking line and its chip that stops it come first,
   // where the low card shows them, as the dock had them (PR 545's review).
   const picking = control.pick.place !== null;
   return (
     <>
-      {(turn?.after ?? []).map((bubble) => (
+      {parts.map((bubble) => (
         <View key={bubble.id} style={styles.part}>
           {bubble === turn?.after[0] ? <SetQuestLine control={control} /> : null}
           {bubble === last && picking ? <ReplyPicks control={control} /> : null}
@@ -130,7 +133,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
             onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
             onShowLayer={control.leaving.showLayer}
             words={
-              bubble.id === docked ? null : (
+              bubble.id === docked || speaksForItself(bubble) ? null : (
                 <Words
                   addRecalculated={control.chat.addRecalculated}
                   bubble={bubble}

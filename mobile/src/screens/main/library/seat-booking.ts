@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
@@ -13,12 +14,14 @@ import { doneOf } from '@/library/cards/done';
 import { type Slot, seatBookingOf } from '@/library/cards/payloads';
 import { nextFreeSeat, seatState } from '@/library/cards/seats';
 import { liveSlot, sameSlot } from '@/library/cards/slot-band';
+import { siteDate, siteInstant } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibrarySeat, LibraryWriteResult } from '@/library/replies';
 import { type SeatBookingStages, seatBooking } from '@/telemetry';
 import { BOOKING_CLOSED } from './seats-card';
 import { bseqnoOf, type CardFailure, type LibraryCardActions, libraryMessage } from './use-library-call';
 import { seatsFor } from './use-room-counts';
+import { withinWait } from './seats-wait';
 import type { HoldStay } from './use-seat-stay';
 
 // The seat book card's booking (moved out of `book-seat-card.tsx`): what it sends on 예약하기 and what the card says.
@@ -39,6 +42,8 @@ const GRADUATE_ROOM = '8F-grad-reading-room';
 
 export interface Booking {
   card: LibraryCardData;
+  // The card's place in the chat, whose outcome a cancel from the done message sets (P01 ticket 15).
+  place: string;
   space: LibrarySpace;
   slot: Slot;
   actions: LibraryCardActions;
@@ -59,7 +64,24 @@ export function readKeyOf(space: Pick<LibrarySpace, 'id'>, slot: Slot): string {
 
 export const SEATS_STALE = '자리를 다시 확인하고 있어요. 확인이 끝나면 다시 눌러 주세요.';
 
-// 예약하기: the booking, then the done message; a seat just taken offers the next free one. A time whose start has
+// The read back of a new booking's start (P01 ticket 15) waits this long at most.
+const READ_BACK_MS = 4_000;
+
+// The start the library holds for a new booking (its USESTART), found by its number among the bookings of its day;
+// null when it is not listed in time, or on another day, and the start sent stands.
+export async function bookedStart(date: string, bseqno: string): Promise<string | null> {
+  try {
+    const day = siteDate(date);
+    const bookings = await withinWait(library.myBookings(day, day), READ_BACK_MS);
+    const found = bookings.find(({ BSEQNO }) => String(BSEQNO) === bseqno);
+    const at = found === undefined ? null : siteInstant(found.USESTART);
+    return at !== null && at.date === date ? at.clock : null;
+  } catch {
+    return null;
+  }
+}
+
+// 예약하기: the booking, its start read back, then the done message; a seat just taken offers the next free one. A time whose start has
 // gone by at the press, or that the space no longer has room for, is never sent, whatever the band did. The usage
 // data's stages start just before the library is asked, so a press turned away before it sends nothing.
 export async function sendBooking(
@@ -85,10 +107,12 @@ export async function sendBooking(
     return notBooked(booking, seat, result, stages);
   }
   stages.booked();
+  const bseqno = bseqnoOf(info);
+  const start = await bookedStart(slot.date, bseqno);
   booking.close('booked');
-  const made = { slot, label: seat.VNAME, bseqno: bseqnoOf(info), notes: card.notes };
+  const made = { slot, label: seat.VNAME, bseqno, notes: card.notes, start };
   booking.hold(space, slot, made.bseqno);
-  const done = doneOf(space, made, now());
+  const done = { ...doneOf(space, made, now()), place: booking.place };
   booking.actions.addOwn({ text: done.title, done });
   return null;
 }

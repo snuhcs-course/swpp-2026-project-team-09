@@ -7,6 +7,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { EventSheets, useEventSheets } from '../events/event-sheets';
 import { JoinSheet } from '../party/join-sheet';
 import { usePartyActions } from '../party/use-party-actions';
 import type { CardActions, ProposalActions } from './chat-cards';
+import type { TellAct } from './library/act-stage';
 import type { Tell } from './library/booking-stage';
 import type { LibraryCardActions } from './library/use-library-call';
 import type { EventCardActions } from './chat-event-cards';
@@ -75,6 +77,8 @@ export interface CardLeaving {
     point: PlacePoint | null;
     walk: number | null;
   };
+  // How a booking's ticket tells its main button beside the input (P01 ticket 15).
+  act?: TellAct;
 }
 
 type LeavingBooking = CardLeaving['booking'];
@@ -96,7 +100,7 @@ function bookingActionsOf(booking: LeavingBooking): Pick<LibraryCardActions, 'on
 
 // What the cards of the conversation's answers do, and the sheets their buttons open over the chat.
 export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: CardActions; sheets: ReactElement } {
-  const { openEvent, openQuestPost, openPartyForm, proposals, booking } = leaving;
+  const { openEvent, openQuestPost, openPartyForm, proposals, booking, act } = leaving;
   const eventCards = useEventCards(openEvent);
   const questCards = useQuestCards(openQuestPost);
   const { addOwn, outcomes, finish, unfinish, rooms, showRoom, bubbles } = chat;
@@ -116,6 +120,7 @@ export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: Car
         askedBefore: (bubbleId: number) =>
           bubbles.findLast(({ id, role }) => role === 'user' && id < bubbleId)?.text ?? '',
         ...bookingActionsOf(booking),
+        ...(act === undefined ? {} : { act }),
       },
     }),
     [
@@ -131,6 +136,7 @@ export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: Car
       showRoom,
       bubbles,
       booking,
+      act,
     ],
   );
   return {
