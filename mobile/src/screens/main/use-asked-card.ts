@@ -102,9 +102,9 @@ export function useAskedCard(
       return;
     }
     if (address?.kind === 'invitation' && !isError) {
-      showToast(INVITATION_GONE);
+      showToast(INVITATION_GONE, undefined, 'alert');
     } else if (address?.kind === 'party-gone') {
-      showToast(PARTY_GONE);
+      showToast(PARTY_GONE, undefined, 'alert');
     } else if (address !== null) {
       router.navigate(fallbackFor(address));
     }
