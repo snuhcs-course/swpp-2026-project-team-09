@@ -213,11 +213,17 @@ export function sharedQuestFor(quests: readonly Quest[], eventId: string): Quest
   return quests.find(({ globalEvent, holders }) => globalEvent?.id === eventId && holders.length > 1) ?? null;
 }
 
-// The Quest the User holds alone for the event: the main server ends it when they join another of the event, and
-// `+ 파티 모집` edits it.
-export function soloQuestFor(quests: readonly Quest[], eventId: string | null): Quest | null {
+// The 파티 the User holds alone for the event: the main server ends it when they join another of the event, and
+// `+ 파티 모집` edits it. Not a Quest taken alone ("여기로"), which is never a 파티 and which the main server lets no
+// one edit.
+export function partyHeldAloneFor(quests: readonly Quest[], eventId: string | null): Quest | null {
   if (eventId === null) {
     return null;
   }
-  return quests.find(({ globalEvent, holders }) => globalEvent?.id === eventId && holders.length === 1) ?? null;
+  return (
+    quests.find(
+      ({ globalEvent, holders, takenAlone }) =>
+        globalEvent?.id === eventId && holders.length === 1 && takenAlone !== true,
+    ) ?? null
+  );
 }

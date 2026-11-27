@@ -10,21 +10,23 @@ import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { questsQuery } from '@/api/queries';
 import { useToast } from '@/design-system';
-import { sharedQuestFor, soloQuestFor } from '@/features/events/adapter';
+import { partyHeldAloneFor, sharedQuestFor } from '@/features/events/adapter';
 
 // Opens 파티 만들기 with a Global Event chosen (`/party-form?eventId=…`). A User who already holds the event's 파티 with
-// others is led to its room instead, and one who holds it alone to its edit form, since sending a new one would only
-// change that Quest.
+// others is led to its room instead, and one who holds a 파티 of it alone to that 파티's edit form, since sending a new
+// one would only change it. A Quest taken alone ("여기로") still opens the blank form, which attending turns into a 파티.
 export function useOpenPartyCreate(): (eventId: string) => void {
   const quests = useQuery(questsQuery).data ?? [];
   const showToast = useToast();
   return useCallback(
     (eventId: string) => {
+      const alone = partyHeldAloneFor(quests, eventId);
+      if (alone !== null) {
+        router.push({ pathname: '/party-form', params: { questId: alone.id } });
+        return;
+      }
       const shared = sharedQuestFor(quests, eventId);
-      const solo = soloQuestFor(quests, eventId);
-      if (solo !== null) {
-        router.push({ pathname: '/party-form', params: { questId: solo.id } });
-      } else if (shared === null) {
+      if (shared === null) {
         router.push({ pathname: '/party-form', params: { eventId } });
       } else {
         router.push(`/room/${shared.id}`);

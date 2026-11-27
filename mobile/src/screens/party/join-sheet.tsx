@@ -13,7 +13,7 @@ import { questsQuery } from '@/api/queries';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
 import type { JoinPolicy } from '@/api/types';
 import { BottomSheet, Button, color, font, Icon, RoundIcon, space, text } from '@/design-system';
-import { soloQuestFor } from '@/features/events/adapter';
+import { partyHeldAloneFor } from '@/features/events/adapter';
 import { topicParticle } from '@/features/map/short-name';
 import { joinLabel } from './post-card';
 
@@ -66,7 +66,7 @@ function goneWords(title: string): string {
 // The warning over the note when joining ends the User's own Quest of the event, or nothing.
 function GoneNote({ eventId }: { eventId: string | null }): ReactElement | null {
   const quests = useQuery(questsQuery).data ?? [];
-  const gone = soloQuestFor(quests, eventId);
+  const gone = partyHeldAloneFor(quests, eventId);
   if (gone === null) {
     return null;
   }

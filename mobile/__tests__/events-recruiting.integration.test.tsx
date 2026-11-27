@@ -225,6 +225,23 @@ describe('+ 파티 모집', () => {
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(`${CAREER.title} 같이 가요`);
   });
 
+  it('opens the room of the Quest the User already shares for the event', async () => {
+    const shared = { ...MY_CAREER, holders: [...MY_CAREER.holders, MIN_JUN_HOLDER], capacity: 4 };
+    answerEvents(server, { quests: [DINNER, shared] });
+    server.on(`GET /quests/${shared.id}`, { status: 200, body: shared });
+    server.on(`GET /quests/${shared.id}/invitations`, { status: 200, body: [] });
+    const user = await openEvents();
+    await openSheet(user);
+
+    await user.press(screen.getByRole('button', { name: '파티 모집' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe(`/room/${shared.id}`);
+    expect(toast()).toHaveTextContent('이 행사에 함께 가는 파티가 이미 있어요');
+  });
+});
+
+describe('+ 파티 모집 with a Quest the User holds alone for the event', () => {
   it('opens the edit form of the Quest the User holds alone for the event', async () => {
     answerEvents(server, { quests: [DINNER, MY_CAREER] });
     server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
@@ -239,19 +256,15 @@ describe('+ 파티 모집', () => {
     expect(screen.getByDisplayValue(MY_CAREER.title)).toBeVisible();
   });
 
-  it('opens the room of the Quest the User already shares for the event', async () => {
-    const shared = { ...MY_CAREER, holders: [...MY_CAREER.holders, MIN_JUN_HOLDER], capacity: 4 };
-    answerEvents(server, { quests: [DINNER, shared] });
-    server.on(`GET /quests/${shared.id}`, { status: 200, body: shared });
-    server.on(`GET /quests/${shared.id}/invitations`, { status: 200, body: [] });
+  it('opens 파티 만들기 with the event chosen for a Quest taken alone ("여기로"), which cannot be edited', async () => {
+    answerEvents(server, { quests: [DINNER, { ...MY_CAREER, takenAlone: true }] });
     const user = await openEvents();
     await openSheet(user);
 
     await user.press(screen.getByRole('button', { name: '파티 모집' }));
     await pass(500);
 
-    expect(shownAddress()).toBe(`/room/${shared.id}`);
-    expect(toast()).toHaveTextContent('이 행사에 함께 가는 파티가 이미 있어요');
+    expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
   });
 });
 
