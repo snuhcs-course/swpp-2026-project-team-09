@@ -10,10 +10,9 @@
 // party, 바꾸기 / 그대로 두기 beside a Quest already set (`plan-set`, P04 ticket 17), which it also sends with POST /plans
 // and POST /assistant/answers, a Quest cancelled by words (`quest-cancel`, ticket 24), and a 파티 changed in place
 // (`party-change`, ticket 25), a Place or a time picked (`pick`, ticket 26), and a study answer together
-// (`study-group`, P10 ticket 16); `study-plan`, the places to study alone ranked, waits for its own switch. The 1.0.0
-// bundle sends none of them. A main server before P05 ticket 17 refuses `plan-set`, one before P05 ticket 31
-// `quest-cancel`, one before P05 ticket 30 `party-change`, one before P05 ticket 24 `pick`, and one before P10
-// ticket 07 (#643) `study-group`.
+// (`study-group`, P10 ticket 16). The 1.0.0 bundle sends none of them. A main server before P05 ticket 17 refuses
+// `plan-set`, one before P05 ticket 31 `quest-cancel`, one before P05 ticket 30 `party-change`, one before P05 ticket
+// 24 `pick`, and one before P10 ticket 07 (#643) `study-group`.
 export const ANSWER_CAPABILITIES = [
   'library',
   'answer',

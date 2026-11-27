@@ -17,7 +17,7 @@ Native files: none. Releases: an app OTA update, only after the Production serve
 
 ## Acceptance criteria
 
-- [x] `ANSWER_CAPABILITIES` has `study-group` and not `study-plan`. (Unit test.)
+- [x] `ANSWER_CAPABILITIES` has `study-group`. (Unit test.) `study-plan` is ticket 23's (#685), so the test pins only `study-group`, and either merge order keeps both.
 - [x] "같이 공부할 자리 있어?" gets the group answer from the mock server. "공부할 자리 있어?" alone still gets today's seat ticket. (Unit test of the mock's reply: the mock answers the words together before the library's words.)
 - [ ] The Production server's capability list includes `study-group` before the OTA (checked at the release). The server side, #643, is in the Release `snunow/all/26.11.27-10`.
 - [x] A group answer shown as one step of several requests has its main button: `stepActionOf` asks the group card's act as `libraryActOf` does (a point from #655's review). (Integration test.)
