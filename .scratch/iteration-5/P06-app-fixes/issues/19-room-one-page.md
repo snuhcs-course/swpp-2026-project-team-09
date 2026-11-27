@@ -113,12 +113,9 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
    - The toast after opening becomes '파티를 활성화했어요'.
    - No push is added.
 6. **The activation help**, one line each:
-   - 켜면 다른 멤버의 알림 목록에 떠요
    - 참여한 멤버끼리만 지도에서 서로의 위치를 봐요
    - 참여하려면 전체 위치 공유가 켜져 있어야 해요
-   - 일정 시작 30분 전부터 그 장소에 도착하면, 위치를 보는 멤버에게 도착 알림이 가요
    - 한 번에 한 파티만 참여할 수 있어요
-   - 다 모이면 꺼 주세요. 꺼도 파티는 그대로 남아요
    - 남은 일정이 있어야 켤 수 있어요
 
 ### 3. 일정
@@ -142,8 +139,6 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
    - PR 662 (open, another owner) touches `features/party/mine.ts`. This ticket changes `making.ts`, not `mine.ts`.
 5. **The 일정 help**, one line each:
    - 일정을 추가·수정·삭제하면 다른 멤버에게 알림이 가요
-   - 지도에서 고르거나 건물 이름으로 적은 장소는 활성화 중 멤버의 도보 시간과 도착 알림에 쓰여요
-   - 내 파티 목록의 시간과 장소도 일정에서 가져와요
    - 행사를 골라 만든 일정은 행사를 따라가서 고칠 수 없어요
 
 ### 4. 신청, 멤버, 초대 중
@@ -223,6 +218,9 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
   - the room always asks `openAsk`, while 파티 켜기 asks only beside another Party;
   - 내 파티's strip still leaves the other Party rather than ending one the User leads, as its sheet says.
   - The questions moved from `activation-box.tsx` to `screens/room/party-asks.ts`.
+- **The help bubbles, trimmed by the user on 2026-11-27.** Part 2.6 and 3.5 above now list the lines kept.
+  - The activation help dropped '켜면 다른 멤버의 알림 목록에 떠요', '일정 시작 30분 전부터 그 장소에 도착하면, 위치를 보는 멤버에게 도착 알림이 가요' and '다 모이면 꺼 주세요. 꺼도 파티는 그대로 남아요'.
+  - The 일정 help dropped '지도에서 고르거나 건물 이름으로 적은 장소는 활성화 중 멤버의 도보 시간과 도착 알림에 쓰여요' and '내 파티 목록의 시간과 장소도 일정에서 가져와요'.
 - **The library's booked room** (PR 684, merged during the build) stays on the step `shownSubQuest` shows, as the lists show it. The head's box takes the orange step's place line as 일정 draws it, so it carries the room whenever the orange step is that step.
 - **Tests:**
   - `answerRoom` now answers the Lobby with the Master Switch on, as the room's flows need. The Master-Switch-off flows are in `room-activation-master`.

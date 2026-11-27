@@ -9,16 +9,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, Overlay, space } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 
-// The help of 파티 활성화 and of 일정, one line each (P06 ticket 19).
+// The help of 파티 활성화 and of 일정, one line each (P06 ticket 19), as the user trimmed it on 2026-11-27.
 export const ACTIVATION_HELP = {
   title: '파티 활성화',
   lines: [
-    '켜면 다른 멤버의 알림 목록에 떠요',
     '참여한 멤버끼리만 지도에서 서로의 위치를 봐요',
     '참여하려면 전체 위치 공유가 켜져 있어야 해요',
-    '일정 시작 30분 전부터 그 장소에 도착하면, 위치를 보는 멤버에게 도착 알림이 가요',
     '한 번에 한 파티만 참여할 수 있어요',
-    '다 모이면 꺼 주세요. 꺼도 파티는 그대로 남아요',
     '남은 일정이 있어야 켤 수 있어요',
   ],
 } as const;
@@ -27,8 +24,6 @@ export const PLAN_HELP = {
   title: '일정',
   lines: [
     '일정을 추가·수정·삭제하면 다른 멤버에게 알림이 가요',
-    '지도에서 고르거나 건물 이름으로 적은 장소는 활성화 중 멤버의 도보 시간과 도착 알림에 쓰여요',
-    '내 파티 목록의 시간과 장소도 일정에서 가져와요',
     '행사를 골라 만든 일정은 행사를 따라가서 고칠 수 없어요',
   ],
 } as const;

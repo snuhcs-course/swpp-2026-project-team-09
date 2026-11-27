@@ -88,13 +88,17 @@ describe("the room's app bar and title", () => {
 });
 
 const HELP = [
-  '켜면 다른 멤버의 알림 목록에 떠요',
   '참여한 멤버끼리만 지도에서 서로의 위치를 봐요',
   '참여하려면 전체 위치 공유가 켜져 있어야 해요',
-  '일정 시작 30분 전부터 그 장소에 도착하면, 위치를 보는 멤버에게 도착 알림이 가요',
   '한 번에 한 파티만 참여할 수 있어요',
-  '다 모이면 꺼 주세요. 꺼도 파티는 그대로 남아요',
   '남은 일정이 있어야 켤 수 있어요',
+];
+
+// The lines the user took out of the help on 2026-11-27.
+const LEFT_OUT = [
+  '켜면 다른 멤버의 알림 목록에 떠요',
+  '일정 시작 30분 전부터 그 장소에 도착하면, 위치를 보는 멤버에게 도착 알림이 가요',
+  '다 모이면 꺼 주세요. 꺼도 파티는 그대로 남아요',
 ];
 
 describe('활성화 while none runs', () => {
@@ -107,6 +111,9 @@ describe('활성화 while none runs', () => {
 
     for (const line of HELP) {
       expect(screen.getByText(line)).toBeVisible();
+    }
+    for (const line of LEFT_OUT) {
+      expect(screen.queryByText(line)).toBeNull();
     }
     await user.press(screen.getByLabelText('파티 활성화 도움말 닫기'));
     expect(screen.queryByText(HELP[0] ?? '')).toBeNull();

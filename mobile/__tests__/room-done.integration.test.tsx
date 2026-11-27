@@ -42,8 +42,6 @@ const [MEET] = PICNIC.subQuests;
 const DURING_PICNIC = new Date('2026-10-06T09:10:00.000Z');
 const HELP = [
   '일정을 추가·수정·삭제하면 다른 멤버에게 알림이 가요',
-  '지도에서 고르거나 건물 이름으로 적은 장소는 활성화 중 멤버의 도보 시간과 도착 알림에 쓰여요',
-  '내 파티 목록의 시간과 장소도 일정에서 가져와요',
   '행사를 골라 만든 일정은 행사를 따라가서 고칠 수 없어요',
 ];
 
@@ -87,6 +85,9 @@ describe("일정's grey and orange", () => {
     for (const line of HELP) {
       expect(screen.getByText(line)).toBeVisible();
     }
+    // The lines the user took out on 2026-11-27.
+    expect(screen.queryByText(/도보 시간과 도착 알림에 쓰여요$/u)).toBeNull();
+    expect(screen.queryByText('내 파티 목록의 시간과 장소도 일정에서 가져와요')).toBeNull();
   });
 
   it('greys a step without an end once the next one starts, and the time and place box follows', async () => {
