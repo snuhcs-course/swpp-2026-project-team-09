@@ -12,7 +12,7 @@
 
 import { clockOf } from '../assistant/free-time/free-time.js';
 import { withCopula, withSubject } from '../assistant/gathering/answer-words.js';
-import { dayAndClock, koreaDate } from '../assistant/korea-time.js';
+import { dateAndClock, koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
 import { type GoneKind, type NotificationWords, type PartyGone, type Told } from './notification.js';
@@ -84,14 +84,17 @@ function interestBody(time: string | null, placeLabel: string | null): string {
   return time === null ? '맡겨 둔 관심에 맞아요.' : `${time}에 시작해요.`;
 }
 
-// A new match of a watched interest: the start in Korea with its day and the Place, leaving out what is unknown. It
-// rings once. `at` is the Notification's time, from which the day counts.
-function interestWords(
-  { subject, id, title, startsAt, placeLabel }: Told & { kind: 'interest-new' },
-  at: Date,
-): NotificationWords {
+// A new match of a watched interest: the start in Korea with its date and the Place, leaving out what is unknown. It
+// rings once.
+function interestWords({
+  subject,
+  id,
+  title,
+  startsAt,
+  placeLabel,
+}: Told & { kind: 'interest-new' }): NotificationWords {
   const event = subject === 'event';
-  const time = startsAt === null ? null : dayAndClock(startsAt, at);
+  const time = startsAt === null ? null : dateAndClock(startsAt);
   return {
     title: event ? `${withSubject(title)} 떴어요` : `${title} 모집이 떴어요`,
     ahead: null,
@@ -103,19 +106,19 @@ function interestWords(
   };
 }
 
-// "내일 14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소". The day counts from `at`, the Notification's time.
-function stepLine({ stepTitle, startsAt, cancelled }: Of<'step-changed'>, at: Date): string {
+// "11/18(수) 14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소".
+function stepLine({ stepTitle, startsAt, cancelled }: Of<'step-changed'>): string {
   if (cancelled) {
     return `'${stepTitle}' 취소`;
   }
-  return startsAt === null ? stepTitle : `${dayAndClock(startsAt, at)} ${stepTitle}`;
+  return startsAt === null ? stepTitle : `${dateAndClock(startsAt)} ${stepTitle}`;
 }
 
 // What a party's members would have said in words. Each rings, is about the member, and opens the party's room.
-function memberWords(told: Of<'step-changed'> | Of<'arrived'> | Of<'late'>, at: Date): NotificationWords {
+function memberWords(told: Of<'step-changed'> | Of<'arrived'> | Of<'late'>): NotificationWords {
   const card = { kind: 'party', id: told.questId };
   if (told.kind === 'step-changed') {
-    const line = stepLine(told, at);
+    const line = stepLine(told);
     return {
       title: `${withSubject(told.byName)} 일정을 바꿨어요`,
       ahead: null,
@@ -210,10 +213,10 @@ function goneWords({ kind, questId, questTitle, leaderName }: PartyGone): Notifi
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
-    return interestWords(told, at);
+    return interestWords(told);
   }
   if (told.kind === 'step-changed' || told.kind === 'arrived' || told.kind === 'late') {
-    return memberWords(told, at);
+    return memberWords(told);
   }
   if (told.kind === 'join-accepted' || told.kind === 'join-declined' || told.kind === 'join-asked') {
     return joinWords(told);

@@ -10,7 +10,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { dayAndClock } from '../src/assistant/korea-time.js';
+import { clockOf } from '../src/assistant/free-time/free-time.js';
 import { befriend, signInUser, TestUser } from './friends.js';
 import { expectStatus, ON_CAMPUS, setMasterSwitch, uploadPosition } from './location-sharing.js';
 import { joinParty, openParty } from './parties.js';
@@ -115,6 +115,12 @@ async function stepIdOf({ leader, questId }: Holders): Promise<string> {
   return step.id;
 }
 
+// "11/18(수) 14:10 정문 앞에서 만나기": a changed step's date, then its clock in Korea, then its title.
+const datedLine = (startsAt: string, title: string): unknown =>
+  expect.stringMatching(
+    new RegExp(`^\\d{1,2}/\\d{1,2}\\([일월화수목금토]\\) ${clockOf(new Date(startsAt))} ${title}$`, 'u'),
+  );
+
 describe('A Holder changing a step', () => {
   it('tells the other Holder who changed it and to what, and not the Holder who changed it', async () => {
     const { leader, minsu, questId } = await twoHolders();
@@ -127,7 +133,7 @@ describe('A Holder changing a step', () => {
         expect.objectContaining({
           id: `step-changed:party:${questId}:${minsu.id}`,
           title: '민수가 일정을 바꿨어요',
-          line: `${dayAndClock(new Date(step.startsAt), new Date())} 정문 앞에서 만나기`,
+          line: datedLine(step.startsAt, '정문 앞에서 만나기'),
           url: `/main?card=party:${questId}`,
         }),
       ]);

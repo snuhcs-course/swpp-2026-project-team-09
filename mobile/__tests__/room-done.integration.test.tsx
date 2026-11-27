@@ -101,7 +101,7 @@ describe("일정's grey and orange", () => {
     expect(first?.getByText('오늘 17:40')).not.toHaveStyle({ color: color.party });
     expect(second?.getByText('오늘 18:00–20:00')).toHaveStyle({ color: color.party });
     expect(screen.getByText('오늘 18:00')).toBeVisible();
-    // The greyed step keeps its own time; the box no longer says it.
+    // The greyed step keeps its own time; the room's next time above 일정 no longer says it.
     expect(screen.getAllByText('오늘 17:40')).toHaveLength(1);
   });
 

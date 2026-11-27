@@ -67,11 +67,11 @@ describe('The words of a new match of a watched interest', () => {
     expect(wordsOf({ ...news, subject: 'event', title: '2026 하반기 채용박람회' }, AT)).toEqual({
       title: '2026 하반기 채용박람회가 떴어요',
       ahead: null,
-      line: '오늘 12:18 학생회관',
+      line: '11/17(화) 12:18 학생회관',
       card: { kind: 'event', id: QUEST_ID },
       about: null,
       rings: true,
-      body: '오늘 12:18 학생회관이에요.',
+      body: '11/17(화) 12:18 학생회관이에요.',
     });
   });
 
@@ -85,7 +85,7 @@ describe('The words of a new match of a watched interest', () => {
   it.each([
     [null, '학생회관', '학생회관', '학생회관이에요.'],
     [null, '아크로', '아크로', '아크로예요.'],
-    [AT, null, '오늘 12:18', '오늘 12:18에 시작해요.'],
+    [AT, null, '11/17(화) 12:18', '11/17(화) 12:18에 시작해요.'],
     [null, null, '', '맡겨 둔 관심에 맞아요.'],
   ])('leaves out what is unknown: %s and %s give "%s" and "%s"', (startsAt, placeLabel, line, body) => {
     expect(wordsOf({ ...news, subject: 'event', title: '전시', startsAt, placeLabel }, AT)).toMatchObject({
@@ -97,18 +97,18 @@ describe('The words of a new match of a watched interest', () => {
 
 describe('The day of a time in a Notification', () => {
   const news = { kind: 'interest-new', id: QUEST_ID, subject: 'event', title: '전시', placeLabel: null } as const;
-  // AT is Tuesday 17 November 2026 at 12:18 in Korea.
+  // AT is Tuesday 17 November 2026 at 12:18 in Korea. A Notification is read on later days too, so even today's and
+  // tomorrow's times say their date.
   it.each([
-    ['later today', '2026-11-17T14:00:00Z', '오늘 23:00'],
-    ['tomorrow', '2026-11-18T05:00:00Z', '내일 14:00'],
-    ['tomorrow just after midnight', '2026-11-17T15:10:00Z', '내일 00:10'],
+    ['later today', '2026-11-17T14:00:00Z', '11/17(화) 23:00'],
+    ['tomorrow just after midnight in Korea', '2026-11-17T15:10:00Z', '11/18(수) 00:10'],
     ['any later day, without a year', '2026-11-27T05:00:00Z', '11/27(금) 14:00'],
     ['a day of another year', '2027-01-04T00:30:00Z', '1/4(월) 09:30'],
-  ])('says the day %s', (_case, startsAt, line) => {
+  ])('says the date %s', (_case, startsAt, line) => {
     expect(wordsOf({ ...news, startsAt: new Date(startsAt) }, AT).line).toBe(line);
   });
 
-  it('says the day of a changed step', () => {
+  it('says the date of a changed step', () => {
     const changed = {
       kind: 'step-changed',
       questId: QUEST_ID,
@@ -119,7 +119,7 @@ describe('The day of a time in a Notification', () => {
       cancelled: false,
     } as const;
 
-    expect(wordsOf(changed, AT).line).toBe('내일 14:10 정문 앞에서 만나기');
+    expect(wordsOf(changed, AT).line).toBe('11/18(수) 14:10 정문 앞에서 만나기');
   });
 });
 

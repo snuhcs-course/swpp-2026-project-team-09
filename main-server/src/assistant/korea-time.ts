@@ -47,30 +47,39 @@ const askedOn = (now: Date): string => koreaDate(new Date(now.getTime() - 1));
 // The day of a time beside its clock, in the words the app writes (koreaDayWord in mobile/src/korea-time.ts): nothing
 // for today, "내일(수)", "모레(목)", "어제(월)", else "11/23(월)".
 export function dayWordsFrom(date: string, now: Date): string {
-  const days = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${askedOn(now)}T00:00:00Z`)) / DAY_MS);
+  const days = daysBetween(askedOn(now), date);
   if (days === 0) {
     return '';
   }
-  const [, month, day] = date.split('-').map(Number);
-  const weekday = WEEKDAY_WORDS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
-  return `${NEAR_DAYS[days] ?? `${month}/${day}`}(${weekday})`;
+  const near = NEAR_DAYS[days];
+  return near === undefined ? shortDate(date) : `${near}(${weekdayOf(date)})`;
 }
 
-// A time in Korea with its day, as a Notification and the app say it: "오늘 14:00", "내일 14:00", else "11/28(금) 14:00",
-// with no year (P06 ticket 26; the app's is dayAndClock in mobile/src/korea-time.ts). The day counts from `now`.
-export function dayAndClock(at: Date, now: Date): string {
-  const date = koreaDate(at);
-  const days = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${koreaDate(now)}T00:00:00Z`)) / DAY_MS);
+// The calendar days from one day in Korea to another: "2026-11-17" to "2026-11-18" is 1.
+const daysBetween = (from: string, to: string): number =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
+
+const weekdayOf = (date: string): string => WEEKDAY_WORDS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
+
+// "11/28(금)", with no year.
+function shortDate(date: string): string {
   const [, month, day] = date.split('-').map(Number);
-  const weekday = WEEKDAY_WORDS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
-  const words = days === 0 ? '오늘' : days === 1 ? '내일' : `${String(month)}/${String(day)}(${weekday})`;
-  return `${words} ${koreaClock(at).toISOString().slice(11, 16)}`;
+  return `${String(month)}/${String(day)}(${weekdayOf(date)})`;
+}
+
+// "14:00" in Korea.
+const clockIn = (at: Date): string => koreaClock(at).toISOString().slice(11, 16);
+
+// A time in Korea with its date, as a Notification says it: "11/28(금) 14:00", with no year (P06 ticket 26). Always the
+// date, never "오늘" or "내일": a Notification's words are kept as they were made, and read on a later day.
+export function dateAndClock(at: Date): string {
+  return `${shortDate(koreaDate(at))} ${clockIn(at)}`;
 }
 
 // A time in Korea with its day before it when that is not today: "18:00", "내일(수) 18:00", "11/24(화) 09:00". A time
 // with no day reads as today's, and a 파티 tomorrow read as today's was gone to a day early.
 export function clockWithDay(at: Date, now: Date): string {
-  const clock = koreaClock(at).toISOString().slice(11, 16);
+  const clock = clockIn(at);
   const day = dayWordsFrom(koreaDate(at), now);
   return day === '' ? clock : `${day} ${clock}`;
 }

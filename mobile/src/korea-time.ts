@@ -118,19 +118,19 @@ export function koreaShortDate(instant: Date): string {
   return `${twoDigits(korea.getUTCMonth() + 1)}/${twoDigits(korea.getUTCDate())} (${WEEKDAYS[korea.getUTCDay()]})`;
 }
 
-// A time with its day, as a 파티's times and the main server's Notifications say it: "오늘 14:00", "내일 14:00", else
-// "11/28(금) 14:00", with no year (P06 ticket 26; the main server's is dayAndClock in main-server
-// src/assistant/korea-time.ts).
+// The short date in Korea, with no year: "11/28(금)".
+function koreaMonthDay(at: Date): string {
+  const korea = inKorea(at);
+  return `${String(korea.getUTCMonth() + 1)}/${String(korea.getUTCDate())}(${koreaWeekdayName(at)})`;
+}
+
+// A time with its day, as a 파티's times say it: "오늘 14:00", "내일 14:00", else "11/28(금) 14:00", with no year
+// (P06 ticket 26). The main server's Notifications, kept and read on later days, always say the date
+// (dateAndClock in its src/assistant/korea-time.ts).
 export function dayAndClock(instant: string, now: Date): string {
   const at = new Date(instant);
   const days = koreaDaysAfter(now, at);
-  const korea = inKorea(at);
-  const day =
-    days === 0
-      ? '오늘'
-      : days === 1
-        ? '내일'
-        : `${String(korea.getUTCMonth() + 1)}/${String(korea.getUTCDate())}(${koreaWeekdayName(at)})`;
+  const day = days === 0 ? '오늘' : days === 1 ? '내일' : koreaMonthDay(at);
   return `${day} ${koreaClock(instant)}`;
 }
 
@@ -138,11 +138,10 @@ export function dayAndClock(instant: string, now: Date): string {
 export function koreaDayWord(instant: string, now: Date): string {
   const at = new Date(instant);
   const days = koreaDaysAfter(now, at);
-  const weekday = koreaWeekdayName(at);
   const near: Partial<Record<number, string>> = { [-1]: '어제', 1: '내일', 2: '모레' };
   if (days === 0) {
     return '';
   }
-  const korea = inKorea(at);
-  return `${near[days] ?? `${korea.getUTCMonth() + 1}/${korea.getUTCDate()}`}(${weekday})`;
+  const word = near[days];
+  return word === undefined ? koreaMonthDay(at) : `${word}(${koreaWeekdayName(at)})`;
 }
