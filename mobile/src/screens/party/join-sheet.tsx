@@ -63,6 +63,21 @@ function goneWords(title: string): string {
   return `이 행사로 올린 내 파티 ‘${title}’${topicParticle(title)} 없어져요`;
 }
 
+// The warning over the note when joining ends the User's own Quest of the event, or nothing.
+function GoneNote({ eventId }: { eventId: string | null }): ReactElement | null {
+  const quests = useQuery(questsQuery).data ?? [];
+  const gone = soloQuestFor(quests, eventId);
+  if (gone === null) {
+    return null;
+  }
+  return (
+    <View style={styles.note}>
+      <Icon color={color.danger} name="alert" size={16} />
+      <Text style={styles.goneWords}>{goneWords(gone.title)}</Text>
+    </View>
+  );
+}
+
 // The join confirm sheet, the frame's `PartyJoin`. Its note says that any member may switch the Party on, as the
 // app has it (P06 spec, Rules), where the frame says the 파티장.
 export function JoinSheet<Subject extends JoinSubject>({
@@ -70,8 +85,6 @@ export function JoinSheet<Subject extends JoinSubject>({
   onClose,
   onJoin,
 }: JoinSheetProps<Subject>): ReactElement {
-  const quests = useQuery(questsQuery).data ?? [];
-  const gone = post === null ? null : soloQuestFor(quests, post.eventId);
   return (
     <BottomSheet label="참여 확인" onClose={onClose} open={post !== null}>
       {post === null ? null : (
@@ -85,12 +98,7 @@ export function JoinSheet<Subject extends JoinSubject>({
             <Row label="장소" words={post.place} />
             <Row label="멤버" words={`${post.members} (${post.fill})`} />
           </View>
-          {gone === null ? null : (
-            <View style={styles.note}>
-              <Icon color={color.danger} name="alert" size={16} />
-              <Text style={styles.goneWords}>{goneWords(gone.title)}</Text>
-            </View>
-          )}
+          <GoneNote eventId={post.eventId} />
           <View style={styles.note}>
             <Icon color={color.inkMuted} name="info" size={16} />
             <Text style={styles.noteWords}>멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.</Text>
