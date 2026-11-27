@@ -44,7 +44,7 @@ import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
-import { CARD_FACE, Grip, STRIP_TOP } from './time-card-strip';
+import { CARD_FACE, Caret, Grip, STRIP_TOP } from './time-card-strip';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
 import { restingLift, type TopStops } from './top-stops';
@@ -76,6 +76,9 @@ interface BarProps {
   onHeight: (height: number) => void;
   // How far below its place under the pill it stands, under the bar of several requests (P04 ticket 09); left out, 0.
   offset?: number;
+  // Under the bar of several requests, where the chosen step's span is centred on that bar, as a share of its range: a
+  // caret on the card's top edge points there (P01 ticket 23). Left out, none.
+  caret?: number;
   // People are picked in its rows (P04 ticket 64), which opens it.
   picking?: Picking | null;
 }
@@ -132,6 +135,21 @@ function UnderFrame({ under, children }: { under: TopStops; children: ReactNode 
   );
 }
 
+// "＋ 같이" at the right of the head's row, which tells its width so that the words leave it room.
+function AddSlot({ add, onWidth }: { add: ReactNode; onWidth: (width: number) => void }): ReactElement {
+  return (
+    <View
+      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        onWidth(Math.ceil(nativeEvent.layout.width));
+      }}
+      style={styles.add}
+      testID="time-bar-add"
+    >
+      {add}
+    </View>
+  );
+}
+
 function frameTop(inset: number): number {
   return barTop(inset) + radius.xl;
 }
@@ -142,6 +160,7 @@ function TimeCard({
   add = null,
   onHeight,
   offset = 0,
+  caret,
   picking = null,
   under,
 }: BarProps & { under: TopStops | undefined }): ReactElement {
@@ -159,28 +178,21 @@ function TimeCard({
       style={[styles.bar, { top: under === undefined ? barY : barY - frameTop(top) }, grip.moved, grip.rested]}
       testID="time-bar"
     >
-      <View onLayout={onBand} testID="time-card-head">
-        <TimeBand
-          {...band}
-          day={day ?? koreaDayWord(startAt, new Date(now))}
-          folded
-          head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
-        />
-      </View>
-      <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
-      {add === null ? null : (
-        <View
-          onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-            setAddWidth(Math.ceil(nativeEvent.layout.width));
-          }}
-          style={styles.add}
-          testID="time-bar-add"
-        >
-          {add}
+      <View style={styles.face} testID="time-card-face">
+        <View onLayout={onBand} testID="time-card-head">
+          <TimeBand
+            {...band}
+            day={day ?? koreaDayWord(startAt, new Date(now))}
+            folded
+            head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
+          />
         </View>
-      )}
-      <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
-      {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
+        <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
+        {add === null ? null : <AddSlot add={add} onWidth={setAddWidth} />}
+        <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
+        {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
+      </View>
+      {caret === undefined ? null : <Caret at={caret} />}
     </Reanimated.View>
   );
   return under === undefined ? card : <UnderFrame under={under}>{card}</UnderFrame>;
@@ -196,6 +208,7 @@ interface PlanBarProps {
   onClose: () => void;
   onHeight: (height: number) => void;
   offset?: number;
+  caret?: number;
   // The way back to the card the answer was asked from, or null (P10 ticket 15).
   toCard?: (() => void) | null;
 }
@@ -205,7 +218,7 @@ interface PlanBarProps {
 // for in words (P04 ticket 82). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
 // the Plan can take more people (P04 ticket 14), so that the dock is the input's row alone.
 export function PlanBar(props: PlanBarProps): ReactElement {
-  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset, toCard = null } = props;
+  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset, caret, toCard = null } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
   const addName = settled ? null : addNameOf(answer.input.kind);
@@ -241,6 +254,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
       day={mealDayOf(answer, plan)}
       onHeight={onHeight}
       offset={offset}
+      caret={caret}
     />
   );
 }
@@ -325,14 +339,10 @@ function BookingCard(p: {
 
 const styles = StyleSheet.create({
   frame: { position: 'absolute', right: 0, bottom: 0, left: 0, overflow: 'hidden', pointerEvents: 'box-none' },
-  bar: {
-    position: 'absolute',
-    right: ANSWER_TOP.side,
-    left: ANSWER_TOP.side,
-    paddingTop: space[3],
-    paddingHorizontal: space[4],
-    ...CARD_FACE,
-  },
+  // The card's place, which moves; its face is inside, and the caret over the face's top edge beside it, outside both
+  // bounds: Android draws a child outside its parent only where the parent says so (P01 ticket 23).
+  bar: { position: 'absolute', right: ANSWER_TOP.side, left: ANSWER_TOP.side, overflow: 'visible' },
+  face: { paddingTop: space[3], paddingHorizontal: space[4], ...CARD_FACE },
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and

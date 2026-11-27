@@ -11,11 +11,25 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { color, radius, shadow, space } from '@/design-system';
 import { STRIP_SLOP, type TimeCardGrip } from './time-card-grip';
 
-// The time card's grip and its strip (moved out of `time-bar.tsx` for its length), and the parts the strip of a step
-// with no time card shares with it (`steps-strip.tsx`, P01 ticket 22).
+// The time card's grip and its strip, and the caret on its top edge (out of `time-bar.tsx` for its length), and the
+// parts the strip of a step with no time card shares with it (`steps-strip.tsx`, P01 ticket 22).
 
 // The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
 export const STRIP_TOP = space[1];
+
+// The caret's side: a square turned 45°, as the approved page draws it (15 there, 13 on the page before it).
+const CARET = 15;
+
+// The caret on the card's top edge, half over the card, at `at` (0–100) across the track's width, the card's padding
+// left out as the steps card's is (P01 ticket 23). It is the card's own part, so it moves with the card.
+export function Caret({ at }: { at: number }): ReactElement {
+  const left: `${number}%` = `${at}%`;
+  return (
+    <View style={styles.caretRow}>
+      <View style={[styles.caret, { left }]} testID="time-card-caret" />
+    </View>
+  );
+}
 
 // The card's face: its corners, its white and its shadow.
 export const CARD_FACE = { borderRadius: radius.xl, backgroundColor: color.surface, boxShadow: shadow.float } as const;
@@ -72,4 +86,24 @@ const styles = StyleSheet.create({
     backgroundColor: color.border,
   },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
+  caretRow: {
+    position: 'absolute',
+    top: -CARET / 2,
+    right: space[4],
+    left: space[4],
+    height: CARET,
+    pointerEvents: 'none',
+  },
+  caret: {
+    position: 'absolute',
+    top: 0,
+    width: CARET,
+    height: CARET,
+    marginLeft: -CARET / 2,
+    borderRadius: 2,
+    backgroundColor: color.surface,
+    // The approved page's soft edge, so that the caret reads over a light map.
+    boxShadow: '-2px -2px 3px rgba(20, 30, 60, 0.08)',
+    transform: [{ rotate: '45deg' }],
+  },
 });
