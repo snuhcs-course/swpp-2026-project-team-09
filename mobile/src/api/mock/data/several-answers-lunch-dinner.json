@@ -1,0 +1,1747 @@
+{
+  "text": "점심과 저녁을 순서대로 짰어요.",
+  "mapButtons": [],
+  "cards": [],
+  "proposal": null,
+  "answer": {
+    "input": {
+      "kind": "meal",
+      "date": "2088-03-09",
+      "meal": "dinner",
+      "people": [
+        {
+          "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+          "constraints": [
+            {
+              "kind": "from",
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "source": "step"
+            },
+            {
+              "kind": "notBefore",
+              "time": "12:00",
+              "source": "step"
+            }
+          ]
+        }
+      ],
+      "window": {
+        "from": null,
+        "until": null
+      },
+      "placeId": null
+    },
+    "chips": [
+      {
+        "kind": "origin",
+        "text": "301동에서",
+        "userId": null
+      }
+    ],
+    "plans": [
+      {
+        "id": "301동식당",
+        "title": "301동식당에서 저녁",
+        "place": {
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "label": "301동식당",
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "startAt": "2088-03-09T17:00:00+09:00",
+        "endAt": "2088-03-09T18:00:00+09:00",
+        "togetherMinutes": 60,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+            "name": "유상",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2088-03-09T17:00:00+09:00",
+            "walkMinutes": 0,
+            "arriveAt": "2088-03-09T12:00:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2088-03-09T17:00:00+09:00",
+            "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+            "title": "301동식당에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "저녁 ",
+              "strong": false
+            },
+            {
+              "text": "301동식당",
+              "strong": true
+            },
+            {
+              "text": " · 식사 60분",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "돈까스",
+              "strong": true
+            }
+          ]
+        ],
+        "basis": ["돈까스 6,500원", "메뉴: 오늘의 식단"],
+        "scene": {
+          "people": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "at": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "source": "timetable",
+              "tag": "나"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "pick",
+              "tag": "301동식당"
+            },
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "candidate",
+              "tag": "학생회관식당"
+            },
+            {
+              "place": {
+                "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                "label": "자하연식당 2층",
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "role": "candidate",
+              "tag": "자하연식당 2층"
+            }
+          ],
+          "routes": [],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "text": "17:00 저녁",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2088-03-09T16:00:00+09:00",
+            "endAt": "2088-03-09T18:30:00+09:00"
+          },
+          "now": "2088-03-09T09:00:00+09:00",
+          "lanes": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "others": [],
+          "startAt": "2088-03-09T17:00:00+09:00",
+          "endAt": "2088-03-09T18:00:00+09:00",
+          "text": "17:00–18:00 · 식사 60분"
+        },
+        "menu": {
+          "price": null,
+          "dishes": [
+            {
+              "name": "돈까스",
+              "price": 6500,
+              "cuisine": null
+            }
+          ],
+          "others": 0
+        }
+      },
+      {
+        "id": "학생회관식당",
+        "title": "학생회관식당에서 저녁",
+        "place": {
+          "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+          "label": "학생회관식당",
+          "latitude": 37.45932,
+          "longitude": 126.95058
+        },
+        "startAt": "2088-03-09T17:00:00+09:00",
+        "endAt": "2088-03-09T18:00:00+09:00",
+        "togetherMinutes": 60,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+            "name": "유상",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2088-03-09T16:45:00+09:00",
+            "walkMinutes": 15,
+            "arriveAt": "2088-03-09T12:15:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2088-03-09T17:00:00+09:00",
+            "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+            "title": "학생회관식당에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "저녁 ",
+              "strong": false
+            },
+            {
+              "text": "학생회관식당",
+              "strong": true
+            },
+            {
+              "text": " · 식사 60분",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "돈까스",
+              "strong": true
+            }
+          ],
+          [
+            {
+              "text": "걸어서 15분이에요",
+              "strong": false
+            }
+          ]
+        ],
+        "basis": ["301동 → 학생회관식당 걸어서 15분", "돈까스 6,500원", "메뉴: 오늘의 식단"],
+        "scene": {
+          "people": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "at": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "source": "timetable",
+              "tag": "나 · 15분"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "pick",
+              "tag": "학생회관식당"
+            },
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "candidate",
+              "tag": "301동식당"
+            },
+            {
+              "place": {
+                "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                "label": "자하연식당 2층",
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "role": "candidate",
+              "tag": "자하연식당 2층"
+            }
+          ],
+          "routes": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "role": "me",
+              "from": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "to": {
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "minutes": 15
+            }
+          ],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "text": "17:00 저녁",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2088-03-09T16:00:00+09:00",
+            "endAt": "2088-03-09T18:30:00+09:00"
+          },
+          "now": "2088-03-09T09:00:00+09:00",
+          "lanes": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "others": [],
+          "startAt": "2088-03-09T17:00:00+09:00",
+          "endAt": "2088-03-09T18:00:00+09:00",
+          "text": "17:00–18:00 · 식사 60분"
+        },
+        "menu": {
+          "price": null,
+          "dishes": [
+            {
+              "name": "돈까스",
+              "price": 6500,
+              "cuisine": null
+            }
+          ],
+          "others": 0
+        }
+      },
+      {
+        "id": "자하연식당 2층",
+        "title": "자하연식당 2층에서 저녁",
+        "place": {
+          "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+          "label": "자하연식당 2층",
+          "latitude": 37.46098,
+          "longitude": 126.95252
+        },
+        "startAt": "2088-03-09T17:00:00+09:00",
+        "endAt": "2088-03-09T18:00:00+09:00",
+        "togetherMinutes": 60,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+            "name": "유상",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2088-03-09T16:43:00+09:00",
+            "walkMinutes": 17,
+            "arriveAt": "2088-03-09T12:17:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2088-03-09T17:00:00+09:00",
+            "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+            "title": "자하연식당 2층에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "저녁 ",
+              "strong": false
+            },
+            {
+              "text": "자하연식당 2층",
+              "strong": true
+            },
+            {
+              "text": " · 식사 60분",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "돈까스",
+              "strong": true
+            }
+          ],
+          [
+            {
+              "text": "걸어서 17분이에요",
+              "strong": false
+            }
+          ]
+        ],
+        "basis": ["301동 → 자하연식당 2층 걸어서 17분", "돈까스 6,500원", "메뉴: 오늘의 식단"],
+        "scene": {
+          "people": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "at": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "source": "timetable",
+              "tag": "나 · 17분"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                "label": "자하연식당 2층",
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "role": "pick",
+              "tag": "자하연식당 2층"
+            },
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "candidate",
+              "tag": "301동식당"
+            },
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "candidate",
+              "tag": "학생회관식당"
+            }
+          ],
+          "routes": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "role": "me",
+              "from": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "to": {
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "minutes": 17
+            }
+          ],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "text": "17:00 저녁",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2088-03-09T16:00:00+09:00",
+            "endAt": "2088-03-09T18:30:00+09:00"
+          },
+          "now": "2088-03-09T09:00:00+09:00",
+          "lanes": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "others": [],
+          "startAt": "2088-03-09T17:00:00+09:00",
+          "endAt": "2088-03-09T18:00:00+09:00",
+          "text": "17:00–18:00 · 식사 60분"
+        },
+        "menu": {
+          "price": null,
+          "dishes": [
+            {
+              "name": "돈까스",
+              "price": 6500,
+              "cuisine": null
+            }
+          ],
+          "others": 0
+        }
+      }
+    ],
+    "dropped": [],
+    "noPlan": null,
+    "choosable": true,
+    "otherMeal": {
+      "meal": "lunch",
+      "start": "11:00"
+    },
+    "planSet": null,
+    "related": [],
+    "mealSet": null
+  },
+  "answers": [
+    {
+      "input": {
+        "kind": "meal",
+        "date": "2088-03-09",
+        "meal": "lunch",
+        "people": [
+          {
+            "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+            "constraints": []
+          }
+        ],
+        "window": {
+          "from": null,
+          "until": null
+        },
+        "placeId": null
+      },
+      "chips": [
+        {
+          "kind": "origin",
+          "text": "301동에서",
+          "userId": null
+        }
+      ],
+      "plans": [
+        {
+          "id": "301동식당",
+          "title": "301동식당에서 점심",
+          "place": {
+            "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+            "label": "301동식당",
+            "latitude": 37.45016,
+            "longitude": 126.95259
+          },
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "basis": "timetable"
+              },
+              "leaveAt": "2088-03-09T11:00:00+09:00",
+              "walkMinutes": 0,
+              "arriveAt": "2088-03-09T10:45:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T11:00:00+09:00",
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "title": "301동식당에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "점심 ",
+                "strong": false
+              },
+              {
+                "text": "301동식당",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "제육볶음",
+                "strong": true
+              }
+            ]
+          ],
+          "basis": ["제육볶음 6,000원", "메뉴: 오늘의 식단"],
+          "scene": {
+            "people": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "source": "timetable",
+                "tag": "나"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "pick",
+                "tag": "301동식당"
+              },
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "candidate",
+                "tag": "자하연식당 2층"
+              },
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "candidate",
+                "tag": "학생회관식당"
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "text": "11:00 점심",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T10:00:00+09:00",
+              "endAt": "2088-03-09T12:30:00+09:00"
+            },
+            "now": "2088-03-09T09:00:00+09:00",
+            "lanes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "나",
+                "busy": [
+                  {
+                    "startAt": "2088-03-09T10:00:00+09:00",
+                    "endAt": "2088-03-09T10:45:00+09:00",
+                    "label": "301동 수업"
+                  }
+                ]
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T11:00:00+09:00",
+            "endAt": "2088-03-09T12:00:00+09:00",
+            "text": "11:00–12:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "제육볶음",
+                "price": 6000,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        },
+        {
+          "id": "자하연식당 2층",
+          "title": "자하연식당 2층에서 점심",
+          "place": {
+            "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+            "label": "자하연식당 2층",
+            "latitude": 37.46098,
+            "longitude": 126.95252
+          },
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "basis": "timetable"
+              },
+              "leaveAt": "2088-03-09T10:46:00+09:00",
+              "walkMinutes": 14,
+              "arriveAt": "2088-03-09T10:59:00+09:00",
+              "leaveBy": null,
+              "next": null,
+              "mode": "shuttle",
+              "shuttle": {
+                "boardAt": "301동",
+                "getOffAt": "기숙사삼거리"
+              }
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T11:00:00+09:00",
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "title": "자하연식당 2층에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "점심 ",
+                "strong": false
+              },
+              {
+                "text": "자하연식당 2층",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "제육볶음",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "셔틀로 14분이에요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "301동 → 자하연식당 2층 셔틀로 14분 (301동 정류장 → 기숙사삼거리 정류장)",
+            "제육볶음 6,000원",
+            "메뉴: 오늘의 식단"
+          ],
+          "scene": {
+            "people": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "source": "timetable",
+                "tag": "나 · 14분"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "pick",
+                "tag": "자하연식당 2층"
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "301동식당"
+              },
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "candidate",
+                "tag": "학생회관식당"
+              }
+            ],
+            "routes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "role": "me",
+                "from": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "to": {
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "minutes": 14,
+                "mode": "shuttle"
+              }
+            ],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "text": "11:00 점심",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T10:00:00+09:00",
+              "endAt": "2088-03-09T12:30:00+09:00"
+            },
+            "now": "2088-03-09T09:00:00+09:00",
+            "lanes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "나",
+                "busy": [
+                  {
+                    "startAt": "2088-03-09T10:00:00+09:00",
+                    "endAt": "2088-03-09T10:45:00+09:00",
+                    "label": "301동 수업"
+                  }
+                ]
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T11:00:00+09:00",
+            "endAt": "2088-03-09T12:00:00+09:00",
+            "text": "11:00–12:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "제육볶음",
+                "price": 6000,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        },
+        {
+          "id": "학생회관식당",
+          "title": "학생회관식당에서 점심",
+          "place": {
+            "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+            "label": "학생회관식당",
+            "latitude": 37.45932,
+            "longitude": 126.95058
+          },
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "basis": "timetable"
+              },
+              "leaveAt": "2088-03-09T10:45:00+09:00",
+              "walkMinutes": 15,
+              "arriveAt": "2088-03-09T11:00:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T11:00:00+09:00",
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "title": "학생회관식당에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "점심 ",
+                "strong": false
+              },
+              {
+                "text": "학생회관식당",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "제육볶음",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "걸어서 15분이에요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": ["301동 → 학생회관식당 걸어서 15분", "제육볶음 6,000원", "메뉴: 오늘의 식단"],
+          "scene": {
+            "people": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "source": "timetable",
+                "tag": "나 · 15분"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "pick",
+                "tag": "학생회관식당"
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "301동식당"
+              },
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "candidate",
+                "tag": "자하연식당 2층"
+              }
+            ],
+            "routes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "role": "me",
+                "from": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "to": {
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "minutes": 15
+              }
+            ],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "text": "11:00 점심",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T10:00:00+09:00",
+              "endAt": "2088-03-09T12:30:00+09:00"
+            },
+            "now": "2088-03-09T09:00:00+09:00",
+            "lanes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "나",
+                "busy": [
+                  {
+                    "startAt": "2088-03-09T10:00:00+09:00",
+                    "endAt": "2088-03-09T10:45:00+09:00",
+                    "label": "301동 수업"
+                  }
+                ]
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T11:00:00+09:00",
+            "endAt": "2088-03-09T12:00:00+09:00",
+            "text": "11:00–12:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "제육볶음",
+                "price": 6000,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        }
+      ],
+      "dropped": [],
+      "noPlan": null,
+      "choosable": true,
+      "otherMeal": {
+        "meal": "dinner",
+        "start": "17:00"
+      },
+      "planSet": null,
+      "related": [],
+      "mealSet": null,
+      "key": "meal 2088-03-09 lunch"
+    },
+    {
+      "input": {
+        "kind": "meal",
+        "date": "2088-03-09",
+        "meal": "dinner",
+        "people": [
+          {
+            "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+            "constraints": [
+              {
+                "kind": "from",
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "source": "step"
+              },
+              {
+                "kind": "notBefore",
+                "time": "12:00",
+                "source": "step"
+              }
+            ]
+          }
+        ],
+        "window": {
+          "from": null,
+          "until": null
+        },
+        "placeId": null
+      },
+      "chips": [
+        {
+          "kind": "origin",
+          "text": "301동에서",
+          "userId": null
+        }
+      ],
+      "plans": [
+        {
+          "id": "301동식당",
+          "title": "301동식당에서 저녁",
+          "place": {
+            "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+            "label": "301동식당",
+            "latitude": 37.45016,
+            "longitude": 126.95259
+          },
+          "startAt": "2088-03-09T17:00:00+09:00",
+          "endAt": "2088-03-09T18:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "basis": "chosen"
+              },
+              "leaveAt": "2088-03-09T17:00:00+09:00",
+              "walkMinutes": 0,
+              "arriveAt": "2088-03-09T12:00:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T17:00:00+09:00",
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "title": "301동식당에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "저녁 ",
+                "strong": false
+              },
+              {
+                "text": "301동식당",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "돈까스",
+                "strong": true
+              }
+            ]
+          ],
+          "basis": ["돈까스 6,500원", "메뉴: 오늘의 식단"],
+          "scene": {
+            "people": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "source": "timetable",
+                "tag": "나"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "pick",
+                "tag": "301동식당"
+              },
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "candidate",
+                "tag": "학생회관식당"
+              },
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "candidate",
+                "tag": "자하연식당 2층"
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "text": "17:00 저녁",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T16:00:00+09:00",
+              "endAt": "2088-03-09T18:30:00+09:00"
+            },
+            "now": "2088-03-09T09:00:00+09:00",
+            "lanes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T17:00:00+09:00",
+            "endAt": "2088-03-09T18:00:00+09:00",
+            "text": "17:00–18:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "돈까스",
+                "price": 6500,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        },
+        {
+          "id": "학생회관식당",
+          "title": "학생회관식당에서 저녁",
+          "place": {
+            "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+            "label": "학생회관식당",
+            "latitude": 37.45932,
+            "longitude": 126.95058
+          },
+          "startAt": "2088-03-09T17:00:00+09:00",
+          "endAt": "2088-03-09T18:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "basis": "chosen"
+              },
+              "leaveAt": "2088-03-09T16:45:00+09:00",
+              "walkMinutes": 15,
+              "arriveAt": "2088-03-09T12:15:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T17:00:00+09:00",
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "title": "학생회관식당에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "저녁 ",
+                "strong": false
+              },
+              {
+                "text": "학생회관식당",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "돈까스",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "걸어서 15분이에요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": ["301동 → 학생회관식당 걸어서 15분", "돈까스 6,500원", "메뉴: 오늘의 식단"],
+          "scene": {
+            "people": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "source": "timetable",
+                "tag": "나 · 15분"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "pick",
+                "tag": "학생회관식당"
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "301동식당"
+              },
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "candidate",
+                "tag": "자하연식당 2층"
+              }
+            ],
+            "routes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "role": "me",
+                "from": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "to": {
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "minutes": 15
+              }
+            ],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "text": "17:00 저녁",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T16:00:00+09:00",
+              "endAt": "2088-03-09T18:30:00+09:00"
+            },
+            "now": "2088-03-09T09:00:00+09:00",
+            "lanes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T17:00:00+09:00",
+            "endAt": "2088-03-09T18:00:00+09:00",
+            "text": "17:00–18:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "돈까스",
+                "price": 6500,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        },
+        {
+          "id": "자하연식당 2층",
+          "title": "자하연식당 2층에서 저녁",
+          "place": {
+            "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+            "label": "자하연식당 2층",
+            "latitude": 37.46098,
+            "longitude": 126.95252
+          },
+          "startAt": "2088-03-09T17:00:00+09:00",
+          "endAt": "2088-03-09T18:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "basis": "chosen"
+              },
+              "leaveAt": "2088-03-09T16:43:00+09:00",
+              "walkMinutes": 17,
+              "arriveAt": "2088-03-09T12:17:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T17:00:00+09:00",
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "title": "자하연식당 2층에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "저녁 ",
+                "strong": false
+              },
+              {
+                "text": "자하연식당 2층",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "돈까스",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "걸어서 17분이에요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": ["301동 → 자하연식당 2층 걸어서 17분", "돈까스 6,500원", "메뉴: 오늘의 식단"],
+          "scene": {
+            "people": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "source": "timetable",
+                "tag": "나 · 17분"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "pick",
+                "tag": "자하연식당 2층"
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "301동식당"
+              },
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "candidate",
+                "tag": "학생회관식당"
+              }
+            ],
+            "routes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "role": "me",
+                "from": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "to": {
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "minutes": 17
+              }
+            ],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "text": "17:00 저녁",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T16:00:00+09:00",
+              "endAt": "2088-03-09T18:30:00+09:00"
+            },
+            "now": "2088-03-09T09:00:00+09:00",
+            "lanes": [
+              {
+                "userId": "4a02c68b-21d4-48c0-bf3d-3feff65740ea",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T17:00:00+09:00",
+            "endAt": "2088-03-09T18:00:00+09:00",
+            "text": "17:00–18:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "돈까스",
+                "price": 6500,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        }
+      ],
+      "dropped": [],
+      "noPlan": null,
+      "choosable": true,
+      "otherMeal": {
+        "meal": "lunch",
+        "start": "11:00"
+      },
+      "planSet": null,
+      "related": [],
+      "mealSet": null,
+      "key": "meal 2088-03-09 dinner"
+    }
+  ],
+  "lookup": null,
+  "refusal": null,
+  "steps": [
+    {
+      "kind": "meal",
+      "title": "301동식당에서 점심",
+      "place": {
+        "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+        "label": "301동식당",
+        "latitude": 37.45016,
+        "longitude": 126.95259
+      },
+      "from": {
+        "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+        "label": "301동",
+        "latitude": 37.45016,
+        "longitude": 126.95259
+      },
+      "startAt": "2088-03-09T11:00:00+09:00",
+      "endAt": "2088-03-09T12:00:00+09:00",
+      "status": "shown",
+      "reason": null,
+      "shows": {
+        "kind": "answer",
+        "key": "meal 2088-03-09 lunch"
+      }
+    },
+    {
+      "kind": "meal",
+      "title": "301동식당에서 저녁",
+      "place": {
+        "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+        "label": "301동식당",
+        "latitude": 37.45016,
+        "longitude": 126.95259
+      },
+      "from": {
+        "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+        "label": "301동",
+        "latitude": 37.45016,
+        "longitude": 126.95259
+      },
+      "startAt": "2088-03-09T17:00:00+09:00",
+      "endAt": "2088-03-09T18:00:00+09:00",
+      "status": "shown",
+      "reason": null,
+      "shows": {
+        "kind": "answer",
+        "key": "meal 2088-03-09 dinner"
+      }
+    }
+  ]
+}
