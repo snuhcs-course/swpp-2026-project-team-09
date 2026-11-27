@@ -72,12 +72,24 @@ describe('"아침 7시에 도서관 갔다가 점심" from an app that says answ
   });
 });
 
+// The fault P05 ticket 78 removes: for such an app the lunch was planned from nowhere, since only a booking was a step
+// before it, and the model said it did not know where the User starts.
 describe('"아침 7시에 도서관 갔다가 점심" from an app before it', () => {
-  it('stays one answer, lunch, and no steps, as before', async () => {
+  it('stays one answer, lunch, and no steps', async () => {
     const reply = await steps.asked([STUDY, LUNCH, SAID], WORDS, OLD_APP, FAR);
 
     expect(reply).not.toHaveProperty('answers');
     expect(reply).not.toHaveProperty('steps');
     expect(reply.answer?.input.kind).toBe('meal');
+  });
+
+  it('sets the lunch out from the study place when the stay ends, chained as such an app reads a chain', async () => {
+    const reply = await steps.asked([STUDY, LUNCH, SAID], WORDS, OLD_APP, FAR);
+
+    // The study plan the model was given first: 중앙도서관, open, a stay of 07:00–10:00.
+    const origin = reply.answer?.plans[0]?.parts[0]?.origin;
+    expect(origin?.basis).toBe('chosen');
+    expect(askerConstraints(reply.answer?.input)).toEqual(chainFrom(origin?.place.placeId ?? '-', '10:00', 'asker'));
+    expect(plannedSchema.parse(stage.model.toolResults()[1]).plans[0]?.people[0]?.from).toBe(origin?.place.label);
   });
 });
