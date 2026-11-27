@@ -1408,9 +1408,10 @@ the lists are the newest first.
   audience is told `party-changed`.
 - `POST /quests/:questId/end` ends the Quest for every Holder and answers 204: it is deleted with its Sub Quests, the
   Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and its running
-  Party is closed with it, members included (`QuestParty.close`). A repeat is refused as a Quest the User does not hold, so it takes no
-  `Idempotency-Key`. An entry, an answer or another control at the same moment runs after it and is refused as for a
-  Quest that is gone. `DELETE /quests/:questId` stays one Holder's drop.
+  Party is closed with it, members included (`QuestParty.close`): the members' rows are locked, in the order of their
+  ids, before the Quest and then the Party, as a Party's end does. A repeat is refused as a Quest the User does not
+  hold, so it takes no `Idempotency-Key`. An entry, an answer or another control at the same moment runs after it and
+  is refused as for a Quest that is gone. `DELETE /quests/:questId` stays one Holder's drop.
 
 Accepting a request and removing a Holder lock that User before the Quest, as entering does, and every control checks
 the Leader once the Quest is locked, so that a control and a change of Leader at the same moment run one after the

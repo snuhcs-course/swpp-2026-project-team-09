@@ -107,6 +107,7 @@ export class LeaderService {
     const memberIds = await this.questParty.memberIdsOf(questId);
     const { told, holderIds, gone, partyAudience } = await this.visibility.announceRemovals(memberIds, () =>
       this.prisma.$transaction(async (tx) => {
+        await this.questParty.lockMembers(memberIds, tx);
         await this.lockLed(questId, userId, tx);
         const closed = await this.questParty.close(questId, tx);
         const { title, leader, holders, joinRequests, invitations } = await tx.quest.delete({

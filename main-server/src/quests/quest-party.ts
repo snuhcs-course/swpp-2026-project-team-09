@@ -11,15 +11,15 @@ import { FriendsService } from '../friends/friends.service.js';
 import { type Party, type Prisma } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
+import { PARTY_INCLUDE } from '../parties/dto/party.dto.js';
+import { UsersService } from '../users/users.service.js';
 import { QuestsService } from './quests.service.js';
-
-// A Party's members in the order they entered, as `PARTY_INCLUDE` lists them.
-const ENTRY_ORDER = [{ joinedAt: 'asc' }, { id: 'asc' }] satisfies Prisma.PartyMemberOrderByWithRelationInput[];
 
 // The Party running for a Quest (its activation), as the Quest's changes reach it, and the one rule of a member's way
 // out that PartiesService keeps too. Here, not in PartiesService, because the parties module imports the quests module.
-// But for `drop`, sends no signal: each method answers the Users to send `party-changed` to once the transaction
-// commits, and the caller wraps the transaction in VisibilityService.announceRemovals for the members it may take out.
+// The rules send no signal: each answers the Users to send `party-changed` to once the transaction commits, and the
+// caller wraps the transaction in VisibilityService.announceRemovals for the members it may take out. `drop`, a Holder's
+// drop of the Quest, lives here too, as the Quest change that closes the Party, and sends its own signals.
 @Injectable()
 export class QuestParty {
   constructor(
@@ -29,6 +29,7 @@ export class QuestParty {
     private readonly visibility: VisibilityService,
     private readonly signals: SignalsService,
     private readonly roomRequests: RoomRequestSync,
+    private readonly users: UsersService,
   ) {}
 
   // A Holder's drop of the Quest. The last Holder's deletes the Quest, and closes its Party, if one runs, first.
@@ -43,6 +44,16 @@ export class QuestParty {
     );
     this.signals.send(partyAudience, 'party-changed');
     await this.roomRequests.questChanged(questId);
+  }
+
+  // Locks the rows of the Users, in the order of their ids, as a Party's end does before the Party: call it before the
+  // Quest is locked, with the members `memberIdsOf` read, so that a member's way out at the same moment runs before or
+  // after the change.
+  async lockMembers(memberIds: readonly string[], tx: Prisma.TransactionClient): Promise<void> {
+    await memberIds.toSorted().reduce(async (locked, memberId) => {
+      await locked;
+      await this.users.lock(memberId, tx);
+    }, Promise.resolve());
   }
 
   // The members of the Quest's Party, read before a change that may take them out.
@@ -89,11 +100,7 @@ export class QuestParty {
   // Who is told of a change to the Party: its members, the Holders of its Quest and the Friends of its members.
   async audienceOf(party: Pick<Party, 'id' | 'questId'>, tx: Prisma.TransactionClient): Promise<string[]> {
     const memberIds = await this.memberIds(party, tx);
-    const holders =
-      party.questId === null
-        ? []
-        : await tx.questHolder.findMany({ where: { questId: party.questId }, select: { userId: true } });
-    const holderIds = holders.map((holder) => holder.userId);
+    const holderIds = party.questId === null ? [] : await this.quests.holderIds(party.questId, tx);
     return [...new Set([...memberIds, ...holderIds, ...(await this.friends.friendsOfAny(memberIds, tx))])];
   }
 
@@ -102,7 +109,7 @@ export class QuestParty {
     const members = await tx.partyMember.findMany({
       where: { partyId: party.id },
       select: { userId: true },
-      orderBy: ENTRY_ORDER,
+      orderBy: PARTY_INCLUDE.members.orderBy,
     });
     return members.map((member) => member.userId);
   }
