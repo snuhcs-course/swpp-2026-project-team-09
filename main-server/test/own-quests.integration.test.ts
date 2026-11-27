@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -20,6 +21,9 @@ import { signInUser } from './friends.js';
 import { attend, connectToDatabase, getQuests, makeQuest, place132, storeEvent } from './quests.js';
 import { ANY_STRING, refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
+
+// A Quest with no room request and no room booked (P05 ticket 68).
+const NO_ROOMS = { roomRequest: null, bookedRoom: null };
 
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
@@ -83,6 +87,7 @@ describe('Making a Quest of one’s own', () => {
       takenAlone: false,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
+      ...NO_ROOMS,
     });
     expect((await getQuests(app, user)).body).toEqual([response.body]);
   });

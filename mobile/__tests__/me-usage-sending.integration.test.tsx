@@ -12,7 +12,7 @@ import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { fakePostHog } from './support/posthog';
+import { type FakeClient, fakePostHog } from './support/posthog';
 import { answerMainScreen, askMainServer, LOBBY, PHONE_NOW } from './support/server';
 
 // Usage data as the app sends it over the fake main server, with the PostHog stand-in (P08 ticket 12): a User who
@@ -61,6 +61,11 @@ async function openMe(usage: boolean): Promise<void> {
   await pass(500);
 }
 
+// The events but the failed requests, which the fake main server's unset routes give (P08 ticket 13).
+function opened(client: FakeClient): string[] {
+  return client.events().filter((event) => event !== 'api_request_failed');
+}
+
 async function turn(on: boolean): Promise<void> {
   await fireEvent(screen.getByRole('switch', { name: SWITCH }), 'valueChange', on);
 }
@@ -78,7 +83,7 @@ it('drops what waits unsent when the switch is turned off, and sends again when 
     throw new Error('The layer made no PostHog client');
   }
   // The test app's root layout has no `RouteBreadcrumb`, so no screen is sent here (`usage-events.unit.test.ts`).
-  expect(client.events()).toEqual(['app_opened']);
+  expect(opened(client)).toEqual(['app_opened']);
   expect(client.queue.length).toBeGreaterThan(0);
 
   // Off holds before the account answers.
@@ -92,5 +97,5 @@ it('drops what waits unsent when the switch is turned off, and sends again when 
   await turn(true);
   await pass(2500);
   expect(client.calls.slice(-3).map(([method]) => method)).toEqual(['optIn', 'identify', 'capture']);
-  expect(client.events()).toEqual(['app_opened']);
+  expect(opened(client)).toEqual(['app_opened']);
 });

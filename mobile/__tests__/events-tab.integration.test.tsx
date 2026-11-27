@@ -260,6 +260,23 @@ describe('the filters and the search', () => {
   });
 });
 
+// P06 ticket 17: the tab's bar is 50 high with 4 on top, and the search field takes its place at that height, so the
+// filters under it stay where they are.
+describe("the search's bar", () => {
+  it('is as high as the tab bar', async () => {
+    answerEvents(server);
+    const user = await openEvents();
+    const row = { height: 50, paddingTop: 4 };
+
+    expect(screen.getByRole('header', { name: '행사' })).toHaveStyle({ fontFamily: font.bold, fontSize: 25 });
+    expect(screen.getByRole('button', { name: '행사 검색' }).parent).toHaveStyle(row);
+
+    await user.press(screen.getByRole('button', { name: '행사 검색' }));
+
+    expect(screen.getByRole('button', { name: '검색 닫기' }).parent).toHaveStyle(row);
+  });
+});
+
 describe('an empty list', () => {
   it('says what the tab holds when the main server lists no event', async () => {
     answerEvents(server, { events: [] });

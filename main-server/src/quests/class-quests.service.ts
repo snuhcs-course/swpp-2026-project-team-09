@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -74,6 +75,8 @@ function toClassQuestDto(
     takenAlone: false,
     waitingJoinRequests: 0,
     members: [],
+    roomRequest: null,
+    bookedRoom: null,
   };
 }
 

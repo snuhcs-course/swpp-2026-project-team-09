@@ -12,6 +12,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -55,12 +56,21 @@ function Proposal({
   );
 }
 
-// The done message of a library booking, whose 좌석 현황 보기 gives the seats card in the app's own bubble.
-function Done({ done, actions }: { done: LibraryDone; actions: CardActions }): ReactElement {
+// The done message of a library booking, whose 좌석 현황 보기 gives a room's seats card in the app's own bubble.
+function Done({
+  done,
+  bubbleId,
+  actions,
+}: {
+  done: LibraryDone;
+  bubbleId: number;
+  actions: CardActions;
+}): ReactElement {
   return (
     <LibraryDoneRows
+      actions={actions.library}
+      bubbleId={bubbleId}
       done={done}
-      walk={actions.library.bookingWalk?.() ?? null}
       onSeats={() => {
         actions.library.addOwn({ text: '좌석 현황이에요.', cards: [{ kind: 'library', library: done.seatsCard }] });
       }}
@@ -95,7 +105,7 @@ export function BubbleParts({
     <>
       {words}
       {shown.length === 0 ? null : <Cards actions={cardActions} bubbleId={id} cards={shown} own={own} />}
-      {done === undefined ? null : <Done actions={cardActions} done={done} />}
+      {done === undefined ? null : <Done actions={cardActions} bubbleId={id} done={done} />}
       {proposed === null ? null : <Proposal actions={cardActions.proposals} bubbleId={id} proposal={proposed} />}
       {layers.map((layer) => (
         <View key={layer} style={styles.below}>

@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -21,6 +22,8 @@ import {
   clockOf,
   droppedAt,
   onBandDay,
+  HANDLE_WIDTH,
+  handlesOutside,
   shareOf,
   type Stretch,
   stepped,
@@ -65,11 +68,12 @@ interface Moved {
 
 export const LANE_HEIGHT = 20;
 const BAR_HEIGHT = 8;
-const HANDLE_WIDTH = 16;
 // A handle takes a touch this wide, and its drag begins only on a sideways move, so that the card still scrolls over
 // the band.
 const HANDLE_TOUCH = 44;
 const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
+// The space between a handle drawn outside a short band and the band (P01 ticket 17).
+const HANDLE_HAIR = 2;
 // Up and down too, so that a folded bar's handle, one lane high, still takes a touch the design system's height.
 const HANDLE_SLOP_Y = (HANDLE_TOUCH - LANE_HEIGHT) / 2;
 const PAN_STARTS = 10;
@@ -80,6 +84,8 @@ interface HandleProps {
   shown: Stretch;
   trackWidth: number;
   focused: boolean;
+  // Drawn outside the band, which is too short for both handles on its ends (P01 ticket 17).
+  outside: boolean;
   disabled: boolean;
   onMove: (moved: Moved) => void;
   onLetGo: (moved: Moved) => void;
@@ -87,10 +93,11 @@ interface HandleProps {
   whole: PanGesture;
 }
 
-function Handle(props: HandleProps): ReactElement {
-  const { bound, band, shown, trackWidth, focused, disabled, onMove, onLetGo, whole } = props;
+// A handle's drag, which moves its end by the finger's distance and lets it go there.
+function useHandlePan(props: HandleProps): PanGesture {
+  const { bound, band, trackWidth, disabled, onMove, onLetGo, whole } = props;
   const own = bound === 'from' ? band.startAt : band.endAt;
-  const pan = useMemo(() => {
+  return useMemo(() => {
     const at = (translationX: number): Moved => ({
       bound,
       clock: droppedAt(bound, shareOf(own, band.range) + translationX / trackWidth, band),
@@ -110,6 +117,11 @@ function Handle(props: HandleProps): ReactElement {
         onLetGo(at(translationX));
       });
   }, [bound, band, own, trackWidth, disabled, onMove, onLetGo, whole]);
+}
+
+function Handle(props: HandleProps): ReactElement {
+  const { bound, band, shown, focused, outside, disabled, onLetGo } = props;
+  const pan = useHandlePan(props);
   const time = bound === 'from' ? shown.startAt : shown.endAt;
   return (
     <GestureDetector gesture={pan}>
@@ -126,8 +138,21 @@ function Handle(props: HandleProps): ReactElement {
             onLetGo({ bound, clock: stepped(bound, actionName === 'increment' ? 1 : -1, band) });
           }
         }}
-        style={[styles.handle, { left: percent(shareOf(time, band.range)) }, focused && styles.focused]}
-      />
+        style={[
+          styles.handle,
+          { left: percent(shareOf(time, band.range)) },
+          outside && (bound === 'from' ? styles.outsideFrom : styles.outsideUntil),
+          focused && styles.focused,
+        ]}
+        testID={`time-band-handle-${bound}`}
+      >
+        {outside ? (
+          <View style={styles.grip} testID={`time-band-grip-${bound}`}>
+            <View style={styles.gripLine} />
+            <View style={styles.gripLine} />
+          </View>
+        ) : null}
+      </View>
     </GestureDetector>
   );
 }
@@ -252,6 +277,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
       bound={bound}
       disabled={disabled}
       focused={focus === bound}
+      outside={handlesOutside(shown, band.range, trackWidth)}
       trackWidth={trackWidth}
       whole={whole}
       onLetGo={moved.onLetGo}
@@ -299,5 +325,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: color.surface,
   },
+  // A handle drawn outside a short band stands a hair apart from it and carries a grip of two short lines, so that the
+  // band is plainly the block between them (P01 ticket 17); one on a band's end stays as it was.
+  outsideFrom: { marginLeft: -(HANDLE_WIDTH + HANDLE_HAIR), alignItems: 'center', justifyContent: 'center' },
+  outsideUntil: { marginLeft: HANDLE_HAIR, alignItems: 'center', justifyContent: 'center' },
+  grip: { flexDirection: 'row', gap: 2 },
+  gripLine: { width: 1.5, height: 8, borderRadius: 1, backgroundColor: color.quest },
   focused: { borderWidth: 3, borderColor: color.focusRing },
 });

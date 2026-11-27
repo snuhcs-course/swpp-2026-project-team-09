@@ -16,11 +16,9 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import type { AnswerReply, Plan } from '@/api/assistant-types';
+import type { AnswerReply, LibrarySpace, Plan } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
-import { fixedOnDay } from '@/features/assistant/booking-day';
-import { spanOf } from '@/library/cards/slot-band';
 import type { Lookup } from '@/api/lookup-types';
 import { color, radius, shadow, space } from '@/design-system';
 import { windowOf, withoutSkipped } from '@/features/assistant/plan-input';
@@ -28,11 +26,12 @@ import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
+import type { Slot } from '@/library/cards/payloads';
 import { ANSWER_TOP, listsTop } from '../layout';
 import type { ShownBooking } from '@/features/assistant/booking-scene';
 import type { Chat } from '@/features/assistant/use-chat';
 import { bookingKept } from '../library/booking-kept';
-import { SlotBand } from '../library/slot-band';
+import { useBookingBand } from './booking-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { mealDayOf } from './meal-day';
 import { type Picking, PersonRows } from './person-rows';
@@ -255,9 +254,9 @@ export function LookupBar({
   );
 }
 
-// A booking's bar (P04 ticket 07): the seat card's band, whose handles change the start and the end the chat keeps for
-// the card, within the space's hours, steps, and lengths, as they did in the card. While a booking is on its way the
-// band is hidden, as the card's was, so that the time stays as it was booked.
+// A booking's bar (P04 ticket 07): the time card a meal's answer draws, with the seat card's band, whose handles change
+// the start and the end the chat keeps for the card within the room's hours, steps, and lengths (P01 ticket 14). Its
+// "＋ 같이" slot is empty. While a booking is on its way the bar is hidden, so that the time stays as it was booked.
 export function BookingBar({
   booking,
   chat,
@@ -267,30 +266,34 @@ export function BookingBar({
   chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
-  const { top } = useSafeAreaInsets();
   const { kept, keep, live } = bookingKept(booking, chat);
   const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
   // The User's Classes and Quests of the slot's date, which the band shows and names (P01 ticket 05).
   const quests = useQuery(questsQuery).data ?? NO_QUESTS;
   return live === null || pending || booking.booked ? null : (
-    <View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        onHeight(nativeEvent.layout.height);
+    <BookingCard
+      // A new answer's card sets its range anew (P01 ticket 17).
+      key={booking.place}
+      keep={(slot) => {
+        keep({ slot });
       }}
-      style={[styles.bar, { top: barTop(top) }]}
-      testID="time-bar"
-    >
-      <SlotBand
-        onChange={(slot) => {
-          keep({ slot });
-        }}
-        day={fixedOnDay(quests, live.date, spanOf(live))}
-        slot={live}
-        space={kept.space}
-        wordsFirst
-      />
-    </View>
+      onHeight={onHeight}
+      quests={quests}
+      slot={live}
+      space={kept.space}
+    />
   );
+}
+
+function BookingCard(p: {
+  slot: Slot;
+  space: LibrarySpace;
+  quests: readonly Quest[];
+  keep: (slot: Slot) => void;
+  onHeight: (height: number) => void;
+}): ReactElement {
+  const band = useBookingBand(p.slot, p.space, p.quests, p.keep);
+  return <Bar band={band} onHeight={p.onHeight} />;
 }
 
 const styles = StyleSheet.create({

@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -19,6 +20,9 @@ import { signInUser } from './friends.js';
 import { attend, connectToDatabase, getQuest, getQuests, place132, questFor, storeEvent } from './quests.js';
 import { ANY_STRING, refused } from './signals.js';
 import { startApp } from './start-app.js';
+
+// A Quest with no room request and no room booked (P05 ticket 68).
+const NO_ROOMS = { roomRequest: null, bookedRoom: null };
 
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
@@ -72,6 +76,7 @@ describe('Attending a Global Event', () => {
       takenAlone: false,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
+      ...NO_ROOMS,
     });
   });
 

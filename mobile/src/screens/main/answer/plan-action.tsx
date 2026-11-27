@@ -5,6 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -31,6 +32,8 @@ export interface PlanAction {
   disabled: boolean;
   // A secondary choice on the same row, at the left (P04 ticket 50): 그대로 두기 beside a Quest the User holds.
   secondary?: Choice;
+  // Drawn in red: a booking's 예약 취소 (P01 ticket 15).
+  danger?: boolean;
 }
 
 // "만들고 초대 보내기" for a Plan with a Friend, as "이대로 초대" made it into a Quest and invited them; "일정에 넣기" for a meal's Plan
@@ -42,7 +45,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   if (!framed || answer === null || plan === null || invitation.made !== null) {
     return null;
   }
-  if (!planShown(control.chat.bubbles, onScreenOf(control))) {
+  // A study answer's group study room tells its own main button, as a booking ticket does (P10 ticket 11).
+  if (!planShown(control.chat.bubbles, onScreenOf(control)) || plan.study?.group !== undefined) {
     return null;
   }
   const { kind } = answer.input;
@@ -110,7 +114,13 @@ export function PlanActionButton({ action }: { action: PlanAction }): ReactEleme
     return <ChoiceRow main={action} secondary={action.secondary} />;
   }
   return (
-    <Button disabled={action.disabled} onPress={action.onPress} full size="bar">
+    <Button
+      disabled={action.disabled}
+      onPress={action.onPress}
+      full
+      size="bar"
+      variant={action.danger === true ? 'danger' : 'primary'}
+    >
       {action.words}
     </Button>
   );
@@ -169,14 +179,14 @@ export function bookingActionOf({ booking, bookingStage, framed, chat }: ChatShe
   return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting };
 }
 
-// After a booking, "확인" closes the answer and keeps the conversation (P01 ticket 03): the done message says what was
-// booked, and its own 좌석 현황 보기 is the second way on.
-export function bookedActionOf({ framed, chat, hide }: ChatSheetControl): PlanAction | null {
-  const last = chat.bubbles.at(-1);
-  if (!framed || last?.done === undefined || chat.waiting) {
+// A booking's ticket's main button (P01 ticket 15): after a booking, 가는 길, or 예약 취소 once its "예약 취소 ›" was
+// pressed; a return card's 반납하기; a cancel card's 예약 취소. Only that of the bubble on screen, the last.
+export function libraryActOf({ framed, chat, libraryAct }: ChatSheetControl): PlanAction | null {
+  const { seen, press } = libraryAct;
+  if (!framed || seen === null || chat.bubbles.at(-1)?.id !== seen.bubbleId) {
     return null;
   }
-  return { words: '확인', onPress: hide, disabled: false };
+  return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting, danger: seen.danger };
 }
 
 // Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's.
@@ -196,7 +206,7 @@ export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
   }
   const plan =
     control.steps === null
-      ? (planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control) ?? bookedActionOf(control))
+      ? (planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control) ?? libraryActOf(control))
       : stepActionOf(control);
   if (plan !== null) {
     return { kind: 'plan', plan };

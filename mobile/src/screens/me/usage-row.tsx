@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -10,7 +11,7 @@ import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } fro
 import { chooseUsage } from '@/consent/choices';
 import { NO_CONSENT, useKeptConsent, usageChosen } from '@/consent/kept-consent';
 import { color, radius, space, SwitchRow, text, useToast } from '@/design-system';
-import { allowUsage } from '@/telemetry';
+import { holdUsage } from '@/telemetry';
 import { USAGE_HEADING, USAGE_PART } from '../legal-documents';
 
 // What usage data holds, under the switch, and the words of a failed change. A draft that a person reviews before the
@@ -38,14 +39,15 @@ export function UsageRow(): ReactElement {
         onValueChange={(next) => {
           const before = kept ?? NO_CONSENT;
           setTurning(next);
-          allowUsage(usageChosen({ ...before, usage: next }));
+          const release = holdUsage(usageChosen({ ...before, usage: next }));
           chooseUsage(next).then(
             () => {
               setTurning(null);
+              release();
             },
             () => {
               setTurning(null);
-              allowUsage(usageChosen(before));
+              release();
               showToast(USAGE_NOT_CHANGED);
             },
           );

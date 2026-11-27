@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { partyChangedWords } from '@/screens/main/library/book-room-card';
@@ -12,7 +13,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { type FakeServer, refusal } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
-import { bookingRow, inCard, inFrame, pressIn, startLibraryChat } from './support/library-chat';
+import { bookingRow, inCard, inDock, inFrame, pressIn, startLibraryChat } from './support/library-chat';
 import { socketServer } from './support/live';
 import { COMPANIONS, readyCard, REQUEST_ID } from './support/room-requests';
 
@@ -91,8 +92,8 @@ describe('the report of a room booked', () => {
 
     expect(inFrame().getByText('G412 예약되었어요!')).toBeVisible();
     expect(inFrame().getByText(partyChangedWords('G412'))).toBeVisible();
-    const cancel = inCard('library-cancel-cancel:4F-group-6:2026-11-02:1700');
-    await pressIn(cancel, '취소하기');
+    expect(inCard('library-cancel-cancel:4F-group-6:2026-11-02:1700').getByLabelText(/^예약됨 · /u)).toBeVisible();
+    await pressIn(inDock(), '예약 취소');
 
     expect(library.writes().at(-1)).toEqual({ endpoint: 'setCancelBooking', body: { bseqno: '2000001' } });
     expect(library.writes().filter(({ endpoint }) => endpoint === 'setRoomBooking')).toHaveLength(1);

@@ -10,7 +10,7 @@ import { checkBooking, PARTY_REFUSAL } from '../src/assistant/library/booking-ru
 import { CATALOGUE_FILE, type Catalogue, readCatalogue } from '../src/assistant/library/catalogue.js';
 import { bookKeyOf, isLibraryKey } from '../src/assistant/library/library-card.js';
 import { pickStudyTime } from '../src/assistant/library/study-pick.js';
-import { studyRoomFor } from '../src/assistant/library/study-room.js';
+import { groupRooms, studyRoomFor } from '../src/assistant/library/study-room.js';
 import { type GroupPerson, NO_SHARED_DAY, studyGroupTime } from '../src/assistant/lookup/study-group.js';
 import { studyGroupAnswer } from '../src/assistant/lookup/study-group-parts.js';
 import { wordlessStudySentence } from '../src/assistant/lookup/study-plan-words.js';
@@ -83,6 +83,7 @@ function answerFor(people: GroupPerson[], given: Partial<StudyInput> = {}): Answ
     walkingMinutes,
     placePoint: (placeId) => ({ ...POINT, placeId, label: `${placeId}동` }),
     placeLabel: (placeId) => `${placeId}동`,
+    hours: groupRooms(catalogue)[0]?.hours ?? null,
   });
 }
 
@@ -192,7 +193,7 @@ describe('Too few or too many', () => {
     const answer = answerFor(peopleOf(9));
 
     expect(answer.plans).toEqual([]);
-    expect(answer.noPlan).toEqual({ reason: 'no-fit', lines: [[{ text: PARTY_REFUSAL, strong: false }]] });
+    expect(answer.noPlan).toMatchObject({ reason: 'no-fit', lines: [[{ text: PARTY_REFUSAL, strong: false }]] });
   });
 });
 
@@ -207,7 +208,27 @@ describe('No common time', () => {
     const answer = answerFor(people);
 
     expect(answer.plans).toEqual([]);
-    expect(answer.noPlan).toEqual({ reason: 'no-shared-time', lines: [[{ text: NO_SHARED_DAY, strong: false }]] });
+    expect(answer.noPlan).toMatchObject({
+      reason: 'no-shared-time',
+      lines: [[{ text: NO_SHARED_DAY, strong: false }]],
+    });
+    // Each lane over the rooms' hours on the day, 09:00 to 23:00 (P05 ticket 65).
+    expect(answer.noPlan?.band).toMatchObject({
+      startAt: `${TOMORROW}T09:00:00+09:00`,
+      endAt: `${TOMORROW}T23:00:00+09:00`,
+    });
+    expect(answer.noPlan?.band?.lanes.slice(0, 2)).toEqual([
+      {
+        userId: 'me',
+        name: '나',
+        busy: [{ startAt: `${TOMORROW}T09:00:00+09:00`, endAt: `${TOMORROW}T20:00:00+09:00`, label: '수업' }],
+      },
+      {
+        userId: 'friend-1',
+        name: '친구1',
+        busy: [{ startAt: `${TOMORROW}T12:00:00+09:00`, endAt: `${TOMORROW}T23:00:00+09:00`, label: '수업' }],
+      },
+    ]);
   });
 });
 
