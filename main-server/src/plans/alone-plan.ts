@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type Plan, type PlanInput } from '../assistant/dto/answer.dto.js';
@@ -84,6 +85,9 @@ export function aloneLeaveBy(plan: Plan, nextWord: NextWord, clock: Date): Alone
   return walkOn(plan, nextWord, now);
 }
 
+// What the User does at the Place they are at: eats at a meal, studies at a study place (P10 ticket 24), and else meets.
+const STAY_WORDS: Partial<Record<PlanInput['kind'], string>> = { meal: '먹어요', study: '공부해요' };
+
 // "**학생회관식당**으로 가요", "**301동식당**에서 먹어요" for a meal where the User is, and "**채용박람회**에 가요" for an
 // event.
 export function goingLine(plan: Plan, kind: PlanInput['kind']): AnswerLine {
@@ -95,7 +99,7 @@ export function goingLine(plan: Plan, kind: PlanInput['kind']): AnswerLine {
   }
   const { label } = plan.place;
   const there = mineOf(plan)?.walkMinutes === 0;
-  const rest = there ? `에서 ${kind === 'meal' ? '먹어요' : '봐요'}` : `${withToward(label).slice(label.length)} 가요`;
+  const rest = there ? `에서 ${STAY_WORDS[kind] ?? '봐요'}` : `${withToward(label).slice(label.length)} 가요`;
   return [
     { text: label, strong: true },
     { text: rest, strong: false },
