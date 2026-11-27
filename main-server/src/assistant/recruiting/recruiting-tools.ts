@@ -3,11 +3,14 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { z } from 'zod';
 import { type Plan, QUEST_IDS_MAX, type QuestsInput } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { leftOutNow } from '../free-time/left-out-classes.js';
 import { othersText } from '../others-text.js';
 import { type QuestsPlanService } from './quests-plan.service.js';
 
@@ -67,7 +70,8 @@ export function planQuests(plans: QuestsPlanService): Tool {
         globalEventId: globalEventId ?? null,
         questIds: questIds ?? null,
       };
-      const answer = await plans.plan(userId, planInput, { now, location: context.location });
+      const skipped = leftOutNow({ context, presented });
+      const answer = await plans.plan(userId, planInput, { now, location: context.location, skipped });
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;

@@ -2,7 +2,9 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
@@ -21,7 +23,8 @@ import { type ReportedShuttle, shuttleTrip, type ShuttleTrip } from './shuttle-t
 
 export interface WayArgs {
   now: Date;
-  me: { userId: string; name: string; items: readonly DayItem[] };
+  // `skipped`: the asker's Classes the conversation leaves out, which are not in `items` (P05 ticket 70).
+  me: { userId: string; name: string; items: readonly DayItem[]; skipped?: readonly DayItem[] };
   // Where the app says the User is, with the Place it is in or the nearest within 150 m and whether it is on campus,
   // or null when it sent none.
   location: { at: Position; placeId: string | null; onCampus: boolean } | null;

@@ -3,7 +3,9 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
@@ -15,8 +17,9 @@ import { PlaceLookup } from '../../places/place-lookup.js';
 import { QuestsService } from '../../quests/quests.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
-import { type AnswerReply, type NewQuestInput } from '../dto/answer.dto.js';
-import { dateOf, onDay } from '../free-time/free-time.js';
+import { type AnswerReply, type LeftOutClass, type NewQuestInput } from '../dto/answer.dto.js';
+import { dateOf, type DayItem, onDay } from '../free-time/free-time.js';
+import { idsOn, skippedOut } from '../free-time/left-out-classes.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { type AnswerPerson } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
@@ -34,6 +37,13 @@ interface Where {
 
 const refused = (message: string): BadRequestException => new BadRequestException(message);
 
+interface PlanAt {
+  now: Date;
+  location: Position | null;
+  // The conversation's Classes left out (P05 ticket 70).
+  skipped?: readonly LeftOutClass[];
+}
+
 // The one place that gathers what an answer of a new recruiting Quest needs: the Global Event or the Place, the people
 // of the plan and the asker's other Friends with their days, for the tool, the recalculation, and the making alike.
 @Injectable()
@@ -48,20 +58,19 @@ export class NewQuestPlanService {
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
-  async plan(
-    askerId: string,
-    input: NewQuestInput,
-    at: { now: Date; location: Position | null },
-  ): Promise<AnswerReply> {
+  async plan(askerId: string, input: NewQuestInput, at: PlanAt): Promise<AnswerReply> {
     return (await this.planned(askerId, input, at)).answer;
   }
+
+  // The asker's Classes of the day, among which a tool names a Class to leave out (P05 ticket 70).
+  readonly classesOn = (askerId: string, date: string): Promise<DayItem[]> => this.days.classesOn(askerId, date);
 
   // The answer, and the calculation it words. Refuses a Global Event that is not published at a Place, a Place not in
   // the list, an activity with no time said on a day other than today, and people as a meal's plan refuses them.
   async planned(
     askerId: string,
     input: NewQuestInput,
-    at: { now: Date; location: Position | null },
+    at: PlanAt,
   ): Promise<{ answer: AnswerReply; planning: NewQuestPlanning }> {
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date, time } = input;
@@ -69,7 +78,7 @@ export class NewQuestPlanService {
     if (time === null && where.event === null && date !== koreaDate(now)) {
       throw refused('A new Quest on another day needs a time');
     }
-    const { people, others } = await this.peopleOf(askerId, input);
+    const { people, others } = await this.peopleOf(askerId, input, idsOn(at.skipped ?? [], date));
     const [asker] = people;
     if (asker === undefined) {
       throw refused('A plan has its asker');
@@ -137,9 +146,11 @@ export class NewQuestPlanService {
 
   // The plan's people, the asker first, each the asker's Friend and once, and the asker's other Friends who hold no
   // 파티 for the Global Event, each with their day. A Friend going alone is offered: entering leaves the Quest held alone.
+  // The asker's Classes left out (`skippedIds`) are free, and a Friend's never are.
   private async peopleOf(
     askerId: string,
     { people, date, globalEventId }: NewQuestInput,
+    skippedIds: readonly string[],
   ): Promise<{ people: AnswerPerson[]; others: AnswerPerson[] }> {
     const ids = people.map(({ userId }) => userId);
     const [asker, friends, holders] = await Promise.all([
@@ -154,13 +165,16 @@ export class NewQuestPlanService {
       throw refused("Only the asker's Friends can be in a plan");
     }
     const named: Pick<FriendView, 'id' | 'name'>[] = [{ id: askerId, name: asker.name }, ...friends];
-    const dayOf = async (userId: string): Promise<AnswerPerson> => ({
-      userId,
-      name: named.find(({ id }) => id === userId)?.name ?? '',
-      me: userId === askerId,
-      items: await this.days.itemsOn(userId, date),
-      position: null,
-    });
+    const dayOf = async (userId: string): Promise<AnswerPerson> => {
+      const items = await this.days.itemsOn(userId, date);
+      return {
+        userId,
+        name: named.find(({ id }) => id === userId)?.name ?? '',
+        me: userId === askerId,
+        ...(userId === askerId ? skippedOut(items, skippedIds) : { items }),
+        position: null,
+      };
+    };
     const otherIds = friends.map(({ id }) => id).filter((id) => !ids.includes(id) && !holders.includes(id));
     return {
       people: await Promise.all(ids.map((id) => dayOf(id))),

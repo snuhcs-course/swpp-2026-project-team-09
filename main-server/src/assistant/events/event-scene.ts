@@ -3,7 +3,9 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
@@ -11,7 +13,8 @@ import { type EventsInput, type MapScene, type PlacePoint, type TimeBand } from 
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type AnswerPerson, placeLabelOf, withAnd } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
-import { busyIn } from '../gathering/meal-scene.js';
+import { skippedBand } from '../free-time/left-out-classes.js';
+import { busyIn, busyLabel } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import { type EventPlan, type EventPlanning, type PlacedEvent, type Way } from './event-fit.js';
 
@@ -152,7 +155,8 @@ export function sceneOf(plan: EventPlan, naming: EventNaming<NamingArgs>): MapSc
 }
 
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after
-// half an hour past its end: the asker's lane, then the others', and the time they are there.
+// half an hour past its end: the asker's lane, then the others', the asker's Classes left out, and the time they are
+// there.
 export function bandOf(
   { state, start, end, stayMinutes, clash }: EventPlan,
   naming: EventNaming<NamingArgs>,
@@ -172,6 +176,7 @@ export function bandOf(
       name,
       busy: busyIn(items, from, until, (placeId) => naming.placeLabel(placeId)),
     })),
+    ...skippedBand(asker.skipped, (item) => busyLabel(item, (placeId) => naming.placeLabel(placeId))),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text:

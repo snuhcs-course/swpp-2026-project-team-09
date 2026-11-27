@@ -4,12 +4,15 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { z } from 'zod';
 import { type AnswerReply, type MeetInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Tool } from '../feature.js';
 import { onDay } from '../free-time/free-time.js';
+import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { busyAt } from './busy-at.js';
@@ -65,6 +68,7 @@ const input = z
       .describe(
         "The User's meeting to change (그거 3시로), by its ref in [Ahead: …] or findDay's answer. Left out otherwise: the server takes the meeting that day with the same Friends.",
       ),
+    ...skipParameters,
   })
   .refine(({ from, until }) => from === undefined || until === undefined || from < until, 'Expected from before until');
 
@@ -99,12 +103,14 @@ export function planMeet(plans: MeetPlanService): Tool {
     description:
       "Plans when the User and Friends can meet on a day from today to a week ahead, and where. The server decides the earliest time they are all free, the place where they are together longest among the places people gather and the buildings they are in, and when everyone is there, and the app draws the plans on the map. Answers result 'planned' with the plans in order, each with its place, start, end, togetherMinutes, and each person's way, or result 'none' with the reason.",
     input,
-    run: async (
-      { date, friendIds, from, until, at, placeId, questId },
-      { userId, now, context, capabilities, found, presented },
-    ) => {
+    run: async (args, { userId, now, context, capabilities, found, presented }) => {
+      const { date, friendIds, from, until, at, placeId, questId } = args;
       if (outOfReach(date, now)) {
         return outOfReachDay(date, presented);
+      }
+      const skip = await skipFor(plans.classesOn, { userId, date, context, presented }, args);
+      if ('result' in skip) {
+        return skip;
       }
       const seen = seenIds(context);
       askedBy('planMeet', friendIds, found, presented);
@@ -118,10 +124,13 @@ export function planMeet(plans: MeetPlanService): Tool {
         window: { from: at ?? from ?? null, until: until ?? null },
         placeId: placeId ?? null,
       };
-      const asked = at === undefined ? null : onDay(date, at);
-      const setsAside = capabilities.has('plan-set');
-      const planAt = { now, location: context.location, setsAside, ...(questId === undefined ? {} : { questId }) };
-      const planned = await plans.planned(userId, meetInput, planAt);
+      const planned = await plans.planned(userId, meetInput, {
+        now,
+        location: context.location,
+        setsAside: capabilities.has('plan-set'),
+        skipped: skip.skipped,
+        ...(questId === undefined ? {} : { questId }),
+      });
       const { answer, held } = planned;
       if (held?.result === 'several') {
         return { result: 'several', meetings: held.kept.map((meeting) => plans.wordsOf(meeting)) };
@@ -133,9 +142,9 @@ export function planMeet(plans: MeetPlanService): Tool {
       presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
-        return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason] };
+        return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason], ...skip.said };
       }
-      return plannedWords(plans, planned, at, asked);
+      return { ...plannedWords(plans, planned, at, at === undefined ? null : onDay(date, at)), ...skip.said };
     },
   });
 }

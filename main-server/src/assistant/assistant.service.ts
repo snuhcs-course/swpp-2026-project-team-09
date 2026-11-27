@@ -49,10 +49,11 @@ import { UsageService } from '../usage/usage.service.js';
 import { UsersService } from '../users/users.service.js';
 import { causeOf, RUN_OBSERVER, runFeature, type RunLimits, type RunObserver } from './adapter.js';
 import { chatAssistant, type ChatAssistantServices } from './chat/chat-assistant.js';
-import { NO_CONTEXT, type RequestContext } from './dto/answer.dto.js';
+import { type LeftOutClass, NO_CONTEXT, type RequestContext } from './dto/answer.dto.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { replyBody } from './reply-body.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
+import { leftOutLines, leftOutNow } from './free-time/left-out-classes.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
 import { friendMentions } from './mentions.js';
@@ -96,7 +97,7 @@ export class AssistantService {
     friends: FriendViewService,
     places: PlacesService,
     placeLookup: PlaceLookup,
-    days: UserDayService,
+    private readonly days: UserDayService,
     restaurantPlaces: RestaurantPlaces,
     @Inject(TRAVEL_PROVIDER) travel: TravelProvider,
     @Inject(LIBRARY_CATALOGUE) catalogue: Catalogue,
@@ -156,13 +157,17 @@ export class AssistantService {
       throw new HttpException("Today's messages are used up", HttpStatus.TOO_MANY_REQUESTS);
     }
     const latest = messages.slice(-HISTORY_MAX);
-    const ahead = capabilities.includes('answer') ? await this.ahead(userId, now) : [];
+    const keptOut = leftOutFrom(context, now);
+    const ahead = capabilities.includes('answer')
+      ? [...(await this.ahead(userId, now)), ...(await this.leftOutLines(userId, keptOut))]
+      : [];
     try {
       const mentions = await friendMentions(this.friendViews, userId, context.mentions);
+      const asked = { ...context, mentions, ...(context.skipped === undefined ? {} : { skipped: keptOut }) };
       const reply = await runFeature(
         chosen.model,
         this.chatFor(capabilities),
-        { userId, now, capabilities, context: { ...context, mentions }, ahead },
+        { userId, now, capabilities, context: asked, ahead },
         latest,
         this.limits,
         this.observer,
@@ -170,7 +175,7 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      return this.answered(userId, reply);
+      return this.answered(userId, reply, context.skipped === undefined ? undefined : keptOut);
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
@@ -178,9 +183,9 @@ export class AssistantService {
   }
 
   // The reply as the app reads it, once the Assistant has answered, with its usage event (README.md: Usage data).
-  private answered(userId: string, reply: FeatureReply): AssistantReplyDto {
+  private answered(userId: string, reply: FeatureReply, sent?: readonly LeftOutClass[]): AssistantReplyDto {
     this.usage.sent(userId, 'assistant_reply_completed', {});
-    return replyBody(reply);
+    return replyBody(reply, sent);
   }
 
   private chatFor(capabilities: readonly ClientCapability[]): Feature {
@@ -192,6 +197,11 @@ export class AssistantService {
     return chat;
   }
 
+  // The line of the Classes the conversation leaves out (P05 ticket 70).
+  private leftOutLines(userId: string, list: readonly LeftOutClass[]): Promise<string[]> {
+    return leftOutLines((askerId, date) => this.days.classesOn(askerId, date), userId, list);
+  }
+
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
   private async countMessage(userId: string, now: Date): Promise<number> {
     const key = `assistant:messages:${userId}:${koreaDate(now)}`;
@@ -199,6 +209,12 @@ export class AssistantService {
     await this.redis.expire(key, COUNT_LIFETIME_SECONDS);
     return sent;
   }
+}
+
+// The conversation's Classes left out that are still to come: a day before today in Korea is past and dropped.
+function leftOutFrom(context: RequestContext, now: Date): LeftOutClass[] {
+  const today = koreaDate(now);
+  return leftOutNow({ context }).filter(({ date }) => date >= today);
 }
 
 // What an app that draws answers draws besides: a day's events, a meet, the visible area's study spaces, ranked study

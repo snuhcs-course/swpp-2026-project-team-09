@@ -5,7 +5,9 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
@@ -17,8 +19,9 @@ import { heldMeetingOf, type MeetingAsked } from '../../quests/held-meeting.js';
 import { type KeptQuest } from '../../quests/kept-quests.js';
 import { StudySpacesService } from '../../study-spaces/study-spaces.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
-import { type AnswerReply, type MeetInput } from '../dto/answer.dto.js';
-import { freeTimeOf, onDay } from '../free-time/free-time.js';
+import { type AnswerReply, type LeftOutClass, type MeetInput } from '../dto/answer.dto.js';
+import { type DayItem, freeTimeOf, onDay } from '../free-time/free-time.js';
+import { idsOn } from '../free-time/left-out-classes.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { keptWords } from '../lookup/day-quests.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
@@ -41,6 +44,8 @@ interface PlanAt {
   questId?: string;
   // Only for an app that draws `planSet` (`plan-set`) is the asker's meeting looked for and set aside.
   setsAside?: boolean;
+  // The conversation's Classes left out (P05 ticket 70).
+  skipped?: readonly LeftOutClass[];
 }
 
 // A meet's plan as the tool reads it: the answer, its people's days, and the asker's meeting it would change.
@@ -64,6 +69,9 @@ export class MeetPlanService {
     private readonly studySpaces: StudySpacesService,
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
+
+  // The asker's Classes of the day, among which a tool names a Class to leave out (P05 ticket 70).
+  readonly classesOn = (askerId: string, date: string): Promise<DayItem[]> => this.days.classesOn(askerId, date);
 
   // `leftOut` names Sub Quests that stand in nobody's way, as a meal's plan takes them.
   async plan(askerId: string, input: MeetInput, at: PlanAt): Promise<AnswerReply> {
@@ -113,7 +121,7 @@ export class MeetPlanService {
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date } = input;
     const [people, otherFriends, collected, buildings, held] = await Promise.all([
-      this.meals.peopleOf(askerId, friends, date, at.location),
+      this.meals.peopleOf(askerId, friends, date, at.location, idsOn(at.skipped ?? [], date)),
       otherFriendsOf(notInPlan, date, { days: this.days, travel: this.travel }),
       this.menus.findByDate(date),
       this.studySpaces.listFor(askerId),

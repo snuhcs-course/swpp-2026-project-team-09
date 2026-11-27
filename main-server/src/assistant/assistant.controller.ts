@@ -75,7 +75,8 @@ export class AssistantController {
   @HttpCode(HttpStatus.OK)
   recalculate(
     @CurrentUser() user: SignedInUser,
-    @Body({ schema: recalculationSchema }) { input, location, locationMissing, clientCapabilities }: Recalculation,
+    @Body({ schema: recalculationSchema })
+    { input, location, locationMissing, clientCapabilities, skipped = [] }: Recalculation,
   ): Promise<AnswerReply> {
     const now = this.clock.now();
     // Recruiting Quests are each on the day of their own step.
@@ -89,7 +90,7 @@ export class AssistantController {
       throw new UnprocessableEntityException(`Only an app that says ${studyCapabilityOf(input)} draws this answer`);
     }
     const setsAside = clientCapabilities.includes('plan-set');
-    return this.answers.plan(user.id, input, { now, location, locationMissing, setsAside });
+    return this.answers.plan(user.id, input, { now, location, locationMissing, setsAside, skipped });
   }
 
   // The card of a pressed building or Friend's face, without the model and without counting the User's messages.

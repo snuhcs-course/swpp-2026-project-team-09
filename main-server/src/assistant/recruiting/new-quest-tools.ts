@@ -4,7 +4,9 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
@@ -13,6 +15,7 @@ import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.j
 import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
+import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { offerPicks, PICK_NOTE, PICK_PLACE, pickTime } from '../tools/pick-offers.js';
@@ -75,6 +78,7 @@ const input = z
       .describe(
         'The Board it is posted on: meal (식사), career (커리어), hobby (취미, 운동 among them) or show (공연·전시). Left out for hobby.',
       ),
+    ...skipParameters,
   })
   .refine(({ globalEventId, title }) => globalEventId !== undefined || title !== undefined, {
     message: 'Give globalEventId, or title for an activity',
@@ -147,7 +151,12 @@ export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayServic
         const reason = 'A 파티 on another day needs a time. Ask the User when.';
         return { result: 'needs-time', reason, ...(shown ? { note: PICK_NOTE } : {}) };
       }
-      const at = { now, location: request.location };
+      const asking = { userId, date: given.date, context: request, presented };
+      const skip = await skipFor(plans.newQuests.classesOn, asking, given);
+      if ('result' in skip) {
+        return skip;
+      }
+      const at = { now, location: request.location, skipped: skip.skipped };
       const first = inputOf(userId, given, placeId, given.friendIds ?? []);
       let answer = await plans.newQuests.plan(userId, first, at);
       const free = answer.plans[0]?.candidates ?? [];
@@ -160,9 +169,9 @@ export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayServic
       presented.mapButtons.length = 0;
       const [plan] = answer.plans;
       if (plan === undefined) {
-        return noneFound('Not everyone of the 파티 can be there then.');
+        return { ...noneFound('Not everyone of the 파티 can be there then.'), ...skip.said };
       }
-      return { result: 'planned', plan: planWords(plan, given.globalEventId !== undefined) };
+      return { result: 'planned', plan: planWords(plan, given.globalEventId !== undefined), ...skip.said };
     },
   });
 }

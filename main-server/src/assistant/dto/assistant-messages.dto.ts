@@ -11,12 +11,21 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { z } from 'zod';
 import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer } from '../feature.js';
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
-import { type AnswerReply, type Lookup, NO_CONTEXT, type ReplyStep, requestContextSchema } from './answer.dto.js';
+import {
+  type AnswerReply,
+  type LeftOutClass,
+  type Lookup,
+  NO_CONTEXT,
+  type ReplyStep,
+  requestContextSchema,
+} from './answer.dto.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 import { type Refusal, type RefusalOffer } from '../refusals/refusal.dto.js';
 
@@ -105,6 +114,10 @@ export interface AssistantReplyDto {
   // The answer on screen leaves the map with its time card and button: the User asked for another plan, or something
   // else, and nothing could be drawn for it (P05 ticket 55). Left out otherwise, and by a reply that draws its own.
   clears?: true;
+  // The asker's Classes the conversation leaves out after this message, which the app keeps for the conversation and
+  // sends back as `context.skipped` (P05 ticket 70). Given while the request sent some or a tool left one out or put one
+  // back, empty once none is left; left out otherwise, when the app keeps what it has.
+  skipped?: LeftOutClass[];
 }
 
 // A button that opens a 파티's room at its 수정 (P05 ticket 30), sent only to an app that says `party-change`.

@@ -10,7 +10,9 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- ******************************************************************************/
+ 
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+******************************************************************************/
 
 import { z } from 'zod';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
@@ -26,7 +28,7 @@ import { PRICE_INPUTS, priceConditionOf } from './meal-price.js';
 import { type MealPlanService } from './meal-plan.service.js';
 import { addingWords, busyWords, invitedWords, plannedWords } from './meal-tool-words.js';
 import { NOT_POSTED } from './not-posted.js';
-import { skipOf, skippedWords, skipParameters } from './skip-classes.js';
+import { skipOf, skippedWords, skipParameters } from '../free-time/left-out-classes.js';
 
 export { PLAN_RULES } from './plan-rules.js';
 
@@ -297,11 +299,7 @@ export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => re
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       refuseUnseen(found, 'place', startPlaceId === undefined ? [] : [startPlaceId], []);
-      const skip = await skipOf(
-        plans,
-        { userId, date, context },
-        { skip: args.skipClasses, attend: args.attendClasses },
-      );
+      const skip = await skipOf(plans.classesOn, { userId, date, context, presented }, args);
       if ('result' in skip) {
         return skip;
       }
@@ -320,7 +318,7 @@ export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => re
         presented.answer = withPicking(presented.answer);
       }
       const shown = presented.answer?.input;
-      return { ...words, ...skippedWords(shown?.kind === 'meal' ? shown : undefined, skip.classes) };
+      return { ...words, ...skippedWords(shown?.kind === 'meal' ? (shown.skipped ?? []) : [], skip.classes) };
     },
   });
 }
