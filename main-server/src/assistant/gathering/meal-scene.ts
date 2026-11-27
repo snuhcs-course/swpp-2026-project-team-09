@@ -223,7 +223,7 @@ export function otherLane(
 }
 
 // The asker's Classes left out of the plan, whole, labelled as a lane's busy stretch.
-function skippedOf(items: readonly DayItem[], naming: Naming): NonNullable<TimeBand['skipped']> {
+export function skippedOf(items: readonly DayItem[], naming: Naming): NonNullable<TimeBand['skipped']> {
   return items.map((item) => ({
     id: item.id,
     startAt: koreaTime(item.start),
