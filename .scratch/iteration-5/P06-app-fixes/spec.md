@@ -40,6 +40,7 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 32. **A new Leader.** From the same audit: a hand-over is told to nobody.
 33. **A full 파티's 모집글.** "참여하기 대신 '정원 초과' 등의 문구로 … 비활성화 느낌의 버튼."
 34. **파티 만들기.** Added by the user on 2026-11-26, from their notes on the 파티 form (wireframe item 8). Settled over four rounds on 2026-11-27 (`references/34-1-form-wireframe.webp`): the form as a preview of its 모집글, title and text typed in place, the settings changed in place, a building search with a badge for what the place matched, and no photo or tags ("태그가 어차피 지금 서버로 안간다고 했잖아 … 일단은 빼고").
+35. **Sheets that close.** Added by the user on 2026-11-27, with no wireframe: every sheet slides down instead of vanishing, and closes by a tap on its handle, a tap above it, or a swipe down from anywhere on it, "대신 … 스크롤이 최상단이 아니면 내려가면 안돼".
 
 Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 20 to 33 against 331adc64 on 2026-11-27: none was fixed then.
 
@@ -81,6 +82,7 @@ One ticket per item, numbered as the items:
 32. [32: The member who becomes Leader is told, in 알림](issues/32-new-leader-notice.md)
 33. [33: A full 파티's 모집글 says so on its button](issues/33-full-post-button.md)
 34. [34: 파티 만들기 as a preview of its 모집글: title and text typed in place, time, place and event in one box, the settings changed in place, a building search for the place, and no photo or tags](issues/34-form-as-post-preview.md)
+35. [35: Every sheet slides down when it closes, and closes by a tap on its handle, a tap above it, or a swipe down from anywhere on it, never while its list is scrolled](issues/35-sheets-slide-down.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -108,6 +110,7 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
   - After 19: 19 rewrites the room (`screens/room/`: `activation-box.tsx`, `people-sections.tsx`, `use-room-actions.ts`, `room-adapter.ts`, `plan-section.tsx`). 21, 23, 26 and 30 touch those files, so they are checked again against the code once 19 has merged, and never run beside it.
 
 - Added on 2026-11-27 and built at once: 34. It changes the 파티 form (`screens/party/form/`), `features/party/making.ts`, the stand-in photos and tags (`api/quest-parts/`), 찾기's search and order and 추천 이유 (`features/party/finding.ts`, `screens/party/post-reasons.tsx`), and the room's tag chips after 19. Tickets 28 and 31 also touch `use-send.ts` and `making.ts`; whichever lands second merges `5.0/Main` first.
+- Added on 2026-11-27 and built at once: 35. It changes `BottomSheet` (`design-system/bottom-sheet.tsx`, `use-slide.ts`) and the sheets that scroll (their scroll views). Ticket 34 adds sheets on it; whichever lands second merges `5.0/Main` first.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -166,6 +169,7 @@ When the held tickets are taken up, tickets touching the same files never run at
 50. As a User opening a full 파티, I want its button to say it is full.
 51. As a User making a 파티, I want the form to look like the 모집글 it makes and to fit on one screen, typing the title and text in place and changing the settings without leaving it, so that I see what others will see.
 52. As a User naming a place, I want to pick a building from a search and to see whether my place is a known building, a point on the map or only my words.
+53. As a User closing a sheet, I want it to slide down, and to close it by its handle, by a tap above it or by swiping it down, without a swipe inside a scrolled list closing it.
 
 ## Implementation Decisions
 
@@ -201,6 +205,7 @@ Decided on 2026-11-27 (20 to 33):
 - 30: an event's count is the 파티 the User could enter; a 파티's size is Holders over the Quest's capacity; a sharing count includes the User.
 - 31: inviting is refused only into a 파티 full at that moment; 31 adds one database migration, the exception to the rule below. 20 to 26, 31 and 32 need a main server Release.
 - 34 (2026-11-27): 파티 만들기 is a preview of its 모집글. The title and text are typed in place with no confirm button; the time, the place and the event share one label-less box whose rows open sheets; the place sheet searches buildings and the row's badge says 건물, 지도 or 직접 입력; 인원, 공개 범위, 참여 방식 and 게시판 change in place and 친구 초대 opens a sheet; the button stays pressable and marks empty required fields; picking an event leaves the title empty. Photos and tags go with everything that ran on their stand-ins (the room's chips, 찾기's tag search and order, 추천 이유's 관심사), and the pull request records why and what bringing them back needs.
+- 35 (2026-11-27): every `BottomSheet` slides down with its last content when it closes, and closes by a tap on its handle, a tap on the scrim, Android's back, or a swipe down from anywhere on it that follows the finger and closes past a threshold or on a flick. A swipe that starts inside a vertical scroll area closes only if that area was at its top when the finger went down; otherwise it only scrolls, even after reaching the top. The centre `Dialog`, the full-screen `Modal`s and the Assistant's answer sheet are left as they are.
 
 For all tickets:
 
@@ -256,6 +261,7 @@ Every item received and where it went:
 | 18 내 파티 카드의 시간/장소/행사 줄, 방장 표시, 지도에서 위치 보기 (added 2026-11-26) | Ticket 18, with the board or 비공개 tag and tighter groups (added 2026-11-27). The map entry waits for the room, with the event link |
 | 20–33 파티·행사에서 사용자가 알 수 없는 것 (code audit, 2026-11-27) | Tickets 20 to 33, those the user took up; the rest held (Out of Scope) |
 | 8 파티 만들기 (added 2026-11-26) | Ticket 34, settled over four rounds on 2026-11-27 (the preview, typing in place, settings in place, the building search and its badge, no photo or tags) |
+| 팝업창이 부드럽게 내려가고, 바·빈 공간·스와이프로 닫히기 (added 2026-11-27) | Ticket 35 |
 
 Notes for the tickets:
 
