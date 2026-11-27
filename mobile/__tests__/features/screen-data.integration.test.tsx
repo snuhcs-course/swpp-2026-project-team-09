@@ -11,6 +11,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -194,7 +195,7 @@ describe('the cards of the map', () => {
         { icon: 'pin', text: '301동 대강당' },
         { icon: 'users', text: '같이 갈 파티 1개 모집 중' },
       ],
-      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1' },
+      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1', recruiting: 1 },
       secondary: null,
       position: { latitude: 37.45016, longitude: 126.95259 },
       event: { id: 'e1', favorite: true },

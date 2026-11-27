@@ -3,10 +3,13 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
+import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import type { RecruitRowView } from '@/features/events/adapter';
 import { openPost } from '../party/post-card';
@@ -64,4 +67,11 @@ export function EventSheets({ sheets, quests }: { sheets: EventSheetsState; ques
       quests={quests}
     />
   );
+}
+
+// The sheets with the User's Quests, for a screen that does not read them itself: the map's event card opens them.
+export function useEventSheetsOver(): { open: (event: PickedEvent) => void; sheet: ReactElement } {
+  const sheets = useEventSheets();
+  const quests = useQuery(questsQuery).data ?? [];
+  return { open: sheets.setRecruitEvent, sheet: <EventSheets quests={quests} sheets={sheets} /> };
 }
