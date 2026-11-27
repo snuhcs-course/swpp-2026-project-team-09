@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -56,7 +57,7 @@ afterEach(() => {
 describe('the start against the main server', () => {
   it('shows the sign-in screen at the start for a phone that keeps no tokens', async () => {
     await askMainServer({ signedIn: false });
-    await keep({ signedIn: true, consented: true, onboardingCompleted: true });
+    await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: true });
     await startApp();
     await pass(1000);
 
@@ -70,7 +71,7 @@ describe('the start against the main server', () => {
         onboarding: { completed: false, suggestion: { name: '홍길동', department: '컴퓨터공학부' } },
       }),
     );
-    await keep({ signedIn: true, consented: true, onboardingCompleted: true });
+    await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: true });
     await startApp();
     await pass(1000);
 

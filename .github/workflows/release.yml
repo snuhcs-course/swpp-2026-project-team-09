@@ -8,6 +8,7 @@
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-24  Fable 5.2  prompted by AhnJinYoung
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-26  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target at the tag's commit once
@@ -142,6 +143,9 @@ jobs:
       EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_CLIENT_ID }}
       # Where crash reports go; baked into the bundle, never into the fingerprint. Empty, the app reports nothing.
       EXPO_PUBLIC_SENTRY_DSN: ${{ vars.PRODUCTION_APP_SENTRY_DSN }}
+      # PostHog's project token for usage data; baked into the bundle, never into the fingerprint. It may be unset, and
+      # stays unset until P08 ticket 15: the app then sends nothing.
+      EXPO_PUBLIC_POSTHOG_TOKEN: ${{ vars.PRODUCTION_APP_POSTHOG_TOKEN }}
       GOOGLE_IOS_URL_SCHEME: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME }}
       INVITE_LINK_HOST: ${{ vars.PRODUCTION_APP_INVITE_LINK_HOST }}
       APP_VERSION_URL: https://github.com/${{ github.repository }}/releases/download/app-version/app-version.json

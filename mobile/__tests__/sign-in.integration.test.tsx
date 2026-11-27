@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -108,7 +109,7 @@ describe('how a sign-in ends', () => {
   });
 
   it('leads a User who agreed before to Onboarding', async () => {
-    await keep({ consented: true });
+    await keep({ mockAccountConsent: { version: 1, usage: false } });
     const user = await openSignIn();
     await pressSignIn(user);
     await pass(400);
@@ -118,7 +119,7 @@ describe('how a sign-in ends', () => {
   });
 
   it('leads a User who finished Onboarding on this phone to the main screen', async () => {
-    await keep({ consented: true, onboardingCompleted: true });
+    await keep({ mockAccountConsent: { version: 1, usage: false }, onboardingCompleted: true });
     const user = await openSignIn();
     await pressSignIn(user);
     await pass(1000);

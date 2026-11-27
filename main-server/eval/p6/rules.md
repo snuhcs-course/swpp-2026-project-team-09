@@ -9,7 +9,7 @@ The rules come from the P06 spec (`.scratch/iteration-3/P06-tutorial-and-kwanjeo
 - **Space**: one entry of the catalogue, by its `id`: a reading-room sector (7층, 8층), a group-study-room size on a floor (2층, 4층), or a media room (6층). A space's **name** is the catalogue's `name`.
 - **Seat space**: a reading-room sector (`common: reading_room`): 7F-7A-zone1-notebook, 7F-7A-zone2, 7F-notebook-171, 7F-7B-notebook, 8F-8A-zone1-quiet, 8F-8A-zone2-notebook, 8F-notebook-181 and 8F-grad-reading-room. One person per seat.
 - **Room space**: a group study room (`common: group_study_room`) or a media room (`common: media_room`).
-- **Library card**: a card of the reply that the phone fills from the library. Its **action** is `book`, `cancel`, `return`, `seats` or `myBookings`. A book, cancel or return card only proposes: nothing happens at the library until the User presses its button (예약하기, 취소하기, 반납하기).
+- **Library card**: a card of the reply that the phone fills from the library. Its **action** is `book`, `cancel`, `return`, `seats` or `myBookings`. A book, cancel or return card only proposes: nothing happens at the library until the User presses its button (예약하기, 취소하기, 반납하기). _Superseded 2026-11-27 (P05 tickets 62 and 63), after the freeze:_ the cancel button is named 예약 취소, as on the phone; the frozen labels that mention 취소하기 stay (`suite.yaml`, `supersededAfterFreeze`).
 - **People** of a booking: the asker plus the Friends named in the request, or the asker and the other Holders of a Quest the asker holds.
 - **The asker**: the User who asks, 김새봄 unless the case names another (world.yaml). `now` is Wednesday 2026-11-04 at 10:05 in Korea.
 

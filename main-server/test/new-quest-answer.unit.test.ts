@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type NewQuestInput } from '../src/assistant/dto/answer.dto.js';
@@ -12,6 +13,7 @@ import { type AnswerPerson } from '../src/assistant/gathering/answer-words.js';
 import { newQuestAnswer } from '../src/assistant/recruiting/new-quest-answer.js';
 import { fitNewQuest } from '../src/assistant/recruiting/new-quest-fit.js';
 import { DATE, id, myDay, NOW, placeOf, readExample, travel } from './events-example.js';
+import { withoutBand } from './no-plan.js';
 
 // The words of a new recruiting Quest: the design's examples (section 6.3 Together 8 to 11, section 6.4 Recruit 4) and
 // the wireframe's words.
@@ -307,6 +309,6 @@ describe('No time everyone can meet', () => {
     });
 
     expect(plans).toEqual([]);
-    expect(noPlan).toEqual({ reason: 'no-fit', lines: [plain('그 시간엔 모일 수 없어요')] });
+    expect(withoutBand(noPlan)).toEqual({ reason: 'no-fit', lines: [plain('그 시간엔 모일 수 없어요')] });
   });
 });

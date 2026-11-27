@@ -2,14 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import * as Sentry from '@sentry/react-native';
-import Constants from 'expo-constants';
-import * as Updates from 'expo-updates';
-import { Platform } from 'react-native';
 import { ApiError } from '@/api/errors';
 import { keepErrorReports, readErrorReports } from '@/storage/error-reports';
+import { buildTags } from './build';
 import { scrubBreadcrumb, scrubEvent } from './scrub';
 
 // The one place that starts Sentry and hands it reports (README.md, "Crash reports"). Nothing here runs before
@@ -65,23 +64,10 @@ const beforeSend: BeforeSend = (event, hint) => {
   return scrubEvent(event);
 };
 
-function tag(value: string | null | undefined): string {
-  const trimmed = (value ?? '').trim();
-  return trimmed === '' ? 'none' : trimmed;
-}
-
-// The tags every report carries: the Release the JavaScript came from, the over-the-air update and the runtime version
-// it runs on, the native build's version and the platform. Each variable is read by its full name, because the
-// bundler replaces only those.
+// The tags every report carries (`build.ts`): the Release, the over-the-air update, the runtime version, the native
+// build's version and the platform.
 function tags(): Record<string, string> {
-  return {
-    release_tag: tag(process.env.EXPO_PUBLIC_RELEASE_TAG),
-    release_commit: tag(process.env.EXPO_PUBLIC_RELEASE_COMMIT),
-    ota_update_id: tag(Updates.updateId),
-    runtime_version: tag(Updates.runtimeVersion),
-    app_version: tag(Constants.expoConfig?.version),
-    platform: Platform.OS,
-  };
+  return { ...buildTags() };
 }
 
 // Sentry's options, each checked against @sentry/react-native 8.36.0's own reference. Tracing, profiling and session

@@ -78,6 +78,7 @@ export class StudyGroupService {
       walkingMinutes: walking,
       placePoint: (placeId) => this.pointOf(this.placeOf(placeId)),
       placeLabel: (placeId) => placeLabelOf(this.placeOf(placeId)),
+      hours: groupRooms(this.catalogue)[0]?.hours ?? null,
     });
     return { answer, otherDays: time.kind === 'pick' ? time.pick.others : [] };
   }
