@@ -169,6 +169,22 @@ describe('The room of studying together once booked', () => {
   });
 });
 
+// Partition: the card shown again once booked, on a phone that did not book (P10 ticket 25). Expected value: the room the
+// library booked, as the request carries it (P05 ticket 68), not the room the card would choose.
+describe('The room of studying together booked, shown again', () => {
+  it('locks its ticket on the room the request says was booked', async () => {
+    await readyToBook();
+    server.on(`GET /library/room-requests/${REQUEST_ID}`, {
+      status: 200,
+      body: { ...requestOf(['consented', 'consented', 'consented'], 0, 'booked'), bookedRoom: 'G409' },
+    });
+    await pass(3500);
+
+    expect(inFrame().getByTestId('room-ticket-room')).toHaveTextContent('G409', { exact: false });
+    expect(inFrame().getByTestId('room-ticket-room')).toBeDisabled();
+  });
+});
+
 // Partition, from #657's emulator pictures: no 사용 용도 chosen before 동의 요청 보내기, which once left a request everyone
 // consented to with 예약하기 dimmed and no way to its use. Expected values: the user's rule, a request is sent with its
 // use, as a room card's 예약하기 waits for one.

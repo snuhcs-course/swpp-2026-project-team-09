@@ -53,6 +53,8 @@ export interface RoomRequest {
   companions?: RoomRequestCompanion[];
   // How many more people the room's minimum needs.
   moreNeeded?: number;
+  // The room the library booked, once booked and reported with it (P05 ticket 68); absent from a server before it.
+  bookedRoom?: string | null;
 }
 
 // A request that asks the User, for the consent dialog on the main screen.
@@ -154,8 +156,13 @@ export function isRoomRequest(value: unknown): value is RoomRequest {
       return isPerson(each) && isAnswer(field(each, 'consented'));
     })(field(value, 'consents')) &&
     (companions === undefined || isCompanionStates(companions)) &&
-    (moreNeeded === undefined || isNumber(moreNeeded))
+    (moreNeeded === undefined || isNumber(moreNeeded)) &&
+    isRoomOrNone(field(value, 'bookedRoom'))
   );
+}
+
+function isRoomOrNone(value: unknown): value is string | null | undefined {
+  return value === undefined || value === null || (typeof value === 'string' && value !== '');
 }
 
 function isAsk(value: unknown): value is RoomAsk {
