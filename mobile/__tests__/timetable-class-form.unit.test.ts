@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
@@ -34,6 +35,17 @@ function draft(...slots: SlotDraft[]): ClassDraft {
 }
 
 describe('opening a class', () => {
+  it('gives two slots for two sets of hours on one day', () => {
+    const lesson: TimetableClass = {
+      id: 'c1',
+      courseName: '선형대수',
+      times: [time('wednesday', '19:00', '20:45'), time('wednesday', '15:30', '16:45')],
+      overlaps: [],
+    };
+
+    expect(draftOf(lesson, []).slots.map((each) => slotName(each, 0))).toEqual(['수 15:30–16:45', '수 19:00–20:45']);
+  });
+
   it('gives a slot per set of hours and Place, in the week’s order, the later one checked when it shares the Place', () => {
     const lesson: TimetableClass = {
       id: 'c1',
@@ -65,6 +77,17 @@ describe('saving', () => {
     expect(saved.times).toEqual([
       { weekday: 'monday', startTime: '13:00', endTime: '14:30', placeId: 'p302', room: '118호' },
       { weekday: 'wednesday', startTime: '15:30', endTime: '16:45', placeId: 'p302', room: '118호' },
+    ]);
+  });
+
+  it('saves two slots on one day as two times of that day, in the order of their hours (P06 ticket 11a)', () => {
+    const saved = saveOf(
+      draft(slot({ days: [2], start: '19:00', end: '20:45' }), slot({ days: [2], start: '15:30', end: '16:45' })),
+    );
+
+    expect(saved.times.map(({ weekday, startTime }) => `${weekday} ${startTime}`)).toEqual([
+      'wednesday 15:30',
+      'wednesday 19:00',
     ]);
   });
 
@@ -105,5 +128,15 @@ describe('ready to save', () => {
     expect(isReady(crossing)).toBe(false);
     expect(slotCrossesAnother(touching, 1)).toBe(false);
     expect(isReady(touching)).toBe(true);
+  });
+
+  it('is ready with two slots on one day whose hours do not cross (P06 ticket 11a)', () => {
+    const apart = draft(
+      slot({ days: [2], start: '15:30', end: '16:45' }),
+      slot({ days: [2], start: '19:00', end: '20:45' }),
+    );
+
+    expect(slotCrossesAnother(apart, 0)).toBe(false);
+    expect(isReady(apart)).toBe(true);
   });
 });

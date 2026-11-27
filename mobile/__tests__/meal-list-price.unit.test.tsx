@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
@@ -23,7 +24,7 @@ const asked = (condition: Pick<MealInput, 'maxPrice' | 'cheapFirst'>): AnswerRep
 type Change = (alter: (input: PlanInput) => PlanInput) => void;
 
 async function listOf(answer: AnswerReply, change: Change = ignoreMark): Promise<void> {
-  const shown = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark, change };
+  const shown = { index: 0, openMenu: ignoreMark, show: ignoreMark, chooseKind: ignoreMark, change };
   await render(<MealList answer={answer} busy={false} shown={shown} />);
 }
 

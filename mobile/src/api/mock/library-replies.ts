@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, LibraryCardData } from '@/api/assistant-types';
@@ -19,6 +20,7 @@ import {
   STUDIO_NOTES,
   STUDIO_PLEDGE,
 } from './data/library';
+import { STUDY_PLAN_ASKED, STUDY_PLAN_REPLY } from './data/study-plan-answer';
 
 // The mock Assistant's answers about 관정도서관, until the main server's library tools land (P06 ticket 07): the
 // cards it would show, in the spec's `library` shape. A time in the words ("17시", "17:00") is the start, else the
@@ -85,7 +87,7 @@ function cardFor(words: string): LibraryCardData {
 }
 
 export function isLibraryAsk(words: string): boolean {
-  return LIBRARY_WORDS.some((word) => words.includes(word));
+  return LIBRARY_WORDS.some((word) => words.includes(word)) || words.includes(STUDY_PLAN_ASKED);
 }
 
 // As the main server's rules have it (`library-rules.ts`, P05 ticket 34): a reading-room seat is booked for today only,
@@ -101,7 +103,12 @@ function tomorrowsSeat(words: string): AssistantReply | null {
   return { text: TODAY_ONLY, mapButtons: [], cards: [], proposal: null };
 }
 
+// Where to study alone, as a main server answers an app that says `study-plan` (P10 ticket 17): the places to study as
+// candidates. Until the app says it (ticket 23), its own words ask it; "공부할 자리 있어?" stays the seat card.
 export function libraryReply(words: string): AssistantReply {
+  if (words.includes(STUDY_PLAN_ASKED)) {
+    return STUDY_PLAN_REPLY;
+  }
   const tomorrow = tomorrowsSeat(words);
   if (tomorrow !== null) {
     return tomorrow;

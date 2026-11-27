@@ -119,9 +119,11 @@ describe('The whole study answer', () => {
   it('books at 관정관 only, whose seats the phone reads', () => {
     const booked = plans.filter(({ study }) => study?.book !== null);
 
-    expect(booked.map(({ id, study }) => [id, study?.book, study?.liveSeats])).toEqual([
-      ['관정관', { spaceId: '7F-7A-zone2' }, 'kwanjeong'],
+    expect(booked.map(({ id, study }) => [id, study?.book?.spaceId, study?.liveSeats])).toEqual([
+      ['관정관', '7F-7A-zone2', 'kwanjeong'],
     ]);
+    // With the book card the app opens in the plan (P10 ticket 21).
+    expect(booked[0]?.study?.book?.card).toMatchObject({ action: 'book', key: 'book:7F-7A-zone2:2026-11-04:1930:210' });
   });
 
   it('lists the known-open buildings before those whose hours are not known, and never calls one closed', () => {
