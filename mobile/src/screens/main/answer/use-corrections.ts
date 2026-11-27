@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -108,9 +109,9 @@ function removerOf(change: ShownAnswer['change'], only: string | null, close: ()
   };
 }
 
-function moveOf({ plan, setMoving, change }: ShownAnswer): Corrections['move'] {
+function moveOf({ frame, setMoving, change }: ShownAnswer): Corrections['move'] {
   return (at, letGo) => {
-    const still = plan === null || msOf(at.startAt) === msOf(plan.band.startAt);
+    const still = frame === null || msOf(at.startAt) === msOf(frame.band.startAt);
     setMoving(letGo && still ? null : at);
     if (letGo && !still) {
       change((input) => withStart(input, clockOf(at.startAt)), 'move');

@@ -10,6 +10,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -28,6 +29,7 @@ import { MealMenu } from './meal-menu';
 import { mealWordsOf } from './meal-words';
 import { OfferButtons } from './offer-buttons';
 import { PlanStepper } from './plan-stepper';
+import { KindChips } from './kind-chips';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
@@ -204,6 +206,10 @@ export function PlanCard(props: PlanCardProps): ReactElement {
     <View style={styles.plan}>
       <Said lines={linesOf(shown, answer, over)} said={meal ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} /> : null}
+      {/* A meal with no Plan keeps its conditions, each with its ✕ (P01 ticket 31). */}
+      {shown.plan === null && answer.input.kind === 'meal' ? (
+        <KindChips answer={answer} change={shown.change} disabled={busy} onChoose={shown.chooseKind} />
+      ) : null}
       <Below
         answer={answer}
         busy={busy}

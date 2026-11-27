@@ -7,6 +7,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -45,7 +46,7 @@ interface OnScreen {
 
 // What deciding a reply's card reads of what is on screen.
 interface Seen {
-  shown: Pick<ShownAnswer, 'source' | 'answer' | 'plan'>;
+  shown: Pick<ShownAnswer, 'source' | 'answer' | 'plan' | 'frame'>;
   lookup: Pick<ShownLookup, 'lookup'>;
   invitation: Pick<PlanInvitation, 'made'>;
 }
@@ -81,7 +82,7 @@ export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
   const turn = turnsOf(sceneBubblesOf(bubbles)).findLast(({ after }) => after.length > 0);
   for (const bubble of turn?.after ?? []) {
     const kind = wordsKindOf(bubble, onScreen);
-    if (kind === 'plan' && onScreen.shown.plan !== null) {
+    if (kind === 'plan' && onScreen.shown.frame !== null) {
       return { kind };
     }
     const lookup = onScreen.lookup.lookup;
@@ -206,14 +207,15 @@ export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): Reac
     return <LookupBar lookup={bar.lookup} onHeight={onHeight} />;
   }
   const leftAlone = invitation.left !== null && invitation.made === null && invitation.changed === null;
-  return shown.answer === null || shown.plan === null || leftAlone ? null : (
+  // An answer with no Plan keeps the time card it was asked in (P01 ticket 31).
+  return shown.answer === null || shown.frame === null || leftAlone ? null : (
     <PlanBar
       answer={shown.answer}
       focus={focus}
       invitation={invitation}
       onClose={onClose}
       onHeight={onHeight}
-      plan={shown.plan}
+      plan={shown.frame}
       shown={shown}
     />
   );

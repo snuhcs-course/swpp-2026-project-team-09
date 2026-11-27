@@ -7,6 +7,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -23,6 +24,7 @@ import {
   type SetStored,
   withPlan,
 } from './answer-state';
+import { type Frame, frameOf } from './answer-frame';
 import { showing, withKind } from './meal-kinds';
 import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
@@ -82,6 +84,9 @@ export interface ShownAnswer {
   // input gives way to it.
   moving: Stretch | null;
   setMoving: (at: Stretch | null) => void;
+  // What the time card is drawn from: the Plan on screen, or for an answer with no Plan the frame it was asked in
+  // (P01 ticket 31); null with neither.
+  frame: Frame | null;
   // The Plan whose restaurant's menu the raised card shows (board E4), null for the list of candidates (board E3).
   menuFor: string | null;
   // Shows that Plan and opens its restaurant's menu; `closeMenu` returns to the list.
@@ -249,6 +254,7 @@ export function useShownAnswer(
     source: current.source,
     answer: current.answer,
     plan,
+    frame: plan ?? frameOf(current.answer, current.framed),
     index: current.index,
     ...browsing,
     chooseKind,

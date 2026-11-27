@@ -251,7 +251,10 @@ export interface AnswerReply extends WithMissing, WithAdding {
   // A meal's: the Restaurants closed for the meal, which the list names apart under "쉬는 곳" (P04 ticket 71). Absent
   // when none, from other answers, and from a main server before it.
   closed?: ClosedPlace[];
-  noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
+  // `band`, the time card over the window asked for, with everyone's lane, the Friends to add and the Classes left out,
+  // so that a card with no Plan keeps what was asked (P01 ticket 31); absent from a main server before it.
+  noPlan:
+    ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[]; band?: TimeBand } & WithRelax) | null;
   // A meal asked with company the User did not name (P04 ticket 73): picking opens on the Plan as the answer arrives.
   // Absent otherwise, when nobody is left to pick, and from a main server before it.
   pickPeople?: true;

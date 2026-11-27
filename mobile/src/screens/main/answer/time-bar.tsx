@@ -7,6 +7,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
@@ -178,7 +179,8 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
 interface PlanBarProps {
   shown: ShownAnswer;
   answer: AnswerReply;
-  plan: Plan;
+  // The Plan on screen, or the frame an answer with no Plan keeps (P01 ticket 31).
+  plan: Pick<Plan, 'band' | 'parts'> & { place: Plan['place'] | null };
   invitation: PlanInvitation;
   focus: BandFocus;
   onClose: () => void;
