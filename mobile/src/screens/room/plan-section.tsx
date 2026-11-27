@@ -69,7 +69,7 @@ function Step({ step, editsPlan, onEdit, onCancel, onPlace }: StepProps): ReactE
         <Text style={styles.what}>{subQuest.title}</Text>
         {place === '' ? null : (
           <PlaceWords onOpen={onPlace} point={pointOnMap(subQuest.place)}>
-            <Text style={styles.place}>{place}</Text>
+            {(link) => <Text style={[styles.place, link && styles.link]}>{place}</Text>}
           </PlaceWords>
         )}
       </View>
@@ -223,5 +223,7 @@ const styles = StyleSheet.create({
   nextTime: { color: color.party },
   what: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
   place: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
+  // A place picked on the map, which opens it, in the 행사 line's blue (P06 ticket 27).
+  link: { color: color.blue600 },
   small: { alignItems: 'center', justifyContent: 'center', width: 32, height: 32 },
 });

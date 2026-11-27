@@ -50,15 +50,25 @@ interface InfoLineProps {
   event?: boolean;
   // A card's smaller, muted words, or the 모집글's.
   small?: boolean;
+  // A line whose press opens something, in the 행사 line's blue: a place picked on the map (P06 ticket 27).
+  link?: boolean;
 }
 
 // A line after its icon: the time, the place, the members, or the event in blue.
-export function InfoLine({ icon, children, lines, event = false, small = false }: InfoLineProps): ReactElement {
-  const ink = event ? color.blue600 : small ? color.inkMuted : color.ink;
+export function InfoLine({
+  icon,
+  children,
+  lines,
+  event = false,
+  small = false,
+  link = false,
+}: InfoLineProps): ReactElement {
+  const blue = event || link;
+  const ink = blue ? color.blue600 : small ? color.inkMuted : color.ink;
   return (
     <View style={styles.line} testID={event ? 'event-line' : undefined}>
       <View style={small ? styles.smallIcon : styles.icon}>
-        <Icon color={event ? color.blue600 : color.inkMuted} name={icon} size={16} />
+        <Icon color={blue ? color.blue600 : color.inkMuted} name={icon} size={16} />
       </View>
       <Text numberOfLines={lines} style={[small ? styles.smallWords : styles.words, { color: ink }]}>
         {children}
@@ -106,7 +116,11 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
       <InfoBox>
         <InfoLine icon="clock">{post.time}</InfoLine>
         <PlaceWords onOpen={placeOnMap.open} point={post.point}>
-          <InfoLine icon="pin">{post.place}</InfoLine>
+          {(link) => (
+            <InfoLine icon="pin" link={link}>
+              {post.place}
+            </InfoLine>
+          )}
         </PlaceWords>
         <InfoLine icon="users">{post.members}</InfoLine>
         {post.event === null ? null : (

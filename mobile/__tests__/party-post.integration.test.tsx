@@ -220,8 +220,9 @@ describe('파티 모집글 of a Quest the User holds', () => {
 });
 
 describe('the place of a 파티 picked on the map', () => {
-  it('opens a small map with its pin from its words on the 모집글', async () => {
+  it('opens a small map with its pin from its words on the 모집글, which show the › of a line that opens', async () => {
     const user = await openAt(`/post/${RUN.id}`);
+    expect(screen.getByTestId('place-chevron')).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: '버들골 (100동) 입구' }));
     await pass(500);
@@ -236,5 +237,6 @@ describe('the place of a 파티 picked on the map', () => {
 
     expect(screen.getByText('장소 미정')).toBeVisible();
     expect(screen.queryByRole('button', { name: '장소 미정' })).toBeNull();
+    expect(screen.queryByTestId('place-chevron')).toBeNull();
   });
 });

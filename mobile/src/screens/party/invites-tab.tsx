@@ -57,7 +57,11 @@ function InvitationPlan({ next }: { next: ShownQuestInvitation['nextSubQuest'] }
     <View style={styles.plan}>
       <Line icon="clock">{time}</Line>
       <PlaceWords onOpen={placeOnMap.open} point={pointOnMap(next?.place)}>
-        <Line icon="pin">{place}</Line>
+        {(link) => (
+          <Line icon="pin" link={link}>
+            {place}
+          </Line>
+        )}
       </PlaceWords>
       {placeOnMap.sheet}
     </View>

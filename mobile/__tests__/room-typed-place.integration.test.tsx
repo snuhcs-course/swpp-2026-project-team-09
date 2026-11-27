@@ -174,6 +174,8 @@ describe('the place of a Sub Quest in 일정', () => {
   it('opens a small map with its pin when it was picked on the map', async () => {
     answerRoom(server, PICNIC);
     const user = await openRoom(PICNIC);
+    // Only the picked point shows the ›: 자하연 is a Place of the list.
+    expect(within(screen.getByLabelText('일정')).getAllByTestId('place-chevron')).toHaveLength(1);
 
     await user.press(within(screen.getByLabelText('일정')).getByRole('button', { name: '301동 앞' }));
     await pass(500);
@@ -190,5 +192,6 @@ describe('the place of a Sub Quest in 일정', () => {
     expect(plan.queryByRole('button', { name: '서울대입구역' })).toBeNull();
     expect(plan.getByText('자하연')).toBeVisible();
     expect(plan.queryByRole('button', { name: '자하연' })).toBeNull();
+    expect(plan.queryByTestId('place-chevron')).toBeNull();
   });
 });

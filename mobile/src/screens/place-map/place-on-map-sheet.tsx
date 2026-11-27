@@ -83,27 +83,29 @@ export function usePlaceOnMap(): { open: (point: PointOnMap) => void; sheet: Rea
 interface PlaceWordsProps {
   point: PointOnMap | null;
   onOpen: (point: PointOnMap) => void;
-  children: ReactNode;
+  // The place's line, in blue when it opens the map, as the 행사 line that opens its sheet is.
+  children: (link: boolean) => ReactNode;
 }
 
-// The place's words where a 파티 is shown: a press opens the map for a place picked on the map, and words typed or a
-// Place of the list stay as they are.
+// The place's words where a 파티 is shown: for a place picked on the map, a blue line with › whose press opens the
+// map, as the room's 행사 line opens its sheet; words typed or a Place of the list stay as they are.
 export function PlaceWords({ point, onOpen, children }: PlaceWordsProps): ReactElement {
   if (point === null) {
-    return <>{children}</>;
+    return <>{children(false)}</>;
   }
   return (
     <Pressable
       accessibilityHint="지도에서 보기"
       accessibilityLabel={point.label}
       accessibilityRole="button"
-      hitSlop={space[1]}
+      hitSlop={{ top: space[2], bottom: space[2] }}
       onPress={() => {
         onOpen(point);
       }}
-      style={({ pressed }) => pressed && styles.pressed}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      {children}
+      <View style={styles.grow}>{children(true)}</View>
+      <Icon color={color.blue600} name="chevronRight" size={16} testID="place-chevron" />
     </Pressable>
   );
 }
@@ -121,5 +123,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.partySoft,
   },
   words: { flex: 1, fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  grow: { flex: 1 },
   pressed: { opacity: 0.6 },
 });
