@@ -3,7 +3,7 @@
 Parent: [P10 spec](../spec.md)
 Status: ready-for-agent
 Pull request: none yet
-Blocked by: 18
+Blocked by: 18; the main server's 24 for the button
 
 Native files: none. Releases: an app OTA update, though no answer reaches it until the app says `study-plan` (ticket 23).
 
@@ -19,7 +19,7 @@ The approved board's ③ ("공부할 곳 후보 화면", 2026-11-27): a press on
 3. Its line is the way there, then until when and how long the User can stay: "걸음 4분 · 15:50까지 2시간 30분". When the way is not known, its arrival takes the way's place ("19:12 도착 · …").
 4. The body is a slot. Where a Restaurant has the meals of its day and its menu, a study place has its spaces, best first, each by name in bold with its hours under it, as the main server words them, or "시간 정보 없음" when it gives none.
 5. No "가는 길" button: the way is drawn on the map, as a meal's.
-6. The main button "일정에 넣기" for a study place alone except 관정 waits for the main server (see Comments).
+6. The main button is "일정에 넣기" for a study place alone except 관정, as for a meal alone (`schedulesAlone` in `plan-input.ts`, used by `planActionOf`). It saves the Plan as a Quest taken alone at `POST /plans` (the main server's ticket 24), and the card says its two lines as for a meal. `takenAlone` counts a study alone too, so it sends no 파티 usage data. The mock saves the stored study answer's places the same way.
 7. 관정's place opens the same view until ticket 22 makes it the seat ticket.
 
 ## Acceptance criteria
@@ -27,10 +27,11 @@ The approved board's ③ ("공부할 곳 후보 화면", 2026-11-27): a press on
 - [x] A row press and the chosen place's mark open the place. (Unit tests, failing before the change.)
 - [x] The view's head: the way back, the number in the study colour, the building, and the walk and stay. (Unit test, failing before the change.)
 - [x] Each space by name with its hours, or "시간 정보 없음". (Unit tests, failing before the change.)
-- [ ] "일정에 넣기" for a place other than 관정.
+- [x] "일정에 넣기" for a place other than 관정, none for 관정 or a study together. (Unit test, failing before the change.)
+- [x] "일정에 넣기" saves the place and the card says "공대 신양학술정보관으로 가요" over the mocks. (Integration test, failing before the change.)
 - [ ] Emulator pictures at font scale 1.0 and 1.3.
 - [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
 
-- The main server makes a Quest only of a meal's, a meet's, an events' or a new recruiting Quest's Plan (`plans.service.ts`, `aloneInputOf` and `mealOrMeetInputOf`). A study Plan is refused with 400 `PLAN_KIND`. "일정에 넣기" needs a server ticket first: a study Plan alone made into a Quest taken alone. Raised with the orchestrator on 2026-11-27.
+- The main server made a Quest only of a meal's, a meet's, an events' or a new recruiting Quest's Plan, and refused a study Plan with 400 `PLAN_KIND`. Its ticket 24 (PR #677) takes a study Plan alone; this PR merges after it.

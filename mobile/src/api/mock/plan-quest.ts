@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Plan } from '@/api/assistant-types';
@@ -15,8 +16,10 @@ import { ME } from './data/frame';
 import { EVENTS_ANSWER } from './data/events-answer';
 import { PLAN_QUEST } from './data/plan-quest';
 import { MEAL_ANSWER_ALONE } from './data/meal-answers';
+import { STUDY_PLAN_ANSWER } from './data/study-plan-answer';
 import { takenAloneOf } from './data/taken-alone';
 import { mealTakenAloneOf } from './data/taken-alone-meal';
+import { studyAloneInput } from '@/features/assistant/plan-input';
 
 // The Quests the mock made, which its list of Quests holds after its own, as the main server lists the Quests the
 // User holds. Empty at each start.
@@ -37,8 +40,8 @@ function madeByMe(quest: Quest): Quest {
 
 // A Plan made into a Quest without a main server: the mock does not calculate, so it answers with the stored copy of
 // the main server's real reply, whatever Plan it is given, and lists that Quest among the User's from then on.
-// An events Plan of the stored answer, or a meal's Plan for the User alone, is taken alone, as the main server takes
-// it, and listed in place of the party.
+// An events Plan of the stored answer, or a meal's or a study place's Plan for the User alone, is taken alone, as the
+// main server takes it, and listed in place of the party.
 export function mockPlanQuest(making?: MakePlanQuest): PlanQuest {
   const plan = making?.input.kind === 'events' ? EVENTS_ANSWER.plans.find(({ id }) => id === making.planId) : undefined;
   if (plan !== undefined) {
@@ -52,6 +55,12 @@ export function mockPlanQuest(making?: MakePlanQuest): PlanQuest {
     made = [taken.quest];
     return taken;
   }
+  const study = aloneStudy(making);
+  if (study !== undefined) {
+    const taken = mealTakenAloneOf(study, { ...ME }, '공부해요');
+    made = [taken.quest];
+    return taken;
+  }
   made = [madeByMe(PLAN_QUEST.quest)];
   return PLAN_QUEST;
 }
@@ -62,6 +71,14 @@ function aloneMeal(making?: MakePlanQuest): Plan | undefined {
     return undefined;
   }
   return MEAL_ANSWER_ALONE.plans.find(({ id }) => id === making.planId);
+}
+
+// A study place of the stored study answer for the User alone, by its id (P10 ticket 19).
+function aloneStudy(making?: MakePlanQuest): Plan | undefined {
+  if (making === undefined || !studyAloneInput(making.input)) {
+    return undefined;
+  }
+  return STUDY_PLAN_ANSWER.plans.find(({ id }) => id === making.planId);
 }
 
 // "다시 고르기": a Quest the mock made ends.

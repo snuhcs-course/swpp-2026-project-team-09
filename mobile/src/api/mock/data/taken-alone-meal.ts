@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Plan } from '@/api/assistant-types';
@@ -22,7 +23,8 @@ const SECOND: Record<string, { line: string; remindAt: string | null }> = {
 
 const NOTHING_TOLD = { line: '오늘은 다음 일정이 없어 나설 알림은 없어요', remindAt: null };
 
-export function mealTakenAloneOf(plan: Plan, me: Person): PlanQuest {
+// A study place of `study-plan-answer.ts` taken alone the same way (P10 ticket 19), studied at where the User is.
+export function mealTakenAloneOf(plan: Plan, me: Person, stay: '먹어요' | '공부해요' = '먹어요'): PlanQuest {
   const { line, remindAt } = SECOND[plan.id] ?? NOTHING_TOLD;
   const there = plan.parts.find((part) => part.me)?.walkMinutes === 0;
   return {
@@ -62,7 +64,7 @@ export function mealTakenAloneOf(plan: Plan, me: Person): PlanQuest {
       lines: [
         [
           { text: plan.place.label, strong: true },
-          { text: there ? '에서 먹어요' : '으로 가요', strong: false },
+          { text: there ? `에서 ${stay}` : '으로 가요', strong: false },
         ],
         [{ text: line, strong: false }],
       ],

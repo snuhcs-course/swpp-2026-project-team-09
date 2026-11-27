@@ -15,7 +15,7 @@ import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button } from '@/design-system';
 import { addingWordsOf } from '@/features/assistant/adding-words';
-import { peopleOf } from '@/features/assistant/plan-input';
+import { peopleOf, schedulesAlone } from '@/features/assistant/plan-input';
 import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
 import type { ChatSheetControl } from '../chat-sheet';
 import { CHANGE_WORDS, type ProposalMaking } from '../chat-proposal-card';
@@ -80,7 +80,7 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
       disabled,
     };
   }
-  return kind === 'meal' && people === 1 ? { words: '일정에 넣기', onPress: invitation.invite, disabled } : null;
+  return schedulesAlone(answer.input, plan) ? { words: '일정에 넣기', onPress: invitation.invite, disabled } : null;
 }
 
 // Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place, or for a meeting changes that

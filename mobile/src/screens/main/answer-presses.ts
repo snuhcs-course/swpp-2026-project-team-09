@@ -13,7 +13,6 @@ import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { drawsMeal } from '@/features/assistant/meal-marks';
 import { friendIdOf } from '@/features/map/adapter';
 import { openMealMenu } from './answer/meal-card';
-import type { ChatSheetControl } from './chat-sheet';
 
 const PICK_ID = 'answer:pick';
 const ME_ID = 'answer:me';
@@ -86,7 +85,10 @@ export function planPress(
 
 // "메뉴 ›": a press on a meal answer's chosen place, its label included, raises the card to that restaurant's menu
 // (board E4), and a study answer's to that place's spaces (P10 ticket 19); any other mark opens as before.
-export function withMealMenu(control: Pick<ChatSheetControl, 'answer' | 'card'>, onMark: OnMark): OnMark {
+export function withMealMenu(
+  control: { answer: Pick<ShownAnswer, 'answer' | 'plan' | 'openMenu'> },
+  onMark: OnMark,
+): OnMark {
   return (id, position, pick) => {
     const { answer, plan } = control.answer;
     if (id === 'answer:pick' && answer !== null && plan !== null && drawsMeal(answer)) {

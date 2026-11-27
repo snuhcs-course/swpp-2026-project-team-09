@@ -7,10 +7,11 @@
 import { render, screen, within } from '@testing-library/react-native';
 
 import type { Plan } from '@/api/assistant-types';
+import type { LatLng } from '@/api/types';
 import { STUDY_PLAN_ANSWER } from '@/api/mock/data/study-plan-answer';
 import { color } from '@/design-system';
 import { MealMenu } from '@/screens/main/answer/meal-menu';
-import { ignoreMark, withMealMenu } from '@/screens/main/answer-presses';
+import { ignoreMark, type OnMark, withMealMenu } from '@/screens/main/answer-presses';
 import { freshWrapper } from './support/queries';
 
 // A study place opened (P10 ticket 19): the meal answer's view of a Restaurant, with the place's spaces and their hours
@@ -28,10 +29,9 @@ function planAt(index: number): Plan {
 }
 
 async function opened(index: number): Promise<void> {
-  await render(
-    <MealMenu answer={STUDY_PLAN_ANSWER} plan={planAt(index)} shown={{ index, closeMenu: ignoreMark }} />,
-    { wrapper: freshWrapper() },
-  );
+  await render(<MealMenu answer={STUDY_PLAN_ANSWER} plan={planAt(index)} shown={{ index, closeMenu: ignoreMark }} />, {
+    wrapper: freshWrapper(),
+  });
 }
 
 // Partitions: a place with its hours known; one without them. Expected values: the stored answer's spaces, walks and
@@ -65,31 +65,31 @@ describe('a study place opened', () => {
   });
 });
 
+function pressed(): { openMenu: jest.Mock<void, [string]>; onMark: jest.Mock<void, [string, LatLng]>; press: OnMark } {
+  const openMenu = jest.fn<void, [string]>();
+  const onMark = jest.fn<void, [string, LatLng]>();
+  const press = withMealMenu({ answer: { answer: STUDY_PLAN_ANSWER, plan: planAt(1), openMenu } }, onMark);
+  return { openMenu, onMark, press };
+}
+
+const SOMEWHERE: LatLng = { latitude: 0, longitude: 0 };
+
 // Partitions: the chosen place's mark of a study answer; another mark. Expected values: the place opened, or the press
 // passed on.
 describe("a press on a study answer's chosen place", () => {
-  function control(): { openMenu: jest.Mock; onMark: jest.Mock; press: ReturnType<typeof withMealMenu> } {
-    const openMenu = jest.fn();
-    const onMark = jest.fn();
-    const answer = { answer: STUDY_PLAN_ANSWER, plan: planAt(1), openMenu };
-    // Only what withMealMenu reads of the control.
-    const press = withMealMenu({ answer, card: {} } as unknown as Parameters<typeof withMealMenu>[0], onMark);
-    return { openMenu, onMark, press };
-  }
-
   it('opens that place', () => {
-    const { openMenu, onMark, press } = control();
+    const { openMenu, onMark, press } = pressed();
 
-    press('answer:pick', { latitude: 0, longitude: 0 });
+    press('answer:pick', SOMEWHERE);
 
     expect(openMenu).toHaveBeenCalledWith(planAt(1).id);
     expect(onMark).not.toHaveBeenCalled();
   });
 
   it('passes another mark on', () => {
-    const { openMenu, onMark, press } = control();
+    const { openMenu, onMark, press } = pressed();
 
-    press('answer:candidate:1', { latitude: 0, longitude: 0 });
+    press('answer:candidate:1', SOMEWHERE);
 
     expect(onMark).toHaveBeenCalled();
     expect(openMenu).not.toHaveBeenCalled();

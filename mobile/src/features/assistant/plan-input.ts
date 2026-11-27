@@ -9,7 +9,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { MealInput, PlanInput, PlanPerson } from '@/api/assistant-types';
+import type { MealInput, Plan, PlanInput, PlanPerson } from '@/api/assistant-types';
 
 const NO_WINDOW: MealInput['window'] = { from: null, until: null };
 
@@ -23,6 +23,20 @@ export function hasPeople(input: PlanInput): input is WithPeople {
 // events and Quests.
 export function peopleOf(input: PlanInput): readonly PlanPerson[] {
   return hasPeople(input) ? input.people : [];
+}
+
+// A study for the asker alone: not together and nobody else, as the main server's `isTogether` reads it.
+export function studyAloneInput(input: PlanInput): boolean {
+  return input.kind === 'study' && !input.together && input.people.length < 2;
+}
+
+// What "일정에 넣기" saves as a Quest taken alone: a meal's Plan for the asker alone, or a study place's alone but
+// 관정's, whose seat is booked from its seat ticket (P10 ticket 19; the main server's ticket 24).
+export function schedulesAlone(input: PlanInput, plan: Pick<Plan, 'study'>): boolean {
+  if (input.kind === 'meal') {
+    return input.people.length === 1;
+  }
+  return studyAloneInput(input) && plan.study?.book === null;
 }
 
 // The kinds whose window the User fixes on the band: a meal, a meet, and a study answer.
