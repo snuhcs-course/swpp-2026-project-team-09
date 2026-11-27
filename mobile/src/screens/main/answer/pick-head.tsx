@@ -23,6 +23,7 @@ import {
   previewOf,
   walkGuessOf,
 } from '@/features/assistant/people-picking';
+import { backToSeatCard } from '@/features/assistant/seat-together';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { FriendView } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
@@ -73,7 +74,12 @@ export interface PickingBar {
 // of the Friend it was made with, as the last ✕ did.
 function finishOf(shown: ShownAnswer, onClose: () => void): () => void {
   return () => {
-    const { answer, picked } = shown;
+    const { answer, picked, source } = shown;
+    // A study answer together that a seat card asked goes back to that card once every Friend is out (P10 ticket 15).
+    if (picked?.length === 0 && backToSeatCard(source)) {
+      shown.setAdding(false);
+      return;
+    }
     const first = answer?.input.kind === 'meet' ? (answer.input.people[1]?.userId ?? null) : null;
     if (first !== null && picked?.length === 0) {
       onClose();
@@ -105,10 +111,10 @@ function rowsOf(frame: Frame, picked: readonly string[], friends: readonly Frien
 // never moves a row and the keyboard, which takes the card away a while, does not reorder them (the user's phone,
 // 2026-11-25). Only the rows of that order show, so that they never grow once open (P04 ticket 67).
 function useOpenOrder(
-  shown: Pick<ShownAnswer, 'pickOrder' | 'keepPickOrder'>,
+  source: Pick<PickSource, 'pickOrder' | 'keepPickOrder'>,
   rows: PickRow[] | null,
 ): PickRow[] | null {
-  const { pickOrder, keepPickOrder } = shown;
+  const { pickOrder, keepPickOrder } = source;
   const order = rows === null ? null : (pickOrder ?? openOrderOf(rows));
   useEffect(() => {
     if (order !== null && pickOrder === null) {
@@ -125,13 +131,37 @@ function useListedFriends(): readonly FriendView[] | null {
   return data ?? (isError ? [] : null);
 }
 
-export function usePickingBar(
-  shown: ShownAnswer,
-  plan: Frame,
-  { busy, onClose }: { busy: boolean; onClose: () => void },
-): PickingBar {
+// Who picks people in a time card: the answer on screen, or the seat answer's "＋ 같이" (P10 ticket 15), whose
+// picking the card keeps itself. Both draw the same rows and head.
+export interface PickSource {
+  picked: readonly string[] | null;
+  asked: readonly string[] | null;
+  // Whether there is a card to pick in: the answer on screen, or the seat card.
+  ready: boolean;
+  pickOrder: readonly string[] | null;
+  keepPickOrder: (order: readonly string[]) => void;
+  pick: (userId: string) => void;
+  setAdding: (open: boolean) => void;
+  // 완료.
+  finish: () => void;
+}
+
+export function answerPickSource(shown: ShownAnswer, onClose: () => void): PickSource {
+  return {
+    picked: shown.picked,
+    asked: shown.asked,
+    ready: shown.answer !== null,
+    pickOrder: shown.pickOrder,
+    keepPickOrder: shown.keepPickOrder,
+    pick: shown.pick,
+    setAdding: shown.setAdding,
+    finish: finishOf(shown, onClose),
+  };
+}
+
+export function usePickingBar(source: PickSource, plan: Frame, { busy }: { busy: boolean }): PickingBar {
   const friends = useListedFriends();
-  const { picked, answer, asked } = shown;
+  const { picked, ready, asked } = source;
   // From 완료 until its answer, the bar shows what was asked for, not the answer before it.
   const people = picked ?? asked;
   const band = useMemo(() => {
@@ -142,23 +172,23 @@ export function usePickingBar(
     return { ...plan.band, lanes, ...previewOf(plan.band, lanes) };
   }, [plan.band, people]);
   const others = asked === null ? plan.band.lanes.length - 1 : asked.length;
-  const waiting = picked === null || answer === null || friends === null;
-  const rows = useOpenOrder(shown, waiting ? null : rowsOf(plan, picked, friends));
-  if (picked === null || answer === null || rows === null) {
+  const waiting = picked === null || !ready || friends === null;
+  const rows = useOpenOrder(source, waiting ? null : rowsOf(plan, picked, friends));
+  if (picked === null || !ready || rows === null) {
     return { band, picking: null, head: null, inPlan: others };
   }
   const leave = (): void => {
-    shown.setAdding(false);
+    source.setAdding(false);
   };
   return {
     band,
-    picking: { rows, onPick: shown.pick },
+    picking: { rows, onPick: source.pick },
     head: (
       <PickHead
         disabled={busy}
         done={doneWordsOf(rows.length)}
         onCancel={leave}
-        onDone={rows.length === 0 ? leave : finishOf(shown, onClose)}
+        onDone={rows.length === 0 ? leave : source.finish}
       />
     ),
     inPlan: others,

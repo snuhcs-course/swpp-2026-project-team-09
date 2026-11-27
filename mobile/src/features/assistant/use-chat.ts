@@ -167,8 +167,13 @@ export interface Chat {
   addRecalculated: (asked: string, answer: AnswerReply) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
   // User's words and `reply`'s answer as the Assistant's. `forgotten` when the conversation was forgotten meanwhile;
-  // a failure takes the turn back.
-  askApp: (asked: string, reply: () => Promise<AnswerReply>) => Promise<'shown' | 'forgotten' | 'failed'>;
+  // a failure takes the turn back. `onShown` is given, once the answer is shown, that answer and the way back to the
+  // conversation as it was before the turn (P10 ticket 15).
+  askApp: (
+    asked: string,
+    reply: () => Promise<AnswerReply>,
+    onShown?: (answer: AnswerReply, back: () => void) => void,
+  ) => Promise<'shown' | 'forgotten' | 'failed'>;
   // How each library card of the conversation ended, by the card's place: its bubble and its key.
   outcomes: ReadonlyMap<string, CardOutcome>;
   finish: (card: string, outcome: CardOutcome) => void;

@@ -16,17 +16,36 @@ The 관정 seat answer alone stays today's seat ticket, since the app does not s
   - `chosen.seatSpaceId` set to the card's space;
   - `together: true`;
   - `people`: the asker, then the Friends picked.
-  - `what` and `area` take the server's answer (see the plan's open question).
+  - `what: 'any'` and `area: null`: the main server reads both for an answer alone only, and `together: true` gives the group answer even before anyone consents.
   - The group answer (ticket 11) takes the card's place.
 - **Removing every Friend** from that answer shows the seat card the app kept, with no server call.
 - `BookingBar` in `time-bar.tsx` is the one file of the band session this ticket needs, after #637 merges.
 
 ## Acceptance criteria
 
-- [ ] The seat answer's time card shows "+ 같이", and it opens the meal's picker. (Integration test.)
-- [ ] Picking three Friends posts the study input above, with `together: true`, and shows the group answer. (Integration test with the mock server.)
-- [ ] Removing every Friend shows the kept seat card, and no request is sent. (Integration test.)
-- [ ] The seat answer's own tests pass unchanged.
-- [ ] Whole lint, format and types.
+- [x] The seat answer's time card shows "+ 같이", and it opens the meal's picker. (Integration test.)
+- [x] Picking three Friends posts the study input above, with `together: true`, and shows the group answer. (Integration test with the mock server.)
+- [x] Removing every Friend shows the kept seat card, and no request is sent. (Integration test.)
+- [ ] The seat answer's own tests pass unchanged. (Integration tests run at the nightly level: none was changed.)
+- [x] Whole lint, format and types.
+
+## How it is built
+
+- **One "＋ 같이".** The seat card's bar draws the time card's own chip (`AddChip`) and picker (`usePickingBar`), as a meal's. `usePickingBar` now reads a `PickSource`: the answer on screen (`answerPickSource`) or, for the seat card, which has no answer, the picking the card keeps itself (`useSeatPicking` in `screens/main/answer/seat-picking.tsx`). The rows, the head and 완료 are the same code.
+- **완료** builds the study input from the card (`seatTogetherInput` in `features/assistant/seat-together.ts`) and asks it as the app's own turn (`askApp`, "같이 공부할 자리"), as a tap on a mark does. The group answer then takes the card's place in the conversation.
+- **Back.** `askApp` now gives, once its answer is shown, that answer and the way back to the conversation as it was before the turn. The seat card keeps both (`keepSeatCard`). 완료 with every Friend out of that answer (`finishOf` in `pick-head.tsx`) shows the conversation as it was, with no request. A time dragged on the group answer since keeps the way back, since the conversation's reply is still that answer.
+
+## "＋ 같이" by answer kind
+
+| Answer | "＋ 같이" | Why |
+|---|---|---|
+| Meal, alone or with Friends | works | the time card's slot (P04) |
+| Meet | works | the same slot; the last Friend taken out closes the answer, as before |
+| New party | works, as "초대할 친구 추가" | the same slot |
+| Study, alone with a Plan or together | works | the same slot; a group answer held while its consents are out does not open it (ticket 12) |
+| An answer with no Plan | works | its frame keeps the people (P01 ticket 31) |
+| The 관정 seat card alone | works: this ticket | the same chip and picker; it asks the group answer and comes back with every Friend out |
+| A seat card among several steps, a room card | not applicable | neither draws a time card: the steps draw the seat card (P04 ticket 09), and a room card keeps its own card; a group room comes through the group answer (ticket 14) |
+| Events, Quests | not applicable | nobody is asked for: their answers name times and parties already set |
 
 ## Comments

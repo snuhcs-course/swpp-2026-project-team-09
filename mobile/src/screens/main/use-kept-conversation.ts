@@ -5,6 +5,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useMemo, useState } from 'react';
@@ -85,9 +86,9 @@ function useShowing(chat: Chat, show: () => void, end: number | undefined): Show
         show();
         sendNew(text, tapped, mentions);
       },
-      askApp: (asked, reply) => {
+      askApp: (asked, reply, onShown) => {
         show();
-        return askApp(asked, reply);
+        return askApp(asked, reply, onShown);
       },
       addRecalculated: (asked, answer) => {
         show();

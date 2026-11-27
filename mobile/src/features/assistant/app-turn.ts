@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback } from 'react';
@@ -29,7 +30,11 @@ export function useAskApp(
   takeBack: () => void,
 ): Chat['askApp'] {
   return useCallback(
-    async (asked: string, reply: () => Promise<AnswerReply>): Promise<'shown' | 'forgotten' | 'failed'> => {
+    async (
+      asked: string,
+      reply: () => Promise<AnswerReply>,
+      onShown?: (answer: AnswerReply, back: () => void) => void,
+    ): Promise<'shown' | 'forgotten' | 'failed'> => {
       takeBack();
       const before = said.current;
       const asking = conversation.current;
@@ -46,6 +51,9 @@ export function useAskApp(
       }
       const text = answerWords(answer, asked);
       add({ role: 'assistant', text, cards: [], mapButtons: [], proposal: null, failure: null, answer });
+      onShown?.(answer, () => {
+        show(before);
+      });
       return 'shown';
     },
     [add, conversation, said, setWaiting, show, takeBack],
