@@ -15,7 +15,7 @@ import { pass, screen, shownAddress } from './support/app';
 import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { answer, answerRoom, HIS_PICNIC, openRoom, PICNIC } from './support/room';
+import { answer, answerRoom, HIS_PICNIC, openRoom, PICNIC, toastIcon } from './support/room';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
 // A 파티 the User held that leaves their list, told once on any screen of the signed-in app, against the fake main
@@ -137,6 +137,7 @@ describe('a 파티 that leaves the list on another tab', () => {
     await questsChanged();
 
     expect(toastWords()).toBe(REMOVED);
+    expect(toastIcon()).toBe('alert');
   });
 
   it('is told when the main server could not say whether the User still holds it', async () => {
@@ -288,6 +289,7 @@ describe('a row of 알림 of a 파티 gone', () => {
     await pass(500);
 
     expect(toastWords()).toBe('이미 없는 파티예요');
+    expect(toastIcon()).toBe('alert');
     expect(shownAddress()).toMatch(/^\/main(?:\?card=undefined)?$/u);
   });
 });

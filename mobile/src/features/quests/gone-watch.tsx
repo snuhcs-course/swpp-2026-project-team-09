@@ -48,13 +48,18 @@ function goneWords(title: string, way: GoneWay): string {
 // other answer, the room's `QUEST_NOT_FOUND` or no answer at all, is told: the list has moved past the Quest, so a
 // toast lost here would never come. A removal is told apart from an end by the User's removals; when the main server
 // cannot say which, the words say only that the User is out.
-async function tellIfGone(questId: string, title: string, showToast: (words: string) => void): Promise<void> {
+async function tellIfGone(
+  questId: string,
+  title: string,
+  showToast: (words: string, shownMs?: number, icon?: 'alert') => void,
+): Promise<void> {
   if (leftOnPurpose(questId)) {
     return;
   }
   const way = await goneWay(questId);
   if (way !== null) {
-    showToast(goneWords(title, way));
+    // A 파티 gone is news against the User, with the alert icon, not ✓.
+    showToast(goneWords(title, way), undefined, 'alert');
   }
 }
 
