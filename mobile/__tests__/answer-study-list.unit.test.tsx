@@ -68,13 +68,13 @@ describe("a study answer's list", () => {
     });
   });
 
-  it('chooses a place at a press, its view being another ticket’s', async () => {
+  it('opens a place at a press, as a meal answer’s row opens its Restaurant (P10 ticket 19)', async () => {
     const shown = await list();
 
     await fireEvent.press(screen.getByTestId('meal-row-3'));
 
-    expect(shown.show).toHaveBeenCalledWith(STUDY_PLAN_ANSWER.plans[2]?.id);
-    expect(shown.openMenu).not.toHaveBeenCalled();
+    expect(shown.openMenu).toHaveBeenCalledWith(STUDY_PLAN_ANSWER.plans[2]?.id);
+    expect(shown.show).not.toHaveBeenCalled();
   });
 });
 
@@ -123,5 +123,16 @@ describe("the places a study answer's list cannot offer", () => {
     expect(last).toHaveProp('accessibilityLabel', '경영학도서관 · 경영대학 학생만 쓸 수 있어요');
     expect(last).toHaveProp('testID', 'meal-dropped-row');
     expect(last).toHaveStyle({ opacity: 0.45 });
+  });
+
+  it('stands after 쉬는 곳, outside its heading, with no heading of its own (P10 ticket 19)', async () => {
+    await list();
+    const closed = within(screen.getByTestId('meal-closed-group'));
+    const dropped = within(screen.getByTestId('meal-dropped-group'));
+
+    expect(closed.getByRole('header', { name: '쉬는 곳' })).toBeOnTheScreen();
+    expect(closed.queryByTestId('meal-dropped-row')).toBeNull();
+    expect(dropped.getByTestId('meal-dropped-row')).toBeOnTheScreen();
+    expect(dropped.queryByRole('header')).toBeNull();
   });
 });
