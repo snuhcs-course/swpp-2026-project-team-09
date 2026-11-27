@@ -62,7 +62,7 @@ const SEAT_CARD = {
 };
 
 const SEAT_SUMMARY =
-  '7층 7A 열람실 2 구역 7193, 오늘 17:00–18:00 예약을 아래에 띄웠어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.';
+  '7층 열람실 7193, 오늘 17:00–18:00 예약을 아래에 띄웠어요. 예약하기를 눌러야 예약돼요. 로그인이 보이면 관정도서관에 먼저 로그인해요.';
 
 describe('A book card', () => {
   it('is filled from the catalogue and the checked request, and the model gets a summary', async () => {
@@ -102,7 +102,7 @@ describe('A book card', () => {
       },
     ]);
     expect(stage.model.toolResults()[1]).toMatchObject({
-      summary: expect.stringContaining('사용 용도는 카드에서 골라요') as unknown,
+      summary: expect.stringContaining('사용 용도는 예약하기 전에 골라요') as unknown,
     });
 
     const stated = await stage.send(user, [
@@ -129,7 +129,7 @@ describe('A refused booking', () => {
       refusals: [
         { field: 'start', reason: '몇 시부터 예약할지 알려 주세요' },
         { field: 'minutes', reason: '몇 시간 또는 몇 시까지 예약할지 알려 주세요' },
-        { field: 'seat', reason: '1은 7A 열람실 2 구역의 자리가 아니에요', bound: '7193–7670' },
+        { field: 'seat', reason: '1은 7층 열람실의 자리가 아니에요', bound: '7193–7670' },
       ],
     });
     expect(libraryCards(response.body)).toEqual([]);

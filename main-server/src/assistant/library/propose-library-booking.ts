@@ -27,6 +27,7 @@ import {
   saysClosed,
   saysSameDayOnly,
 } from './booking-rules.js';
+import { spokenNameOf } from './app-names.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 import { closedToday } from './closed-today.js';
 import { firstOfSeveralNote } from './find-library-space.js';
@@ -132,9 +133,9 @@ function summaryOf(
   { filled = '', askedToBook = false }: { filled?: string; askedToBook?: boolean | undefined } = {},
 ): string {
   const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
-  const where = `${space.floor}층 ${space.name}${booking.seat === null ? '' : ` ${booking.seat}`}`;
+  const where = `${spokenNameOf(space)}${booking.seat === null ? '' : ` ${booking.seat}`}`;
   const who = party.people > 1 ? `, ${party.people}명` : '';
-  const asks = space.unit === 'room' && booking.useDesc === null ? ' 사용 용도는 카드에서 골라요.' : '';
+  const asks = space.unit === 'room' && booking.useDesc === null ? ' 사용 용도는 예약하기 전에 골라요.' : '';
   const when = `${dayWords(booking.date, now)} ${booking.start}–${end}`;
   const press = askedToBook
     ? `대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요. ${SIGN_IN_FIRST}`

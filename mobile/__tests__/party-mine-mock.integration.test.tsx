@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -48,7 +49,7 @@ describe('내 파티 in the mock build', () => {
     const study = within(screen.getByLabelText('자료구조 중간고사 스터디'));
     expect(study.getByText('비공개')).toBeVisible();
     expect(study.getByText('3명')).toBeVisible();
-    expect(study.getByText(/^9월 28일 \(월\) 19:00 · /u)).toBeVisible();
+    expect(study.getByText('9월 28일 (월) 19:00')).toBeVisible();
     expect(screen.queryByRole('button', { name: '자료구조 중간고사 스터디' })).toBeNull();
     // The chips count the Quests held now: the Party of the career talk and the dinner.
     expect(screen.getByText('전체 2')).toBeVisible();

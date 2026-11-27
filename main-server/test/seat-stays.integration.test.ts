@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -87,7 +88,7 @@ describe('POST /library/seat-stays', () => {
 
     expect(response.body).toMatchObject({
       quest: {
-        title: '관정 7층 7A 열람실 2 구역',
+        title: '관정 7층 열람실',
         capacity: 1,
         joinPolicy: 'closed',
         takenAlone: true,

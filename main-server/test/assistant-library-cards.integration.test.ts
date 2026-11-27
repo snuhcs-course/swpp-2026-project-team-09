@@ -122,7 +122,7 @@ describe('Seats and myBookings cards', () => {
 
     expect(stage.model.toolResults()[1]).toEqual({
       result: 'shown',
-      summary: '8층 8A 열람실 1 구역(QUIET ZONE)의 오늘 좌석 현황이 아래에 나와요.',
+      summary: '8층 정숙 열람실의 오늘 좌석 현황이 아래에 나와요.',
     });
     expect(stage.model.toolResults()[4]).toEqual({
       result: 'shown',

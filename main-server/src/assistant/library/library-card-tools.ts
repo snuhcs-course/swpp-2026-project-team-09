@@ -11,6 +11,7 @@ import { defineTool, type Tool } from '../feature.js';
 import { clockOf } from '../free-time/free-time.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
 import { koreaDate } from '../korea-time.js';
+import { spokenNameOf } from './app-names.js';
 import { addDays, windowRefusal } from './booking-rules.js';
 import { type LibraryTarget, myBookingsCard, seatsCard, targetCard } from './library-card.js';
 import {
@@ -116,7 +117,7 @@ export function showLibrarySeats(services: LibraryServices): Tool {
       const length = start === undefined ? null : (minutes ?? DEFAULT_SEAT_MINUTES);
       showCard(context.presented, seatsCard(space, { date: day, start: start ?? null, minutes: length }));
       const when = dayWords(day, context.now);
-      return { result: 'shown', summary: `${space.floor}층 ${space.name}의 ${when} 좌석 현황이 아래에 나와요.` };
+      return { result: 'shown', summary: `${spokenNameOf(space)}의 ${when} 좌석 현황이 아래에 나와요.` };
     },
   });
 }

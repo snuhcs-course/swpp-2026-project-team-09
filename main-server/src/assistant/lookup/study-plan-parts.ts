@@ -25,6 +25,9 @@ import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import { durationWords } from './day-lookup.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
+import { durationWords as lengthWords } from '../library/booking-rules.js';
+import { type Catalogue } from '../library/catalogue.js';
+import { studyBookFor } from './study-book.js';
 import { type StudyDay, type StudyStay } from './study-near.js';
 import { studyOthers } from './study-others.js';
 import { type WayArgs } from './way.js';
@@ -74,6 +77,8 @@ export interface PlanContext {
   ordered: readonly Ranked[];
   faded: readonly Faded[];
   others?: readonly OtherFriend[];
+  // The 관정 catalogue, for the card of the seat 관정관's plan books.
+  catalogue: Catalogue;
 }
 
 // What 관정관's plan books (P10 ticket 05): the first 7층 seat for a quiet place or any. A group study room needs
@@ -271,7 +276,7 @@ function bandOf({ stay, end, building }: Ranked, { now, way, input, others }: Pl
     ...studyOthers(others, plan, { from, until, label }),
     startAt: koreaTime(stay.arrival),
     endAt: koreaTime(end),
-    text: `${clockOf(stay.arrival)}–${clockOf(end)}`,
+    text: `${clockOf(stay.arrival)}–${clockOf(end)} · ${lengthWords(Math.round((end.getTime() - stay.arrival.getTime()) / MINUTE_MS))}`,
   };
 }
 
@@ -294,7 +299,10 @@ export function planOf(ranked: Ranked, index: number, context: PlanContext): Pla
     band: bandOf(ranked, context),
     study: {
       spaces: spots.map((spot) => spotOf(spot)),
-      book: building.liveSeats === null ? null : seatToBook(context.input),
+      book:
+        building.liveSeats === null
+          ? null
+          : studyBookFor(seatToBook(context.input), context.catalogue, { start: stay.arrival, end }),
       liveSeats: building.liveSeats === null ? null : 'kwanjeong',
     },
   };

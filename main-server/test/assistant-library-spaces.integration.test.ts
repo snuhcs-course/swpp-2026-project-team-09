@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -30,7 +31,7 @@ describe('findLibrarySpace asking', () => {
     expect(await stage.result(user, find(ids, '7층 노트북존'))).toEqual({
       result: 'several',
       candidates: [
-        expect.objectContaining({ id: '7F-7A-zone1-notebook', name: '7A 열람실 1 구역(노트북존)', floor: 7 }),
+        expect.objectContaining({ id: '7F-7A-zone1-notebook', name: '7층 7A 노트북존', floor: 7 }),
         expect.objectContaining({ id: '7F-notebook-171', floor: 7 }),
         expect.objectContaining({ id: '7F-7B-notebook', floor: 7 }),
       ],

@@ -4,6 +4,8 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { readFileSync } from 'node:fs';
+import { z } from 'zod';
 import { type AnswerReply, type Plan, type PlanStudy, type StudySpot } from '../../src/assistant/dto/answer.dto.js';
 
 // A whole study answer (P10 ticket 02), as P10 ticket 03 makes it: "공부할 자리 있어?" on Wednesday 2026-11-04 at
@@ -15,6 +17,12 @@ import { type AnswerReply, type Plan, type PlanStudy, type StudySpot } from '../
 // their walk there, for "+ 같이" (ticket 07). The app session builds its mock from it.
 
 export const ME = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
+
+// 관정관's study part as studyPlanAnswer makes it for this question, its book card included (P10 ticket 21); the app's
+// copy is mobile/__tests__/fixtures/study-kwanjeong-book.json.
+const KWANJEONG_STUDY = z
+  .custom<PlanStudy>()
+  .parse(JSON.parse(readFileSync(new URL('study/kwanjeong-book.json', import.meta.url), 'utf8')));
 export const OTHER_FRIEND = { userId: 'a3f1c2d4-0000-4000-8000-0000000000a4', name: '최준호' };
 const DAY = '2026-11-04';
 const at = (clock: string): string => `${DAY}T${clock}:00+09:00`;
@@ -131,7 +139,7 @@ const BUILDINGS: Building[] = [
     ],
     study: {
       spaces: [spot('kwanjeong', '관정관', 'reading', '7A·7B·8A열람실 07:00–23:00', '23:00')],
-      book: { spaceId: '7F-7A-zone2' },
+      book: KWANJEONG_STUDY.book,
       liveSeats: 'kwanjeong',
     },
   },
