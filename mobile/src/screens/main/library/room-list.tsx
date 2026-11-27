@@ -3,16 +3,18 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { LibrarySpace } from '@/api/assistant-types';
-import { color, font, radius, space, text } from '@/design-system';
+import { color, space, text } from '@/design-system';
 import type { Slot } from '@/library/cards/payloads';
 import { type CellCount, cellOf, type Room, roomGrid, roomOf, spacesOf } from '@/library/cards/seat-rooms';
 import { rangeWords } from '@/library/cards/times';
 import { LOG_IN_FOR_SEATS } from '../study-rows';
+import { type FloorCell, FloorCells } from './floor-cells';
 import type { RoomCounting } from './room-counting';
 import { type Rooms, useRooms } from './use-room-counts';
 
@@ -39,44 +41,30 @@ function countWords(count: CellCount): { shown: string; said: string } {
   return COUNT_WORDS[count.kind];
 }
 
-function RoomCell({
-  room,
-  spaces,
-  rooms,
-  inUse,
-  onPick,
-}: {
-  room: Room;
-  spaces: readonly LibrarySpace[];
-  rooms: Extract<Rooms, { state: 'listed' }>;
-  inUse: boolean;
-  onPick: (space: LibrarySpace) => void;
-}): ReactElement {
-  const { count, pick } = cellOf(spaces, rooms.counts);
+function cellOfRoom(
+  room: Room,
+  rooms: Extract<Rooms, { state: 'listed' }>,
+  inUse: boolean,
+  onPick: (space: LibrarySpace) => void,
+): FloorCell {
+  const { count, pick } = cellOf(spacesOf(room, rooms.sectors), rooms.counts);
   const { shown, said } = countWords(count);
-  const full = pick === null;
-  const few = count.kind === 'free' && count.free < FEW;
-  return (
-    <Pressable
-      accessibilityLabel={said === '' ? room.label : `${room.label} ${said}`}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: full, selected: inUse }}
-      disabled={full}
-      onPress={() => {
-        if (pick !== null) {
-          onPick(pick);
-        }
-      }}
-      style={({ pressed }) => [styles.cell, inUse && styles.inUse, full && styles.full, pressed && styles.pressed]}
-    >
-      <Text numberOfLines={1} style={[styles.cellName, full && styles.fullWords]}>
-        {room.cell}
-      </Text>
-      {shown === '' ? null : (
-        <Text style={[styles.cellCount, few && styles.few, full && styles.fullWords]}>{shown}</Text>
-      )}
-    </Pressable>
-  );
+  return {
+    key: `${String(room.floor)} ${room.kind}`,
+    floor: room.floor,
+    name: room.cell,
+    label: room.label,
+    value: shown,
+    said,
+    chosen: inUse,
+    off: pick === null,
+    few: count.kind === 'free' && count.free < FEW,
+    onPress: () => {
+      if (pick !== null) {
+        onPick(pick);
+      }
+    },
+  };
 }
 
 // The list under the ticket: the time its free seats are for, then the floors.
@@ -105,15 +93,7 @@ export function RoomList({
   );
 }
 
-// Two cells to a row, so that every cell has the same width on every floor.
-const PER_ROW = 2;
-
-function pairs<T>(cells: readonly T[]): T[][] {
-  return Array.from({ length: Math.ceil(cells.length / PER_ROW) }, (_, row) =>
-    cells.slice(row * PER_ROW, row * PER_ROW + PER_ROW),
-  );
-}
-
+// The floors in the grid's order, each with its rooms.
 function Floors({
   rooms,
   inUse,
@@ -124,70 +104,20 @@ function Floors({
   onPick: (space: LibrarySpace) => void;
 }): ReactElement {
   const { floors, rows } = roomGrid(rooms.sectors);
-  return (
-    <>
-      {floors.map((floor, column) => {
-        const cells = rows.flatMap(({ cells: byFloor }) => {
-          const room = byFloor[column];
-          return room === null || room === undefined ? [] : [room];
-        });
-        return (
-          <View key={floor} style={styles.floor}>
-            <Text style={styles.floorName}>{`${String(floor)}층`}</Text>
-            {pairs(cells).map((pair) => (
-              <View key={pair.map(({ kind }) => kind).join(' ')} style={styles.row}>
-                {Array.from({ length: PER_ROW }, (_, index) => {
-                  const room = pair[index];
-                  return (
-                    <View key={room?.kind ?? `empty-${String(index)}`} style={styles.place}>
-                      {room === undefined ? null : (
-                        <RoomCell
-                          inUse={inUse !== null && inUse.floor === room.floor && inUse.kind === room.kind}
-                          onPick={onPick}
-                          room={room}
-                          rooms={rooms}
-                          spaces={spacesOf(room, rooms.sectors)}
-                        />
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
-            ))}
-          </View>
-        );
-      })}
-    </>
+  const cells = floors.flatMap((_floor, column) =>
+    rows.flatMap(({ cells: byFloor }) => {
+      const room = byFloor[column];
+      if (room === null || room === undefined) {
+        return [];
+      }
+      const shown = inUse !== null && inUse.floor === room.floor && inUse.kind === room.kind;
+      return [cellOfRoom(room, rooms, shown, onPick)];
+    }),
   );
+  return <FloorCells cells={cells} />;
 }
-
-const CELL_HEIGHT = 44;
 
 const styles = StyleSheet.create({
   list: { gap: space[2] },
   basis: { ...text.caption, color: color.inkMuted },
-  floor: { gap: space[1] },
-  floorName: { ...text.caption, color: color.inkMuted },
-  row: { flexDirection: 'row', gap: space[2] },
-  place: { flex: 1, flexBasis: 0, minWidth: 0 },
-  pressed: { opacity: 0.6 },
-  cell: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[1],
-    minHeight: CELL_HEIGHT,
-    paddingHorizontal: space[3],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: color.border,
-    backgroundColor: color.surface,
-  },
-  // The room on screen: the study colour's border.
-  inUse: { borderWidth: 1.5, borderColor: color.svcStudy },
-  full: { backgroundColor: color.surfaceSunken, borderColor: color.surfaceSunken },
-  cellName: { flexShrink: 1, fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.ink },
-  cellCount: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 20, color: color.svcStudy },
-  few: { color: color.danger },
-  fullWords: { color: color.inkMuted, fontFamily: font.regular },
 });

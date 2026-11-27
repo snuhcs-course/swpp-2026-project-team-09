@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -19,6 +20,7 @@ import {
   Place,
   Prisma,
   QuestBoard,
+  RoomRequestStatus,
   SubQuest,
 } from '../../generated/prisma/client.js';
 
@@ -89,6 +91,25 @@ export interface QuestDto {
   // The Holders in the order they entered, then the Users whose invitation waits, by when it was sent, then the Users
   // who declined, by when they declined. None for a Class Quest.
   members: QuestMemberDto[];
+  // The room request a booking party was made for, for the map's Quest tag ("동의 1/3"); null for every other Quest.
+  roomRequest: QuestRoomRequestDto | null;
+  // The room the library booked for the Quest's booked room request, as the booker's phone reported it ("G412"), for
+  // its Holders, the only Users a Quest is shown to (P05 ticket 68); null for every other Quest.
+  bookedRoom: string | null;
+}
+
+// A Quest's room request and the room booked for it, as QuestDto carries them.
+export interface QuestRooms {
+  request: QuestRoomRequestDto | null;
+  booked: string | null;
+}
+
+// A booking party's room request (P10): its status, and of the companions still in, how many consented and were asked.
+export interface QuestRoomRequestDto {
+  id: string;
+  status: RoomRequestStatus;
+  consented: number;
+  asked: number;
 }
 
 // A Quest as a User who does not hold it reads it: in the list of recruiting Quests, in a request to join it and in an
@@ -237,7 +258,7 @@ export function subQuestsAheadWhere(now: Date): Prisma.QuestWhereInput {
   };
 }
 
-export function toQuestDto(quest: StoredQuest, userId: string, now: Date): QuestDto {
+export function toQuestDto(quest: StoredQuest, userId: string, now: Date, rooms: QuestRooms): QuestDto {
   const { globalEvent, _count } = quest;
   return {
     id: quest.id,
@@ -263,6 +284,8 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date): Quest
       ...quest.invitations.map(({ user }): QuestMemberDto => ({ user, state: 'invited', lateMinutes: null })),
       ...quest.declines.map(({ user }): QuestMemberDto => ({ user, state: 'declined', lateMinutes: null })),
     ],
+    roomRequest: rooms.request,
+    bookedRoom: rooms.booked,
   };
 }
 

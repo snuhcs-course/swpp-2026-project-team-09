@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, type FreeInterval, startOfDay } from '../free-time/free-time.js';
@@ -169,5 +170,5 @@ export function filledWords(fill: SeatFill, leaveBy: LeaveBy | null, end: string
   if (leaveBy === null) {
     return arriving;
   }
-  return `${arriving}${leaveBy.start} ${leaveBy.for}이라 ${leaveBy.at}엔 나서요. ${end}까지 쓰지 않으면 카드에서 끝 시간을 당겨요. `;
+  return `${arriving}${leaveBy.start} ${leaveBy.for}이라 ${leaveBy.at}엔 나서요. ${end}까지 쓰지 않으면 끝 시간을 당겨요. `;
 }

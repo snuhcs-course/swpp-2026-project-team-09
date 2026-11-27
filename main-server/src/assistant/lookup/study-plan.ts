@@ -5,10 +5,18 @@
  ******************************************************************************/
 
 import { type StudyBuildingDto, type StudySpaceDto } from '../../study-spaces/dto/study-spaces.dto.js';
-import { type AnswerLine, type AnswerReply, type ClosedPlace, type StudyInput } from '../dto/answer.dto.js';
+import {
+  type AnswerLine,
+  type AnswerReply,
+  type ClosedPlace,
+  type StudyInput,
+  type TimeBand,
+} from '../dto/answer.dto.js';
 import { onDay } from '../free-time/free-time.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
+import { busyIn } from '../gathering/meal-scene.js';
+import { type BandRows, othersWithoutPlace, windowBand, withBand } from '../gathering/no-plan-band.js';
 import { koreaDate } from '../korea-time.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
 import { byStay, inArea, studyDayOf, type StudyDay, stayAt } from './study-near.js';
@@ -21,7 +29,9 @@ import {
   type Spot,
   type StudyHours,
 } from './study-plan-parts.js';
+import { type Catalogue } from '../library/catalogue.js';
 import { type WayArgs } from './way.js';
+import { WayNaming } from './way-naming.js';
 
 // "공부할 자리 있어?" answered as ranked study places (P10 ticket 03): one plan per building holding a space of the kind
 // asked that the User may use. The buildings known open at the arrival come first, then those whose hours are not
@@ -37,6 +47,8 @@ export interface StudyPlanArgs {
   // The asker's Friends with their day, for each time card's "+ 같이"; none given, the band has no `others`.
   others?: readonly OtherFriend[];
   hoursOf: (key: string, at: Date) => StudyHours;
+  // The 관정 catalogue, for the card of the seat 관정관's plan books (P10 ticket 21).
+  catalogue: Catalogue;
 }
 
 // The stay when no next item, end set, or close ends it.
@@ -196,6 +208,21 @@ function byLongEnough(group: readonly Ranked[]): Ranked[] {
   return byStay(keyed).map(({ one }) => one);
 }
 
+// The time card of an answer without a plan (P05 ticket 67), as a meal's keeps (ticket 65): the User's lane and their
+// other Friends, with no walk, from when they are ready to the end they set, else their next item, which the range
+// shows, else three hours on.
+function noPlanBand({ input, way, now, others }: StudyPlanArgs, { ready, next }: StudyDay): TimeBand {
+  const guessed = new Date(ready.getTime() + GUESSED_STAY_MINUTES * MINUTE_MS);
+  const end = input.window.until === null ? (next?.start ?? guessed) : onDay(input.date, input.window.until);
+  const naming = new WayNaming(way);
+  const label = (placeId: string): string => naming.placeLabel(placeId);
+  const rows = (from: Date, until: Date): BandRows => ({
+    lanes: [{ userId: way.me.userId, name: '나', busy: busyIn(way.me.items, from, until, label) }],
+    ...othersWithoutPlace(others, { from, until, label }),
+  });
+  return windowBand({ start: ready, end }, now, rows, next?.end);
+}
+
 export function studyPlanAnswer(args: StudyPlanArgs): AnswerReply {
   const day = studyDayOf(args.way);
   const fitting = fittingOf(args);
@@ -213,7 +240,7 @@ export function studyPlanAnswer(args: StudyPlanArgs): AnswerReply {
     plans: ordered.map((one, index) => planOf(one, index, context)),
     dropped: drops.map(({ dropped }) => dropped),
     closed: judged.flatMap((one) => (one.kind === 'closed' ? [one.closed] : [])),
-    noPlan: ordered.length > 0 ? null : noPlanOf(fitting, judged, args),
+    noPlan: ordered.length > 0 ? null : withBand(noPlanOf(fitting, judged, args), () => noPlanBand(args, day)),
     choosable: true,
   };
 }

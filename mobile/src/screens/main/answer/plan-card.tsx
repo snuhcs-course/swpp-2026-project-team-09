@@ -10,6 +10,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -30,6 +31,8 @@ import { OfferButtons } from './offer-buttons';
 import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
+import { StudyGroupBody } from './study-group-body';
+import type { TellAct } from '../library/act-stage';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
 
 interface CardProps {
@@ -139,6 +142,9 @@ interface PlanCardProps extends CardProps {
   said?: string;
   // One of several requests, whose candidates have no flag on the map (P04 ticket 09): the stepper switches them.
   steps?: boolean;
+  // Where a study answer's group study room tells its main button, and the bubble it tells it for (P10 ticket 11).
+  act?: TellAct;
+  bubbleId?: number;
 }
 
 // The answer on screen in the answer frame's card, with no text of its own by default: "＋ 같이" while the Plan can
@@ -200,10 +206,24 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const meal = shown.plan !== null && mealCard(answer);
+  const group = shown.plan?.study?.group;
   return (
     <View style={styles.plan}>
-      <Said lines={linesOf(shown, answer, over)} said={meal ? '' : said} />
+      <Said lines={linesOf(shown, answer, over)} said={meal || group !== undefined ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} /> : null}
+      {shown.plan !== null && group !== undefined ? (
+        <StudyGroupBody
+          act={props.act}
+          answer={answer}
+          bubbleId={props.bubbleId}
+          busy={busy || settled(invitation)}
+          group={group}
+          onAdd={fix.toggleAdding}
+          plan={shown.plan}
+          said={said}
+          shown={shown}
+        />
+      ) : null}
       <Below
         answer={answer}
         busy={busy}

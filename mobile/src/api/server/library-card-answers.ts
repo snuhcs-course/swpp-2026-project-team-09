@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryAction, LibraryCardData, LibrarySpace } from '@/api/assistant-types';
@@ -30,7 +31,7 @@ function isMapImage(value: unknown): value is LibrarySpace['mapImage'] {
   return value === null || (isNumber(field(value, 'width')) && isNumber(field(value, 'height')));
 }
 
-function isSpace(value: unknown): value is LibrarySpace {
+export function isSpace(value: unknown): value is LibrarySpace {
   const unit = field(value, 'unit');
   const kind = field(value, 'kind');
   return (

@@ -2,13 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
 import type { Slot } from '@/library/cards/payloads';
 import type { RoomCount, RoomCounts } from '@/library/cards/seat-rooms';
-import { freeSeatCount } from '@/library/cards/seats';
-import type { LibrarySeat } from '@/library/replies';
 import { SEATS_WAIT_MS, withinWait } from './seats-wait';
 
 // The free seats of the seat card's rooms (P01 tickets 03 and 08), held apart from the card, so that each count that
@@ -42,16 +41,18 @@ export function forgetKeptCounts(): void {
   reading.clear();
 }
 
-// What the counting asks of the app: the card's time, the library session, the sectors, a sector's seats, and the clock.
+// What the counting asks of the app: the card's time, the library session, the sectors, how many of a sector's seats or
+// rooms are free for the time, and the clock. The room ticket counts its room kinds' free rooms the same way (P10
+// ticket 10).
 export interface CountingDeps {
   slot: () => Slot;
   loggedIn: () => boolean;
   sectors: () => Promise<LibrarySpace[] | null>;
-  seats: (sector: LibrarySpace, slot: Slot) => Promise<LibrarySeat[]>;
+  count: (sector: LibrarySpace, slot: Slot) => Promise<number>;
   now: () => number;
 }
 
-// One sector's free seats for the time, kept when they come; a read already on its way is shared.
+// One sector's free seats or rooms for the time, kept when they come; a read already on its way is shared.
 function countFor(sector: LibrarySpace, slot: Slot, deps: CountingDeps): Promise<number> {
   const key = keyOf(sector, slot);
   const shared = reading.get(key);
@@ -59,9 +60,8 @@ function countFor(sector: LibrarySpace, slot: Slot, deps: CountingDeps): Promise
     return shared;
   }
   const count = deps
-    .seats(sector, slot)
-    .then((seats) => {
-      const free = freeSeatCount(seats);
+    .count(sector, slot)
+    .then((free) => {
       kept.set(key, { count: free, at: deps.now() });
       return free;
     })

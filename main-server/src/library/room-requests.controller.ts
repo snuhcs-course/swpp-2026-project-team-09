@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Body, Controller, Get, Header, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
@@ -16,10 +17,12 @@ import {
   createRoomRequestSchema,
   type RoomCompanionDto,
   type RoomInboxDto,
+  type RoomRequestAnswerDto,
   type RoomRequestDto,
   type RoomResultDto,
   roomResultSchema,
 } from './dto/room-request.dto.js';
+import { RoomAnswersService } from './room-answers.service.js';
 import { RoomBookingsService } from './room-bookings.service.js';
 import { RoomConsentsService } from './room-consents.service.js';
 import { RoomRequestsService } from './room-requests.service.js';
@@ -31,6 +34,7 @@ export class RoomRequestsController {
     private readonly requests: RoomRequestsService,
     private readonly consents: RoomConsentsService,
     private readonly bookings: RoomBookingsService,
+    private readonly answers: RoomAnswersService,
   ) {}
 
   // 동의 요청 보내기 on a book card. A repeat would make a second booking party, so it takes an Idempotency-Key.
@@ -53,6 +57,15 @@ export class RoomRequestsController {
   @Get('room-requests/:id')
   read(@CurrentUser() user: SignedInUser, @Param('id', { schema: z.uuid() }) id: string): Promise<RoomRequestDto> {
     return this.requests.read(user.id, id);
+  }
+
+  // The study answer the request was sent from, rebuilt for the requester's card (P10).
+  @Get('room-requests/:id/answer')
+  answer(
+    @CurrentUser() user: SignedInUser,
+    @Param('id', { schema: z.uuid() }) id: string,
+  ): Promise<RoomRequestAnswerDto> {
+    return this.answers.answer(user.id, id);
   }
 
   // The only reply with a 학번, so that no cache keeps it.
