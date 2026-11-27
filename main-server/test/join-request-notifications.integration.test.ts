@@ -83,9 +83,9 @@ describe('The Leader accepting a request to join', () => {
         {
           id: `join-accepted:party:${questId}`,
           kind: 'join-accepted',
-          title: '점심 같이 참여 신청이 수락됐어요',
+          title: '참여 신청이 수락됐어요',
           ahead: null,
-          line: '홍길동님의 파티',
+          line: '점심 같이 · 홍길동님의 파티',
           at: AT,
           url: `/main?card=party:${questId}`,
         },
@@ -97,7 +97,7 @@ describe('The Leader accepting a request to join', () => {
 });
 
 describe('The Leader declining a request to join', () => {
-  it('keeps one Notification for the one who asked, which rings and opens 보낸 신청', async () => {
+  it('keeps one Notification for the one who asked, which rings and opens 찾기', async () => {
     const { leader, user, questId, requestId } = await asked();
 
     expect((await answerJoinRequest(app, leader, { questId, requestId }, 'decline')).status).toBe(204);
@@ -105,13 +105,13 @@ describe('The Leader declining a request to join', () => {
     await vi.waitFor(async () => {
       expect((await getNotifications(user)).body).toEqual([
         {
-          id: `join-declined:sent-requests:${questId}`,
+          id: `join-declined:find-parties:${questId}`,
           kind: 'join-declined',
-          title: '점심 같이 참여 신청이 거절됐어요',
+          title: '참여 신청이 거절됐어요',
           ahead: null,
-          line: '홍길동님의 파티',
+          line: '점심 같이 · 홍길동님의 파티',
           at: AT,
-          url: `/main?card=sent-requests:${questId}`,
+          url: `/main?card=find-parties:${questId}`,
         },
       ]);
     });
@@ -128,9 +128,9 @@ describe('Asking to join', () => {
         {
           id: `join-asked:party:${questId}`,
           kind: 'join-asked',
-          title: '김철수님이 점심 같이에 참여를 신청했어요',
+          title: '새 참여 신청 1명',
           ahead: null,
-          line: '참여 신청 1명',
+          line: '점심 같이 · 김철수님',
           at: AT,
           url: `/main?card=party:${questId}`,
         },
@@ -157,8 +157,8 @@ describe('Asking to join while others wait', () => {
       expect((await getNotifications(leader)).body).toEqual([
         expect.objectContaining({
           id: `join-asked:party:${questId}`,
-          title: '이영희님 외 1명이 점심 같이에 참여를 신청했어요',
-          line: '참여 신청 2명',
+          title: '새 참여 신청 2명',
+          line: '점심 같이 · 이영희님 외 1명',
         }),
       ]);
     });
@@ -182,9 +182,7 @@ describe('Asking to join once no request waits', () => {
     await joinRequestOf(app, second, questId);
 
     await vi.waitFor(async () => {
-      expect(await keptRows(leader)).toEqual([
-        expect.objectContaining({ title: '이영희님이 점심 같이에 참여를 신청했어요', sentAt: null }),
-      ]);
+      expect(await keptRows(leader)).toEqual([expect.objectContaining({ title: '새 참여 신청 1명', sentAt: null })]);
     });
   });
 });
@@ -197,9 +195,7 @@ describe('A request to join withdrawn', () => {
 
     expect((await withdrawJoinRequest(app, second, secondId)).status).toBe(204);
     await vi.waitFor(async () => {
-      expect(await keptRows(leader)).toEqual([
-        expect.objectContaining({ title: '김철수님이 점심 같이에 참여를 신청했어요' }),
-      ]);
+      expect(await keptRows(leader)).toEqual([expect.objectContaining({ title: '새 참여 신청 1명' })]);
     });
     expect((await withdrawJoinRequest(app, user, requestId)).status).toBe(204);
 

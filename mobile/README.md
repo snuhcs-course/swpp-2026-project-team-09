@@ -1078,12 +1078,14 @@ the requests to join, which also wait for the User. A new match of a watched int
 (`step-changed`, a calendar) as an acceptance's, a member arrived at the step's point (`arrived`, a pin) on the navy
 round, and a member late (`late`, a clock) in the colour of the requests to join; the room's row of a late member
 starts with "N분 늦어요". The Leader's answer to the User's request to join is kept as an acceptance's: accepted
-(`join-accepted`, a group), which opens the party's card, and declined (`join-declined`, a person), whose address
-`/main?card=sent-requests:<questId>` ends at 보낸 신청 under 파티's 초대. The Leader's own Notification of the requests
-waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신청 {n}명" below. A 파티 gone is kept on the navy round:
-ended (`party-ended`, a group), the User removed (`party-removed`, a person), and a request or an invitation that
-waited on it (`join-cancelled`, `invitation-cancelled`). Their address, `/main?card=party-gone:<questId>`, is on no
-map, and pressing it says "이미 없는 파티예요". A kind
+(`join-accepted`, a group), which opens the party's card, and declined (`join-declined`, a person, on a muted grey
+round), whose address `/main?card=find-parties:<questId>` ends at 파티's 찾기. Each leads with the answer, "참여 신청이
+수락됐어요", and names the 파티 in its line, so that a long title of the 파티 is what the row cuts. The Leader's own Notification of the requests
+waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신청 {n}명" below. A 파티 gone is kept on
+the navy round, with the same order of words: ended (`party-ended`, a group), the User removed (`party-removed`, a
+person), a request that waited on it (`join-cancelled`, a group) and an invitation that waited on it
+(`invitation-cancelled`, a calendar). Their address, `/main?card=party-gone:<questId>`, is on no map, and pressing it
+says "이미 없는 파티예요". A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does

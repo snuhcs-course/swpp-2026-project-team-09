@@ -34,29 +34,29 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ACCEPTED: KeptNotification = {
   id: `join-accepted:party:${DINNER.id}`,
   kind: 'join-accepted',
-  title: '저녁 약속 참여 신청이 수락됐어요',
+  title: '참여 신청이 수락됐어요',
   ahead: null,
-  line: '김민준님의 파티',
+  line: '저녁 약속 · 김민준님의 파티',
   at: '2026-10-06T12:58:00+09:00',
   url: `/main?card=party:${DINNER.id}`,
 };
 
 const DECLINED: KeptNotification = {
-  id: 'join-declined:sent-requests:q-coding',
+  id: 'join-declined:find-parties:q-coding',
   kind: 'join-declined',
-  title: '코딩 테스트 스터디 참여 신청이 거절됐어요',
+  title: '참여 신청이 거절됐어요',
   ahead: null,
-  line: '김민준님의 파티',
+  line: '코딩 테스트 스터디 · 김민준님의 파티',
   at: '2026-10-06T12:50:00+09:00',
-  url: '/main?card=sent-requests:q-coding',
+  url: '/main?card=find-parties:q-coding',
 };
 
 const ASKED: KeptNotification = {
   id: `join-asked:party:${STUDY.id}`,
   kind: 'join-asked',
-  title: '윤태오님 외 1명이 알고리즘 스터디에 참여를 신청했어요',
+  title: '새 참여 신청 2명',
   ahead: null,
-  line: '참여 신청 2명',
+  line: '알고리즘 스터디 · 윤태오님 외 1명',
   at: '2026-10-06T12:40:00+09:00',
   url: `/main?card=party:${STUDY.id}`,
 };
@@ -90,7 +90,7 @@ describe('a request to join accepted, in 알림', () => {
   it("is a row with its words, which opens the party's card", async () => {
     const user = await openNotifications('알림');
 
-    const row = screen.getByRole('button', { name: '저녁 약속 참여 신청이 수락됐어요 · 김민준님의 파티 · 12:58' });
+    const row = screen.getByRole('button', { name: '참여 신청이 수락됐어요 · 저녁 약속 · 김민준님의 파티 · 12:58' });
     await user.press(row);
     await pass(500);
 
@@ -100,16 +100,31 @@ describe('a request to join accepted, in 알림', () => {
 });
 
 describe('a request to join declined, in 알림', () => {
-  it('is a row with its words, which opens 보낸 신청 under 초대', async () => {
+  it('is a row with its words, which opens 찾기 for another 파티', async () => {
     const user = await openNotifications('알림');
 
     const row = screen.getByRole('button', {
-      name: '코딩 테스트 스터디 참여 신청이 거절됐어요 · 김민준님의 파티 · 12:50',
+      name: '참여 신청이 거절됐어요 · 코딩 테스트 스터디 · 김민준님의 파티 · 12:50',
     });
     await user.press(row);
     await pass(500);
 
-    expect(shownAddress()).toBe('/party?tab=invites');
+    expect(shownAddress()).toBe('/party?tab=find');
+  });
+});
+
+describe('an answer to a request to join a 파티 with a long title, in 알림', () => {
+  it('leads with the answer, so that the title of the 파티 is what is cut', async () => {
+    const long = '이번 주 금요일 저녁 샤로수길 맛집 탐방하고 2차로 노래방까지 가실 분들 모여요';
+    server.on('GET /notifications', {
+      status: 200,
+      body: [{ ...DECLINED, line: `${long} · 김민준님의 파티` }],
+    });
+
+    await openNotifications('알림');
+
+    expect(screen.getByText('참여 신청이 거절됐어요')).toBeVisible();
+    expect(screen.getByText(`${long} · 김민준님의 파티`)).toBeVisible();
   });
 });
 
