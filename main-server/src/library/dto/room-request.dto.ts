@@ -38,7 +38,14 @@ export const createRoomRequestSchema = z.union([
 
 export type CreateRoomRequestDto = z.infer<typeof createRoomRequestSchema>;
 
-export const roomResultSchema = z.strictObject({ ok: z.boolean(), failedUserId: z.uuid().optional() });
+// `room`, with `ok`, is the room the library booked as it names it ("G412"), which the phone alone reads (P05 ticket 68).
+export const roomResultSchema = z
+  .strictObject({
+    ok: z.boolean(),
+    failedUserId: z.uuid().optional(),
+    room: z.string().trim().min(1).max(40).optional(),
+  })
+  .refine(({ ok, room }) => ok || room === undefined, { message: 'A room comes with ok only', path: ['room'] });
 
 export type RoomResultDto = z.infer<typeof roomResultSchema>;
 
@@ -84,6 +91,8 @@ export interface RoomRequestDto {
   companions: RoomCompanionStateDto[];
   // How many more people the room's minimum needs while the request gathers; 0 when met, and once it is not active.
   moreNeeded: number;
+  // The room the library booked, as the booker's phone reported it; null before, or when it did not say (P05 ticket 68).
+  bookedRoom: string | null;
 }
 
 // A room request that asks the User, for the consent dialog on the main screen.

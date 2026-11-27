@@ -1151,6 +1151,9 @@ model RoomRequest {
   failedUserId   String?           @map("failed_user_id") @db.Uuid
   // Why it was dissolved, shown on the requester's card.
   reason         String?
+  // The room the library booked, as it names it ("G412"), which the booker's phone reports with the booking (P05
+  // ticket 68), for the requester and the Holders of its Quest. Null before, and for a booking reported without it.
+  bookedRoom     String?           @map("booked_room")
   createdAt      DateTime          @default(now()) @map("created_at")
   consents       RoomConsent[]
   notices        RoomNotice[]
