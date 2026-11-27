@@ -121,14 +121,14 @@ describe("A booking party's row", () => {
   it('says when and the consents in the 파티 tab, and opens the answer again', () => {
     const row = mine(bookingParty(GATHERING));
 
-    expect(row?.line).toBe('내일 15:00 · 동의 1/3 · 기다리는 중');
+    expect(row?.time).toBe('내일 15:00 · 동의 1/3 · 기다리는 중');
     expect(row?.reopens).toBe(true);
   });
 
   it('says when and where once booked, and opens its room', () => {
     const row = mine(bookingParty({ ...GATHERING, status: 'booked', consented: 3 }));
 
-    expect(row?.line).not.toContain('동의');
+    expect(row?.time).not.toContain('동의');
     expect(row?.reopens).toBeUndefined();
   });
 
