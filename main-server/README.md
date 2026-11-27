@@ -4070,7 +4070,7 @@ words and gives it its address. A feature imports `NotificationsModule` and call
 
 `told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock. After each
 call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing, or a
-`cancel` that forgot nothing, sends none. `schedule` and `replace` refuse, by throwing, a card no address opens. The
+`cancel` that forgot nothing, sends none. `schedule`, `replace` and `renew` refuse, by throwing, a card no address opens. The
 calls throw when the database fails too, so a caller that must not fail catches and logs.
 
 | Kind            | Told to                                       | When                                                                                                                           | Title                                                                                    | Ahead                          | Line                                                                                | Card                                         | Rings |

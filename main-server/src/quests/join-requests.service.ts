@@ -102,7 +102,7 @@ export class JoinRequestsService {
       };
     });
     this.signals.send([leaderId], 'quests-changed');
-    this.tellLeader(leaderId, questId, true);
+    this.tellLeader(leaderId, questId, 'asked');
     return toWaitingDto(request);
   }
 
@@ -129,7 +129,7 @@ export class JoinRequestsService {
       return { leaderId: request.quest.leaderId, questId: request.questId };
     });
     this.signals.send([leaderId], 'quests-changed');
-    this.tellLeader(leaderId, questId, false);
+    this.tellLeader(leaderId, questId, 'changed');
   }
 
   // The Quests the Leader removed the User from since the User last entered each, the latest first.
@@ -177,7 +177,7 @@ export class JoinRequestsService {
     // For the User who asked, not the Leader who pressed.
     this.usage.sent(request.userId, 'party_join_completed', { how: 'request_accepted' });
     this.tellAnswer(request, 'join-accepted');
-    this.tellLeader(leaderId, questId, false);
+    this.tellLeader(leaderId, questId, 'changed');
     await this.roomRequests.questChanged(questId);
   }
 
@@ -193,7 +193,7 @@ export class JoinRequestsService {
     // The Leader's count of waiting requests changed too.
     this.signals.send([request.userId, leaderId], 'quests-changed');
     this.tellAnswer(request, 'join-declined');
-    this.tellLeader(leaderId, questId, false);
+    this.tellLeader(leaderId, questId, 'changed');
   }
 
   // The request to the Quest the User leads, read without a lock to learn whom to lock.
@@ -219,13 +219,13 @@ export class JoinRequestsService {
 
   // Not awaited, as `tellAnswer`. A request `asked` while none other waits rings; any other change rewrites it without
   // ringing again, and none left forgets it, so that the next request rings again.
-  private tellLeader(leaderId: string, questId: string, asked: boolean): void {
-    this.toldLeader(leaderId, questId, asked).catch((error: unknown) => {
+  private tellLeader(leaderId: string, questId: string, change: 'asked' | 'changed'): void {
+    this.keepWaitingNotice(leaderId, questId, change).catch((error: unknown) => {
       this.logger.warn(`The Leader was not told of the requests to join: ${String(error)}`);
     });
   }
 
-  private async toldLeader(leaderId: string, questId: string, asked: boolean): Promise<void> {
+  private async keepWaitingNotice(leaderId: string, questId: string, change: 'asked' | 'changed'): Promise<void> {
     const quest = await this.prisma.quest.findUnique({
       where: { id: questId },
       select: {
@@ -240,7 +240,7 @@ export class JoinRequestsService {
     }
     const waiting = quest.joinRequests.length;
     const told: Told = { kind: 'join-asked', questId, questTitle: quest.title, name: newest.user.name, waiting };
-    await (asked && waiting === 1
+    await (change === 'asked' && waiting === 1
       ? this.notifications.schedule(leaderId, told, this.clock.now())
       : this.notifications.renew(leaderId, told, this.clock.now()));
   }
