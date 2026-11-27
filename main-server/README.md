@@ -1151,7 +1151,8 @@ Friend is a Closed Quest the User makes and invites the Friend into. The routes,
   out each Quest whose Sub Quests have all ended, that is each is cancelled or past its end time; the User's marks of
   done do not count. `GET /quests/:questId` answers one, ended or not.
 - `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
-  The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
+  The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests, and its running
+  Party, if any, is closed with it in the same transaction (`QuestParty.drop`), its members told `party-changed`.
 - `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
   [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
   `{ "title": "카페", "startsAt": "...", "endsAt": "...", "place": ... }`. The title has 1 to 50 characters, the times
@@ -1402,10 +1403,12 @@ the lists are the newest first.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
   Quest, with their progress. The removal is kept in `quest_removals` in the same transaction, so that the User comes
   back only by asking to join and the Leader accepting, even to an Open Quest; entering the Quest in any way deletes
-  it. A Holder who drops the Quest leaves no removal.
+  it. A Holder who drops the Quest leaves no removal. A Holder in the Quest's running Party leaves it in the same
+  transaction, as leaving it does (`QuestParty.leave`), so that its members no longer see them by it, and the Party's
+  audience is told `party-changed`.
 - `POST /quests/:questId/end` ends the Quest for every Holder and answers 204: it is deleted with its Sub Quests, the
-  Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and a running Party
-  for it goes on with `quest: null`. A repeat is refused as a Quest the User does not hold, so it takes no
+  Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and its running
+  Party is closed with it, members included (`QuestParty.close`). A repeat is refused as a Quest the User does not hold, so it takes no
   `Idempotency-Key`. An entry, an answer or another control at the same moment runs after it and is refused as for a
   Quest that is gone. `DELETE /quests/:questId` stays one Holder's drop.
 
@@ -1527,8 +1530,9 @@ The User's Party reads:
 }
 ```
 
-- `quest` is `null` for a Party tied to no Quest, and becomes `null` when the last Holder drops the Quest or its Leader
-  ends it; the Party goes on. Its `globalEvent` is `null` for a Quest without one.
+- `quest` is `null` for a Party tied to no Quest. A Party whose Quest is deleted, by its last Holder's drop or its
+  Leader's end, is closed with it; one whose Quest is deleted another way, such as a room request's booking party,
+  goes on with `quest: null`. Its `globalEvent` is `null` for a Quest without one.
 - `sharing` is the reading User's own switch for the Party. The members are in the order they entered, the reading
   User among them, and `visible` says whether the reading User can see each on the map now, never why not (see
   [Location Sharing](#location-sharing)).
