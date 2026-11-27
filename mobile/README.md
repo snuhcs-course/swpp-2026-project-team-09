@@ -1085,8 +1085,9 @@ waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신
 the muted grey round, as a declined request is, with the same order of words: ended (`party-ended`, a group), the User removed (`party-removed`, a
 person), a request that waited on it (`join-cancelled`, a group) and an invitation that waited on it
 (`invitation-cancelled`, a calendar). Their address, `/main?card=party-gone:<questId>`, is on no map, and pressing it
-says "이미 없는 파티예요". The member who becomes a 파티's Leader (`became-leader`, a person on the navy round) is
-told "파티장이 됐어요", with the 파티 and who left it or handed it over in the line; it opens the party's card. A kind
+says "이미 없는 파티예요", with the alert icon. The member who becomes a 파티's Leader (`became-leader`, a person on the
+navy round) is told "파티장이 됐어요", with the 파티 and who left it or handed it over in the line; it opens the party's
+card. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
@@ -1122,7 +1123,7 @@ another phone or the Leader's end. `GoneQuestsWatch` (`src/features/quests/gone-
 tells it on whatever screen is shown: a Quest that was in `GET /quests` and is not when the list comes again, and that
 `GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), is told once: "{title} 파티에서
 내보내졌어요" when `GET /quest-removals` lists the Quest, "{title} 파티가 없어졌어요" when the Quest is not found
-otherwise, and "{title} 파티에서 빠졌어요" when the main server cannot say. A Quest that only left the
+otherwise, and "{title} 파티에서 빠졌어요" when the main server cannot say, each with the alert icon. A Quest that only left the
 list because all its Sub Quests ended, a Class Quest, and the User's own 나가기 or 파티 없애기 on this phone, which
 mark the Quest while they run, are not told; what happened before the app started is told by its Notification in 알림. From the top:
 
