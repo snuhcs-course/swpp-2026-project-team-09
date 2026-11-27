@@ -40,6 +40,7 @@ import { SlotBand } from './slot-band';
 import type { Loaded } from './use-library-call';
 import { useSeatCalls } from './seat-calls';
 import { useSeatOnMap } from './booking-stage';
+import { useSlotHeld } from '../answer/sentence-slot';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
 // offers the named or tapped seat, else the first free one, and books it only on 예약하기; 예약 안 함 beside it ends the card
@@ -98,9 +99,14 @@ function StudyLine({
   arrival: NonNullable<LibraryCardData['arrival']> | null;
   ticketed: boolean;
 }): ReactElement | null {
+  const held = useSlotHeld();
   const when = `${slot.start}부터 ${lengthWords(slot.minutes)}`;
   if (busy) {
     return <Said>예약하는 중이에요</Said>;
+  }
+  // Under a later reply, or the dots, the explaining line gives way (P01 ticket 20).
+  if (held) {
+    return null;
   }
   if (free === null) {
     // Over a ticket the seat and the count fill in where they stand, and no sentence says they are read.
