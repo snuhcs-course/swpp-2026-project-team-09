@@ -181,6 +181,16 @@ describe('joining another Quest of the event while holding one alone', () => {
     expect(screen.getByText(`이 행사로 올린 내 파티 ‘${MY_CAREER.title}’는 없어져요`)).toBeVisible();
   });
 
+  it('says nothing of a Quest taken alone ("여기로"), which is no 파티', async () => {
+    answerEvents(server, { quests: [DINNER, { ...MY_CAREER, takenAlone: true }] });
+    const user = await openPostOf(/^이서연/u);
+
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
+
+    expect(screen.getByRole('header', { name: `‘${SEO_YEON_GOING.title}’에 참여할까요?` })).toBeVisible();
+    expect(screen.queryByText(/^이 행사로 올린 내 파티/u)).toBeNull();
+  });
+
   it('says nothing of it without a Quest of the event', async () => {
     answerEvents(server);
     const user = await openPostOf(/^이서연/u);
