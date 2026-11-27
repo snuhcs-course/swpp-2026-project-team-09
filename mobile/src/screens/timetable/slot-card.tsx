@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,7 +18,6 @@ import {
   type SlotDraft,
   slotCrossesAnother,
   slotName,
-  takenDays,
 } from '@/features/timetable/class-form';
 import { DayToggles, PlaceButton, TimeRow } from './class-fields';
 
@@ -90,7 +90,6 @@ function SlotTimes({ draft, index, onChange }: Pick<SlotCardProps, 'draft' | 'in
         onChange={(days) => {
           onChange({ days });
         }}
-        taken={takenDays(draft, index)}
       />
       <TimeRow
         end={slot.end}
