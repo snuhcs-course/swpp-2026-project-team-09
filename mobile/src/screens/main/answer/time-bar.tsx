@@ -7,6 +7,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
@@ -195,7 +196,8 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
   const addName = settled ? null : addNameOf(answer.input.kind);
-  const busy = shown.recalculating || invitation.sending || invitation.changing;
+  // A held answer's band stays as it is too (P10 ticket 12): nothing it asks would be asked.
+  const busy = shown.recalculating || shown.locked || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   const pickingBar = usePickingBar(shown, plan, { busy, onClose });
