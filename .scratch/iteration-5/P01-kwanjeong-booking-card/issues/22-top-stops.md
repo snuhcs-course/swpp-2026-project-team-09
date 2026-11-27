@@ -63,6 +63,7 @@ For length, the time card's grip strip moved to `time-card-strip.tsx`, the grip'
 
 - [x] Folding the time card under the steps card leaves the same card mounted, its strip of 20 under the steps card's bottom edge, in a frame that clips everything above the steps card's rounded top; there is no tab. (Integration test `answer-top-stops`, the fault. Not run on Main's code: there the tuck takes the card to the stage's top, its end above the steps card, so the check cannot pass.)
 - [x] The stops come in order by the grip's steps, 2 → 1 → 0. At 0 the steps card and the card's frame stand with the steps card's bottom at the stage's top. A press opens 0 → 1 → 2. (Same test.)
+- [x] At stop 0 nothing of the cards shows behind the status bar, only the strip below it. On the emulator (2026-11-28) the steps card gone up showed behind the status bar, as the stage starts under it. The top's cards are now drawn within the stage, which clips above its top. (Same test.)
 - [x] One long pull goes 2 → 0, and one long pull down 0 → 2. (Same test.)
 - [x] At a seat step the strip of its own stands under the steps card; a press or a pull down opens nothing; a pull up folds to 0 and a press brings it back. Changing back to the Plan at stop 1 brings its card behind the steps card, drawn only once its height is known. (Same test.)
 - [x] The sheet's high edge is the stop's at each of 2, 1 and 0. (Same test.)
