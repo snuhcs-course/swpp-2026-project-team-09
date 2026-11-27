@@ -86,6 +86,7 @@ describe('Lunch and dinner in one message', () => {
 
     expect(reply.answers?.map((each) => kindOf(each))).toEqual(['lunch', 'dinner']);
     expect(reply.answers?.every(({ plans }) => plans.length > 0)).toBe(true);
+    expect(new Set(reply.answers?.map(({ key }) => key)).size).toBe(2);
     expect(reply.answer === null ? null : kindOf(reply.answer)).toBe('dinner');
   });
 

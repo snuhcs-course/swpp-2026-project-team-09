@@ -122,6 +122,15 @@ describe('Which request an answer answers', () => {
 });
 
 describe('The answers of a message', () => {
+  it('names a request withdrawn once, and no longer when it is drawn again', () => {
+    const presented = fresh();
+    withdrawAnswer(presented, meal('2026-11-27', 'dinner'));
+    withdrawAnswer(presented, meal('2026-11-27', 'dinner'));
+    expect(presented.withdrawn).toHaveLength(1);
+    presentAnswer(presented, answerOf(meal('2026-11-27', 'dinner', '18:00')));
+    expect(presented.withdrawn).toEqual([]);
+  });
+
   it('keeps one per request: another is added after, the same one replaces it in its place', () => {
     const presented = fresh();
     presentAnswer(presented, answerOf(meal('2026-11-27', 'lunch')));
@@ -148,6 +157,7 @@ describe('The answers of a message', () => {
     presentAnswer(presented, answerOf(meal('2026-11-27', 'dinner')));
     withdrawAnswer(presented, meal('2026-11-27', 'dinner'));
     expect(presented.answers?.map(({ input }) => input)).toEqual([meal('2026-11-27', 'lunch')]);
+    expect(presented.withdrawn).toEqual([requestKey(meal('2026-11-27', 'dinner'))]);
     expect(presented.answer).toBeNull();
     clearDrawn(presented);
     expect(presented.answers).toEqual([]);

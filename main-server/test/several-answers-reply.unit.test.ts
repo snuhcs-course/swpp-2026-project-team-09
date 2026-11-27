@@ -71,11 +71,14 @@ const reply = (more: Partial<FeatureReply>): FeatureReply => ({
 });
 
 describe('The reply of lunch and dinner', () => {
-  it('gives an app that says answers both, and the last one in answer', () => {
-    expect(replyBody(reply({}), undefined, ['answer', 'answers'])).toMatchObject({
-      answer: DINNER,
-      answers: [LUNCH, DINNER],
-    });
+  it('gives an app that says answers both, each with its own key, and the last one in answer', () => {
+    const body = replyBody(reply({}), undefined, ['answer', 'answers']);
+    expect(body).toMatchObject({ answer: DINNER, answers: [LUNCH, DINNER] });
+    const [lunchKey, dinnerKey] = (body.answers ?? []).map(({ key }) => key);
+    expect(lunchKey).toEqual(expect.any(String));
+    expect(dinnerKey).toEqual(expect.any(String));
+    expect(lunchKey).not.toBe(dinnerKey);
+    expect(body.answer).not.toHaveProperty('key');
   });
 
   it('gives any other app the last one alone, as before', () => {
@@ -90,16 +93,20 @@ describe('The reply of lunch and dinner', () => {
 
   it('names which answer holds the plan chosen, the last one that does', () => {
     const body = replyBody(reply({ select: '학생회관식당' }), undefined, ['answer', 'answers']);
-    expect(body.select).toEqual({ planId: '학생회관식당', index: 1 });
+    expect(body.select).toEqual({ planId: '학생회관식당', key: body.answers?.[1]?.key });
     expect(replyBody(reply({ select: '학생회관식당' }), undefined, ['answer']).select).toEqual({
       planId: '학생회관식당',
     });
   });
 
-  it('keeps the answers drawn when the last request was withdrawn, and does not clear them', () => {
-    const withdrawn = reply({ answer: null, answers: [LUNCH], clears: true });
-    expect(replyBody(withdrawn, undefined, ['answer', 'answers'])).not.toHaveProperty('clears');
-    expect(replyBody(withdrawn, undefined, ['answer'])).toMatchObject({ answer: null, clears: true });
+  it('keeps the answers drawn when the last request was withdrawn, names its key, and does not clear them', () => {
+    const withdrawn = reply({ answer: null, answers: [LUNCH], withdrawn: ['dinner-key'], clears: true });
+    const body = replyBody(withdrawn, undefined, ['answer', 'answers']);
+    expect(body).not.toHaveProperty('clears');
+    expect(body.withdrawn).toEqual(['dinner-key']);
+    const before = replyBody(withdrawn, undefined, ['answer']);
+    expect(before).toMatchObject({ answer: null, clears: true });
+    expect(before).not.toHaveProperty('withdrawn');
   });
 });
 

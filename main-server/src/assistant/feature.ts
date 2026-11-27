@@ -134,6 +134,8 @@ export interface Presented {
   // One answer per request of the message, in the order first presented (P05 ticket 73); a Lookup leaves them. Absent
   // until a tool presents one.
   answers?: AnswerReply[];
+  // The requests of the message that ended with no answer, by their key (P05 ticket 73).
+  withdrawn?: string[];
   lookup: Lookup | null;
   // What refuse wrote; the reply keeps it only without an answer or a Lookup.
   refusal: Refusal | null;

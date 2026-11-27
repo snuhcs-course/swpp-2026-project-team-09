@@ -63,6 +63,9 @@ export interface Mention {
 }
 
 export interface AnswerReply extends WithMissing {
+  // The request it answers, the server's own words for it, given in the reply's `answers` only (P05 ticket 73). Opaque to
+  // the app, which compares it and never builds it.
+  key?: string;
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];

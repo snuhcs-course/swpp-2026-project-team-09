@@ -16,7 +16,7 @@ import { isTogether } from './lookup/study-group.js';
 // "점심이랑 저녁 짜줘" keeps both: an answer replaces one of the same request and is added after the others otherwise,
 // and a Lookup leaves them.
 
-type Drawn = Pick<Presented, 'answer' | 'answers' | 'lookup' | 'mapButtons' | 'clears'>;
+type Drawn = Pick<Presented, 'answer' | 'answers' | 'withdrawn' | 'lookup' | 'mapButtons' | 'clears'>;
 
 // Which request of the message an answer answers: its kind and day, and for a meal the meal, for a study plan whether
 // it is together. Quests have no day of their own: those of one Global Event are one request.
@@ -51,6 +51,9 @@ export function presentAnswer(presented: Drawn, answer: AnswerReply): void {
   takeMap(presented);
   presented.answer = answer;
   presented.answers = withAnswer(presented.answers ?? [], answer);
+  if (presented.withdrawn !== undefined) {
+    presented.withdrawn = presented.withdrawn.filter((key) => key !== requestKey(answer.input));
+  }
 }
 
 // `keepsButtons`: a Lookup that stands beside the layer buttons, such as a closed 관정도서관's. The answers of the
@@ -64,7 +67,7 @@ export function presentLookup(presented: Drawn, lookup: Lookup, { keepsButtons =
 }
 
 // A request for a plan ended with none drawn: its answer leaves the reply, and the plan on screen leaves the map too
-// (P05 ticket 55). The answers of the message's other requests stay.
+// (P05 ticket 55). The answers of the message's other requests stay; an app that says `answers` is told its key.
 export function withdrawAnswer(presented: Drawn, input: PlanInput): void {
   takeMap(presented);
   presented.answer = null;
@@ -72,6 +75,8 @@ export function withdrawAnswer(presented: Drawn, input: PlanInput): void {
   if (presented.answers !== undefined) {
     presented.answers = presented.answers.filter((answer) => !sameRequest(answer.input, input));
   }
+  const key = requestKey(input);
+  presented.withdrawn = [...(presented.withdrawn ?? []).filter((each) => each !== key), key];
 }
 
 // Nothing drawn, so that a button under the text stands alone.
