@@ -94,6 +94,7 @@ function isNoPlan(value: unknown): value is AnswerReply['noPlan'] {
     value === null ||
     (isOneOf(['no-menu', 'no-shared-time', 'no-fit'])(field(value, 'reason')) &&
       listOf(isLine)(field(value, 'lines')) &&
+      (field(value, 'band') === undefined || isBand(field(value, 'band'))) &&
       hasRelax(value))
   );
 }
