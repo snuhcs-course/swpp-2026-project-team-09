@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -24,6 +25,8 @@ export const NO_ANSWER: ShownAnswer = {
   toggleBasis: nothing,
   adding: false,
   setAdding: nothing,
+  locked: false,
+  lock: nothing,
   picked: null,
   asked: null,
   pickOrder: null,

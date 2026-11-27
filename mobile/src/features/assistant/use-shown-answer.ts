@@ -7,6 +7,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -50,6 +51,10 @@ export interface ShownAnswer {
   // People are being picked in the time card (P04 ticket 64); `setAdding(false)` leaves without changing anything.
   adding: boolean;
   setAdding: (open: boolean) => void;
+  // The answer is held as it is: a study answer together whose consent requests are out keeps its people, its time and
+  // its room until they are taken back (P10 ticket 12). Picking does not open, and no change asks again.
+  locked: boolean;
+  lock: (locked: boolean) => void;
   // The people checked while picking, but the asker, null when not picking.
   picked: readonly string[] | null;
   // The rows' order while picking, kept from when it opened so that a check never moves a row; null until kept.
@@ -182,6 +187,27 @@ type Ask = (
 // Asks for a recalculation of the answer on screen when it is called, unless one of that epoch is on its way: a
 // control may call a `change` of an earlier render. Its answer, or its failure, counts only while the epoch it was
 // asked in is still the one on screen. A band let go where no recalculation is asked goes back.
+// The answer held as it is (P10 ticket 12): while locked, picking does not open and no change asks again; a band let go
+// goes back, as where no recalculation is asked.
+function useLock(
+  setAdding: (open: boolean) => void,
+  ask: Ask,
+): Pick<ShownAnswer, 'locked' | 'lock' | 'setAdding' | 'change'> {
+  const [locked, lock] = useState(false);
+  return {
+    locked,
+    lock,
+    setAdding: (open) => {
+      if (!(open && locked)) {
+        setAdding(open);
+      }
+    },
+    change: (alter, by) => {
+      ask(locked ? (input: PlanInput): PlanInput => input : alter, by, null);
+    },
+  };
+}
+
 function useChange(current: AnswerState, setStored: SetStored, recalculation: Recalculation): Ask {
   const live = useRef({ current, recalculation });
   const flight = useRef<number | null>(null);
@@ -244,6 +270,7 @@ export function useShownAnswer(
   const picking = usePeoplePicking(setStored, current.picked, (alter, asked) => {
     ask(alter, undefined, null, asked);
   });
+  const held = useLock(picking.setAdding, ask);
   const plan = current.answer?.plans[current.index] ?? null;
   return {
     source: current.source,
@@ -255,9 +282,7 @@ export function useShownAnswer(
     basisOpen: current.basisOpen,
     adding: current.adding,
     recalculating: current.recalculating,
-    change: (alter, by) => {
-      ask(alter, by, null);
-    },
+
     again: () => {
       // A copy, which `ask` takes for a change.
       ask((input) => ({ ...input }), undefined, null);
@@ -269,6 +294,7 @@ export function useShownAnswer(
     pickOrder: current.pickOrder,
     asked: current.asked,
     ...picking,
+    ...held,
     pendingAdd: current.pendingAdd,
     undo: current.kept === null ? null : browsing.undo,
     moving: current.moving,
