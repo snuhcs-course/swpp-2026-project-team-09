@@ -152,12 +152,15 @@ describe('an edit that changes one thing', () => {
   });
 });
 
+// A place as `setPlace` takes it: the words searched, and the row pressed when it is not the words kept as typed.
+type PlaceRow = [words: string, row?: string];
+
 describe('a place set, then replaced', () => {
-  it.each([
+  it.each<[string, PlaceRow, PlaceRow, object]>([
     ['a building by words', ['학생회관', '학생회관 63동'], ['정문'], { label: '정문' }],
     ['words by a building’s exact name', ['정문'], ['학생회관 63동'], { placeId: 'p63' }],
     ['words by a building of the list', ['정문'], ['학생회관', '학생회관 63동'], { placeId: 'p63' }],
-  ] as const)('sends the last one: %s', async (_, first, last, place) => {
+  ])('sends the last one: %s', async (_, first, last, place) => {
     const user = await openAt('/party-form');
     await fillPublic(user);
 
