@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { InvitationCard } from '@/api/invitation-card-types';
@@ -13,6 +14,7 @@ export const RECEIVED: QuestInvitation = {
   id: INVITATION_CARD.id,
   quest: INVITATION_CARD.quest,
   sentAt: INVITATION_CARD.sentAt,
+  nextSubQuest: null,
 };
 
 // The stored card as the main server words it when nothing says where the User sets out from, which is its answer to

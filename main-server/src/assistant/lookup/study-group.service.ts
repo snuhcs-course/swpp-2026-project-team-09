@@ -11,7 +11,15 @@ import { FriendViewService } from '../../friends/friend-view.service.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
-import { type AnswerReply, type PersonConstraint, type PlacePoint, type StudyInput } from '../dto/answer.dto.js';
+import {
+  type AnswerReply,
+  type LeftOutClass,
+  type PersonConstraint,
+  type PlacePoint,
+  type StudyInput,
+} from '../dto/answer.dto.js';
+import { type DayItem } from '../free-time/free-time.js';
+import { idsOn, skippedOut } from '../free-time/left-out-classes.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { walkingMinutes } from '../gathering/gathering-travel.js';
@@ -49,16 +57,20 @@ export class StudyGroupService {
     return groupRooms(this.catalogue)[0]?.bookingAheadDays ?? 0;
   }
 
-  // The answer on the best of `dates` (the input's date unless a period is asked), and the other days' best.
+  // The asker's Classes of the day, among which a tool names a Class to leave out (P05 ticket 70).
+  readonly classesOn = (askerId: string, date: string): Promise<DayItem[]> => this.days.classesOn(askerId, date);
+
+  // The answer on the best of `dates` (the input's date unless a period is asked), and the other days' best. The asker's
+  // Classes the conversation leaves out (P05 ticket 70) are free.
   async plan(
     askerId: string,
     input: StudyInput,
-    at: { now: Date; location: Position | null },
+    at: { now: Date; location: Position | null; skipped?: readonly LeftOutClass[] },
     dates: readonly string[] = [input.date],
   ): Promise<{ answer: AnswerReply; otherDays: StudyDatePick[] }> {
     const { friends, others } = await this.meals.friendsOf(askerId, { people: input.people, placeId: null });
     const kwanjeong = this.kwanjeong();
-    const people = await this.peopleOf(input, friends, dates);
+    const people = await this.peopleOf(input, friends, dates, () => true, at.skipped);
     const time = studyGroupTime({
       input,
       dates,
@@ -148,12 +160,13 @@ export class StudyGroupService {
   }
 
   // Each person's items of the days, named by their Friend view or the names given, the asker 나; none for one whose day
-  // is not read.
+  // is not read. The asker's Classes left out are taken from their items alone, never a Friend's.
   private async peopleOf(
     input: StudyInput,
     named: readonly (FriendView | string)[],
     dates: readonly string[],
     reads: (userId: string) => boolean = () => true,
+    skipped: readonly LeftOutClass[] = [],
   ): Promise<GroupPerson[]> {
     const days = await Promise.all(
       input.people.map(async ({ userId }) =>
@@ -164,11 +177,18 @@ export class StudyGroupService {
           : {},
       ),
     );
+    const asker = Object.entries(days[0] ?? {}).map(
+      ([date, items]) => [date, skippedOut(items, idsOn(skipped, date))] as const,
+    );
     return input.people.map(({ userId, constraints }, index) => ({
       userId,
       name: index === 0 ? '나' : nameOf(named[index - 1]),
       me: index === 0,
-      itemsByDate: days[index] ?? {},
+      itemsByDate:
+        index === 0 ? Object.fromEntries(asker.map(([date, { items }]) => [date, items])) : (days[index] ?? {}),
+      ...(index === 0
+        ? { skippedByDate: Object.fromEntries(asker.map(([date, out]) => [date, out.skipped ?? []])) }
+        : {}),
       constraints,
     }));
   }

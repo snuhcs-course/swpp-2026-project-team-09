@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -206,6 +207,6 @@ const styles = StyleSheet.create({
   },
   photo: { width: PHOTO, height: PHOTO, borderRadius: 8, backgroundColor: color.surfaceSunken },
   roomWords: { flex: 1, minWidth: 0, gap: spacing[1] / 2 },
-  roomName: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.ink },
+  roomName: { ...text.label, color: color.ink },
   roomTimes: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
 });

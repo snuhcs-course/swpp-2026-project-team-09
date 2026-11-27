@@ -4,11 +4,20 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
 import { Prisma, User } from '../../generated/prisma/client.js';
-import { HOLDER_SELECT, QUEST_SUMMARY_INCLUDE, QuestSummaryDto, toQuestSummaryDto } from './quest.dto.js';
+import {
+  HOLDER_SELECT,
+  NextSubQuestDto,
+  nextSubQuestOf,
+  QUEST_INCLUDE,
+  QUEST_SUMMARY_INCLUDE,
+  QuestSummaryDto,
+  toQuestSummaryDto,
+} from './quest.dto.js';
 
 export const askToJoinSchema = z.strictObject({ questId: z.uuid() });
 
@@ -19,6 +28,12 @@ export interface WaitingDto {
   id: string;
   quest: QuestSummaryDto;
   sentAt: string;
+}
+
+// An invitation as the invited User lists it, with when and where its Quest next meets, since a 비공개 파티's post
+// cannot be read before entering. Null only for a Quest with no Sub Quest ahead, which the list leaves out.
+export interface ReceivedInvitationDto extends WaitingDto {
+  nextSubQuest: NextSubQuestDto | null;
 }
 
 // A request to join or an invitation as the Leader lists it, with its User.
@@ -43,6 +58,10 @@ export const WAITING_INCLUDE = {
   quest: { include: QUEST_SUMMARY_INCLUDE },
 } satisfies Prisma.QuestJoinRequestInclude & Prisma.QuestInvitationInclude;
 
+export const RECEIVED_INVITATION_INCLUDE = {
+  quest: { include: { ...QUEST_SUMMARY_INCLUDE, subQuests: QUEST_INCLUDE.subQuests } },
+} satisfies Prisma.QuestInvitationInclude;
+
 export const WAITING_USER_INCLUDE = {
   user: { select: HOLDER_SELECT },
 } satisfies Prisma.QuestJoinRequestInclude & Prisma.QuestInvitationInclude;
@@ -53,6 +72,13 @@ export function toWaitingDto(
     | Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_INCLUDE }>,
 ): WaitingDto {
   return { id: waiting.id, quest: toQuestSummaryDto(waiting.quest), sentAt: waiting.sentAt.toISOString() };
+}
+
+export function toReceivedInvitationDto(
+  invitation: Prisma.QuestInvitationGetPayload<{ include: typeof RECEIVED_INVITATION_INCLUDE }>,
+  now: Date,
+): ReceivedInvitationDto {
+  return { ...toWaitingDto(invitation), nextSubQuest: nextSubQuestOf(invitation.quest, now) };
 }
 
 export function toWaitingUserDto(

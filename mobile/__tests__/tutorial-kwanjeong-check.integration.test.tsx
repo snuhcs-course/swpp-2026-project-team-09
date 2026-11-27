@@ -25,6 +25,7 @@ import { isLibraryLoggedIn, markLibraryLoggedIn } from '@/library/flag';
 import { hiddenTransport } from '@/library/library';
 import { isLibraryWrite } from '@/library/site';
 import { TUTORIAL_SHEET_FLAGS } from '@/screens/main/tutorial/tutorial-sheet';
+import { color } from '@/design-system';
 
 // The 관정 quest's ✓ 완료 on the main screen (MainTutorialOk and MainTutorialFail): the phone asks the fake
 // 관정도서관 for the User's bookings through the library client and completes the quest by what it finds, against the
@@ -214,6 +215,8 @@ describe('✓ 완료 when the library cannot be reached', () => {
     await pressAndWait(user, '완료');
 
     expect(screen.getByText(FAILED)).toBeVisible();
+    // In red, as every failure line is (P01 ticket 19).
+    expect(screen.getByText(FAILED)).toHaveStyle({ color: color.danger });
     expect(button('그냥 완료')).toBeVisible();
     expect(await status()).toBe('started');
     expect(screen.queryByTestId('library-login-view')).toBeNull();

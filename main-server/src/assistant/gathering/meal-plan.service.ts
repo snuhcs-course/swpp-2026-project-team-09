@@ -9,6 +9,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -30,6 +31,7 @@ import { UsersService } from '../../users/users.service.js';
 import {
   type AnswerReply,
   type KeptQuestDto,
+  type LeftOutClass,
   type LocationMissing,
   type MealInput,
   type MeetInput,
@@ -38,21 +40,14 @@ import { type DayItem, freeTimeOf, onDay } from '../free-time/free-time.js';
 import { mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { type OpenRestaurant } from '../free-time/restaurant-card.js';
+import { idsOn, skippedOut } from '../free-time/left-out-classes.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { keptDto } from '../lookup/day-quests.js';
 import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { addingDto, addingOf, type Asked, askedFor, candidatesOf } from './meal-adding.js';
 import { type AnswerPerson, mealAnswer, menusOf } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
-import {
-  type BusyItem,
-  busyIn,
-  leaveOut,
-  mealChangeable,
-  mealSetOf,
-  skippedOut,
-  withSkipped,
-} from './meal-plan-parts.js';
+import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf, withSkipped } from './meal-plan-parts.js';
 import { type BesideServices, besideOf } from './meal-beside.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { locationPlaceOf, otherFriendsOf } from './other-friends.js';
@@ -89,6 +84,8 @@ interface PlanAt {
   leftOut?: readonly string[];
   // The app draws 바꾸기 for `planSet` (`plan-set`): only then is a meal shared with others changeable (P05 ticket 31).
   setsAside?: boolean;
+  // The conversation's Classes left out (P05 ticket 70), beside the input's own.
+  skipped?: readonly LeftOutClass[];
 }
 
 @Injectable()
@@ -124,7 +121,7 @@ export class MealPlanService {
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date, meal } = given;
     const [people, others, collected, missing, held] = await Promise.all([
-      this.peopleOf(askerId, friends, date, at.location, given.skipped),
+      this.peopleOf(askerId, friends, date, at.location, [...(given.skipped ?? []), ...idsOn(at.skipped ?? [], date)]),
       otherFriendsOf(notInPlan, date, { days: this.days, travel: this.travel }),
       this.menus.findByDate(date),
       this.missingOf(askerId, at),

@@ -10,12 +10,14 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
 import { type AnswerReply, type MealInput, type ReplyStep, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Presented, type Tool, type ToolContext } from '../feature.js';
+import { presentAnswer, reviseAnswer, takeMap, withdrawAnswer } from '../presented.js';
 import { afterEarlierSteps } from '../steps/plan-steps.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { mealByClock } from '../free-time/meal-fit.js';
@@ -26,7 +28,7 @@ import { PRICE_INPUTS, priceConditionOf } from './meal-price.js';
 import { type MealPlanService } from './meal-plan.service.js';
 import { addingWords, busyWords, invitedWords, plannedWords } from './meal-tool-words.js';
 import { NOT_POSTED } from './not-posted.js';
-import { skipOf, skippedWords, skipParameters } from './skip-classes.js';
+import { skipOf, skippedWords, skipParameters } from '../free-time/left-out-classes.js';
 
 export { PLAN_RULES } from './plan-rules.js';
 
@@ -63,8 +65,7 @@ function noneOf(
   const relax = answer.noPlan?.relax ?? [];
   const next = relax.length === 0 ? mealAfter(input, now) : null;
   if (next !== null) {
-    presented.answer = null;
-    presented.clears = true;
+    withdrawAnswer(presented);
     presented.offers = [nextMealOffer(next, friendNames(answer))];
     return { result: 'none', meal: input.meal, reason: overToday(next.words) };
   }
@@ -254,15 +255,13 @@ async function plannedFor(
   const { location, locationMissing } = context;
   const at = { now, location, locationMissing, setsAside: toolContext.capabilities.has('plan-set') };
   const asked = await plans.asked(userId, chained);
-  presented.lookup = null;
-  presented.mapButtons.length = 0;
+  takeMap(presented);
   if ('invited' in asked) {
-    presented.answer = null;
-    presented.clears = true;
+    withdrawAnswer(presented);
     return invitedWords(asked.invited, planInput.meal);
   }
   const { answer, served, busy = [], posted = true } = await plans.planned(userId, asked.input, at);
-  presented.answer = answer;
+  presentAnswer(presented, answer);
   const adding = addingWords(answer, asked.alreadyIn);
   if (answer.noPlan !== null) {
     return { ...noneOf(answer, planInput, { now, presented, posted }), ...busyWords(busy), ...adding };
@@ -297,11 +296,7 @@ export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => re
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       refuseUnseen(found, 'place', startPlaceId === undefined ? [] : [startPlaceId], []);
-      const skip = await skipOf(
-        plans,
-        { userId, date, context },
-        { skip: args.skipClasses, attend: args.attendClasses },
-      );
+      const skip = await skipOf(plans.classesOn, { userId, date, context, presented }, args);
       if ('result' in skip) {
         return skip;
       }
@@ -317,17 +312,17 @@ export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => re
         kind,
       });
       if (pickPeople === true) {
-        presented.answer = withPicking(presented.answer);
+        reviseAnswer(presented, withPicking);
       }
       const shown = presented.answer?.input;
-      return { ...words, ...skippedWords(shown?.kind === 'meal' ? shown : undefined, skip.classes) };
+      return { ...words, ...skippedWords(shown?.kind === 'meal' ? (shown.skipped ?? []) : [], skip.classes) };
     },
   });
 }
 
 // A meal asked with company the User did not name (P04 ticket 73) opens the picking of Friends on the plan, when it has
 // a plan and someone left to pick: a User without Friends gets the plan alone.
-function withPicking(answer: AnswerReply | null): AnswerReply | null {
-  const others = answer?.plans[0]?.band.others ?? [];
-  return answer === null || others.length === 0 ? answer : { ...answer, pickPeople: true };
+function withPicking(answer: AnswerReply): AnswerReply {
+  const others = answer.plans[0]?.band.others ?? [];
+  return others.length === 0 ? answer : { ...answer, pickPeople: true };
 }

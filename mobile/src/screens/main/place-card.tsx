@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -22,6 +23,7 @@ import { placeWords } from './my-card';
 import { type PlanAction, usePlanAsk } from './use-plan-ask';
 import type { MainRoute } from './use-route';
 import type { Selection } from './use-selection';
+import { FAILURE } from './answer/line-types';
 
 type GuideAction = Extract<LookupAction, { kind: 'guide' }>;
 
@@ -147,7 +149,7 @@ function Answered({ card, chips, basis, onFriend, ...buttons }: AnsweredProps): 
 function NotYet({ failed, onRetry }: { failed: boolean; onRetry: () => void }): ReactElement {
   return (
     <View style={styles.notYet}>
-      {failed ? <Text style={styles.status}>답을 가져오지 못했어요</Text> : <WaitingDots label="보는 중이에요" />}
+      {failed ? <Text style={styles.failed}>답을 가져오지 못했어요</Text> : <WaitingDots label="보는 중이에요" />}
       {failed ? (
         <Button onPress={onRetry} variant="secondary">
           다시 시도
@@ -203,6 +205,8 @@ const styles = StyleSheet.create({
   subtitle: { ...text.caption, color: color.inkMuted },
   notYet: { alignItems: 'flex-start', gap: space[2] },
   status: { ...text.body, color: color.inkMuted },
+  // A failure, as every failure line is (P01 ticket 19).
+  failed: FAILURE,
   note: { ...text.body, color: color.quest },
   basis: { ...text.body, color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2] },
