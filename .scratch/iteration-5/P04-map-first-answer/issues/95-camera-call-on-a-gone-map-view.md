@@ -43,4 +43,9 @@ Every call on a native view's ref in the app was read. The map module's view has
 
 ## Comments
 
-Built in its own PR from the 2026-11-28 report of the toast. PR 728 (P10 ticket 30) was checked first and left as it is.
+Built in PR #731 from the 2026-11-28 report of the toast. PR 728 (P10 ticket 30) was checked first and left as it is.
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 15 minutes (an estimate), in one session, from 06:14 KST, the PR's opening included. The check of PR 728's framing before it took about 5 more.
+- Tokens, to the PR's opening: 110 input, 40,939 output; cache reads 23,603,503, cache writes 77,074. No subagents.
