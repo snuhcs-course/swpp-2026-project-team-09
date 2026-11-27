@@ -2562,6 +2562,27 @@ Anthropic API as the AI's key says
   vague or cannot be read (a typo, half a sentence), keeps the answer as before, and so
   does an app that ignores it. It is left out of a reply that draws something of its own.
 
+  An app that sends `"clientCapabilities": ["answers"]` gets every answer of a message that asked for several ("점심이랑
+  저녁 짜줘"), one per request (P05 ticket 73, `src/assistant/presented.ts`):
+  - `answers`: the answers the reply draws or changes, in the order first drawn, `[]` when it draws none. Each carries
+    `key`, the server's name for its request: its kind and day, a meal's meal, a study plan alone or together, the
+    Quests of one Global Event. The key is opaque: the app compares keys and never builds one. An answer replaces the
+    one of the same key on screen and is added otherwise, and an answer on screen the reply does not name stays.
+  - `withdrawn`: the keys of the requests that ended with no answer (a meal over for today, one the User was only
+    invited to). The app takes those answers off. It is left out when there is none.
+  - `select.key`: the request whose answer holds the plan chosen in words, when one of `answers` does.
+  - `clears` is never sent to it: the answers on screen may be of requests other than the one that ended with none.
+  - `POST /assistant/answers` from it answers with `key` too. A changed condition may make the answer another request
+    (a Friend added makes a study place one together, the bar's other meal makes lunch dinner), and the app keeps the
+    answer under that key from then on.
+  - The request's context may carry `answers`: the `input` of every answer on screen, in the order of their steps.
+    `conditions` stays the one the User has open, and the model reads each of the others as
+    `[Another step on screen: …]`.
+
+  `answer` still means, for every app, the answer a tool put there last, which a Lookup after it takes away. An app
+  without `answers` gets none of the above, and its reply is as before. Two requests of one kind and day share a key,
+  and the second replaces the first: two meets, two new 파티, two study requests both alone or both together.
+
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend
   counts once, and the Friend's own name replaces the one sent (`src/assistant/mentions.ts`). The run's tools take the
