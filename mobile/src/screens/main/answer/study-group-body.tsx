@@ -28,7 +28,7 @@ import { roomTimesFor } from '../library/room-times';
 import { useRooms } from '../library/use-room-counts';
 import { keepUse, keptUse, UseChooser } from '../library/use-chooser';
 import { useLibraryLoad } from '../library/use-library-call';
-import { usePartyRequest } from '../library/room-party';
+import { SEND_FAILED, usePartyRequest } from '../library/room-party';
 import { mainOf, useGroupAct } from './study-group-act';
 import { consentWords, groupOfRequest, isOut, outWords, partyCardOf } from './study-group-request';
 import { ChatMarkdown } from '../chat-markdown';
@@ -70,18 +70,22 @@ function useRoomsFree(group: StudyGroup, slot: Slot, loggedIn: boolean): ReturnT
   return loaded.state === 'ready' && loggedIn ? freeRooms(loaded.value, kind.seatNos, slot) : null;
 }
 
-function UseLine({ use, onPress }: { use: string | null; onPress: () => void }): ReactElement {
+// The use of the room, and under it the room card's words when the requests could not be sent.
+function UseLine({ use, failed, onPress }: { use: string | null; failed: boolean; onPress: () => void }): ReactElement {
   return (
-    <Pressable
-      accessibilityLabel={`사용 용도: ${use ?? '고르기'}`}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={styles.useLine}
-      testID="room-use-line"
-    >
-      <Text style={styles.hint}>사용 용도</Text>
-      <Text style={styles.link}>{`${use ?? '고르기'} ›`}</Text>
-    </Pressable>
+    <>
+      <Pressable
+        accessibilityLabel={`사용 용도: ${use ?? '고르기'}`}
+        accessibilityRole="button"
+        onPress={onPress}
+        style={styles.useLine}
+        testID="room-use-line"
+      >
+        <Text style={styles.hint}>사용 용도</Text>
+        <Text style={styles.link}>{`${use ?? '고르기'} ›`}</Text>
+      </Pressable>
+      {failed ? <FailureNote failure={null} message={SEND_FAILED} onLogIn={null} /> : null}
+    </>
   );
 }
 
@@ -210,8 +214,12 @@ function useGroupRequest(
   const [asking, setAsking] = useState(false);
   const held = out !== null;
   const { lock } = shown;
+  // Let go when the card goes, as when the User asks anything else after sending (#656's review).
   useEffect(() => {
     lock(held);
+    return (): void => {
+      lock(false);
+    };
   }, [lock, held]);
   return { party, out, asking, setAsking };
 }
@@ -256,7 +264,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
       <LogInNote shown={mainOf(onScreen, loggedIn, party).main === 'logIn' && open !== 'kind' && open !== 'room'} />
       {held ? null : chooser(open === 'use' ? null : open)}
       {out === null ? (
-        <UseLine onPress={toggle('use')} use={use} />
+        <UseLine failed={party.failed} onPress={toggle('use')} use={use} />
       ) : (
         <RequestLine onCancel={party.cancel} words={consentWords(out)} />
       )}

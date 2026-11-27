@@ -41,6 +41,13 @@ The group answer gets a new face on today's room request logic (`screens/main/li
   - `consentWords`: "동의 0/3 · 다 받으면 알려 드려요. 닫아도 돼요.", then "동의 1/3 · … 님을 기다려요", then "모두 동의했어요";
   - `outWords`: "박민수 님이 빠져서 세 명이에요. 한 명만 더 부르면 돼요."
 - **The main button** (`study-group-act.ts`): "보내는 중이에요", "모두 동의하면 예약" dimmed, "+ 같이 한 명 더", which opens today's one-more picker (`OneMorePicker`, now exported), and "예약하기" for ticket 14.
+- **From #656's review:**
+  - the card lets the lock go when it goes, so the next answer changes as before;
+  - a locked change asks nothing and lets a moved band go back;
+  - a request taken back or ended on the server can be sent again, with a new idempotency key;
+  - a send that failed says the room card's words; "요청 취소 ›" works once at a time and only on a booking party's request;
+  - every Friend still in consented while one more is needed: "동의 2/2 · 친구를 더 불러 주세요".
+  - Still open: a time card's handle dragged on a held answer stays where it was let go. Holding the band still is a line in `time-bar.tsx`, left until #637 merges.
 - **Taking it back:**
   - "요청 취소 ›" is P01 ticket 15's `TicketLine` link;
   - `PartyRequest.cancel` ends the booking party (`POST /quests/:id/end`) and forgets the card's request, so the card is to send again.
