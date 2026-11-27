@@ -5,10 +5,11 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLabel } from './map-answer';
-import { mapText, space } from './tokens';
+import { mapText, space, type ToneKind } from './tokens';
 
 // The sizes of an answer's mark (`MapAnswerMark`) and the box its label takes, which the camera and the labels' sides
 // read without drawing it.
@@ -161,4 +162,16 @@ function around(
   }
   const top = side === 'below' ? reach : -reach - height;
   return { left: -width / 2, top, right: width / 2, bottom: top + height };
+}
+
+// The kind whose colour a mark of an answer takes (the user's rule of 2026-11-28, one colour for one thing): its own,
+// else a study answer's or a meal's by their marks, else the app's navy, which the party's is.
+export function markTone({ kind, meal = false, study = false }: MarkKind): ToneKind {
+  return kind ?? (study ? 'study' : meal ? 'meal' : 'party');
+}
+
+interface MarkKind {
+  kind?: ToneKind;
+  meal?: boolean;
+  study?: boolean;
 }

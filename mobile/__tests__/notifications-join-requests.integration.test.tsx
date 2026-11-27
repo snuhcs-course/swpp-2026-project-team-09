@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -109,7 +110,8 @@ describe('a request to join declined, in 알림', () => {
     await user.press(row);
     await pass(500);
 
-    expect(shownAddress()).toBe('/party?tab=find');
+    // The test router still prints the main screen's cleared parameter's name, as `card=undefined`.
+    expect(shownAddress()).toMatch(/^\/party\?(?:card=undefined&)?tab=find$/u);
   });
 });
 

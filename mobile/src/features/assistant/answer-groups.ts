@@ -6,12 +6,21 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
 import type { FlagRole } from '@/api/scene-roles';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, initials, type LabelSide } from '@/design-system';
+import {
+  type AnswerLabel,
+  type AnswerSymbol,
+  color,
+  type FaceBadge,
+  initials,
+  type LabelSide,
+  type ToneKind,
+} from '@/design-system';
 import type { Unplaced } from './answer-labels';
 import type { Standing } from './invited-friends';
 import { keptTagOf } from './set-quest';
@@ -89,8 +98,11 @@ export interface Draft {
   action?: string | null;
   // A meal candidate that does not fit or is far, drawn pale; left out, not.
   faded?: boolean;
-  // A meal answer's pick or candidate, menus or none: its label in coral (P04 ticket 90); left out, not.
-  coral?: boolean;
+  // A listed answer's pick or candidate, a meal answer's menus or none: its label's number a round, as its list's (P04
+  // ticket 90); left out, not.
+  listed?: boolean;
+  // The kind whose colour a pick or a candidate takes, its answer's (`kindTone`); left out, as its marks say.
+  toneKind?: ToneKind;
   // A 관정 booking's pick: its label in the study colour (P01 ticket 10); left out, not.
   study?: boolean;
   // A meal candidate's title is a clock time, not walking minutes (P04 ticket 88); left out, not.
@@ -167,6 +179,16 @@ export function keptDrafts(kept: KeptQuest | null | undefined): Draft[] {
 
 // The titles of the marks that open something at a press end with "›": every mark of a Lookup (`true`, P04 ticket 22),
 // or a Plan's pick alone, whose press opens its flag's card (`'pick'`, ticket 14, boards 10 and 12).
+// A pick or a candidate in the colour of its kind (`kindTone`), its dot and its label, as its answer's place or a step
+// of its kind; left out, as its marks say. Any other mark keeps its own colour.
+export function inKind(draft: Draft, toneKind: ToneKind | undefined): Draft {
+  if (toneKind === undefined || (draft.group !== 'pick' && draft.group !== 'candidate')) {
+    return draft;
+  }
+  const symbol = draft.symbol?.type === 'dot' ? { ...draft.symbol, kind: toneKind } : draft.symbol;
+  return { ...draft, symbol, toneKind };
+}
+
 export function withOpenMarks(opens: boolean | 'pick', drafts: Draft[]): Draft[] {
   if (opens === false) {
     return drafts;
@@ -241,7 +263,8 @@ export function unplaced(
           ...(note === null ? {} : { note }),
           ...(action === null ? {} : { action }),
           ...(faded ? { faded } : {}),
-          ...(draft.coral === true ? { meal: true } : {}),
+          ...(draft.listed === true ? { meal: true } : {}),
+          ...(draft.toneKind === undefined ? {} : { kind: draft.toneKind }),
           ...(draft.study === true ? { study: true } : {}),
           ...(draft.clock === true ? { clock: true } : {}),
           number: group === 'candidate' || symbol === null ? number : null,

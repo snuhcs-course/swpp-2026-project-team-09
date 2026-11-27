@@ -12,7 +12,8 @@ import { koreaClock, koreaDayWord } from '@/korea-time';
 import { seatWords } from '@/library/cards/bookings';
 import type { Slot } from '@/library/cards/payloads';
 import { clockOf, minutesOf } from '@/library/cards/times';
-import type { Draft } from './answer-groups';
+import { type Draft, inKind } from './answer-groups';
+import { stepTone } from './answer-tone';
 import { bookingTitle } from './booking-scene';
 import { meAndWalk } from './proposal-scene';
 import { turnOf } from './turn';
@@ -177,19 +178,19 @@ export function stepDrafts(
     const done = step.status === 'shown';
     const title = (opens[index] ?? true) ? `${titles[index] ?? step.title} ›` : (titles[index] ?? step.title);
     const line = lines[index] ?? null;
-    return [
-      {
-        id: `${STEP_ID}${String(number)}`,
-        name: `${String(number)} ${title} · ${line ?? ''}`,
-        position: { latitude: place.latitude, longitude: place.longitude },
-        planId: null,
-        group: done ? 'pick' : 'dropped',
-        symbol: { type: 'dot', role: done ? 'pick' : 'dropped', number },
-        tone: done ? 'pick' : 'dropped',
-        title,
-        line,
-        number,
-      },
-    ];
+    const draft: Draft = {
+      id: `${STEP_ID}${String(number)}`,
+      name: `${String(number)} ${title} · ${line ?? ''}`,
+      position: { latitude: place.latitude, longitude: place.longitude },
+      planId: null,
+      group: done ? 'pick' : 'dropped',
+      symbol: { type: 'dot', role: done ? 'pick' : 'dropped', number },
+      tone: done ? 'pick' : 'dropped',
+      title,
+      line,
+      number,
+    };
+    // A step done in its kind's colour, as its answer's pick; one not done grey.
+    return [inKind(draft, stepTone(step))];
   });
 }
