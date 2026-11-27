@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -122,10 +123,10 @@ describe("MapAnswerMark: a Friend's green dot", () => {
 // Partitions: a dot of each role, with a number and without. Expected values: the brief's look of a mark and the
 // wireframes.
 describe('MapAnswerMark: a dot', () => {
-  it('draws the pick as a round in the Quest colour with its number in white', async () => {
+  it("draws the pick as a round in the Quest's colour, the party's navy, with its number in white", async () => {
     await render(<MapAnswerMark label={null} symbol={{ type: 'dot', role: 'pick', number: 3 }} testID="mark" />);
 
-    expect(screen.getByTestId('mark:dot')).toHaveStyle({ backgroundColor: color.quest });
+    expect(screen.getByTestId('mark:dot')).toHaveStyle({ backgroundColor: color.snuBlue });
     expect(screen.getByText('3')).toHaveStyle({ color: color.onPrimary });
   });
 
@@ -192,7 +193,7 @@ describe("MapAnswerMark: a label's tone", () => {
     expect(screen.getByTestId('mark:label')).not.toHaveStyle({ borderColor: color.quest });
   });
 
-  it("shows the pick's title, its line in the Quest colour, and its number, inside a Quest border", async () => {
+  it("shows the pick's title, its time in gold, and its number, inside the Quest's navy border", async () => {
     await render(
       <MapAnswerMark
         label={{ side: 'below', tone: 'pick', title: '302동식당', line: '12:15 점심', number: 1 }}
@@ -204,7 +205,7 @@ describe("MapAnswerMark: a label's tone", () => {
     expect(screen.getByText('302동식당')).toBeVisible();
     expect(screen.getByText('12:15 점심')).toHaveStyle({ color: color.quest });
     expect(screen.getByText('1')).toBeVisible();
-    expect(screen.getByTestId('mark:label')).toHaveStyle({ borderColor: color.quest });
+    expect(screen.getByTestId('mark:label')).toHaveStyle({ borderColor: color.snuBlue });
   });
 
   it('shows a label without a number badge when its number is null', async () => {

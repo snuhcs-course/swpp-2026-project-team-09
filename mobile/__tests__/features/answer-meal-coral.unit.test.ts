@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
@@ -13,7 +14,7 @@ import { drawingOf } from '@/features/assistant/answer-marks';
 import { seen } from '../support/answer-marks';
 
 // A meal answer's Restaurants in coral (P04 ticket 85, the user's "3안"): a flag of the meal's marks, not a change of
-// the pick's role, so that every other answer's pick stays gold.
+// the pick's role; every other answer's pick takes its own kind (the user's rule of 2026-11-28).
 
 // Partitions: a meal answer with menus, its pick and its candidates, with a round of their own and without; an answer
 // other than a meal's. Expected values: the ticket's decision.
@@ -39,11 +40,12 @@ describe("a meal answer's marks", () => {
 });
 
 describe("another answer's pick", () => {
-  it('stays gold: a meet answer’s picks carry no meal flag', () => {
+  it('takes its own kind: a meet answer’s picks carry no meal flag and are the party’s', () => {
     const picks = rounds(MEET_ANSWER, 'pick');
 
     expect(picks.length).toBeGreaterThan(0);
     expect(picks.some((symbol) => 'meal' in symbol)).toBe(false);
+    expect(picks.every((symbol) => symbol.type === 'dot' && symbol.kind === 'party')).toBe(true);
   });
 });
 

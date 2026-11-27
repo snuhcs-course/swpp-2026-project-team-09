@@ -7,6 +7,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useLocalSearchParams } from 'expo-router';
@@ -17,6 +18,7 @@ import {
   color,
   font,
   Icon,
+  kindTone,
   mapText,
   QuestRound,
   radius,
@@ -60,7 +62,7 @@ function QuestPill({ count, onFullScreen }: { count: number | null; onFullScreen
   return (
     <View style={styles.pill}>
       <View style={styles.pillLabel}>
-        <Icon color={color.quest} name="flag" size={16} />
+        <Icon color={kindTone.party.ink} name="flag" size={16} />
         <Text style={styles.pillName}>퀘스트</Text>
         {count === null ? null : (
           <Text style={styles.pillCount} testID="quest-count">

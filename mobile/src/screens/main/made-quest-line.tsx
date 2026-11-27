@@ -3,11 +3,12 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { color, font, Icon, radius, shadow, size } from '@/design-system';
+import { color, font, Icon, kindTone, radius, shadow, size } from '@/design-system';
 import { MADE_LINE } from './layout';
 
 // The line over the input of a Quest made from a Plan, which says what its flag says and opens its card after
@@ -29,7 +30,7 @@ export function MadeQuestLine({
       style={({ pressed }) => [styles.line, { bottom }, pressed && styles.pressed]}
       testID="made-quest-line"
     >
-      <Icon color={color.quest} name="flag" size={14} />
+      <Icon color={kindTone.party.ink} name="flag" size={14} />
       <Text style={styles.words}>{words}</Text>
     </Pressable>
   );
@@ -46,11 +47,11 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     paddingLeft: 10,
     borderWidth: 1,
-    borderColor: color.questSoft,
+    borderColor: kindTone.party.soft,
     borderRadius: radius.full,
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  pressed: { backgroundColor: color.questSoft },
-  words: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.quest },
+  pressed: { backgroundColor: kindTone.party.soft },
+  words: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: kindTone.party.ink },
 });

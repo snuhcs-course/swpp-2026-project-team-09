@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -12,7 +13,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
 import type { LookupAction, LookupCard } from '@/api/lookup-types';
 import type { Place } from '@/api/types';
-import { Button, color, RoundIcon, space, text, WaitingDots } from '@/design-system';
+import { Button, color, kindTone, RoundIcon, space, text, WaitingDots } from '@/design-system';
 import { useTapAnswer } from '@/features/assistant/use-tap-answer';
 import { cardId } from '@/features/map/adapter';
 import { Chips } from './answer/lookup-card';
@@ -51,7 +52,7 @@ function Head({
 }): ReactElement {
   return (
     <View style={styles.head}>
-      <RoundIcon fill={color.questSoft} icon="pin" ink={color.quest} />
+      <RoundIcon fill={kindTone.party.soft} icon="pin" ink={kindTone.party.ink} />
       <View style={styles.titles}>
         <Text accessibilityRole="header" numberOfLines={2} style={styles.title}>
           {title}
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
   status: { ...text.body, color: color.inkMuted },
   // A failure, as every failure line is (P01 ticket 19).
   failed: FAILURE,
-  note: { ...text.body, color: color.quest },
+  note: { ...text.body, color: kindTone.party.ink },
   basis: { ...text.body, color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2] },
   cell: { flex: 1 },

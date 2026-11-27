@@ -3,9 +3,10 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLabel, AnswerSymbol } from '@/design-system';
+import type { AnswerLabel, AnswerSymbol, ToneKind } from '@/design-system';
 import type { AnswerDrawing, AnswerThing } from '@/features/assistant/answer-marks';
 
 export const ME_ID = '11ca538e-e4ef-48d9-9a1f-b7160c553bee';
@@ -51,7 +52,7 @@ export function label(
   side: AnswerLabel['side'],
   tone: AnswerLabel['tone'],
   title: string,
-  more: { line?: string; number?: number; meal?: boolean } = {},
+  more: { line?: string; number?: number; meal?: boolean; kind?: ToneKind } = {},
 ): AnswerLabel {
   return {
     side,
@@ -60,5 +61,6 @@ export function label(
     line: more.line ?? null,
     number: more.number ?? null,
     ...(more.meal === true ? { meal: true } : {}),
+    ...(more.kind === undefined ? {} : { kind: more.kind }),
   };
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -9,7 +10,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { QuestProposal, RestaurantCard, RestaurantTravel } from '@/api/assistant-types';
 import type { MenuLine } from '@/api/menu-types';
 import { now } from '@/clock';
-import { Button, cardStyles, color, font, Icon, radius, space } from '@/design-system';
+import { Button, cardStyles, color, font, Icon, kindTone, radius, space } from '@/design-system';
 import { MEAL_NAMES, won } from '@/features/dining/adapter';
 import { koreaDay } from '@/korea-time';
 
@@ -31,7 +32,7 @@ function lineWords({ text, name, price }: MenuLine): string {
 }
 
 function TravelChip({ way: { name, mode, minutes, longest } }: { way: RestaurantTravel }): ReactElement {
-  const ink = longest ? color.party : color.inkMuted;
+  const ink = longest ? color.warning : color.inkMuted;
   return (
     <View style={[styles.chip, longest && styles.longest]} testID={longest ? 'longest-travel' : undefined}>
       <Icon color={ink} name={mode === 'shuttle' ? 'bus' : 'route'} size={12} />
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
     width: MARK,
     height: MARK,
     borderRadius: radius.md,
-    backgroundColor: color.svcDining,
+    backgroundColor: kindTone.meal.ink,
   },
   titles: { flex: 1 },
   name: { fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.ink },
@@ -149,6 +150,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: color.blue50,
   },
-  longest: { backgroundColor: color.partySoft },
+  // The longest way, a heads-up in the warning's colour.
+  longest: { backgroundColor: color.warningSoft },
   chipWords: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16 },
 });
