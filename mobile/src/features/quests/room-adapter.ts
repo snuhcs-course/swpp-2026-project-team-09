@@ -6,41 +6,45 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { LatLng, MyParty, Party, SubQuest } from '@/api/types';
-import { koreaClock } from '@/korea-time';
-import { heldAlone } from './adapter';
+import { koreaClock, koreaDay } from '@/korea-time';
+import { standingsOf } from './plan-steps';
 import { editsSubQuests } from './rules';
 
 // What a Quest's room shows: the frame's `PartyDetail`. The room is the Quest's; its 활성화 is the domain Party opened
 // for the Quest.
 
+// One of those in the running Party, in the order they entered.
+export interface PartyPerson {
+  id: string;
+  name: string;
+  me: boolean;
+}
+
 export type ActivationView =
   // No Party runs for the Quest.
   | { state: 'none' }
-  // The User is in it. `sharing` counts the members the User sees, and the User.
-  | { state: 'in'; sharing: number; leadsParty: boolean; switchOn: boolean }
-  // It runs without the User, who has not answered: `leader` is who leads it, null where the answer does not say.
-  | { state: 'waiting'; partyId: string; title: string; leader: string | null }
+  // The User is in it. `joined`: the Master Switch and the Party switch are both on, without which nobody sees the
+  // User, who then reads as not in. `people` leaves the User out until then.
+  | { state: 'in'; leadsParty: boolean; switchOn: boolean; joined: boolean; people: PartyPerson[] }
+  // It runs without the User, who has not answered. `people`: its members, which `GET /parties` names for a Quest the
+  // User holds, else its Leader.
+  | { state: 'waiting'; partyId: string; title: string; people: PartyPerson[] }
   // It runs without the User, who declined it on this phone.
-  | { state: 'declined'; partyId: string; title: string };
-
-export interface BadgeView {
-  label: string;
-  tone: 'party' | 'warning' | 'neutral' | 'official';
-  icon?: 'lock';
-}
+  | { state: 'declined'; partyId: string; title: string; people: PartyPerson[] };
 
 export interface PlanStepView {
   subQuest: SubQuest;
   // "17:40", "18:00–20:00", or "".
   time: string;
   place: string;
-  // The first Sub Quest ahead.
+  // The orange step of `plan-steps`.
   next: boolean;
-  // Done by the User, ended or cancelled: dimmed.
+  // A grey step of `plan-steps`: dimmed.
   over: boolean;
 }
 
@@ -50,7 +54,8 @@ export interface MemberView {
   department: string;
   leader: boolean;
   me: boolean;
-  // While the User is in the Party: "위치 공유 중", "위치 꺼짐", "공유 일시정지" or "응답 대기". Null otherwise.
+  // While the User is in the Party: "위치 공유 중", "위치 꺼짐" or "응답 대기", none for the User while not joined.
+  // Null otherwise.
   state: { words: string; tone: 'live' | 'muted' | 'waiting' } | null;
   // "5분 늦어요" for a member who reported being late, whether or not the User is in the Party. Null otherwise.
   late: string | null;
@@ -71,25 +76,35 @@ export interface OtherParty {
   leads: boolean;
 }
 
+// The 모집글's Leader row: "김하늘" over "컴퓨터공학부 · 19시간 전".
+export interface HostView {
+  name: string;
+  line: string;
+}
+
 export interface RoomView {
   quest: ShownQuest;
   leads: boolean;
-  // `모집글 보기` for an Open or Approval Quest, which has a post.
+  // An Open or Approval Quest, which has a post.
   hasPost: boolean;
-  // The text in the room, for a Closed Quest only: an Open or Approval Quest's is on its post. "" for none.
+  // The Leader's row, null for a Quest without a Leader.
+  host: HostView | null;
+  // The Quest's text, "" for none.
   text: string;
   // "#AI커리어"
   tags: string[];
+  // The time and place box: the orange step's, "내일 10:00" and its place, else "시간 미정" and "장소 미정".
+  time: string;
+  place: string;
   destination: RoomDestination | null;
   editsPlan: boolean;
-  badges: BadgeView[];
   activation: ActivationView;
   // The other Party the User is in, or null.
   otherParty: OtherParty | null;
   plan: PlanStepView[];
   members: MemberView[];
-  // "2자리 남음" for an Open or Approval Quest, or null.
-  left: string | null;
+  // "3/4명" for an Open or Approval Quest, or null.
+  fill: string | null;
 }
 
 export interface RoomSources {
@@ -100,38 +115,37 @@ export interface RoomSources {
   // The Friends the User sees, by id.
   seenFriends: readonly string[];
   meId: string;
+  // The Master Switch, on while the Lobby is not known.
+  masterOn: boolean;
+  now: Date;
 }
 
-function activationOf({ quest, myParty, parties, declined, meId }: RoomSources): ActivationView {
+function peopleOf(members: readonly { id: string; name: string }[], meId: string): PartyPerson[] {
+  return members.map(({ id, name }) => ({ id, name, me: id === meId }));
+}
+
+function activationOf({ quest, myParty, parties, declined, meId, masterOn }: RoomSources): ActivationView {
   if (myParty?.quest?.id === quest.id) {
-    const others = myParty.members.filter(({ id, visible }) => id !== meId && visible).length;
     const leadsParty = myParty.members.some(({ id, leader }) => id === meId && leader);
-    return { state: 'in', sharing: others + 1, leadsParty, switchOn: myParty.sharing };
+    const joined = masterOn && myParty.sharing;
+    const members = myParty.members.filter(({ id }) => joined || id !== meId);
+    return {
+      state: 'in',
+      leadsParty,
+      switchOn: myParty.sharing,
+      joined,
+      people: peopleOf(members, meId),
+    };
   }
   const running = parties.find((party) => party.quest?.id === quest.id);
   if (running === undefined) {
     return { state: 'none' };
   }
-  const { id, title } = running;
+  const { id, title, leader } = running;
+  const people = peopleOf(running.members ?? (leader === undefined ? [] : [leader]), meId);
   return declined.includes(id)
-    ? { state: 'declined', partyId: id, title }
-    : { state: 'waiting', partyId: id, title, leader: running.leader?.name ?? null };
-}
-
-// A Quest taken alone is a 퀘스트: no 파티 badges and no 비공개, since nobody joins it.
-function badgesOf(quest: ShownQuest, leads: boolean): BadgeView[] {
-  const event = quest.globalEvent === null ? [] : [{ label: quest.globalEvent.title, tone: 'official' } as const];
-  if (heldAlone(quest)) {
-    return [{ label: '퀘스트', tone: 'party' }, ...event];
-  }
-  const closed = quest.joinPolicy === 'closed';
-  const holders = quest.holders.length;
-  return [
-    { label: closed ? `파티 · ${holders}명` : `파티 · ${holders}/${quest.capacity}명`, tone: 'party' },
-    ...(leads ? [{ label: '내가 만든 파티', tone: 'warning' } as const] : []),
-    ...(closed ? [{ label: '비공개', tone: 'neutral', icon: 'lock' } as const] : []),
-    ...event,
-  ];
+    ? { state: 'declined', partyId: id, title, people }
+    : { state: 'waiting', partyId: id, title, people };
 }
 
 function timeOf({ startsAt, endsAt }: SubQuest): string {
@@ -141,32 +155,25 @@ function timeOf({ startsAt, endsAt }: SubQuest): string {
   return endsAt === null ? koreaClock(startsAt) : `${koreaClock(startsAt)}–${koreaClock(endsAt)}`;
 }
 
-function startOf({ startsAt }: SubQuest): number {
-  return startsAt === null ? Number.POSITIVE_INFINITY : new Date(startsAt).getTime();
-}
-
-// By their start, those without one last.
-function planOf(quest: ShownQuest): PlanStepView[] {
-  const steps = quest.subQuests.toSorted((one, other) => startOf(one) - startOf(other));
-  const next = steps.find(({ done, ended, cancelled }) => !done && !ended && !cancelled);
-  return steps.map((subQuest) => ({
+// By their start, those without one last, grey and orange by `plan-steps`.
+function planOf(quest: ShownQuest, now: Date): PlanStepView[] {
+  return standingsOf(quest.subQuests, now).map(({ subQuest, stand }) => ({
     subQuest,
     time: timeOf(subQuest),
     place: subQuest.place?.label ?? '',
-    next: subQuest === next,
-    over: subQuest.done || subQuest.ended || subQuest.cancelled,
+    next: stand === 'now',
+    over: stand === 'past',
   }));
 }
 
-function stateOf(id: string, myParty: MyParty | null, meId: string): MemberView['state'] {
+// The User has no line while not joined: the activation card says why.
+function stateOf(id: string, myParty: MyParty | null, sources: RoomSources): MemberView['state'] {
   const member = myParty?.members.find((one) => one.id === id);
   if (member === undefined) {
     return { words: '응답 대기', tone: 'waiting' };
   }
-  if (id === meId) {
-    return myParty?.sharing === true
-      ? { words: '위치 공유 중', tone: 'live' }
-      : { words: '공유 일시정지', tone: 'muted' };
+  if (id === sources.meId) {
+    return sources.masterOn && myParty?.sharing === true ? { words: '위치 공유 중', tone: 'live' } : null;
   }
   return member.visible ? { words: '위치 공유 중', tone: 'live' } : { words: '위치 꺼짐', tone: 'muted' };
 }
@@ -184,7 +191,7 @@ function membersOf(sources: RoomSources, inParty: boolean): MemberView[] {
     department,
     leader: quest.leader?.id === id,
     me: id === meId,
-    state: inParty ? stateOf(id, myParty, meId) : null,
+    state: inParty ? stateOf(id, myParty, sources) : null,
     late: lateOf(quest, id),
     seen:
       id !== meId &&
@@ -210,27 +217,40 @@ export function otherPartyOf(myParty: MyParty | null, inParty: boolean, meId: st
   return { title: myParty.title, leads: myParty.members.some(({ id, leader }) => id === meId && leader) };
 }
 
+function hostOf({ leader, createdAt }: ShownQuest, now: Date): HostView | null {
+  if (leader === null) {
+    return null;
+  }
+  return {
+    name: leader.name,
+    line: createdAt === null ? leader.department : `${leader.department} · ${agoWords(createdAt, now)}`,
+  };
+}
+
 export function toRoom(sources: RoomSources): RoomView {
-  const { quest, myParty, meId } = sources;
-  const leads = quest.leader?.id === meId;
+  const { quest, myParty, meId, now } = sources;
   const activation = activationOf(sources);
   const inParty = activation.state === 'in';
   const closed = quest.joinPolicy === 'closed';
-  const plan = planOf(quest);
+  const plan = planOf(quest, now);
+  const shown = plan.find(({ next }) => next)?.subQuest ?? null;
+  const start = shown?.startsAt ?? null;
   return {
     quest,
-    leads,
+    leads: quest.leader?.id === meId,
     hasPost: !closed,
-    text: closed ? quest.description : '',
+    host: hostOf(quest, now),
+    text: quest.description,
     tags: quest.tags.map((tag) => `#${tag}`),
+    time: start === null ? '시간 미정' : `${koreaDay(start, now)} ${koreaClock(start)}`,
+    place: shown?.place?.label ?? '장소 미정',
     destination: destinationOf(plan),
     editsPlan: editsSubQuests(quest, meId),
-    badges: badgesOf(quest, leads),
     activation,
     otherParty: otherPartyOf(myParty, inParty, meId),
     plan,
     members: membersOf(sources, inParty),
-    left: quest.joinPolicy === 'closed' ? null : `${quest.capacity - quest.holders.length}자리 남음`,
+    fill: closed ? null : `${String(quest.holders.length)}/${String(quest.capacity)}명`,
   };
 }
 

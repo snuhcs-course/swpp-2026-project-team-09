@@ -5,11 +5,13 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
+import { color } from '@/design-system';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
@@ -72,6 +74,19 @@ function section(name: string): ReturnType<typeof within> {
   return within(screen.getByLabelText(name));
 }
 
+// A list's title icon, which a screen reader skips.
+function titleIcon(name: string, icon: string): ReturnType<typeof screen.getByTestId> {
+  return section(name).getByTestId(`section-icon-${icon}`, { includeHiddenElements: true });
+}
+
+// Every row but the last has a line under it.
+function expectLinesBetween(name: string): void {
+  const rows = section(name).getAllByTestId('person-row');
+  rows.forEach((row, index) => {
+    expect(row).toHaveStyle({ borderBottomWidth: index === rows.length - 1 ? 0 : 1 });
+  });
+}
+
 describe('신청', () => {
   beforeEach(() => {
     answerRoom(server, APPROVAL);
@@ -83,8 +98,10 @@ describe('신청', () => {
     const user = await openRoom(APPROVAL);
 
     expect(section('참여 신청').getByRole('header', { name: '신청 2' })).toBeVisible();
-    expect(section('참여 신청').getByText('20분 전')).toBeVisible();
-    expect(section('참여 신청').getByText('10분 전')).toBeVisible();
+    expect(titleIcon('참여 신청', 'usersPlus')).toBeTruthy();
+    expect(section('참여 신청').queryByText('20분 전')).toBeNull();
+    expect(section('참여 신청').queryByText('10분 전')).toBeNull();
+    expectLinesBetween('참여 신청');
     await user.press(section('참여 신청').getAllByRole('button', { name: '수락' })[0]);
     await pass(500);
 
@@ -115,13 +132,15 @@ describe('신청', () => {
 });
 
 describe('초대 중', () => {
-  it("lists the Leader's invitations as 응답 대기 and cancels one", async () => {
+  it("lists the Leader's invitations dimmed, without 응답 대기, and cancels one", async () => {
     server.on(`GET ${QUEST}/invitations`, { status: 200, body: [INVITATION] });
     server.on(`DELETE ${QUEST}/invitations/qi9`, { status: 204 });
     const user = await openRoom();
 
     expect(section('초대 중').getByRole('header', { name: '초대 중 1' })).toBeVisible();
-    expect(section('초대 중').getByText('응답 대기')).toBeVisible();
+    expect(titleIcon('초대 중', 'send')).toBeTruthy();
+    expect(section('초대 중').queryByText('응답 대기')).toBeNull();
+    expectLinesBetween('초대 중');
     await user.press(section('초대 중').getByRole('button', { name: '초대 취소' }));
     await pass(500);
 
@@ -175,21 +194,29 @@ describe('멤버', () => {
     await openRoom(WITH_JI_WOO);
 
     expect(section('멤버').getByRole('header', { name: '멤버 4' })).toBeVisible();
-    expect(section('멤버').getByText('2자리 남음')).toBeVisible();
+    expect(titleIcon('멤버', 'users')).toBeTruthy();
+    expect(section('멤버').getByText('4/6명')).toHaveStyle({ color: color.party });
+    expect(section('멤버').queryByText('2자리 남음')).toBeNull();
+    // The crown alone marks the Leader: no pill of words, and a screen reader still says 파티장.
     expect(section('멤버').getByLabelText('파티장')).toBeVisible();
+    expect(section('멤버').queryByText('파티장')).toBeNull();
+    expectLinesBetween('멤버');
     expect(section('멤버').getByRole('button', { name: '김민준 · 위치 공유 중' })).toBeVisible();
-    expect(section('멤버').getByRole('button', { name: '서지우 · 위치 꺼짐' })).toBeVisible();
+    // One the User does not see takes no press.
+    expect(section('멤버').getByText('위치 꺼짐')).toBeVisible();
+    expect(section('멤버').queryByRole('button', { name: /^서지우/u })).toBeNull();
     expect(section('멤버').getByRole('button', { name: '이서연 · 응답 대기' })).toBeVisible();
     // The User's own row too.
     expect(section('멤버').getAllByText('위치 공유 중')).toHaveLength(2);
   });
 
-  it("says that the User's sharing is paused", async () => {
+  it("gives the User's own row no line while the Party switch is off", async () => {
     answerMyParty(server, { ...PARTY_WITH_JI_WOO, sharing: false });
 
     await openRoom(WITH_JI_WOO);
 
-    expect(section('멤버').getByText('공유 일시정지')).toBeVisible();
+    expect(section('멤버').queryByText('공유 일시정지')).toBeNull();
+    expect(section('멤버').getAllByText('위치 공유 중')).toHaveLength(1);
   });
 });
 
@@ -198,12 +225,13 @@ describe("a member's row", () => {
     answerRoom(server, WITH_JI_WOO);
   });
 
-  it('shows a member the User sees on the map with the card, and says so for one the User does not see', async () => {
+  it('shows a member the User sees on the map with the card, and takes no press on one the User does not see', async () => {
     const user = await openRoom(WITH_JI_WOO);
 
-    await user.press(section('멤버').getByRole('button', { name: '서지우' }));
-    expect(toast()).toHaveTextContent('서지우님은 위치가 꺼져 있어요');
-    expect(toastIcon()).toBe('alert');
+    expect(section('멤버').queryByRole('button', { name: '서지우' })).toBeNull();
+    await user.press(section('멤버').getByText('서지우'));
+    await pass(500);
+    expect(screen.queryByText('서지우님은 위치가 꺼져 있어요')).toBeNull();
 
     await user.press(section('멤버').getByRole('button', { name: '김민준' }));
     await pass(500);
@@ -262,7 +290,11 @@ describe('ending the Quest from the room', () => {
     await answer(user, '파티 없애기');
 
     const asked = server.received().map(({ method, path }) => `${method} ${path}`);
-    expect(asked.filter((route) => route.startsWith('POST'))).toEqual(['POST /lobby', ...requests]);
+    // Less the position the phone sends while the Master Switch is on.
+    expect(asked.filter((route) => route.startsWith('POST') && route !== 'POST /positions')).toEqual([
+      'POST /lobby',
+      ...requests,
+    ]);
     expect(toast()).toHaveTextContent('파티를 없앴어요');
     expect(shownAddress()).toBe('/main');
   });

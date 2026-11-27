@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { RecruitingQuest } from '@/api/party-types';
@@ -146,6 +147,7 @@ export const PARTIES: Party[] = [
     holdsQuest: true,
     friends: [MIN_JUN],
     leader: { id: HA_EUN.id, name: HA_EUN.name },
+    members: [HA_EUN, MIN_JUN, PARTY_MEMBER].map(({ id, name }) => ({ id, name })),
   },
 ];
 

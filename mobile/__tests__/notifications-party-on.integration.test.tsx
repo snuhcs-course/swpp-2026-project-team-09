@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -91,7 +92,7 @@ describe('a press on 파티 켜기', () => {
     await pass(500);
 
     expect(server.received('POST /parties').map(({ body }) => body)).toEqual([OPENING]);
-    expect(toast()).toHaveTextContent('파티를 활성화했어요 · 멤버 1명에게 알림');
+    expect(toast()).toHaveTextContent(/^파티를 활성화했어요$/u);
     expect(screen.getByRole('header', { name: '알림' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '파티 켜기' })).toBeNull();
   });
@@ -122,7 +123,7 @@ describe('a press on 파티 켜기 while the User is in another Party', () => {
     expect(screen.getByRole('header', { name: '파티를 활성화할까요?' })).toBeVisible();
     expect(
       screen.getByText(
-        '멤버 1명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘자하연 피크닉’ 활성화에서는 나가게 돼요.\n내 정보에서 위치 공유를 켜야 멤버에게 내 위치가 보여요',
+        '다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘자하연 피크닉’ 활성화에서는 나가게 돼요.',
       ),
     ).toBeVisible();
     expect(server.received('POST /parties')).toHaveLength(0);

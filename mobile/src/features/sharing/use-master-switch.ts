@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -28,8 +29,8 @@ export interface MasterSwitch {
   // Known to be off: false while the Lobby is still loading, so nothing is held off before the app knows.
   off: boolean;
   // Shows the new state at once, and the old one again with a toast when the main server did not take it. `done` is
-  // the toast once it did.
-  turn: (on: boolean, done?: string) => void;
+  // the toast once it did. True once it did.
+  turn: (on: boolean, done?: string) => Promise<boolean>;
   // Whether the app has asked the User before they turned it off, and the record that it did.
   offAsked: boolean;
   markOffAsked: () => void;
@@ -50,17 +51,19 @@ export function useMasterSwitch(): MasterSwitch {
         queryClient.setQueryData<Lobby>(LOBBY_KEY, (lobby) => lobby && { ...lobby, masterSwitch: value });
       };
       show(next);
-      apiClient.setMasterSwitch(next).then(
+      return apiClient.setMasterSwitch(next).then(
         () => {
           void queryClient.invalidateQueries({ queryKey: FRIENDS_KEY });
           void queryClient.invalidateQueries({ queryKey: POSITIONS_KEY });
           if (done !== undefined) {
             showToast(done);
           }
+          return true;
         },
         () => {
           show(!next);
           showToast(NOT_CHANGED);
+          return false;
         },
       );
     },

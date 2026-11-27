@@ -6,11 +6,13 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
+import { holdBackButton } from './support/back';
 import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
@@ -21,16 +23,20 @@ import {
   answerRoom,
   DINNER_PARTY_MINE,
   HIS_PICNIC,
+  ME_HOLDER,
+  MIN_JUN_HOLDER,
   myPicnicParty,
   openRoom,
   PICNIC,
   PICNIC_PARTY,
+  SEO_YEON_HOLDER,
   toast,
 } from './support/room';
 import { askMainServer, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
+import { keep } from '@/storage/kept';
 
-// The head of a Quest's room and opening its 활성화, the domain Party opened for the Quest, against the fake main
-// server.
+// The app bar of a Quest's room, its 활성화 (the domain Party opened for the Quest) and the card of a running one,
+// against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -64,37 +70,51 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe("the room's head", () => {
-  it("shows the fill, the Leader's Badge and the title of an Open Quest the User leads", async () => {
+describe("the room's app bar and title", () => {
+  it('shows 수정 to the Leader of an Open Quest, with no 모집글 보기 and no badges', async () => {
     await openRoom();
 
     expect(screen.getByRole('header', { name: '파티' })).toBeVisible();
     expect(screen.getByRole('button', { name: '뒤로' })).toBeVisible();
-    expect(screen.getByText('파티 · 3/4명')).toBeVisible();
-    expect(screen.getByText('내가 만든 파티')).toBeVisible();
-    expect(screen.queryByText('비공개')).toBeNull();
+    expect(screen.getByRole('button', { name: '수정' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '모집글 보기' })).toBeNull();
+    for (const badge of ['파티 · 3/4명', '내가 만든 파티', '비공개', '퀘스트']) {
+      expect(screen.queryByText(badge)).toBeNull();
+    }
     expect(screen.getByRole('header', { name: '자하연 피크닉' })).toBeVisible();
-  });
-
-  it("counts a Closed Quest's Holders without a capacity, marks it 비공개 and names its Global Event", async () => {
-    const closed = {
-      ...HIS_PICNIC,
-      joinPolicy: 'closed' as const,
-      globalEvent: { id: 'e1', title: 'AI 커리어 설명회' },
-    };
-    answerRoom(server, closed);
-
-    await openRoom(closed);
-
-    expect(screen.getByText('파티 · 3명')).toBeVisible();
-    expect(screen.getByText('비공개')).toBeVisible();
-    expect(screen.getAllByText('AI 커리어 설명회')).toHaveLength(2);
-    expect(screen.getByLabelText('행사 · AI 커리어 설명회')).toBeVisible();
-    expect(screen.queryByText('내가 만든 파티')).toBeNull();
   });
 });
 
+const HELP = [
+  '켜면 다른 멤버의 알림 목록에 떠요',
+  '참여한 멤버끼리만 지도에서 서로의 위치를 봐요',
+  '참여하려면 전체 위치 공유가 켜져 있어야 해요',
+  '일정 시작 30분 전부터 그 장소에 도착하면, 위치를 보는 멤버에게 도착 알림이 가요',
+  '한 번에 한 파티만 참여할 수 있어요',
+  '다 모이면 꺼 주세요. 꺼도 파티는 그대로 남아요',
+  '남은 일정이 있어야 켤 수 있어요',
+];
+
 describe('활성화 while none runs', () => {
+  it('shows 파티 활성화 with a ?, which opens the help, closed by a press elsewhere or the back button', async () => {
+    const back = holdBackButton();
+    const user = await openRoom(HIS_PICNIC);
+    expect(activationBox().queryByText('아직 활성화하지 않았어요')).toBeNull();
+
+    await user.press(activationBox().getByRole('button', { name: '파티 활성화 도움말' }));
+
+    for (const line of HELP) {
+      expect(screen.getByText(line)).toBeVisible();
+    }
+    await user.press(screen.getByLabelText('파티 활성화 도움말 닫기'));
+    expect(screen.queryByText(HELP[0] ?? '')).toBeNull();
+
+    await user.press(activationBox().getByRole('button', { name: '파티 활성화 도움말' }));
+    expect(await back()).toBe(true);
+    expect(screen.queryByText(HELP[0] ?? '')).toBeNull();
+    expect(shownAddress()).toBe(`/room/${PICNIC.id}`);
+  });
+
   it('opens the Party for the Quest, closed and for 8, after the sheet, and shows that the User is in it', async () => {
     const mine = answerMyParty(server, null);
     server.on('POST /parties', () => {
@@ -102,25 +122,57 @@ describe('활성화 while none runs', () => {
       return { status: 201, body: myPicnicParty(ME_ID, [{ id: ME_ID, name: '홍길동', department: '컴퓨터공학부' }]) };
     });
     const user = await openRoom(HIS_PICNIC);
-    expect(activationBox().getByText('아직 활성화하지 않았어요')).toBeVisible();
-    expect(activationBox().getByText('켜면 멤버에게 알림이 가고, 수락한 멤버끼리 위치를 공유해요')).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: '파티 활성화' }));
 
     expect(screen.getByRole('header', { name: '파티를 활성화할까요?' })).toBeVisible();
-    expect(
-      screen.getByText(
-        '멤버 2명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n내 정보에서 위치 공유를 켜야 멤버에게 내 위치가 보여요',
-      ),
-    ).toBeVisible();
+    expect(screen.getByText('다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.')).toBeVisible();
     await answer(user, '활성화');
 
     expect(server.received('POST /parties').map(({ body }) => body)).toEqual([
       { title: '자하연 피크닉', capacity: 8, joinPolicy: 'closed', questId: PICNIC.id },
     ]);
-    expect(toast()).toHaveTextContent('파티를 활성화했어요 · 멤버 2명에게 알림');
+    expect(toast()).toHaveTextContent(/^파티를 활성화했어요$/u);
     expect(activationBox().getByText('활성화 중')).toBeVisible();
-    expect(activationBox().getByText('멤버의 응답을 기다리는 중이에요')).toBeVisible();
+    expect(activationBox().getByLabelText('나 참여 중')).toBeVisible();
+    expect(screen.getByTestId('activation-card')).toHaveStyle({ borderWidth: 2 });
+  });
+});
+
+describe('활성화 running', () => {
+  it('shows a white card with the red light and the names of those in, and 나도 참여 without 거절', async () => {
+    answerMyParty(server, null);
+    server.on('GET /parties', { status: 200, body: [{ ...PICNIC_PARTY, members: [MIN_JUN_HOLDER, SEO_YEON_HOLDER] }] });
+    await openRoom(HIS_PICNIC);
+
+    const card = within(screen.getByTestId('activation-card'));
+    expect(card.getByText('활성화 중')).toBeVisible();
+    expect(card.getByLabelText('김민준, 이서연 참여 중')).toBeVisible();
+    expect(card.getByRole('button', { name: '나도 참여' })).toBeVisible();
+    expect(card.queryByRole('button', { name: '거절' })).toBeNull();
+    expect(screen.getByTestId('activation-card')).not.toHaveStyle({ borderWidth: 2 });
+  });
+
+  it('shows the same card to a User who declined it on 내 파티', async () => {
+    await keep({ declinedParties: [PICNIC_PARTY.id] });
+    answerMyParty(server, null);
+    server.on('GET /parties', { status: 200, body: [PICNIC_PARTY] });
+    await openRoom(HIS_PICNIC);
+
+    const card = within(screen.getByTestId('activation-card'));
+    expect(card.getByLabelText('김민준 참여 중')).toBeVisible();
+    expect(card.getByRole('button', { name: '나도 참여' })).toBeVisible();
+  });
+
+  it('outlines the card while the User is in, with the names in the order they entered and no switch', async () => {
+    answerMyParty(server, myPicnicParty(MIN_JUN.id, [MIN_JUN_HOLDER, ME_HOLDER, SEO_YEON_HOLDER]));
+    await openRoom(HIS_PICNIC);
+
+    const card = within(screen.getByTestId('activation-card'));
+    expect(card.getByLabelText('김민준, 나, 이서연 참여 중')).toBeVisible();
+    expect(card.getByRole('button', { name: '활성화에서 나가기' })).toBeVisible();
+    expect(screen.getByTestId('activation-card')).toHaveStyle({ borderWidth: 2 });
+    expect(screen.queryByRole('switch', { name: '내 위치 공유' })).toBeNull();
   });
 });
 
@@ -135,7 +187,7 @@ describe('opening 활성화 beside another Party', () => {
 
     expect(
       screen.getByText(
-        '멤버 2명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘저녁 먹으러 가요’ 활성화에서는 나가게 돼요.\n내 정보에서 위치 공유를 켜야 멤버에게 내 위치가 보여요',
+        '다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 지금 참여 중인 ‘저녁 먹으러 가요’ 활성화에서는 나가게 돼요.',
       ),
     ).toBeVisible();
     await answer(user, '활성화');

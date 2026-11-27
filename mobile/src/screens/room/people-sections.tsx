@@ -7,6 +7,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -15,11 +16,11 @@ import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { joinRequestsQuery, sentInvitationsQuery } from '@/api/queries';
 import type { JoinRequest } from '@/api/waiting-types';
-import { now } from '@/clock';
-import { Button, color, Dialog, font, Icon, space, useToast } from '@/design-system';
-import { agoWords, type MemberView, type RoomView } from '@/features/quests/room-adapter';
+import { Button, color, Dialog, font, space } from '@/design-system';
+import type { MemberView, RoomView } from '@/features/quests/room-adapter';
 import { MemberFriendButton, useFriendPresses } from './member-friend-button';
 import { PersonRow } from './person-row';
+import { SectionTitle } from './section-title';
 import type { RoomActions } from './use-room-actions';
 
 interface SectionProps {
@@ -29,20 +30,8 @@ interface SectionProps {
 
 const STATE_INK = { live: color.live, muted: color.inkMuted, waiting: color.quest } as const;
 
-function Heading({ children, aside }: { children: string; aside?: string | null }): ReactElement {
-  return (
-    <View style={styles.heading}>
-      <Text accessibilityRole="header" style={styles.headingWords}>
-        {children}
-      </Text>
-      {aside === undefined || aside === null ? null : <Text style={styles.aside}>{aside}</Text>}
-    </View>
-  );
-}
-
-// `신청 {n}`: the requests to join an Open or Approval Quest, for its Leader, each with the note its User wrote, or when
-// it came where no note is known. An Open Quest has them only from Users the Leader removed, each marked `전에 내보낸
-// 멤버`.
+// `신청 {n}`: the requests to join an Open or Approval Quest, for its Leader, each a name without a line. An Open Quest
+// has them only from Users the Leader removed, each marked `전에 내보낸 멤버`.
 export function RequestsSection({ room, actions }: SectionProps): ReactElement | null {
   const { quest, leads } = room;
   const asks = leads && quest.joinPolicy !== 'closed';
@@ -52,12 +41,13 @@ export function RequestsSection({ room, actions }: SectionProps): ReactElement |
   }
   return (
     <View accessibilityLabel="참여 신청" style={styles.section}>
-      <Heading>{`신청 ${requests.length}`}</Heading>
-      {requests.map((request) => (
+      <SectionTitle icon="usersPlus">{`신청 ${requests.length}`}</SectionTitle>
+      {requests.map((request, index) => (
         <PersonRow
           department={request.user.department}
           key={request.id}
-          line={request.note ?? agoWords(request.sentAt, now())}
+          last={index === requests.length - 1}
+          line={null}
           mark={request.removedBefore === true ? '전에 내보낸 멤버' : undefined}
           name={request.user.name}
         >
@@ -71,7 +61,7 @@ export function RequestsSection({ room, actions }: SectionProps): ReactElement |
   );
 }
 
-// `초대 중 {n}`: the invitations the Leader sent into the Quest, each `응답 대기` until the Friend answers.
+// `초대 중 {n}`: the invitations the Leader sent into the Quest, dimmed until the Friend answers.
 export function InvitationsSection({ room, actions }: SectionProps): ReactElement | null {
   const { quest, leads } = room;
   const invitations: JoinRequest[] = useQuery({ ...sentInvitationsQuery(quest.id), enabled: leads }).data ?? [];
@@ -80,14 +70,14 @@ export function InvitationsSection({ room, actions }: SectionProps): ReactElemen
   }
   return (
     <View accessibilityLabel="초대 중" style={styles.section}>
-      <Heading>{`초대 중 ${invitations.length}`}</Heading>
-      {invitations.map((invitation) => (
+      <SectionTitle icon="send">{`초대 중 ${invitations.length}`}</SectionTitle>
+      {invitations.map((invitation, index) => (
         <PersonRow
           department={invitation.user.department}
           dimmed
           key={invitation.id}
-          line="응답 대기"
-          lineInk={STATE_INK.waiting}
+          last={index === invitations.length - 1}
+          line={null}
           name={invitation.user.name}
         >
           <Button onPress={() => void actions.cancelInvitation(quest.id, invitation)} variant="secondary">
@@ -100,15 +90,8 @@ export function InvitationsSection({ room, actions }: SectionProps): ReactElemen
 }
 
 // A press on a member the User sees shows them on the map with their card, as the friend list does.
-function useShowMember(): (member: MemberView) => void {
-  const showToast = useToast();
-  return (member) => {
-    if (member.seen) {
-      router.dismissTo({ pathname: '/main', params: { person: member.id } });
-    } else {
-      showToast(`${member.name}님은 위치가 꺼져 있어요`, undefined, 'alert');
-    }
-  };
+function showMember(member: MemberView): void {
+  router.dismissTo({ pathname: '/main', params: { person: member.id } });
 }
 
 // What a press on one of a member row's icons asks before it acts.
@@ -175,27 +158,28 @@ function MemberControls({
 interface MemberRowProps {
   room: RoomView;
   member: MemberView;
+  last: boolean;
   // `301동 앞까지 도보 8분` or `301동 앞에 있어요`, after the state of a member who shares.
   walk: string | undefined;
   onAsk: (action: AskAction) => void;
 }
 
-// A Holder, with the icons on every other row.
-function MemberRow({ room, member, walk, onAsk }: MemberRowProps): ReactElement {
-  const show = useShowMember();
+// A Holder, with the icons on every other row. Only one the User sees takes a press.
+function MemberRow({ room, member, last, walk, onAsk }: MemberRowProps): ReactElement {
   const words = [member.late, member.state?.words, walk].filter((part) => part !== null && part !== undefined);
   return (
     <PersonRow
       department={member.department}
+      last={last}
       leader={member.leader}
       line={words.length === 0 ? null : words.join(' · ')}
       lineInk={member.late === null ? (member.state === null ? undefined : STATE_INK[member.state.tone]) : color.quest}
       name={member.name}
       onPress={
-        member.me
+        member.me || !member.seen
           ? undefined
           : () => {
-              show(member);
+              showMember(member);
             }
       }
     >
@@ -243,27 +227,25 @@ function AskDialog({
 }
 
 // `멤버 {n}`: the Holders, the Leader marked, with what the User sees of each while in the Party and how far each who
-// shares is on foot (`walks`, by id), and the rows' icons, each of which asks first.
+// shares is on foot (`walks`, by id), and the rows' icons, each of which asks first. An Open or Approval Quest shows
+// its fill at the right, as 찾기's card does.
 export function MembersSection({
   room,
   actions,
   walks,
 }: SectionProps & { walks: Partial<Record<string, string>> }): ReactElement {
-  const { members, left, activation } = room;
+  const { members, fill } = room;
   const [ask, setAsk] = useState<Ask | null>(null);
   const [open, setOpen] = useState(false);
   return (
     <View accessibilityLabel="멤버" style={styles.section}>
-      <Heading aside={left}>{`멤버 ${members.length}`}</Heading>
-      {activation.state === 'waiting' || activation.state === 'declined' ? (
-        <View style={styles.lock}>
-          <Icon color={color.inkMuted} name="lock" size={14} />
-          <Text style={styles.lockWords}>활성화에 참여해야 멤버 위치를 볼 수 있어요</Text>
-        </View>
-      ) : null}
-      {members.map((member) => (
+      <SectionTitle end={fill === null ? null : <Text style={styles.fill}>{fill}</Text>} icon="users">
+        {`멤버 ${members.length}`}
+      </SectionTitle>
+      {members.map((member, index) => (
         <MemberRow
           key={member.id}
+          last={index === members.length - 1}
           member={member}
           onAsk={(action) => {
             setAsk({ action, member });
@@ -288,18 +270,6 @@ export function MembersSection({
 
 const styles = StyleSheet.create({
   section: { gap: space[1] },
-  heading: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  headingWords: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, color: color.ink },
-  aside: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
-  lock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: space[2],
-    paddingHorizontal: space[3],
-    borderRadius: 10,
-    backgroundColor: '#F0F2F6',
-  },
-  lockWords: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
+  fill: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: color.party },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
 });

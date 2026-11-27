@@ -3,15 +3,17 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
 import { isRefusal } from '@/api/errors';
-import { friendsQuery, myPartyQuery, partiesQuery, questQuery } from '@/api/queries';
+import { friendsQuery, lobbyQuery, myPartyQuery, partiesQuery, questQuery } from '@/api/queries';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { ShownQuest } from '@/api/quest-parts-types';
-import type { Friend, MyParty, Party } from '@/api/types';
+import type { Friend, Lobby, MyParty, Party } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
+import { now } from '@/clock';
 import { declinedPartiesQuery } from '@/features/parties/declined';
 import { type RoomView, toRoom } from './room-adapter';
 
@@ -26,11 +28,12 @@ type Results = [
   UseQueryResult<Party[]>,
   UseQueryResult<string[]>,
   UseQueryResult<Friend[]>,
+  UseQueryResult<Lobby>,
 ];
 
-// The Friends only tell whom the User sees, and never fail the room.
+// The Friends only tell whom the User sees, and the Lobby whether the Master Switch is on: neither fails the room.
 function combine(results: Results): RoomData {
-  const [quest, myParty, parties, declined, friends] = results;
+  const [quest, myParty, parties, declined, friends, lobby] = results;
   const needed = [quest, myParty, parties, declined];
   const isPending = somePending(needed);
   const isError = someFailed(needed);
@@ -45,6 +48,8 @@ function combine(results: Results): RoomData {
             declined: declined.data ?? [],
             seenFriends: (friends.data ?? []).filter(({ visible }) => visible).map(({ id }) => id),
             meId: myUserId(),
+            masterOn: lobby.data?.masterSwitch !== false,
+            now: now(),
           }),
     isPending,
     isError,
@@ -56,7 +61,7 @@ function combine(results: Results): RoomData {
 // A Quest's room: the Quest, its 활성화 and its members.
 export function useRoom(questId: string): RoomData {
   return useQueries({
-    queries: [questQuery(questId), myPartyQuery, partiesQuery, declinedPartiesQuery, friendsQuery],
+    queries: [questQuery(questId), myPartyQuery, partiesQuery, declinedPartiesQuery, friendsQuery, lobbyQuery],
     combine,
   });
 }

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +13,6 @@ import { myUserId } from '@/auth/sign-in';
 import { Button } from '@/design-system';
 import { heldAlone } from '@/features/quests/adapter';
 import { otherPartyOf } from '@/features/quests/room-adapter';
-import { useMasterSwitch } from '@/features/sharing/use-master-switch';
 import { leavingOf, openAsk } from '../room/activation-box';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
@@ -23,7 +23,6 @@ import { useRoomActions } from '../room/use-room-actions';
 export function PartyOnButton({ questId }: { questId: string }): ReactElement | null {
   const myParty = useQuery(myPartyQuery).data;
   const quest = useQuery(questsQuery).data?.find(({ id }) => id === questId);
-  const masterSwitch = useMasterSwitch().on;
   const actions = useRoomActions();
   const [ask, setAsk] = useState<Ask | null>(null);
   if (myParty === undefined || quest === undefined || heldAlone(quest) || myParty?.quest?.id === questId) {
@@ -32,7 +31,7 @@ export function PartyOnButton({ questId }: { questId: string }): ReactElement | 
   const others = quest.holders.length - 1;
   const otherParty = otherPartyOf(myParty, false, myUserId());
   const open = (): void => {
-    void actions.openParty(quest, others, leavingOf(otherParty));
+    void actions.openParty(quest, leavingOf(otherParty));
   };
   return (
     <>
@@ -41,7 +40,7 @@ export function PartyOnButton({ questId }: { questId: string }): ReactElement | 
           if (otherParty === null) {
             open();
           } else {
-            setAsk(openAsk(others, otherParty, masterSwitch, open));
+            setAsk(openAsk(others, otherParty, open));
           }
         }}
         variant="secondary"

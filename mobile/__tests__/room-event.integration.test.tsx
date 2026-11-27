@@ -18,8 +18,9 @@ import { startFresh } from './support/mocks';
 import { answerRoom, openRoom } from './support/room';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
-// The card of a Quest's Global Event in its room, against the fake main server: a press shows the 행사 tab's detail
-// sheet over the room, without its party button, for an event the app's list holds.
+// The line of a Quest's Global Event in its room's time and place box, against the fake main server: blue with a ›,
+// and a press shows the 행사 tab's detail sheet over the room, without its party button, for an event the app's list
+// holds (P06 ticket 19).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -62,12 +63,16 @@ function sheet(): ReturnType<typeof within> {
   return within(screen.getByTestId('event-detail'));
 }
 
-describe("a press on the event's card in a Quest's room", () => {
+describe("a press on the event's line in a Quest's room", () => {
   it('opens the detail sheet over the room, with 원문 보기 and no party button, and its scrim closes it', async () => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
     answerRoom(server, MY_CAREER);
     answerEvents(server, { quests: [DINNER, MY_CAREER] });
     const user = await openRoom(MY_CAREER);
+    const line = screen.getByRole('button', { name: `행사 · ${CAREER.title}` });
+    expect(within(line).getByTestId('event-line')).toHaveStyle({ flexDirection: 'row' });
+    expect(within(line).getByTestId('event-chevron', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByText('공식 행사')).toBeNull();
 
     await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
     await pass(500);
@@ -110,11 +115,11 @@ describe("a press on the event's card in a Quest's room", () => {
   });
 });
 
-describe("the event's card in a Quest's room, for an event the app's list does not hold", () => {
+describe("the event's line in a Quest's room, for an event the app's list does not hold", () => {
   it.each([
     ['that ended or was withdrawn, so the list lacks it', { status: 200, body: [MAJOR, BOOK_TALK] }],
     ['whose list failed', refusal(500)],
-  ])('leaves the card unpressable for an event %s', async (_case, events) => {
+  ])('leaves the line without the › and unpressable for an event %s', async (_case, events) => {
     answerRoom(server, MY_CAREER);
     answerEvents(server, { quests: [DINNER, MY_CAREER] });
     server.on('GET /global-events', events);
@@ -123,6 +128,7 @@ describe("the event's card in a Quest's room, for an event the app's list does n
     expect(screen.queryByRole('button', { name: `행사 · ${CAREER.title}` })).toBeNull();
     const eventCard = screen.getByLabelText(`행사 · ${CAREER.title}`);
     expect(within(eventCard).getByText(CAREER.title)).toBeVisible();
+    expect(screen.queryByTestId('event-chevron', { includeHiddenElements: true })).toBeNull();
     await user.press(eventCard);
     await pass(500);
 
