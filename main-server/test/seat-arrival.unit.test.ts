@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { checkBooking } from '../src/assistant/library/booking-rules.js';
@@ -246,9 +247,7 @@ describe('The words of a filled seat', () => {
     const words = filledWords(filled, leaveByOf(night, filled.arrival.at, '13:00'), '13:00');
 
     expect(filled.note).toBe('07:00 열 때부터 최대 시간으로 채웠어요');
-    expect(words).toBe(
-      '07:00 열 때부터예요. 11:00 일정이라 10:56엔 나서요. 13:00까지 쓰지 않으면 카드에서 끝 시간을 당겨요. ',
-    );
+    expect(words).toBe('07:00 열 때부터예요. 11:00 일정이라 10:56엔 나서요. 13:00까지 쓰지 않으면 끝 시간을 당겨요. ');
     expect(words).not.toContain('04:');
   });
 
