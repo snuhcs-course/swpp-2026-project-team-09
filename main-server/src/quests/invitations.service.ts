@@ -73,7 +73,8 @@ export class InvitationsService {
   ) {}
 
   // Refused into a Quest its Holders fill at that moment. Waiting invitations take no place, so a Quest with places
-  // left may invite more Friends than it has places: whoever accepts after it fills hears QUEST_FULL.
+  // left may invite more Friends than it has places: whoever accepts after it fills hears QUEST_FULL. create() alone,
+  // which a Plan and a room request invite through, checks no capacity.
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
     const created = await this.prisma.$transaction(async (tx) => {
       const quest = await this.leader.lockLed(questId, leaderId, tx);

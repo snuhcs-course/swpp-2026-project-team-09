@@ -36,34 +36,35 @@ import { useAskForPush } from '@/push/push-ask-host';
 import { trackAction } from '@/telemetry';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
-// Inviting into a 파티 its members fill at that moment; one with places left invites any number.
+// Inviting into a 파티 its Holders fill at that moment; one with places left invites any number.
 const FULL_TO_INVITE = '자리가 다 차서 초대할 수 없어요';
 
-// The Friends the main server refused to invite, and whether it refused because the 파티 was full at that moment.
-interface Missed {
+// The Friends the main server refused to invite, and whether any was refused because the 파티 was full at that moment,
+// which the toast says in place of the count: the Friends refused otherwise are the same 파티's.
+interface InviteRefusals {
   count: number;
   full: boolean;
 }
 
 // Invites each Friend.
-async function invite(questId: string, friends: readonly string[]): Promise<Missed> {
+async function invite(questId: string, friends: readonly string[]): Promise<InviteRefusals> {
   const answers = await Promise.allSettled(friends.map((userId) => apiClient.inviteToQuest(questId, userId)));
   const refused = answers.flatMap((answer) => (answer.status === 'rejected' ? [answer.reason as unknown] : []));
   return { count: refused.length, full: refused.some((error) => isRefusal(error, 409, 'QUEST_FULL')) };
 }
 
 // "파티를 올렸어요 · 2명에게 초대 요청", and the Friends the main server refused after it.
-function toastOf(form: PartyForm, editing: boolean, invited: number, missed: Missed): string {
+function toastOf(form: PartyForm, editing: boolean, invited: number, refused: InviteRefusals): string {
   const done = editing
     ? '모집글을 수정했어요'
     : form.visibility === 'private'
       ? '비공개 파티를 만들었어요'
       : '파티를 올렸어요';
   const main = editing || invited === 0 ? done : `${done} · ${String(invited)}명에게 초대 요청`;
-  if (missed.count === 0) {
+  if (refused.count === 0) {
     return main;
   }
-  return `${main} · ${missed.full ? FULL_TO_INVITE : `${String(missed.count)}명은 초대하지 못했어요`}`;
+  return `${main} · ${refused.full ? FULL_TO_INVITE : `${String(refused.count)}명은 초대하지 못했어요`}`;
 }
 
 // An edit: the Quest's fields, what the phone keeps, then the time and place of its plan.
@@ -143,13 +144,13 @@ export function useSendParty(
         return { sent: 'room', questId, toast: refusalWords(error, {}, NOT_SAVED) };
       }
     }
-    const missed = await invite(questId, friends);
-    const invited = friends.length - missed.count;
+    const refused = await invite(questId, friends);
+    const invited = friends.length - refused.count;
     refetch();
     if (invited > 0) {
       askForPush();
     }
-    return { sent: 'taken', questId, toast: toastOf(form, quest !== null, invited, missed) };
+    return { sent: 'taken', questId, toast: toastOf(form, quest !== null, invited, refused) };
   };
 }
 

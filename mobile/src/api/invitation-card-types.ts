@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { AnswerLine, MapScene, PlacePoint } from './assistant-types';
-import type { SubQuest } from './types';
+import type { Person, SubQuest } from './types';
 import type { QuestSummary } from './waiting-types';
 
 // GET /quest-invitations/:id: an invitation as the invited User opens it, as main-server
@@ -14,6 +15,8 @@ export interface InvitationCard {
   id: string;
   sentAt: string;
   quest: QuestSummary;
+  // The Leader who sent it, who may no longer lead the Quest; the Quest's Leader for one that kept no sender.
+  invitedBy: Person;
   // The Leader first, then in the order they entered.
   holders: { id: string; name: string }[];
   // In the order of their starts, those without one last.

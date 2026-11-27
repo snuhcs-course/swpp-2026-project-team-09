@@ -6,12 +6,15 @@
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
+import request from 'supertest';
 import { inject } from 'vitest';
+import { z } from 'zod';
 import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { befriend, signInUser, TestUser } from './friends.js';
 import { getInvitations, handOver, invite } from './quest-recruiting.js';
 import { connectToDatabase, joinQuest, ownQuest } from './quests.js';
 import { refused } from './signals.js';
+import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
 // Who an invitation names as its sender, and inviting into a full 파티 (P06 ticket 31): the card names the Leader who
@@ -30,11 +33,13 @@ afterAll(async () => {
   await app.close();
 });
 
-// A Leader's Open Quest of two places that `member` entered, and `friend`, a Friend of the Leader outside it.
-async function heldWithMember(): Promise<{ leader: TestUser; member: TestUser; friend: TestUser; questId: string }> {
+// A Leader's Open Quest of `capacity` places that `member` entered, and `friend`, a Friend of the Leader outside it.
+async function heldWithMember(
+  capacity = 3,
+): Promise<{ leader: TestUser; member: TestUser; friend: TestUser; questId: string }> {
   const [leader, member, friend] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
   await befriend(app, leader, friend);
-  const questId = await ownQuest(app, leader, { joinPolicy: 'open', capacity: 3 });
+  const questId = await ownQuest(app, leader, { joinPolicy: 'open', capacity });
   await joinQuest(app, member, questId).expect(201);
   return { leader, member, friend, questId };
 }
@@ -49,6 +54,12 @@ describe('An invitation as the invited User lists it', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject([{ invitedBy: { id: leader.id }, quest: { leader: { id: member.id } } }]);
+    const [{ id }] = z.array(z.object({ id: z.string() })).parse(response.body);
+    const card = await withAccessToken(
+      request(app.getHttpServer()).get(`/quest-invitations/${id}`),
+      friend.accessToken,
+    );
+    expect(card.body).toMatchObject({ invitedBy: { id: leader.id } });
   });
 
   it('names the Quest’s Leader for an invitation sent before the sender was kept', async () => {
@@ -65,10 +76,7 @@ describe('An invitation as the invited User lists it', () => {
 
 describe('Inviting into a 파티', () => {
   it('is refused once its Holders fill it, and leaves no invitation', async () => {
-    const [leader, member, friend] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
-    await befriend(app, leader, friend);
-    const questId = await ownQuest(app, leader, { joinPolicy: 'open', capacity: 2 });
-    await joinQuest(app, member, questId).expect(201);
+    const { leader, friend, questId } = await heldWithMember(2);
 
     const response = await invite(app, leader, questId, friend.id);
 
