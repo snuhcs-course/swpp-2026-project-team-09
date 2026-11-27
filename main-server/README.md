@@ -2576,6 +2576,29 @@ Anthropic API as the AI's key says
   without `answers` gets none of the above, and its reply is as before. Two requests of one kind and day share a key,
   and the second replaces the first: two meets, two new 파티, two study requests both alone or both together.
 
+  For such an app a reply's `steps` are the conversation's (P05 ticket 74, `src/assistant/steps/all-steps.ts`):
+  - The request's context may carry `steps`: the reply's `steps` on screen, whole and in order, at most 32. An answer's
+    step without a key is left out, and a step sent twice counts once. `context.answers` comes in the order of the
+    answer steps, and the server pairs them by that order, so an answer keeps the key it has on screen.
+  - The reply's `steps` are the steps on screen, with this message's answers in place of those of the same request,
+    its bookings in place of one of the same unit that day, and its new steps among them by time. They come whenever
+    there are two or more. An answer's step is `shows: { kind: 'answer', key }`. Titles and labels are at most 200
+    characters, reasons 500.
+  - A step that can move (a meal, a meet, a study place) sets out from the place of the step before it, not before it
+    ends: the asker's `from` and `notBefore` constraints with `source: 'step'`, which the server sets again whenever
+    that step changes, while a start the User named (`asker`) holds. It sets out from no step when a Class or Quest of
+    the asker's lies between them. A step whose conditions change is planned again and comes back in `answers` by its
+    key; one that cannot be is `not-done` ("앞 일정이 바뀌었는데 다시 짜지 못했어요").
+  - A step at a fixed time (the events of a day, Quests, a new 파티) never moves. One that starts before a step done
+    before it ends is `not-done` ("앞 일정이 HH:MM에 끝나 제때 갈 수 없어요").
+
+  For every app that draws answers, the steps hold one step per booking request: a refusal leaves once a seat or room of
+  the same unit that day is booked, and of two refusals of one space the last stands. A meal follows a step that
+  starts before an hour-long meal could come first in its window. A step without a plan comes after those with one.
+  When the server plans a meal again from the step before it and the plan is not the one the model worded, the
+  model's words stay and one sentence is added for that step ("앞 일정에 맞춰 13:05 학생회관식당에서 점심으로
+  바꿨어요.").
+
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend
   counts once, and the Friend's own name replaces the one sent (`src/assistant/mentions.ts`). The run's tools take the

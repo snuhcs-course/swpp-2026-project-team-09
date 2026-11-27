@@ -37,11 +37,10 @@ import {
 } from 'ai';
 import { withApprovalLine } from './approval-line.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
-import { withoutWalkSentences } from './gathering/plan-reply.js';
 import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
-import { keptRefusal, lookupBeside, textBeside } from './refusals/refusals.js';
-import { warnsOfNoText, wordlessText } from './wordless-reply.js';
+import { keptRefusal, lookupBeside } from './refusals/refusals.js';
+import { saidText, warnsOfNoText, wordlessText } from './wordless-reply.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -355,7 +354,7 @@ async function replyOf(
   if (presented.answer !== null || presented.lookup !== null || presented.refusal !== null) {
     delete presented.offers;
   }
-  const said = textBeside(withoutWalkSentences(text, (presented.answer?.plans.length ?? 0) > 0), presented.refusal);
+  const said = saidText(text, presented);
   if (said !== '') {
     return { ...presented, text: said, noTextFinishReason: null };
   }

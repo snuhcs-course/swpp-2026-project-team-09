@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { anthropicModel, openRouterModel, runFeature } from '../src/assistant/adapter.js';
+import { bareHourRule } from '../src/assistant/bare-hours.js';
 import { CAMPUS_TERMS_RULES } from '../src/assistant/campus-terms.js';
 import { chatAssistant, type ChatAssistantServices } from '../src/assistant/chat/chat-assistant.js';
 import { NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
@@ -27,8 +29,10 @@ beforeAll(async () => {
 
 const ALL = { drawsAnswers: true, drawsEvents: true, drawsMeets: true, drawsArea: true };
 
-const NOW_LINE = (time: string): string =>
-  `Now in Korea: ${time} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.`;
+// The time of the request, then what an hour said bare means at it (P05 ticket 75).
+const NOW_LINE = (time: string, at: string): string =>
+  `Now in Korea: ${time} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
+${bareHourRule(new Date(at))}`;
 
 // Answers every request with the provider's text reply, and keeps each request's body.
 function fakeApi(reply: () => Response): { bodies: Json[]; fetch: typeof globalThis.fetch } {
@@ -109,8 +113,8 @@ describe('The chat on the Anthropic path, caching by breakpoints', () => {
     expect(cachedPrefix(one)).toBe(cachedPrefix(other));
     expect(one.tools.length).toBeGreaterThan(0);
     // After the breakpoint, each request's own time.
-    expect(one.system.at(-1)?.text).toBe(NOW_LINE('2026-11-18 Wednesday 09:05'));
-    expect(other.system.at(-1)?.text).toBe(NOW_LINE('2026-11-21 Saturday 12:41'));
+    expect(one.system.at(-1)?.text).toBe(NOW_LINE('2026-11-18 Wednesday 09:05', '2026-11-18T00:05:00Z'));
+    expect(other.system.at(-1)?.text).toBe(NOW_LINE('2026-11-21 Saturday 12:41', '2026-11-21T03:41:00Z'));
   });
 
   it('marks the stable block and sends the time after it, in the same words', async () => {
@@ -128,7 +132,7 @@ describe('The chat on the Anthropic path, caching by breakpoints', () => {
     const [body] = api.bodies as AnthropicBody[];
     expect(body.system).toEqual([
       { type: 'text', text: feature.instructions, cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: NOW_LINE('2026-11-18 Wednesday 09:05') },
+      { type: 'text', text: NOW_LINE('2026-11-18 Wednesday 09:05', '2026-11-18T00:05:00Z') },
     ]);
   });
 });
@@ -151,7 +155,10 @@ describe('The chat on the OpenRouter path', () => {
     // Both system messages, in order, before the conversation: the stable part, then the time of the request.
     expect(openRouterBody.messages.slice(0, 2)).toEqual([
       { role: 'system', content: [{ type: 'text', text: feature.instructions }] },
-      { role: 'system', content: [{ type: 'text', text: NOW_LINE('2026-11-18 Wednesday 09:05') }] },
+      {
+        role: 'system',
+        content: [{ type: 'text', text: NOW_LINE('2026-11-18 Wednesday 09:05', '2026-11-18T00:05:00Z') }],
+      },
     ]);
     expect(systemMessages).toHaveLength(2);
     expect(systemMessages).toEqual(
@@ -170,8 +177,10 @@ describe("The chat's system prompt", () => {
     expect(feature.instructions).not.toContain('Now in Korea');
     expect(feature.instructions).toContain(CAMPUS_TERMS_RULES);
     expect(feature.requestInstructions?.(new Date('2026-11-18T00:05:00Z'))).toBe(
-      NOW_LINE('2026-11-18 Wednesday 09:05'),
+      NOW_LINE('2026-11-18 Wednesday 09:05', '2026-11-18T00:05:00Z'),
     );
-    expect(feature.requestInstructions?.(new Date('2026-11-21T14:59:00Z'))).toBe(NOW_LINE('2026-11-21 Saturday 23:59'));
+    expect(feature.requestInstructions?.(new Date('2026-11-21T14:59:00Z'))).toBe(
+      NOW_LINE('2026-11-21 Saturday 23:59', '2026-11-21T14:59:00Z'),
+    );
   });
 });

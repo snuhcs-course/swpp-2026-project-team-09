@@ -12,16 +12,15 @@
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
-import Reanimated from 'react-native-reanimated';
+import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import type { AnswerReply, LibrarySpace, Plan } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import type { Lookup } from '@/api/lookup-types';
-import { color, radius, shadow, space } from '@/design-system';
+import { radius, space } from '@/design-system';
 import { windowOf } from '@/features/assistant/plan-input';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -44,9 +43,11 @@ import { PickHint } from './sheet-hint';
 import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
-import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
+import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
+import { CARD_FACE, Grip, STRIP_TOP } from './time-card-strip';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
+import { restingLift, type TopStops } from './top-stops';
 
 const NO_WINDOW = { from: null, until: null };
 const NO_QUESTS: readonly Quest[] = [];
@@ -54,8 +55,6 @@ const NO_QUESTS: readonly Quest[] = [];
 // usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
 // the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
 const ADD_ROOM = 72;
-// The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
-const STRIP_TOP = space[1];
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
@@ -79,35 +78,6 @@ interface BarProps {
   offset?: number;
   // People are picked in its rows (P04 ticket 64), which opens it.
   picking?: Picking | null;
-}
-
-// The bar's grip in its strip, the card's whole width at its bottom (the user's phone check), under a hairline that
-// parts it from the card's content as the answer sheet's header is parted, left out when the card is tucked to the
-// strip alone. A drag anywhere on the strip moves the card between tucked, its place, and open (`useTimeCardGrip`); a
-// press opens it or folds it again, and a screen reader tucks it away or back.
-function Grip(p: { grip: TimeCardGrip; folded: boolean; onLayout: (event: LayoutChangeEvent) => void }): ReactElement {
-  const { grip, folded } = p;
-  return (
-    <GestureDetector gesture={grip.pan}>
-      <Pressable
-        accessibilityActions={grip.actions}
-        accessibilityLabel={`사람별 시간 ${folded ? '펼치기' : '접기'}`}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: !folded }}
-        hitSlop={STRIP_SLOP}
-        onAccessibilityAction={({ nativeEvent }) => {
-          grip.onAction(nativeEvent.actionName);
-        }}
-        onLayout={p.onLayout}
-        onPress={grip.toggle}
-        style={styles.strip}
-        testID="time-card-grip"
-      >
-        {grip.place === 'tucked' ? null : <View style={styles.rule} testID="time-card-rule" />}
-        <View style={styles.grip} />
-      </Pressable>
-    </GestureDetector>
-  );
 }
 
 // The rows for each person under the open card, in the room that grows as the card is pulled open.
@@ -140,7 +110,41 @@ function OpenRows(p: {
 // and the rest scrolled to (P04 ticket 61); people are picked in those rows (P04 ticket 64). A time outside that range
 // is asked for in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
 // folded one: open, it lies over the map for a while.
-function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: BarProps): ReactElement {
+// Under the bar of several requests it is the top's last card (P01 ticket 22): it folds behind that bar, then takes the
+// bar up to the stage's top, its grip strip showing all the way (`top-stops.tsx`).
+function Bar(props: BarProps): ReactElement {
+  const sheet = use(SheetLinkContext);
+  return <TimeCard {...props} under={(props.offset ?? 0) > 0 ? sheet.top : undefined} />;
+}
+
+// Under the bar of several requests the card stands in a frame that starts inside that bar, under its rounded top, and
+// moves with the bar's lift: no part of the card ever shows above the bar, however tall it is (the fault P01 ticket 22
+// removes), and past its place behind the bar it goes up with the bar.
+function UnderFrame({ under, children }: { under: TopStops; children: ReactNode }): ReactElement {
+  const { top } = useSafeAreaInsets();
+  const { lift } = under;
+  const moved = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
+  const rested = { transform: [{ translateY: restingLift(under.stop, barTop(top) + under.stepsHeight) }] };
+  return (
+    <Reanimated.View style={[styles.frame, { top: frameTop(top) }, moved, rested]} testID="time-card-frame">
+      {children}
+    </Reanimated.View>
+  );
+}
+
+function frameTop(inset: number): number {
+  return barTop(inset) + radius.xl;
+}
+
+function TimeCard({
+  band,
+  day,
+  add = null,
+  onHeight,
+  offset = 0,
+  picking = null,
+  under,
+}: BarProps & { under: TopStops | undefined }): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
   const [rows, setRows] = useState(0);
@@ -148,10 +152,13 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
   const barY = barTop(top) + offset;
   const { startAt, now } = band.band;
   const sheet = use(SheetLinkContext);
-  const grip = useTimeCardGrip({ height, top: barY, rows, sheet });
+  const grip = useTimeCardGrip({ height, top: barY, rows, sheet, under });
   usePickingPlace(picking !== null, grip, sheet.high);
-  return (
-    <Reanimated.View style={[styles.bar, { top: barY }, grip.moved, grip.rested]} testID="time-bar">
+  const card = (
+    <Reanimated.View
+      style={[styles.bar, { top: under === undefined ? barY : barY - frameTop(top) }, grip.moved, grip.rested]}
+      testID="time-bar"
+    >
       <View onLayout={onBand} testID="time-card-head">
         <TimeBand
           {...band}
@@ -176,6 +183,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
       {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
     </Reanimated.View>
   );
+  return under === undefined ? card : <UnderFrame under={under}>{card}</UnderFrame>;
 }
 
 interface PlanBarProps {
@@ -316,29 +324,17 @@ function BookingCard(p: {
 }
 
 const styles = StyleSheet.create({
+  frame: { position: 'absolute', right: 0, bottom: 0, left: 0, overflow: 'hidden', pointerEvents: 'box-none' },
   bar: {
     position: 'absolute',
     right: ANSWER_TOP.side,
     left: ANSWER_TOP.side,
     paddingTop: space[3],
     paddingHorizontal: space[4],
-    borderRadius: radius.xl,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
+    ...CARD_FACE,
   },
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
-  // The card's whole width, its padding included, 20 high from the hairline to the card's edge (`TUCK_STRIP`).
-  strip: { alignItems: 'center', marginTop: STRIP_TOP, marginHorizontal: -space[4], paddingVertical: space[2] },
-  rule: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    left: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: color.border,
-  },
-  grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
   // the track starts below both (P04 ticket 45).
   add: { position: 'absolute', top: space[3], right: space[3] },
