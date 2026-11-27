@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -88,17 +89,14 @@ describe('The Leader ending a Shared Quest', () => {
 });
 
 describe('The Leader ending the Quest of a running Party', () => {
-  it('leaves the Party going on, tied to no Quest', async () => {
+  it('closes the Party with it (P06 ticket 23)', async () => {
     const [leader, member] = await Promise.all([signInUser(app), signInUser(app)]);
-    const { partyId, questId } = await partyOfHolders(app, leader, [member]);
+    const { questId } = await partyOfHolders(app, leader, [member]);
 
     await endQuest(app, leader, questId);
 
-    expect((await getMyParty(app, member)).body).toMatchObject({
-      id: partyId,
-      quest: null,
-      members: [{ id: leader.id }, { id: member.id }],
-    });
+    expect((await getMyParty(app, member)).body).toMatchObject(refused(404, 'NOT_IN_PARTY'));
+    expect((await getMyParty(app, leader)).body).toMatchObject(refused(404, 'NOT_IN_PARTY'));
   });
 });
 
