@@ -175,19 +175,21 @@ function TimeCard({
       style={[styles.bar, { top: under === undefined ? barY : barY - frameTop(top) }, grip.moved, grip.rested]}
       testID="time-bar"
     >
-      {caret === undefined ? null : <Caret at={caret} />}
-      <View onLayout={onBand} testID="time-card-head">
-        <TimeBand
-          {...band}
-          day={day ?? koreaDayWord(startAt, new Date(now))}
-          folded
-          head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
-        />
+      <View style={styles.face}>
+        <View onLayout={onBand} testID="time-card-head">
+          <TimeBand
+            {...band}
+            day={day ?? koreaDayWord(startAt, new Date(now))}
+            folded
+            head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
+          />
+        </View>
+        <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
+        {add === null ? null : <AddSlot add={add} onWidth={setAddWidth} />}
+        <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
+        {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
       </View>
-      <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
-      {add === null ? null : <AddSlot add={add} onWidth={setAddWidth} />}
-      <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
-      {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
+      {caret === undefined ? null : <Caret at={caret} />}
     </Reanimated.View>
   );
   return under === undefined ? card : <UnderFrame under={under}>{card}</UnderFrame>;
@@ -319,14 +321,10 @@ function BookingCard(p: {
 
 const styles = StyleSheet.create({
   frame: { position: 'absolute', right: 0, bottom: 0, left: 0, overflow: 'hidden', pointerEvents: 'box-none' },
-  bar: {
-    position: 'absolute',
-    right: ANSWER_TOP.side,
-    left: ANSWER_TOP.side,
-    paddingTop: space[3],
-    paddingHorizontal: space[4],
-    ...CARD_FACE,
-  },
+  // The card's place, which moves; its face is inside, and the caret over the face's top edge beside it, outside both
+  // bounds: Android draws a child outside its parent only where the parent says so (P01 ticket 23).
+  bar: { position: 'absolute', right: ANSWER_TOP.side, left: ANSWER_TOP.side, overflow: 'visible' },
+  face: { paddingTop: space[3], paddingHorizontal: space[4], ...CARD_FACE },
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and

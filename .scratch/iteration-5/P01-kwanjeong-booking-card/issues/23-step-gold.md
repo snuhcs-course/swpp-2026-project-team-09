@@ -24,6 +24,7 @@ On an answer to several requests the steps card draws the chosen step's words an
 - [x] The caret stands under the chosen span's middle, at the share of the bar's range that middle takes. (Unit test `steps-caret`; the same integration test.)
 - [x] A press on another step's flag moves the gold; at a seat step there is no caret. (The same integration test.)
 - [x] The caret is drawn outside the card's layout (absolute, `time-card-strip.tsx`), so the card's place and told height are as before.
+- [x] The caret shows on Android. On the emulator (2026-11-28), as a child of the rounded face it was clipped at the face's edge, and only its half hidden on the white was drawn. It now stands beside the face, in the card's moving place, which draws outside itself (`overflow: 'visible'`). It has the approved page's soft shadow, so it reads over a light map. (`answer-steps-gold` pins where it stands; the emulator pictures show it.)
 - [ ] Pictures at 1.0 and 1.3 with ① and with ② chosen. (Waiting on the emulator.)
 
 ## Comments

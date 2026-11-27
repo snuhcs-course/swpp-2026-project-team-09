@@ -106,6 +106,14 @@ describe('the chosen step on the bar of several requests', () => {
 
     expect(screen.getAllByTestId('time-card-caret')).toHaveLength(1);
     expect(caretAt()).toBeCloseTo(DINNER_MIDDLE, 6);
+    // The emulator, 2026-11-28: as a child of the rounded face the caret was clipped at the face's edge on Android, and
+    // only its hidden half was drawn. It stands beside the face, in the card's moving place, which draws outside itself.
+    const place = screen.getByTestId('time-card-caret').parent?.parent;
+    expect(place?.props.testID).toBe('time-bar');
+    const placeStyle: unknown = place?.props.style;
+    expect(StyleSheet.flatten<ViewStyle>(Array.isArray(placeStyle) ? placeStyle : [placeStyle])).toMatchObject({
+      overflow: 'visible',
+    });
   });
 
   it('moves with a press on a flag: the seat in gold with no caret, as it has no time card, and back', async () => {

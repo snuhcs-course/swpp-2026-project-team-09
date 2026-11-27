@@ -102,6 +102,8 @@ const styles = StyleSheet.create({
     marginLeft: -CARET / 2,
     borderRadius: 2,
     backgroundColor: color.surface,
+    // The approved page's soft edge, so that the caret reads over a light map.
+    boxShadow: '-2px -2px 3px rgba(20, 30, 60, 0.08)',
     transform: [{ rotate: '45deg' }],
   },
 });
