@@ -1,0 +1,7 @@
+{
+  "kind": "DataTableNode",
+  "source": {
+    "kind": "HogQLQuery",
+    "query": "select day, action, sum(r) as app_requested, sum(s) as server_completed, sum(c) as app_completed, round(sum(s) / nullIf(sum(r), 0), 3) as reached_server, round(sum(c) / nullIf(sum(s), 0), 3) as reached_phone from ( select toDate(timestamp) as day, replaceRegexpOne(event, '_(requested|completed)$', '') as action, if(endsWith(event,'_requested') and properties.source = 'app', 1, 0) as r, if(endsWith(event,'_completed') and properties.source = 'server' and not (properties.how = 'requests_crossed'), if(event = 'friendship_creation_completed', 0.5, 1), 0) as s, if(endsWith(event,'_completed') and properties.source = 'app', 1, 0) as c from events where timestamp > now() - interval 14 day and event in ('assistant_reply_requested','assistant_reply_completed','party_creation_requested','party_creation_completed','party_join_requested','party_join_completed','friendship_creation_requested','friendship_creation_completed') ) group by day, action order by day desc, action"
+  }
+}

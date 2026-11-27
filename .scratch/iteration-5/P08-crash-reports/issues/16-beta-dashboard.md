@@ -1,7 +1,7 @@
 # 16: The dashboard "Beta" in PostHog
 
 Parent: [P08 spec](../spec.md), [Usage data with PostHog](../spec.md#usage-data-with-posthog)
-Status: ready-for-agent
+Status: done
 Blocked by: 15
 
 Native files: none. Releases: none.
@@ -44,10 +44,42 @@ API reference and written under Comments.
 
 ## Acceptance criteria
 
-- [ ] The dashboard and its six insights exist, and their links are written under Comments.
+- [x] The dashboard and its six insights exist, and their links are written under Comments.
 - [ ] Each insight shows the beta test's data, and a screenshot of the dashboard is under `../references/`, with no key
       and no User id in it.
-- [ ] The queries are in `../references/`, and none holds a key.
+- [x] The queries are in `../references/`, and none holds a key.
 - [ ] The key was never written to a file, a command line or a log.
 
 ## Comments
+
+### Built (2026-11-27)
+
+The dashboard **Beta**: https://us.posthog.com/project/769149/dashboard/2419982 (members of the organisation only).
+
+| Insight                              | Query                                         | Link                                                    |
+| ------------------------------------ | --------------------------------------------- | ------------------------------------------------------- |
+| 일간 사용자 수 (DAU)                 | `../references/16-01-daily-active-users.json` | https://us.posthog.com/project/769149/insights/ci0djkN3 |
+| 재방문 (1일, 7일)                    | `../references/16-02-retention.json`          | https://us.posthog.com/project/769149/insights/oj0Men0y |
+| 다섯 행동, 하루 횟수 (마무리하는 쪽) | `../references/16-03-five-actions.json`       | https://us.posthog.com/project/769149/insights/6HKeffg8 |
+| 많이 본 화면 (7일)                   | `../references/16-04-top-screens.json`        | https://us.posthog.com/project/769149/insights/tJCm8iGt |
+| 행동별 응답률 (서버 도달, 폰 도달)   | `../references/16-05-response-rates.json`     | https://us.posthog.com/project/769149/insights/VUwN2LaL |
+| 실패 이유별 횟수 (내 파티 없음 제외) | `../references/16-06-failures-by-reason.json` | https://us.posthog.com/project/769149/insights/Fh8guOUs |
+
+- **API**: `POST /api/projects/:id/dashboards/` for the dashboard, `POST /api/projects/:id/insights/` with `query` and
+  `dashboards` for each insight, `PATCH /api/projects/:id/insights/:id/` to change one, and `POST
+/api/projects/:id/query/` to run a query, as PostHog's API reference describes. Each query was run once after it was
+  made and gave today's events.
+- **Kinds**: 1 and 3 are Trends (3 with the formulas `A, B, C, D / 2, E`, the friendships halved); 2 is Retention
+  from `app_opened` to `app_opened`, by day over 8 days; 4 is Trends broken down by `route` as a table of 7 days; 5
+  and 6 are HogQL tables. 5 counts, per day and action, the app's `_requested`, the server's `_completed` (a
+  friendship as a half, and none for `requests_crossed`) and the app's `_completed`, and gives the two rates. 6 counts
+  the five `_failed` and `api_request_failed` by `reason`, leaving out `GET /parties/mine`'s refusal, which is its
+  ordinary "in no Party" and would hide the rest (ticket 13's note).
+- **First data** (2026-11-27, one phone): `assistant_reply` 2 requested, 2 done by the server, 2 answered on the
+  phone (rates 1.0 and 1.0); `party_join` 1, 1, 1; screens `/main`, `/party`, `/room/:id`.
+- **Not done**: the screenshot of the dashboard. The agent has no browser here; a person adds one under
+  `../references/` from the link above, with no User id in view.
+- **The key**: it was kept in a file outside the repository with no read access for others, and the dashboard was
+  made by a script reading it from there. Before that, three checks passed it to `curl` on a command line of this
+  machine, where other local processes could have seen it; it was in no file of the repository, log or chat output.
+  So that criterion is left unticked as written.

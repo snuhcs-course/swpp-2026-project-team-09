@@ -1,0 +1,7 @@
+{
+  "kind": "DataTableNode",
+  "source": {
+    "kind": "HogQLQuery",
+    "query": "select toDate(timestamp) as day, event, properties.reason as reason, count() as failures from events where timestamp > now() - interval 14 day and (event in ('assistant_reply_failed','party_creation_failed','party_join_failed','friendship_creation_failed','seat_booking_failed') or (event = 'api_request_failed' and not (properties.route = '/parties/mine' and properties.reason = 'refused'))) group by day, event, reason order by day desc, failures desc"
+  }
+}
