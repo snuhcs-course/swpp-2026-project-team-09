@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDayService } from '../assistant/free-time/user-day.service.js';
-import { type Catalogue, KWANJEONG_PLACE_NUMBER, roomLabelOf } from '../assistant/library/catalogue.js';
+import { appTitleOf } from '../assistant/library/app-names.js';
+import { type Catalogue, KWANJEONG_PLACE_NUMBER } from '../assistant/library/catalogue.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
@@ -63,7 +65,7 @@ export class SeatStaysService {
       kwanjeong === null
         ? null
         : seatLeaveBy(items, { startsAt, endsAt, placeId: kwanjeong.id }, this.walkingMinutes, this.clock.now());
-    const title = roomLabelOf(space, spaceId);
+    const title = appTitleOf(space);
     const questId = await this.prisma.$transaction((tx) =>
       this.quests.createWithSubQuest(
         {

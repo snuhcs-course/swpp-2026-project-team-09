@@ -3,13 +3,14 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useInsets } from './insets';
 import { Icon, type IconName } from './icon';
-import { color, font, size, space, text } from './tokens';
+import { color, font, size, space } from './tokens';
 
 interface IconButtonProps {
   icon: IconName;
@@ -32,6 +33,10 @@ export function IconButton({ icon, label, onPress }: IconButtonProps): ReactElem
   );
 }
 
+// A tab's row, under the phone's inset: 50 high with 4 of it on top, so a title 32 high sits 7 above the line. A bar
+// that takes a tab bar's place, such as 행사's search, takes this row too.
+export const TAB_BAR_ROW = { height: 50, paddingTop: space[1] } as const;
+
 const LEAVE = {
   back: { icon: 'chevronLeft', label: '뒤로' },
   close: { icon: 'x', label: '닫기' },
@@ -53,7 +58,7 @@ interface AppBarProps {
 }
 
 // The bar at the top of a screen, under the phone's status bar, in the frames' two forms. A tab's has its title in
-// 22/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
+// 25/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
 export function AppBar({ title, count, leave, actions, line = true, clear = false }: AppBarProps): ReactElement {
   const { top } = useInsets();
   return (
@@ -79,10 +84,11 @@ export function AppBar({ title, count, leave, actions, line = true, clear = fals
 const styles = StyleSheet.create({
   bar: { backgroundColor: color.surface },
   lined: { borderBottomWidth: 1, borderBottomColor: color.border },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[1], height: size.appBar },
-  tab: { paddingRight: space[2], paddingLeft: space[5] },
-  sub: { paddingRight: space[3], paddingLeft: space[1] },
-  tabTitle: { ...text.titleLg, flex: 1, color: color.ink },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+  tab: { ...TAB_BAR_ROW, paddingRight: space[2], paddingLeft: space[5] },
+  sub: { height: size.appBar, paddingRight: space[3], paddingLeft: space[1] },
+  // Larger than `text.titleLg`, which other screens share (P06 ticket 17).
+  tabTitle: { flex: 1, fontFamily: font.bold, fontSize: 25, lineHeight: 32, letterSpacing: -0.4, color: color.ink },
   // The frames' sub-screen title: between the two titles of the design system.
   subTitle: { flex: 1, fontFamily: font.bold, fontSize: 20, lineHeight: 28, letterSpacing: -0.3, color: color.ink },
   count: { fontFamily: font.medium, color: color.inkMuted },

@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -35,6 +36,12 @@ import { ROOM_CATALOGUE, RoomRequestSync } from './room-request-sync.service.js'
 type Companions = { refused: RoomRequestStatus } | { userIds: string[] };
 
 const ENDING_AHEAD_MS = 10 * 60 * 1000;
+
+// The room the companions' notice names after "예약을 마쳤어요 · " (P05 ticket 68): the library's name, as "G412", cut to
+// keep the notice one line on the phone.
+const NOTICE_ROOM_MAX = 12;
+const noticeRoom = (room: string): string =>
+  room.length <= NOTICE_ROOM_MAX ? room : `${room.slice(0, NOTICE_ROOM_MAX - 1)}…`;
 
 @Injectable()
 export class RoomBookingsService {
@@ -69,19 +76,23 @@ export class RoomBookingsService {
     });
   }
 
-  // Booked; a companion the library did not recognise, who is asked to check their 내 정보; or neither, a message
-  // about the room or the time, which leaves the request ready. A repeat of booked changes nothing.
-  async result(userId: string, requestId: string, { ok, failedUserId }: RoomResultDto): Promise<void> {
+  // Booked, with the room the library booked when the phone gives it; a companion the library did not recognise, who
+  // is asked to check their 내 정보; or neither, a message about the room or the time, which leaves the request ready.
+  // A repeat of booked changes nothing but a room it gives.
+  async result(userId: string, requestId: string, { ok, failedUserId, room }: RoomResultDto): Promise<void> {
     await this.sync.expireDue(this.clock.now());
     await settleOwn(this.sync, userId, requestId, async (settling, held) => {
       if (ok && held.status === RoomRequestStatus.booked) {
+        if (room !== undefined) {
+          await settling.tx.roomRequest.update({ where: { id: held.id }, data: { bookedRoom: room } });
+        }
         return;
       }
       if (held.status !== RoomRequestStatus.ready) {
         notInStatus(held.status);
       }
       if (ok) {
-        await this.booked(settling, held);
+        await this.booked(settling, held, room ?? null);
       } else if (failedUserId !== undefined) {
         await this.unrecognised(settling, held, failedUserId);
       }
@@ -125,10 +136,14 @@ export class RoomBookingsService {
     return { userIds };
   }
 
-  private async booked(settling: Settling, held: HeldRequest): Promise<void> {
-    await settling.tx.roomRequest.update({ where: { id: held.id }, data: { status: RoomRequestStatus.booked } });
+  private async booked(settling: Settling, held: HeldRequest, room: string | null): Promise<void> {
+    await settling.tx.roomRequest.update({
+      where: { id: held.id },
+      data: { status: RoomRequestStatus.booked, bookedRoom: room },
+    });
     const companions = held.consents.filter(isIn).map(({ userId }) => userId);
-    await this.sync.notify(settling, held, companions, await this.doneText(held, '예약을 마쳤어요'));
+    const done = await this.doneText(held, '예약을 마쳤어요');
+    await this.sync.notify(settling, held, companions, room === null ? done : `${done} · ${noticeRoom(room)}`);
     await this.tellEnding(settling, held);
     await this.sync.finish(settling, held, { keepQuest: true });
   }

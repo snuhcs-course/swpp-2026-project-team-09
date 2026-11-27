@@ -72,7 +72,7 @@ describe("A library card in the conversation's history", () => {
 
     expect(response.status).toBe(200);
     expect(JSON.stringify(stage.model.received()[0]?.prompt)).toContain(
-      `[Cards shown: library card for 관정 7층 7A 열람실 2 구역, seat 7300, 11/04 17:00–18:00, as the User left it, library ${seats}]`,
+      `[Cards shown: library card for 관정 7층 열람실, seat 7300, 11/04 17:00–18:00, as the User left it, library ${seats}]`,
     );
   });
 
@@ -89,7 +89,7 @@ describe("A library card in the conversation's history", () => {
 
     expect(response.status).toBe(200);
     expect(JSON.stringify(stage.model.received()[0]?.prompt)).toContain(
-      '[Cards shown: library card for 관정 8층 8A 열람실 1 구역(QUIET ZONE), 11/04 14:00–17:00, as the User left it]',
+      '[Cards shown: library card for 관정 8층 정숙 열람실, 11/04 14:00–17:00, as the User left it]',
     );
   });
 

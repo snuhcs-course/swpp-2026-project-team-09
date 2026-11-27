@@ -6,12 +6,13 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, eventText, IconButton, radius, SearchField, size, space } from '@/design-system';
+import { color, eventText, IconButton, radius, SearchField, size, space, TAB_BAR_ROW } from '@/design-system';
 import { EVENT_SEARCH_HINT, type EventFilter } from '@/features/events/adapter';
 
 // The 행사 tab's app bar and filters, as the `Events` frame draws them.
@@ -29,7 +30,7 @@ interface SearchBarProps {
   onClose: () => void;
 }
 
-// The search field in place of the title, and ✕ that closes it.
+// The search field in place of the title, and ✕ that closes it, in the tab bar's row so the filters stay put.
 export function SearchBar({ search, onSearch, onClose }: SearchBarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   return (
@@ -90,10 +91,10 @@ const ROW_PADDING = 10;
 const styles = StyleSheet.create({
   bar: { backgroundColor: color.surface, borderBottomWidth: 1, borderBottomColor: color.border },
   barRow: {
+    ...TAB_BAR_ROW,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[1],
-    height: size.appBar,
     paddingRight: space[2],
     paddingLeft: space[4],
   },

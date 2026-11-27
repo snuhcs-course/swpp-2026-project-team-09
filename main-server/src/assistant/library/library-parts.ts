@@ -18,6 +18,7 @@ import { CARDS_MAX, noneFound, type Presented, type ToolContext } from '../featu
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
 import { addDays, closedTodayRefusal, lastBookableDate, type Refusal } from './booking-rules.js';
+import { seatNameOf } from './app-names.js';
 import { type Catalogue, type LibrarySpace, type SpaceStatus, statusOf } from './catalogue.js';
 import { type FreeTimePort } from './free-time-port.js';
 import { closedWords } from './closed-today.js';
@@ -94,7 +95,8 @@ function windowWords(space: LibrarySpace, now: Date): string {
 
 // What the model is told of a space: catalogue facts only.
 export function spaceAnswer(id: string, space: LibrarySpace | undefined, status: SpaceStatus, now: Date): object {
-  const base = { id, name: space?.name ?? null, floor: space?.floor ?? null, status };
+  const name = space === undefined ? null : (seatNameOf(space) ?? space.name);
+  const base = { id, name, floor: space?.floor ?? null, status };
   if (space === undefined || status !== 'implemented') {
     return { ...base, ...statusReason(space, status === 'implemented' ? 'unsupported' : status) };
   }
@@ -202,5 +204,6 @@ export function dayWords(date: string, now: Date): string {
   return words[date] ?? date;
 }
 
-// A User signed out of 관정도서관 sees 로그인 on the card in the place of 예약하기, and the main server cannot tell.
-export const SIGN_IN_FIRST = '카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.';
+// A User signed out of 관정도서관 sees 로그인 on the card in the place of 예약하기, and the main server cannot tell. It
+// names no card, which the model's reply never does (P05 ticket 66).
+export const SIGN_IN_FIRST = '로그인이 보이면 관정도서관에 먼저 로그인해요.';
