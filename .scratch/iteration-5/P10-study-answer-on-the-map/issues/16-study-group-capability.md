@@ -17,10 +17,16 @@ Native files: none. Releases: an app OTA update, only after the Production serve
 
 ## Acceptance criteria
 
-- [ ] `ANSWER_CAPABILITIES` has `study-group` and not `study-plan`. (Unit test.)
-- [ ] "같이 공부할 자리 있어?" gets the group answer from the mock server. "공부할 자리 있어?" alone still gets today's seat ticket. (Integration test.)
-- [ ] The Production server's capability list includes `study-group` before the OTA (checked at the release).
-- [ ] A group answer shown as one step of several requests has its main button: `stepActionOf` asks the group card's act as `libraryActOf` does (a point from #655's review). (Integration test.)
-- [ ] Whole lint, format and types.
+- [x] `ANSWER_CAPABILITIES` has `study-group` and not `study-plan`. (Unit test.)
+- [x] "같이 공부할 자리 있어?" gets the group answer from the mock server. "공부할 자리 있어?" alone still gets today's seat ticket. (Unit test of the mock's reply: the mock answers the words together before the library's words.)
+- [ ] The Production server's capability list includes `study-group` before the OTA (checked at the release). The server side, #643, is in the Release `snunow/all/26.11.27-10`.
+- [x] A group answer shown as one step of several requests has its main button: `stepActionOf` asks the group card's act as `libraryActOf` does (a point from #655's review). (Integration test.)
+- [x] Whole lint, format and types.
+
+## How it is built
+
+- `ANSWER_CAPABILITIES` gains `study-group`; the tests' list of what every request sends (`__tests__/support/capabilities.ts`) with it.
+- **A fault found on the way:** the app read a reply's steps only of the kinds `seat`, `room`, `meal`, `meet`, `events`, `quests` and `new-quest` (`api/server/step-answers.ts`). The main server names a Plan's step by its answer's input (`plan-steps.ts`), so a study answer's step is `study`, and one step refused drops all the steps of the reply. `study` is now read; a unit test reads every kind of `ReplyStep`, and failed on `study` before.
+- **The step's button:** `stepActionOf` takes, for a Plan step whose Plan is a group study room, the act its card tells (`libraryActOf`), as the answer alone does; `planActionOf` leaves that Plan to its card.
 
 ## Comments

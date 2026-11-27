@@ -197,13 +197,17 @@ export function libraryActOf({ framed, chat, libraryAct }: ChatSheetControl): Pl
   return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting, danger: seen.danger, ...back };
 }
 
-// Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's.
+// Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's, which a
+// group study room tells itself, as alone (P10 ticket 16).
 function stepActionOf(control: ChatSheetControl): PlanAction | null {
   const step = control.steps?.steps[control.activeStep];
   if (step === undefined || step.status !== 'shown') {
     return null;
   }
-  return step.kind === 'seat' || step.kind === 'room' ? bookingActionOf(control) : planActionOf(control);
+  if (step.kind === 'seat' || step.kind === 'room') {
+    return bookingActionOf(control);
+  }
+  return control.answer.plan?.study?.group === undefined ? planActionOf(control) : libraryActOf(control);
 }
 
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
