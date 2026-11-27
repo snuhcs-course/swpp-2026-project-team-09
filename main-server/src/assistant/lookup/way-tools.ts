@@ -5,10 +5,12 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { clockOf } from '../free-time/free-time.js';
 import { clockTime } from '../free-time/tool-parts.js';
 import { QUEST_FIELD, QUEST_NONE_REASONS, questsNamed } from './quest-way-tools.js';
@@ -113,9 +115,7 @@ function shownWay(
   { way, lookup, labels }: Extract<WayAnswer, { result: 'found' }>,
   presented: ToolContext['presented'],
 ): object {
-  presented.lookup = lookup;
-  presented.answer = null;
-  presented.mapButtons.length = 0;
+  presentLookup(presented, lookup);
   return {
     result: 'found',
     ...labels,
@@ -149,9 +149,7 @@ export function findWay(ways: WayService, tutorial: TutorialOrderService): Tool 
         if (reached.result === 'none') {
           return noneFound(QUEST_NONE_REASONS[reached.reason]);
         }
-        presented.lookup = reached.lookup;
-        presented.answer = null;
-        presented.mapButtons.length = 0;
+        presentLookup(presented, reached.lookup);
         return { result: 'found', fromIs: STARTS[reached.way.start.basis], ...reached.words };
       }
       const ask = { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about };
