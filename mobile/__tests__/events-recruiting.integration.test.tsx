@@ -73,14 +73,15 @@ async function openPostOf(name: RegExp): Promise<User> {
 }
 
 describe('the sheet of the Quests gathering for an event', () => {
-  it("lists the User's own Quest first, then the others with their Leaders", async () => {
+  it("lists the User's own Quest first, then the others with their Leaders, and counts only the others", async () => {
     answerEvents(server, { quests: [DINNER, MY_CAREER] });
     const user = await openEvents();
 
     await openSheet(user);
 
     expect(server.received('GET /quests/recruiting').at(-1)?.query).toEqual({ globalEventId: CAREER.id });
-    expect(screen.getByRole('header', { name: '모집 중인 파티 3' })).toBeVisible();
+    // The 파티 the User could enter, as the row and the map card count them (P06 ticket 30).
+    expect(screen.getByRole('header', { name: '모집 중인 파티 2' })).toBeVisible();
     expect(screen.getAllByRole('button', { name: /^(내 파티|참여 중|이서연|윤태오) /u })).toHaveLength(3);
     expect(
       screen.getByRole('button', { name: /^내 파티 1\/1명 AI 커리어 설명회 18:00 · 301동 대강당/u }),
@@ -104,6 +105,19 @@ describe('the sheet of the Quests gathering for an event', () => {
     expect(
       screen.getByRole('button', { name: /^참여 중 2\/4명 AI 커리어 설명회 김민준 · 18:00 · 301동 대강당/u }),
     ).toBeVisible();
+  });
+});
+
+describe('a full Quest gathering for an event', () => {
+  it('stays a row of the sheet, and is counted neither on the event’s row nor in the sheet', async () => {
+    answerEvents(server, { recruiting: [SEO_YEON_GOING, { ...TAE_O_GOING, holderCount: 4 }] });
+    const user = await openEvents();
+
+    expect(card(CAREER).getByRole('button', { name: '모집 중인 파티 1' })).toBeVisible();
+    await openSheet(user);
+
+    expect(screen.getByRole('header', { name: '모집 중인 파티 1' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^윤태오 4\/4명/u })).toBeVisible();
   });
 });
 

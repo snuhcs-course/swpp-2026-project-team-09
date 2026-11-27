@@ -9,7 +9,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import { answerEvents, CAREER, SEO_YEON_GOING } from './support/events';
+import { answerEvents, CAREER, SEO_YEON_GOING, TAE_O_GOING } from './support/events';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { EVENT, lookOf, press, zoomIn } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -85,6 +85,23 @@ describe("the map's event card", () => {
     await zoomIn(user, 2);
 
     await press(user, EVENT);
+    await press(user, '같이 갈 사람 찾기');
+    await pass(500);
+
+    expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
+  });
+
+  it('counts no full Quest, and opens 파티 만들기 when only full ones gather', async () => {
+    const full = [
+      { ...SEO_YEON_GOING, holderCount: 4 },
+      { ...TAE_O_GOING, holderCount: 4 },
+    ];
+    answerEvents(server, { events: [{ ...CAREER, favorite: true }], recruiting: full });
+    const user = await openMain();
+    await zoomIn(user, 2);
+
+    await press(user, EVENT);
+    expect(screen.queryByText(/^같이 갈 파티 \d개 모집 중$/u)).toBeNull();
     await press(user, '같이 갈 사람 찾기');
     await pass(500);
 
