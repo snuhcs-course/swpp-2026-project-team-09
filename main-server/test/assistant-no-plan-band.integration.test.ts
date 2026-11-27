@@ -8,6 +8,7 @@ import request from 'supertest';
 import { z } from 'zod';
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
 import { MealPlanStage, type Named, resolve } from './meal-plan.js';
+import { MOUNTAIN_AREA } from './study-area-example.js';
 import { withAccessToken } from './sign-in.js';
 
 // A meeting's, a new party's and a study together's answer without a plan keep their time card (P05 ticket 65), as a
@@ -24,6 +25,7 @@ afterAll(() => stage.stop());
 const MEET_APP = ['library', 'answer', 'meet'];
 const EVENTS_APP = ['library', 'answer', 'events'];
 const STUDY_APP = ['library', 'answer', 'study-plan', 'study-group'];
+const STUDY_AREA_APP = ['library', 'answer', 'area', 'study-plan'];
 
 const replied = (body: unknown): AnswerReply => z.object({ answer: z.custom<AnswerReply>() }).parse(body).answer;
 
@@ -195,5 +197,64 @@ describe('A study together without a plan keeps its time card', () => {
 
     expect(answer.plans).toEqual([]);
     expect(answer.noPlan?.band).toEqual(studyBand(date, minsu));
+  });
+});
+
+// 지은, a Friend who could be added, in a Class in 83동 from 11:00 to 12:00; the asker free from 10:00, looking at 관악산,
+// where no study space is (P05 ticket 67).
+async function jieunAt83(date: string): Promise<Named> {
+  await stage.asking(date, '10:00');
+  const jieun = await stage.friend('지은');
+  await stage.classAt(jieun, '11:00', '12:00', '83');
+  return jieun;
+}
+
+function aloneBand(date: string, jieun: Named): object {
+  const at = timeOn(date);
+  return {
+    range: { startAt: at('10:00'), endAt: at('13:00') },
+    now: at('10:00'),
+    lanes: [{ userId: stage.asker.id, name: '나', busy: [] }],
+    others: [
+      {
+        userId: jieun.id,
+        name: '지은',
+        busy: [{ startAt: at('11:00'), endAt: at('12:00'), label: '83동 수업' }],
+        walkMinutes: null,
+      },
+    ],
+    startAt: at('10:00'),
+    endAt: at('13:00'),
+    text: '10:00–13:00',
+  };
+}
+
+describe('A study alone without a plan keeps its time card', () => {
+  it('asked in the chat for a place nearby where none is', async () => {
+    const date = '2061-05-31';
+    const jieun = await jieunAt83(date);
+
+    const steps = [{ tool: 'planStudy', input: { what: 'any', near: true } }, { text: '…' }];
+    const more = { clientCapabilities: STUDY_AREA_APP, context: { viewport: MOUNTAIN_AREA } };
+    const answer = replied((await stage.send(steps, more, '근처 공부할 곳')).body);
+
+    expect(answer.plans).toEqual([]);
+    expect(answer.noPlan?.reason).toBe('no-fit');
+    expect(answer.noPlan?.band).toEqual(aloneBand(date, jieun));
+  });
+
+  it('recalculated in that area', async () => {
+    const date = '2061-06-14';
+    const jieun = await jieunAt83(date);
+    const anyTime = { from: null, until: null };
+    const chosen = { seatSpaceId: null, roomSpaceId: null };
+    const input = { kind: 'study', date, what: 'any', people: peopleOf(stage.asker), together: false, window: anyTime };
+
+    const answer = recalculated(
+      (await recalculate({ ...input, area: MOUNTAIN_AREA, minutes: null, chosen }, STUDY_AREA_APP)).body,
+    );
+
+    expect(answer.plans).toEqual([]);
+    expect(answer.noPlan?.band).toEqual(aloneBand(date, jieun));
   });
 });
