@@ -24,7 +24,8 @@ const PLACE_HELP: Help = {
   lines: [
     { tag: PLACE_KIND_WORDS.building, words: '학교 건물에서 만날 때. 지도에서 찍어도 돼요' },
     { tag: PLACE_KIND_WORDS.point, words: '건물이 아닌 곳에서 만날 때 (정문, 잔디밭 등)' },
-    { tag: PLACE_KIND_WORDS.words, words: '지도에 없거나 더 구체적인 곳 (카페, 301동 203호 등)' },
+    // Broken before the examples, as the wireframe does, so that '등)' never stands alone.
+    { tag: PLACE_KIND_WORDS.words, words: '지도에 없거나 더 구체적인 곳\n(카페, 301동 203호 등)' },
   ],
   note: '이름만은 지도·도보 시간·도착 알림에 쓰이지 않아요',
 };

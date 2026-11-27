@@ -176,7 +176,7 @@ describe('the ? beside 장소', () => {
     expect(bubble.getByText('장소 종류')).toBeVisible();
     expect(bubble.getByText('학교 건물에서 만날 때. 지도에서 찍어도 돼요')).toBeVisible();
     expect(bubble.getByText('건물이 아닌 곳에서 만날 때 (정문, 잔디밭 등)')).toBeVisible();
-    expect(bubble.getByText('지도에 없거나 더 구체적인 곳 (카페, 301동 203호 등)')).toBeVisible();
+    expect(bubble.getByText('지도에 없거나 더 구체적인 곳\n(카페, 301동 203호 등)')).toBeVisible();
     expect(bubble.getByText('이름만은 지도·도보 시간·도착 알림에 쓰이지 않아요')).toBeVisible();
     for (const tag of ['학교 건물', '지도 위치', '이름만']) {
       expect(bubble.getByText(tag)).toBeVisible();
