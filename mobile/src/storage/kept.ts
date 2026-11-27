@@ -7,17 +7,26 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { OnboardingAnswers, Suggestion } from '@/api/types';
+import type { Consent, OnboardingAnswers, Suggestion } from '@/api/types';
 import { startsFromFirstState } from '@/dev-settings';
 
 // What the phone keeps so that the app can open again where the User left it.
 export interface Kept {
   signedIn: boolean;
-  // The User agreed to the legal documents on this phone. A sign-out leaves it as it is.
+  // The User agreed to the legal documents on this phone, as versions before P08 ticket 11 kept it. Nothing writes it
+  // true any more. It is read once, to carry the consent over to an account that holds none (`consentScreenAsks`), and
+  // the consent's answer sets it false. A sign-out leaves it as it is.
   consented: boolean;
+  // The phone's copy of the account's consent (`src/consent/`), from the sign-in's answer, each Lobby, the consent's
+  // answer and the switch "사용 기록 보내기". Emptied at a sign-out and at a Session's end.
+  consent: Consent;
+  // The mock build's stand-in for the account's consent, which the mock's sign-in copies. A sign-out leaves it, as an
+  // account keeps its consent. Never written where the app asks the main server.
+  mockAccountConsent: Consent;
   // What the sign-in suggested for Onboarding's name and department. Null once Onboarding is finished.
   suggestion: Suggestion | null;
   onboardingCompleted: boolean;
@@ -48,6 +57,8 @@ const KEY = 'snunow.kept';
 const FIRST_STATE: Kept = {
   signedIn: false,
   consented: false,
+  consent: { version: null, usage: null },
+  mockAccountConsent: { version: null, usage: null },
   suggestion: null,
   onboardingCompleted: false,
   answers: null,
@@ -64,6 +75,8 @@ const FIRST_STATE: Kept = {
 
 type Later =
   | 'consented'
+  | 'consent'
+  | 'mockAccountConsent'
   | 'locationExplained'
   | 'inviteToken'
   | 'masterSwitch'
@@ -73,6 +86,20 @@ type Later =
   | 'madeQuests'
   | 'pushAsked'
   | 'pushUnregisterOwed';
+
+// A consent as this version stored it; anything else is no consent.
+function consentIn(value: object, name: string): Consent {
+  const consent: unknown = Reflect.get(value, name);
+  if (typeof consent !== 'object' || consent === null) {
+    return { version: null, usage: null };
+  }
+  const version: unknown = Reflect.get(consent, 'version');
+  const usage: unknown = Reflect.get(consent, 'usage');
+  return {
+    version: typeof version === 'number' && Number.isInteger(version) ? version : null,
+    usage: typeof usage === 'boolean' ? usage : null,
+  };
+}
 
 // What an older version stored lacks the fields added later: the rest of it still counts.
 function isKept(value: unknown): value is Omit<Kept, Later> {
@@ -102,6 +129,8 @@ export async function readKept(): Promise<Kept> {
     return {
       ...value,
       consented: 'consented' in value && value.consented === true,
+      consent: consentIn(value, 'consent'),
+      mockAccountConsent: consentIn(value, 'mockAccountConsent'),
       locationExplained: 'locationExplained' in value && value.locationExplained === true,
       inviteToken: 'inviteToken' in value && typeof value.inviteToken === 'string' ? value.inviteToken : null,
       masterSwitch: 'masterSwitch' in value && value.masterSwitch === true,

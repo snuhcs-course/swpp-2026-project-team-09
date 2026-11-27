@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -30,7 +31,7 @@ const ANSWERS = {
 async function keepSignedIn(onboardingCompleted: boolean): Promise<void> {
   await keep({
     signedIn: true,
-    consented: true,
+    consent: { version: 1, usage: false },
     onboardingCompleted,
     suggestion: onboardingCompleted ? null : { name: '홍길동', department: null },
     answers: onboardingCompleted ? { ...ANSWERS, hashtags: [] } : null,
@@ -149,7 +150,7 @@ describe("a screen that is not the User's", () => {
     await user.press(screen.getByRole('button', { name: SIGN_IN }));
     await pass(400);
     await user.press(screen.getByRole('button', { name: '동의하고 시작' }));
-    await pass(100);
+    await pass(400);
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
 
     await saveOnboarding(user);
