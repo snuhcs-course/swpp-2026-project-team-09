@@ -1,0 +1,110 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-27  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A Class the User says is cancelled is left out of the conversation for every kind of answer, not a meal alone (P05
+# ticket 70). On the user's phone (2026-11-27), "1시 수업 휴강이야" over a 관정 seat answer was answered "식사
+# 추천에서만 빼 드릴 수 있어요". The P6 world is Wednesday 2026-11-04 at 10:05, where the asker has Classes at 09:30,
+# 11:00, 13:00 and 16:00; the P4 world is Monday 2026-11-02, where the asker's Tuesday has 데이터베이스 at 11:00 and
+# 운영체제 at 15:00, and 이민수 is a Friend. Written, and not run: no model key on the machine they were written on.
+
+- id: left-out-class-study-same-message
+  category: left-out-classes
+  world: p6-answer
+  capabilities: study-app
+  repeat: 3
+  turns:
+    - user: 1시 수업 휴강이야. 공부할 데 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [planMeal, proposeLibraryBooking, showOnMap]
+    args:
+      planStudy: { skipClasses: ['13:00'] }
+    text:
+      mentions: [[빼고, 뺐, 빼서]]
+      absent: [식사, 밥, 수 없어요]
+
+# Said alone over a study answer on screen: the answer is asked again with the Class left out, never a meal.
+- id: left-out-class-over-study-answer
+  category: left-out-classes
+  world: p6-answer
+  capabilities: study-app
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 공부할 자리 있어?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planStudy]
+    - user: 1시 수업 휴강이야
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planStudy]
+          forbidden: [planMeal, leaveClassesOut]
+        args:
+          planStudy: { skipClasses: ['13:00'] }
+        text:
+          mentions: [[빼고, 뺐, 빼서]]
+          absent: [식사, 밥, 수 없어요]
+
+# Said alone with nothing on screen: it is kept for the conversation, and nothing is planned.
+- id: left-out-class-nothing-on-screen
+  category: left-out-classes
+  world: p6-answer
+  capabilities: study-app
+  repeat: 3
+  turns:
+    - user: 오늘 1시 수업 휴강이래
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [leaveClassesOut]
+      forbidden: [planMeal, planStudy, proposeCancel]
+    args:
+      leaveClassesOut: { date: '2026-11-04', skipClasses: ['13:00'] }
+    text:
+      absent: [식사, 수 없어요, 취소할 수]
+
+# A meet, with the Class left out in the same message.
+- id: left-out-class-meet
+  category: left-out-classes
+  world: p4-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 11시 수업 휴강이야. 민수랑 언제 만날 수 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [resolveFriend, planMeet]
+      forbidden: [planMeal, proposeQuest]
+    args:
+      planMeet: { date: '2026-11-03', skipClasses: ['11:00'] }
+    text:
+      mentions: [[빼고, 뺐, 빼서]]
+      absent: [식사 추천]
+
+# The events of a day, with the Class left out in the same message.
+- id: left-out-class-events
+  category: left-out-classes
+  world: p4-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 3시 수업 휴강인데 볼 만한 행사 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planEvents]
+      forbidden: [planMeal]
+    args:
+      planEvents: { date: '2026-11-03', skipClasses: ['15:00'] }
+    text:
+      absent: [식사 추천]

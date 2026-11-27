@@ -15,7 +15,8 @@ import {
 import { onDay } from '../free-time/free-time.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
-import { busyIn } from '../gathering/meal-scene.js';
+import { skippedBand } from '../free-time/left-out-classes.js';
+import { busyIn, busyLabel } from '../gathering/meal-scene.js';
 import { type BandRows, othersWithoutPlace, windowBand, withBand } from '../gathering/no-plan-band.js';
 import { koreaDate } from '../korea-time.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
@@ -219,6 +220,7 @@ function noPlanBand({ input, way, now, others }: StudyPlanArgs, { ready, next }:
   const rows = (from: Date, until: Date): BandRows => ({
     lanes: [{ userId: way.me.userId, name: '나', busy: busyIn(way.me.items, from, until, label) }],
     ...othersWithoutPlace(others, { from, until, label }),
+    ...skippedBand(way.me.skipped, (item) => busyLabel(item, label)),
   });
   return windowBand({ start: ready, end }, now, rows, next?.end);
 }

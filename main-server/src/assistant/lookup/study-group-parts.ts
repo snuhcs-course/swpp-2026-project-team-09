@@ -21,7 +21,8 @@ import { byStart, clockOf, type DayItem, endOfDay, onDay, startOfDay } from '../
 import { earliest, type Interval, latest } from '../free-time/meal-fit.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
-import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
+import { skippedBand } from '../free-time/left-out-classes.js';
+import { busyIn, busyLabel, halfHoursAround } from '../gathering/meal-scene.js';
 import { windowBand } from '../gathering/no-plan-band.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { durationWords } from '../library/booking-rules.js';
@@ -198,6 +199,7 @@ function bandOf({ booking, minutes }: GroupPick, args: GroupAnswerArgs): TimeBan
       { date: booking.date, now: args.now, placeId: args.kwanjeong.placeId, start, end },
       { from, until, label },
     ),
+    ...askerSkipped(args, booking.date),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text: `${booking.start}–${booking.end} · ${durationWords(minutes)}`,
@@ -227,7 +229,14 @@ function noPlanBand(args: GroupAnswerArgs): TimeBand {
       busy: busyIn(itemsByDate[input.date] ?? [], from, until, label),
     })),
     ...studyOthers(others, plan, { from, until, label }),
+    ...askerSkipped(args, input.date),
   }));
+}
+
+// The asker's Classes the conversation leaves out on `date`, drawn apart on the band (P05 ticket 70).
+function askerSkipped({ people, placeLabel }: GroupAnswerArgs, date: string): Pick<TimeBand, 'skipped'> {
+  const asker = people.find(({ me }) => me);
+  return skippedBand(asker?.skippedByDate?.[date], (item) => busyLabel(item, placeLabel));
 }
 
 // When each person comes, and who leaves before the end: "지은 15:19 도착 · 16:56에 먼저 나서요".

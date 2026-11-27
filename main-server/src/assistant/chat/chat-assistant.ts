@@ -30,6 +30,7 @@ import { CAMPUS_TERMS_RULES } from '../campus-terms.js';
 import { EVENT_RULES, planEvents } from '../events/event-tools.js';
 import { type Feature, type Tool, type ToolContext } from '../feature.js';
 import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-rules.js';
+import { withLeftOut } from '../free-time/left-out-tools.js';
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
@@ -198,7 +199,10 @@ function plannedOnMap(
     return place === null ? null : pointOf(place);
   };
   const earlier = ({ presented }: ToolContext): ReplyStep[] => bookingSteps(presented, kwanjeong());
-  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier, freeTime.days);
+  const planned = withLeftOut(
+    mealsAndEvents(plans, options.drawsEvents === true, earlier, freeTime.days),
+    freeTime.days,
+  );
   if (options.drawsMeets !== true) {
     return planned;
   }

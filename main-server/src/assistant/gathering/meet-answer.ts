@@ -22,7 +22,8 @@ import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, GatheringNaming } from './answer-words.js';
 import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid } from './gathering.js';
 import { basisOf, meetingOf, originChip, personChips, subQuestsOf, untilChip } from './meal-answer.js';
-import { halfHoursAround, lanesOf, othersOf, sceneOf } from './meal-scene.js';
+import { skippedBand } from '../free-time/left-out-classes.js';
+import { busyLabel, halfHoursAround, lanesOf, othersOf, sceneOf } from './meal-scene.js';
 import { meetHours, meetWindow } from './meet-gathering.js';
 import { meetNoPlanBand, withBand } from './no-plan-band.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
@@ -90,6 +91,7 @@ function linesOf(fit: GatheringFit, now: Date): AnswerLine[] {
 function bandOf(fit: GatheringFit, naming: MeetNaming): TimeBand {
   const { start, end, togetherMinutes } = fit;
   const { now, people, input } = naming.args;
+  const { skipped } = naming.asker;
   const hours = meetHours(input.date);
   const ends = people
     .flatMap(({ items }) => items)
@@ -104,6 +106,7 @@ function bandOf(fit: GatheringFit, naming: MeetNaming): TimeBand {
     now: koreaTime(now),
     lanes: lanesOf(naming, from, until),
     ...othersOf(naming, fit, from, until),
+    ...skippedBand(skipped, (item) => busyLabel(item, (placeId) => naming.placeLabel(placeId))),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text: `${clockOf(start)}–${clockOf(end)}${minutesSaid(fit) ? ` · 함께 ${togetherMinutes}분` : ''}`,
