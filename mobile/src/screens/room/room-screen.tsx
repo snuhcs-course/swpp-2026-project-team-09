@@ -79,7 +79,7 @@ function Head({ room }: { room: RoomView }): ReactElement {
 }
 
 // The app bar's `수정` for the Quest's Leader, but not for a Quest taken alone, which gathers nobody and keeps its
-// settings.
+// settings. `centred` keeps it on the title's line: a button otherwise stands at the top of the bar's row.
 function EditAction({ room }: { room: RoomView }): ReactElement | null {
   const { quest, leads } = room;
   if (!leads || heldAlone(quest)) {
@@ -87,6 +87,7 @@ function EditAction({ room }: { room: RoomView }): ReactElement | null {
   }
   return (
     <Button
+      centred
       onPress={() => {
         router.push({ pathname: '/party-form', params: { questId: quest.id } });
       }}

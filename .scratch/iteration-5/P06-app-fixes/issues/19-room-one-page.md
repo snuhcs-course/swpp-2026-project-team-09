@@ -218,6 +218,7 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
 - **The faces** use a new `xs` (26) size of the design system's `Avatar`.
 - **The help bubbles** open over the screen in the app's `Overlay`, with the arrow under the ?. A press anywhere closes them.
 - **The 모집글's Leader row and grey box** are now `PostHost` and `InfoBox` in `screens/party/post-content.tsx`, shared by the 모집글 (with "모집자") and the room (without).
+- **수정 in the app bar** (fix after the user's phone check): the bare ghost `Button` stood at the top of the bar's row, as a button that is not `full` takes `alignSelf: 'flex-start'`. The old `RecruitingActions` had wrapped it in a centred View. `EditAction` now passes `centred`, which puts 수정 on the title's line; `AppBar` itself is unchanged.
 - **The library's booked room** (PR 684, merged during the build) stays on the step `shownSubQuest` shows, as the lists show it. The head's box takes the orange step's place line as 일정 draws it, so it carries the room whenever the orange step is that step.
 - **Tests:**
   - `answerRoom` now answers the Lobby with the Master Switch on, as the room's flows need. The Master-Switch-off flows are in `room-activation-master`.
@@ -230,7 +231,7 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
 
 ### Agent usage (2026-11-27)
 
-- Agent time: about 1 h 5 min (an estimate). One session, in this worktree, 20:41 to 21:46 KST. About half of it was spent waiting on the room's integration tests, which take about 30 s per test on this machine. No subagents.
+- Agent time: about 1 h 15 min (an estimate). One session, in this worktree: the build, 20:41 to 21:46 KST, and the 수정 fix after the phone check, about 10 min from 22:05. About half of it was spent waiting on the room's integration tests, which take about 30 s per test on this machine. No subagents.
 - Tokens:
-  - Input: about 93.4M in all. That is 0.0005M uncached, 92.9M cache reads and 0.49M cache writes.
-  - Output: about 0.20M.
+  - Input: about 101.0M in all. That is 0.0006M uncached, 100.5M cache reads and 0.50M cache writes.
+  - Output: about 0.21M.

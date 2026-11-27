@@ -77,6 +77,8 @@ describe("the room's app bar and title", () => {
     expect(screen.getByRole('header', { name: '파티' })).toBeVisible();
     expect(screen.getByRole('button', { name: '뒤로' })).toBeVisible();
     expect(screen.getByRole('button', { name: '수정' })).toBeVisible();
+    // On the title's line, not at the top of the bar's row.
+    expect(screen.getByRole('button', { name: '수정' })).toHaveStyle({ alignSelf: 'center' });
     expect(screen.queryByRole('button', { name: '모집글 보기' })).toBeNull();
     for (const badge of ['파티 · 3/4명', '내가 만든 파티', '비공개', '퀘스트']) {
       expect(screen.queryByText(badge)).toBeNull();
