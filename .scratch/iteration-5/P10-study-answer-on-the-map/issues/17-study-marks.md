@@ -2,7 +2,7 @@
 
 Parent: [P10 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet
+Pull request: #675
 Blocked by: 03, 04
 
 Native files: none. Releases: an app OTA update, though no answer reaches it until the app says `study-plan` (ticket 23).
@@ -36,3 +36,8 @@ The first of the app's study answer alone, as the approved board draws it ("공�
 - [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time, an estimate shared with ticket 18 (the two were built and checked together, so each figure is for both): about 1 h 50 min in all. About 1 h 30 min in the first session (14:40–16:10 KST, from its stop note), and about 20 min in the session that merged `5.0/Main`, ran the meal list's integration files alone and opened the PRs.
+- Tokens, the second session's share only (the first one's were not measured), estimated as a third of that session: input 13M, of which 12.9M cache reads, 0.09M cache writes and under 1k uncached; output 27k.
