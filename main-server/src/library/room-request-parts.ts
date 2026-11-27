@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, ForbiddenException, HttpStatus } from '@nestjs/common';
@@ -55,6 +56,20 @@ export function overRefusal(catalogue: Catalogue, space: LibrarySpace | undefine
 // How many more people the room's minimum needs with these companions in.
 export function moreNeededOf(space: LibrarySpace | undefined, companionsIn: number): number {
   return Math.max(0, (space?.capacity?.min ?? 0) - (1 + companionsIn));
+}
+
+// Of the companions still in, how many consented and how many were asked: by their consents while the request gathers
+// or is ready; once booked, the `booked` companions of the booking, who all consented; none once it ended.
+export function countsOf(
+  status: RoomRequestStatus,
+  consents: readonly Pick<RoomConsent, 'consented'>[],
+  booked: number,
+): { consented: number; asked: number } {
+  if (status === RoomRequestStatus.booked) {
+    return { consented: booked, asked: booked };
+  }
+  const still = ACTIVE.includes(status) ? consents.filter((consent) => isIn(consent)) : [];
+  return { consented: still.filter(({ consented }) => consented === true).length, asked: still.length };
 }
 
 // The request was deleted, or never was.

@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -83,6 +84,7 @@ describe('Making a Quest of one’s own', () => {
       takenAlone: false,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
+      roomRequest: null,
     });
     expect((await getQuests(app, user)).body).toEqual([response.body]);
   });
