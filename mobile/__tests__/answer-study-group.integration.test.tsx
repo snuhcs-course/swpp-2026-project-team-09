@@ -6,6 +6,8 @@
 
 import { within } from '@testing-library/react-native';
 import { STUDY_GROUP_MORE_NEEDED, STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
+import { text } from '@/design-system';
+import { LOW_LINES } from '@/screens/main/answer/card-caps';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -155,5 +157,26 @@ describe('The study answer together, logged out of the library', () => {
 
     expect(inDock().getByRole('button', { name: '+ 같이 한 명 더' })).toBeOnTheScreen();
     expect(inFrame().queryByText('관정도서관 로그인이 필요해요')).toBeNull();
+  });
+});
+
+// The lowered card, from #655's pictures: the card shows the low step's lines of an answer's words, and the sentence
+// takes them whole, so that the ticket under it never shows cut there. Partitions: logged in and out, which move the
+// login line. Expected values: the low step's lines (`card-caps.ts`).
+describe('The study answer together at the lowest step', () => {
+  it.each([true, false])('shows its sentence alone in the low lines, logged in: %s', async (loggedIn) => {
+    await askTogether({ server, library }, STUDY_GROUP_TO_SEND, { loggedIn });
+    await pass(500);
+
+    expect(screen.getByTestId('study-group-words')).toHaveStyle({ minHeight: LOW_LINES * text.bodyLg.lineHeight });
+  });
+
+  it('writes its sentence in the lines the low step counts', async () => {
+    await askTogether({ server, library }, STUDY_GROUP_MORE_NEEDED, { loggedIn: false });
+    await pass(500);
+
+    expect(inFrame().getByText('그룹스터디룸은 네 명부터예요. 한 명만 더 부르면 돼요.')).toHaveStyle({
+      lineHeight: text.bodyLg.lineHeight,
+    });
   });
 });
