@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -18,22 +19,18 @@ const MINUTES = ['', ...Array.from({ length: 12 }, (_, step) => String(step * 5)
 // The frame's outline of the warning box, between the Quest colour's ground and its ink.
 const WARNING_LINE = '#E8C877';
 const WARNING_INK = '#5C3B00';
-// The frame's ink of a day another time slot holds: a disabled control, lighter than any text.
-const HELD_DAY_INK = '#C2C6D1';
 
 function FieldName({ children }: { children: string }): ReactElement {
   return <Text style={styles.fieldName}>{children}</Text>;
 }
 
-// `월` … `일`, Saturday in blue and Sunday in red while off. A day another time slot holds (`taken`) is greyed out and
-// cannot be pressed.
+// `월` … `일`, Saturday in blue and Sunday in red while off. A day another time slot holds can be pressed too: a class
+// may meet twice on one day, at hours that do not cross (P06 ticket 11a).
 export function DayToggles({
   days,
-  taken = [],
   onChange,
 }: {
   days: readonly number[];
-  taken?: readonly number[];
   onChange: (days: number[]) => void;
 }): ReactElement {
   return (
@@ -42,11 +39,8 @@ export function DayToggles({
       <View style={styles.days}>
         {DAY_NAMES.map((name, day) => {
           const on = days.includes(day);
-          const held = !on && taken.includes(day);
           let ink: string = color.ink;
-          if (held) {
-            ink = HELD_DAY_INK;
-          } else if (day === SATURDAY) {
+          if (day === SATURDAY) {
             ink = color.blue600;
           } else if (day === SUNDAY) {
             ink = color.danger;
@@ -55,13 +49,12 @@ export function DayToggles({
             <Pressable
               accessibilityLabel={name}
               accessibilityRole="togglebutton"
-              accessibilityState={{ checked: on, disabled: held }}
-              disabled={held}
+              accessibilityState={{ checked: on }}
               key={name}
               onPress={() => {
                 onChange(on ? days.filter((other) => other !== day) : [...days, day]);
               }}
-              style={[styles.day, on && styles.dayOn, held && styles.dayHeld]}
+              style={[styles.day, on && styles.dayOn]}
             >
               <Text style={[styles.dayName, { color: on ? color.onPrimary : ink }, on && styles.dayNameOn]}>
                 {name}
@@ -249,7 +242,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   dayOn: { borderColor: color.snuBlue, backgroundColor: color.snuBlue },
-  dayHeld: { borderColor: color.surfaceSunken, backgroundColor: color.surfaceSubtle },
   dayName: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
   dayNameOn: { fontFamily: font.bold },
   times: { flexDirection: 'row', alignItems: 'flex-end', gap: space[2] },
