@@ -9,7 +9,8 @@
 import { type Lookup } from './dto/answer.dto.js';
 import { type Presented } from './feature.js';
 import { withToward } from './gathering/answer-words.js';
-import { wordlessMealSentence } from './gathering/plan-reply.js';
+import { withoutWalkSentences, wordlessMealSentence } from './gathering/plan-reply.js';
+import { textBeside } from './refusals/refusals.js';
 import { wordlessStudySentence } from './lookup/study-plan-words.js';
 
 // What a reply says when no step of the model wrote any text: nothing beside a Lookup, whose lines the app draws as
@@ -49,3 +50,11 @@ export function wordlessText({
 // answer opened at its Restaurant, which have none by their rules, so that the real cases stand out.
 export const warnsOfNoText = ({ answer }: Presented, text: string): boolean =>
   text !== '' && answer?.opened === undefined;
+
+// The model's words as the reply says them: the steps' own in their place when the server planned a step the model had
+// worded into another plan (P05 ticket 74), without the walk sentences beside a plan drawn, and beside a refusal.
+export const saidText = (text: string, presented: Presented): string =>
+  textBeside(
+    withoutWalkSentences(presented.retold ?? text, (presented.answer?.plans.length ?? 0) > 0),
+    presented.refusal,
+  );

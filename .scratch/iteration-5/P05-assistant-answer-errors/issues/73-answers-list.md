@@ -49,5 +49,5 @@ Known limit: two requests of one kind and day share a key, and the second replac
 
 ### Agent usage (2026-11-27)
 
-- Agent time: about 15 minutes, an estimate from this session's transcript (gaps under 5 minutes). Its 15 pinned integration files ran one at a time in the background for about 40 minutes besides, while the session worked on ticket 74.
-- Tokens: input 12.9M, of which 12.8M cache reads, 0.07M cache writes and about 110 uncached; output 38k. No subagents.
+- Agent time: about 27 minutes, an estimate from this session's transcript (gaps under 5 minutes): about 15 for the first version and 12 for the keys, `withdrawn` and the contract note asked for after the review. Its 15 pinned integration files ran one at a time in the background for about 40 minutes besides, while the session worked on ticket 74.
+- Tokens: input 29.2M, of which 29.1M cache reads, 0.13M cache writes and about 180 uncached; output 88k. No subagents.

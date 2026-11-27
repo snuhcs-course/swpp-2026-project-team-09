@@ -145,6 +145,9 @@ export interface Presented {
   notDone?: NotDone[];
   // The requests of the message in time order, when it asked for two or more (P03).
   steps?: ReplyStep[];
+  // The reply's words in place of the model's, when the server planned a step again and it is no longer the plan the
+  // model worded (P05 ticket 74).
+  retold?: string;
   // The plan of the meal answer on screen the User chose in words (choosePlan).
   select?: string;
   // A request for another plan, or another request, ended with nothing drawn: the plan on screen leaves it (P05 ticket

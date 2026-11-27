@@ -9,9 +9,12 @@ import { type PlaceDto } from '../../places/dto/place.dto.js';
 import {
   type AnswerReply,
   type MealInput,
+  type MeetInput,
   type PlacePoint,
+  type PersonConstraint,
   type PlanInput,
   type ReplyStep,
+  type StudyInput,
 } from '../dto/answer.dto.js';
 import { type Card, type NotDone, type ToolContext } from '../feature.js';
 import { onDay } from '../free-time/free-time.js';
@@ -111,9 +114,11 @@ const KIND_WORDS: Record<Exclude<PlanInput['kind'], 'meal'>, string> = {
   study: '공부할 곳',
 };
 
-// The answer's step: its first Plan, or why it has none.
-export function answerStep(answer: AnswerReply): ReplyStep {
+// The answer's step: its first Plan, or why it has none. `key`: its request's, for an app that says `answers` (P05
+// ticket 74).
+export function answerStep(answer: AnswerReply, key?: string): ReplyStep {
   const [plan] = answer.plans;
+  const shows = key === undefined ? { kind: 'answer' as const } : { kind: 'answer' as const, key };
   if (plan !== undefined) {
     return {
       kind: answer.input.kind,
@@ -124,7 +129,7 @@ export function answerStep(answer: AnswerReply): ReplyStep {
       endAt: plan.endAt,
       status: 'shown',
       reason: null,
-      shows: { kind: 'answer' },
+      shows,
     };
   }
   const { input } = answer;
@@ -138,7 +143,7 @@ export function answerStep(answer: AnswerReply): ReplyStep {
     endAt: null,
     status: 'not-done',
     reason: (answer.noPlan?.lines ?? []).map((line) => line.map(({ text }) => text).join('')).join(' ') || null,
-    shows: { kind: 'answer' },
+    shows,
   };
 }
 
@@ -151,55 +156,129 @@ export const inTimeOrder = (steps: readonly ReplyStep[]): ReplyStep[] =>
 // The step a meal follows: of the steps at a place on the meal's day that start no later than the meal may, the latest.
 // A step that starts as the meal's window opens comes first, since the meal cannot come before it.
 export function stepBefore(steps: readonly ReplyStep[], input: MealInput): ReplyStep | null {
-  const mealStart = windowOf(input).start.getTime();
+  return stepBeforeAt(steps, input.date, windowOf(input).start);
+}
+
+// Of the steps at a place on that day that start no later than `start`, the latest.
+export function stepBeforeAt(steps: readonly ReplyStep[], date: string, start: Date): ReplyStep | null {
   const before = steps.filter(
     ({ place, startAt }) =>
       place !== null &&
       startAt !== null &&
-      koreaDate(new Date(startAt)) === input.date &&
-      Date.parse(startAt) <= mealStart,
+      koreaDate(new Date(startAt)) === date &&
+      Date.parse(startAt) <= start.getTime(),
   );
   return inTimeOrder(before).at(-1) ?? null;
 }
 
-// The meal's conditions with the asker setting out from the step's place, free from when it ends. Null when the asker
-// already has a start of their own: one they named, or one kept from the plan on screen.
-export function chainedInput(input: MealInput, step: ReplyStep): MealInput | null {
+// The conditions of a step that can move with the asker setting out from the step's place, free from when it ends: a
+// meal's, a meet's or a study plan's, whose people take the same constraints. Null when the asker already has a start of
+// their own: one they named, or one kept from the plan on screen.
+//
+// `source`: what the new constraints say set them. An app before `answers` is given `asker`, as always, and cannot
+// tell them from the User's own. For an app that says `answers` they are `step` (P05 ticket 74): those of an earlier
+// chain are dropped and set again from the step before, while a start the User named still holds.
+export function chainedInput<Input extends MealInput | MeetInput | StudyInput>(
+  input: Input,
+  step: ReplyStep,
+  source: 'asker' | 'step' = 'asker',
+): Input | null {
   const [asker, ...others] = input.people;
-  if (asker === undefined || step.place === null || asker.constraints.some(({ kind }) => kind === 'from')) {
+  const own = source === 'step' ? withoutChain(asker?.constraints ?? []) : (asker?.constraints ?? []);
+  if (asker === undefined || step.place === null || own.some(({ kind }) => kind === 'from')) {
     return null;
   }
   const end = step.endAt ?? step.startAt;
-  const ready =
-    end === null ? [] : [{ kind: 'notBefore' as const, time: clockOf(new Date(end)), source: 'asker' as const }];
-  const from = { kind: 'from' as const, placeId: step.place.placeId, source: 'asker' as const };
-  return { ...input, people: [{ ...asker, constraints: [...asker.constraints, from, ...ready] }, ...others] };
+  const ready = end === null ? [] : [{ kind: 'notBefore' as const, time: clockOf(new Date(end)), source }];
+  const from = { kind: 'from' as const, placeId: step.place.placeId, source };
+  return { ...input, people: [{ ...asker, constraints: [...own, from, ...ready] }, ...others] };
 }
 
-const isBookCard = (card: Card): card is LibraryCard => card.kind === 'library' && card.library.action === 'book';
+// The constraints without those a step before set.
+export const withoutChain = (constraints: readonly PersonConstraint[]): PersonConstraint[] =>
+  constraints.filter(({ source }) => source !== 'step');
+
+export const isBookCard = (card: Card): card is LibraryCard =>
+  card.kind === 'library' && card.library.action === 'book';
 
 // A refused booking's step at 관정도서관, whose place the library tool did not know. One refused because 관정 was closed
 // keeps no place, so that no later step sets out from it.
 const atKwanjeong = ({ step, closed }: NotDone, place: PlacePoint | null): ReplyStep =>
   !closed && step.place === null && (step.kind === 'seat' || step.kind === 'room') ? { ...step, place } : step;
 
-// The steps the library tools put in the reply so far: its book cards and the bookings refused. A refusal the model
-// asked again and got a card for is left out.
+const dayOf = ({ startAt }: ReplyStep): string | null => (startAt === null ? null : koreaDate(new Date(startAt)));
+
+// Whether a booked step is the one a refusal asked for: the same seat or room, or another of the same unit on the same
+// day, which the model booked in its place (P05 ticket 74). A refusal without a day is one of any day.
+const doneInstead = (refused: ReplyStep, booked: ReplyStep): boolean =>
+  booked.kind === refused.kind &&
+  (booked.title === refused.title || dayOf(refused) === null || dayOf(refused) === dayOf(booked));
+
+// The steps the library tools put in the reply so far: its book cards and the bookings refused. A request is one step:
+// a refusal the model asked again and got a card for, or a card of the same unit that day, is left out, and of two
+// refusals of the same space the last stands.
 export function bookingSteps(presented: ToolContext['presented'], place: PlacePoint | null): ReplyStep[] {
   const booked = presented.cards.flatMap((card) => {
     const step = isBookCard(card) ? bookingStep(card, place) : null;
     return step === null ? [] : [step];
   });
-  const shown = new Set(booked.map(({ kind, title }) => `${kind} ${title}`));
-  const refused = (presented.notDone ?? []).filter(({ step }) => !shown.has(`${step.kind} ${step.title}`));
+  const refused = (presented.notDone ?? []).filter(
+    ({ step }, at, all) =>
+      !booked.some((done) => doneInstead(step, done)) &&
+      !all.slice(at + 1).some((later) => later.step.kind === step.kind && later.step.title === step.title),
+  );
   return [...booked, ...refused.map((notDone) => atKwanjeong(notDone, place))];
 }
 
-// The meal's conditions set out from the step before it among those shown so far, or as they are. planMeal calls it,
-// so that the plan the model reads and words is the one the app shows.
+// The meal's conditions set out from the step before it among those shown so far, or as they are.
 export function afterEarlierSteps(input: MealInput, steps: readonly ReplyStep[]): MealInput {
   const before = stepBefore(steps, input);
   return (before === null ? null : chainedInput(input, before)) ?? input;
+}
+
+// The step a meal follows while the model plans it: of the steps shown so far at a place on its day, the latest that
+// starts before the meal's window ends. The model is told to call the tools in time order, so a step shown before the
+// meal comes before it, even one that starts inside its window ("5시 반부터 관정 있다가 저녁", P05 ticket 74).
+export function stepShownBefore(steps: readonly ReplyStep[], input: MealInput): ReplyStep | null {
+  return stepBeforeAt(steps, input.date, new Date(windowOf(input).end.getTime() - MINUTE_MS));
+}
+
+// The meal's conditions set out from the step shown before it, or as they are. planMeal calls it, so that the plan the
+// model reads and words is the one the app shows.
+export function afterStepsShown(input: MealInput, steps: readonly ReplyStep[]): MealInput {
+  const before = stepShownBefore(steps, input);
+  return (before === null ? null : chainedInput(input, before)) ?? input;
+}
+
+// An answer's step without a plan has only the time it asked for, so it comes after the steps that have one, in the
+// order they came (P05 ticket 74): a dinner too late for today is not ① before a seat after it.
+const planless = ({ shows, place, status }: ReplyStep): boolean =>
+  shows?.kind === 'answer' && place === null && status === 'not-done';
+
+export const stepOrder = (steps: readonly ReplyStep[]): ReplyStep[] => [
+  ...inTimeOrder(steps.filter((step) => !planless(step))),
+  ...steps.filter((step) => planless(step)),
+];
+
+// Whether an answer planned again shows another plan than the one the model was given and worded: another first plan,
+// another time, or none.
+export const planChanged = (worded: AnswerReply, planned: AnswerReply): boolean => {
+  const [before] = worded.plans;
+  const [after] = planned.plans;
+  return before !== undefined && (after?.id !== before.id || after.startAt !== before.startAt);
+};
+
+// The reply's words when the server changed a plan the model had worded (P05 ticket 74): one short sentence per step,
+// in their order, made from the steps alone, so that the words never contradict the plan drawn.
+export function stepsSentence(steps: readonly ReplyStep[]): string {
+  return steps
+    .map(({ title, startAt, status, reason }) =>
+      status === 'not-done'
+        ? `${title}: ${reason ?? '하지 못했어요'}`
+        : `${startAt === null ? '' : `${clockOf(new Date(startAt))} `}${title}`,
+    )
+    .map((line) => (/[.!?]$/u.test(line) ? line : `${line}.`))
+    .join(' ');
 }
 
 // Puts the steps of the run in what it presented, when there are two or more. A meal the model planned before the
@@ -216,17 +295,34 @@ export async function presentSteps(context: ToolContext, services: StepsServices
   if (others.length < 2 && presented.answer === null) {
     return;
   }
-  const { answer } = presented;
-  if (answer?.input.kind === 'meal') {
-    const chained = afterEarlierSteps(answer.input, others);
-    if (chained !== answer.input) {
-      // A replan that fails keeps the meal as the model planned it, so the rest of the reply still reaches the User.
-      const replanned = await services.replanMeal(chained, context).catch(() => answer);
-      reviseAnswer(presented, () => replanned);
-    }
-  }
+  const retold = await mealAfterBookings(context, others, services);
   const all = presented.answer === null ? others : [...others, answerStep(presented.answer)];
-  presented.steps = inTimeOrder(all);
+  presented.steps = stepOrder(all);
+  if (retold) {
+    presented.retold = stepsSentence(presented.steps);
+  }
+}
+
+// A meal the model planned before the booking it follows, or together with it, planned again from that booking, and
+// whether the plan is then another than the one the model worded. A replan that fails keeps the meal as the model
+// planned it, so the rest of the reply still reaches the User. The plan set out from the booking stands; when the model
+// worded another, the steps say it instead (P05 ticket 74).
+async function mealAfterBookings(
+  context: ToolContext,
+  bookings: readonly ReplyStep[],
+  services: StepsServices,
+): Promise<boolean> {
+  const { answer } = context.presented;
+  if (answer?.input.kind !== 'meal') {
+    return false;
+  }
+  const chained = afterEarlierSteps(answer.input, bookings);
+  if (chained === answer.input) {
+    return false;
+  }
+  const replanned = await services.replanMeal(chained, context).catch(() => answer);
+  reviseAnswer(context.presented, () => replanned);
+  return planChanged(answer, replanned);
 }
 
 // The rules of a message that asks for several things, a fragment of the chat's system prompt for an app that draws
