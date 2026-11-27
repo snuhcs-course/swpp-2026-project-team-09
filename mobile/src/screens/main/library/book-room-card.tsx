@@ -118,7 +118,7 @@ export async function bookRoom(
   if (request !== null) {
     await keepRoomBooking(Number(bseqno), request.id).catch(() => null);
     void forgetWaitingRoom(request.questId).catch(() => null);
-    const reported = await reportRoomBooked(request.id).catch(() => 'queued' as const);
+    const reported = await reportRoomBooked(request.id, room.NAME).catch(() => 'queued' as const);
     if (reported === 'ended') {
       addOwn({
         text: partyChangedWords(room.NAME),

@@ -80,18 +80,36 @@ export async function reportRoomCancelled(bseqno: number): Promise<void> {
   await AsyncStorage.setItem(KEY, JSON.stringify(rest));
 }
 
-async function readQueue(): Promise<string[]> {
+// A report kept to send again: the request and the room the library booked. A queue kept before the room was reported
+// holds the request's id alone.
+interface KeptReport {
+  requestId: string;
+  room?: string;
+}
+
+function keptOf(entry: unknown): KeptReport | null {
+  if (typeof entry === 'string') {
+    return { requestId: entry };
+  }
+  if (typeof entry !== 'object' || entry === null || !('requestId' in entry) || typeof entry.requestId !== 'string') {
+    return null;
+  }
+  const room = 'room' in entry && typeof entry.room === 'string' ? entry.room : undefined;
+  return room === undefined ? { requestId: entry.requestId } : { requestId: entry.requestId, room };
+}
+
+async function readQueue(): Promise<KeptReport[]> {
   try {
     const value = await AsyncStorage.getItem(RESULTS);
     const parsed: unknown = value === null ? [] : JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+    return Array.isArray(parsed) ? parsed.flatMap((entry) => keptOf(entry) ?? []) : [];
   } catch {
     return [];
   }
 }
 
-async function writeQueue(ids: readonly string[]): Promise<void> {
-  await AsyncStorage.setItem(RESULTS, JSON.stringify(ids));
+async function writeQueue(reports: readonly KeptReport[]): Promise<void> {
+  await AsyncStorage.setItem(RESULTS, JSON.stringify(reports));
 }
 
 // What reporting a booking made came to: told, kept to retry, or refused because the request had ended meanwhile
@@ -103,21 +121,23 @@ function ended(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 409 || error.status === 404);
 }
 
-async function report(requestId: string): Promise<BookedReport> {
+async function report({ requestId, room }: KeptReport): Promise<BookedReport> {
   try {
-    await roomRequests.result(requestId, { ok: true });
+    await roomRequests.result(requestId, room === undefined ? { ok: true } : { ok: true, room });
     return 'reported';
   } catch (error) {
     return ended(error) ? 'ended' : 'queued';
   }
 }
 
-// Tells the server the booking of the request was made. A report that does not get through is kept and retried.
-export async function reportRoomBooked(requestId: string): Promise<BookedReport> {
-  const reported = await report(requestId);
+// Tells the server the booking of the request was made, and the room the library booked, which the party sees (P05
+// ticket 68). A report that does not get through is kept, with its room, and retried.
+export async function reportRoomBooked(requestId: string, room: string): Promise<BookedReport> {
+  const kept: KeptReport = { requestId, room };
+  const reported = await report(kept);
   if (reported === 'queued') {
     const queue = await readQueue();
-    await writeQueue([...queue.filter((id) => id !== requestId), requestId]);
+    await writeQueue([...queue.filter((each) => each.requestId !== requestId), kept]);
   }
   return reported;
 }
@@ -128,11 +148,11 @@ export async function retryRoomReports(): Promise<void> {
   if (queue.length === 0) {
     return;
   }
-  const left: string[] = [];
-  for (const requestId of queue) {
+  const left: KeptReport[] = [];
+  for (const kept of queue) {
     // oxlint-disable-next-line no-await-in-loop -- one report at a time
-    if ((await report(requestId)) === 'queued') {
-      left.push(requestId);
+    if ((await report(kept)) === 'queued') {
+      left.push(kept);
     }
   }
   await writeQueue(left);

@@ -103,7 +103,8 @@ export interface RoomRequestsClient {
   // The booker asks one more Friend into a request made for booking.
   askOneMore: (id: string, friendId: string, idempotencyKey: string) => Promise<RoomRequest>;
   // What the booking came to, with no library data.
-  result: (id: string, result: { ok: boolean; failedUserId?: string }) => Promise<void>;
+  // `room`: the room the library booked, as the library names it ("G412"), with `ok` only (P05 ticket 68).
+  result: (id: string, result: { ok: boolean; failedUserId?: string; room?: string }) => Promise<void>;
   cancelled: (id: string) => Promise<void>;
   seen: (noticeId: string) => Promise<void>;
 }

@@ -87,7 +87,7 @@ describe('The room of studying together once everyone has consented', () => {
     );
     expect(library.writes()).toHaveLength(1);
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/result`).map(({ body }) => body)).toEqual([
-      { ok: true },
+      { ok: true, room: FIRST_FREE },
     ]);
     expect(inFrame().getByText(`${FIRST_FREE} 예약되었어요!`)).toBeVisible();
   });
