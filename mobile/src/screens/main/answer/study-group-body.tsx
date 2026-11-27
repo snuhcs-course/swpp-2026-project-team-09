@@ -200,7 +200,9 @@ function useGroupBody(props: GroupBodyProps): {
   const onAsk = (): void => {
     setAsking(true);
   };
-  useGroupAct({ ...props, ...booking, group: onScreen, loggedIn, party, onAsk });
+  // A request is sent with its use, as a room card's 예약하기 waits for one: no send before a use is chosen (#657).
+  const sendable = use === null ? { ...party, send: null } : party;
+  useGroupAct({ ...props, ...booking, group: onScreen, loggedIn, party: sendable, onAsk });
   return { loggedIn, slot, choices, request, booking, onScreen };
 }
 

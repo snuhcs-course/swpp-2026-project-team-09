@@ -15,7 +15,8 @@ import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { expectNoWrite, inDock, inFrame, startLibraryChat } from './support/library-chat';
 import { navigate } from './support/library-session';
-import { ASKED_AT, FIRST_FREE, FRIENDS, REQUEST_ID, requestOf, sendTogether } from './support/study-group';
+import { STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
+import { ASKED_AT, askTogether, FIRST_FREE, FRIENDS, REQUEST_ID, requestOf, sendTogether } from './support/study-group';
 
 // Booking the room of the study answer together once everyone has consented (P10 ticket 14; design group-study-design
 // 다, group-study-resume 5): today's booking behind the group answer's card, against the fake main server and the fake
@@ -40,6 +41,10 @@ const COMPANIONS = FRIENDS.map(({ userId, name }, index) => ({
   registeredName: name,
   studentNumber: `2026-0000${String(index + 2)}`,
 }));
+
+function useDescOf(body: unknown): unknown {
+  return typeof body === 'object' && body !== null && 'useDesc' in body ? body.useDesc : null;
+}
 
 function userNameOf(body: unknown): unknown {
   return typeof body === 'object' && body !== null && 'pUserName' in body ? body.pUserName : null;
@@ -161,5 +166,29 @@ describe('The room of studying together once booked', () => {
     expect(screen.queryByTestId('room-use-line')).toBeNull();
     expect(screen.queryByText('요청 취소')).toBeNull();
     expect(screen.queryByRole('button', { name: '동의 요청 보내기' })).toBeNull();
+  });
+});
+
+// Partition, from #657's emulator pictures: no 사용 용도 chosen before 동의 요청 보내기, which once left a request everyone
+// consented to with 예약하기 dimmed and no way to its use. Expected values: the user's rule, a request is sent with its
+// use, as a room card's 예약하기 waits for one.
+describe('A request of studying together with no use chosen', () => {
+  it('is not sent until its use is chosen, so everyone consenting can always book', async () => {
+    const { user } = await askTogether({ server, library }, STUDY_GROUP_TO_SEND);
+    await pass(500);
+
+    expect(inDock().getByRole('button', { name: '동의 요청 보내기' })).toBeDisabled();
+    await user.press(screen.getByTestId('room-use-line'));
+    await user.press(inFrame().getByRole('button', { name: '과제' }));
+    await user.press(inDock().getByRole('button', { name: '동의 요청 보내기' }));
+    await pass(500);
+    server.on(`GET /library/room-requests/${REQUEST_ID}`, {
+      status: 200,
+      body: requestOf(['consented', 'consented', 'consented'], 0, 'ready'),
+    });
+    await pass(3500);
+
+    expect(server.received('POST /library/room-requests').map(({ body }) => useDescOf(body))).toEqual(['과제']);
+    expect(inDock().getByRole('button', { name: '예약하기' })).toBeEnabled();
   });
 });
