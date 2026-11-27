@@ -31,3 +31,8 @@ Only where the meal sets out from. They still get one answer, the last, and no s
 - [x] An app that says `answers` chains as before. (Integration tests, `assistant-steps-chain`, `assistant-several-answers`, `assistant-steps-follow-ups`, `assistant-plan-steps`.)
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 20 minutes, an estimate: this ticket's share of one session's active time, which also built P03-21 and P03-23.
+- Tokens, by the same share: input about 27M, of which cache reads about 27M and cache writes about 0.11M; output about 55K. No subagents.
