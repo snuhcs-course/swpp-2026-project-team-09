@@ -29,7 +29,7 @@ export interface Things {
   avatars: readonly MapAvatar[];
 }
 
-// Above the others of its list. The User's own Avatar is 1, so a selected person is above it too, as in the frames.
+// Above the others of its list, the faces at 0, and the User's own Avatar under them (`pressableMe`), as in the frames.
 export const SELECTED_ORDER = 2;
 // A flag, a Quest made from a Plan's or a booking party's with its room request out (P10 ticket 13): its two lines are
 // what it says, so it is drawn among the Avatars, which the map draws above every marker, and above them.

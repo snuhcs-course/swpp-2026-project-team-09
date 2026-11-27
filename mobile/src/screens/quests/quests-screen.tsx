@@ -33,17 +33,22 @@ import { now } from '@/clock';
 
 type Filter = 'all' | 'class' | 'party';
 
+// A booking party whose room request is out says the request in its line instead of its place, its day and time
+// within it, as its row in the map's list does (P10 ticket 13).
 function QuestRow({ row, onPress }: { row: QuestRowView; onPress: () => void }): ReactElement {
+  const request = row.reopens === true;
+  const line = request ? row.meta : row.place;
+  const time = request ? '' : row.time;
   return (
     <ListRow
       kicker={{ words: row.label, color: questTone[row.tone].kicker }}
-      label={[row.label, row.title, row.place, row.time].filter((part) => part !== '').join(' · ')}
+      label={[row.label, row.title, line, time].filter((part) => part !== '').join(' · ')}
       large
       leading={<QuestRound tone={row.tone} />}
-      lines={row.place === '' ? [] : [row.place]}
+      lines={line === '' ? [] : [line]}
       onPress={onPress}
       title={row.title}
-      trailing={row.time === '' ? null : <Text style={styles.time}>{row.time}</Text>}
+      trailing={time === '' ? null : <Text style={styles.time}>{time}</Text>}
     />
   );
 }

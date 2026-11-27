@@ -213,10 +213,12 @@ describe('isQuest with its room request', () => {
       ['none, null for every Quest but a booking party', { ...QUEST, roomRequest: null }],
       ["a booking party's request gathering", { ...QUEST, roomRequest: ROOM_REQUEST }],
       ['one booked', { ...QUEST, roomRequest: { ...ROOM_REQUEST, status: 'booked', consented: 3 } }],
+      // Read as no tag, so that a status a later main server adds keeps the Quest.
+      ['one with a status this app does not know', { ...QUEST, roomRequest: { ...ROOM_REQUEST, status: 'waiting' } }],
     ],
     [
       ['a request not an object', { ...QUEST, roomRequest: 'r1' }],
-      ...wrongFields(ROOM_REQUEST, { id: [1], status: ['waiting'], consented: ['1'], asked: ['3'] }).map(
+      ...wrongFields(ROOM_REQUEST, { id: [1], status: [1], consented: ['1'], asked: ['3'] }).map(
         ([label, request]): Variant => [`a request with ${label}`, { ...QUEST, roomRequest: request }],
       ),
     ],

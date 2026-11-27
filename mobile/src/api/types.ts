@@ -18,8 +18,6 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { RoomRequestStatus } from './room-requests';
-
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
 // app's own" is defined nowhere else yet, and a mock answers it. All times are ISO 8601 instants and all positions a
 // latitude and a longitude in degrees.
@@ -281,7 +279,8 @@ export interface Quest {
 // A booking party's room request: of the companions still in, how many consented and how many were asked.
 export interface QuestRoomRequest {
   id: string;
-  status: RoomRequestStatus;
+  // One of `RoomRequestStatus`, read as any text: one this app does not know shows no tag.
+  status: string;
   consented: number;
   asked: number;
 }

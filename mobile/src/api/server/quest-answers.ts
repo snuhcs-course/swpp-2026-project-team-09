@@ -6,7 +6,6 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { isRoomRequestStatus } from '@/api/room-requests';
 import type { Quest, QuestMember, QuestRoomRequest } from '@/api/types';
 import {
   field,
@@ -45,13 +44,13 @@ export function isQuest(value: unknown): value is Quest {
   );
 }
 
-// Absent from a main server before it.
+// Absent from a main server before it. Its status is any text, so that one a later main server adds keeps the Quest.
 function isRoomRequestOrNone(value: unknown): value is QuestRoomRequest | null | undefined {
   return (
     value === undefined ||
     value === null ||
     (isText(field(value, 'id')) &&
-      isRoomRequestStatus(field(value, 'status')) &&
+      isText(field(value, 'status')) &&
       isNumber(field(value, 'consented')) &&
       isNumber(field(value, 'asked')))
   );

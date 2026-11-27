@@ -4,7 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { STUDY_GROUP_GATHERING, STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
 import { keepRequestAnswer, requestAnswerOf } from '@/library/room-bookings';
@@ -16,6 +16,7 @@ import { mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { inDock, inFrame, startLibraryChat } from './support/library-chat';
+import { FULL_SCREEN } from './support/lists';
 import { pressMarker } from './support/made-quest';
 import { openMain } from './support/main';
 import { DINNER } from './support/server';
@@ -147,6 +148,23 @@ describe('The address of a booking party with its request out', () => {
 
     expect(server.received(`GET /library/room-requests/${REQUEST_ID}/answer`)).toEqual([]);
     expect(screen.queryByTestId('study-group-body')).toBeNull();
+  });
+});
+
+// The row's line, against the map's flag and ticket 13. Partitions: the Quest list on the whole screen; the 파티 tab's
+// card and the map's list are in room-request-flag.unit.test.ts.
+describe("A booking party's row with its request out on the Quest list screen", () => {
+  it('says the request in its line, its day and time within it, as the map does', async () => {
+    answerGathering();
+    const user = await openMain();
+    await user.press(screen.getByRole('button', { name: FULL_SCREEN }));
+    await pass(0);
+
+    const row = screen.getByRole('button', {
+      name: /관정 그룹스터디룸 6인실 예약 · 내일 15:00 · 동의 1\/3 · 기다리는 중$/u,
+    });
+    expect(within(row).getByText('내일 15:00 · 동의 1/3 · 기다리는 중')).toBeVisible();
+    expect(within(row).queryByText('15:00')).toBeNull();
   });
 });
 

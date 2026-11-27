@@ -81,6 +81,10 @@ describe("A booking party's card on the map", () => {
     expect(cardOf(bookingParty(null)).request).toBeUndefined();
   });
 
+  it('is an ordinary Quest mark with a status this app does not know', () => {
+    expect(cardOf(bookingParty({ ...GATHERING, status: 'waiting' })).request).toBeUndefined();
+  });
+
   it('stands apart from a place it shares with another Quest, as a flag does', () => {
     const party = bookingParty(GATHERING);
     const cards = groupedByPlace(toCards(sources({ quests: [party, quest('q2', { holders: [ME] })] })));
