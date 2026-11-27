@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -19,6 +20,7 @@ import { hideKeyboard } from './support/keyboard';
 import { layStage } from './support/lists';
 import { openMain } from './support/main';
 import { pressMarker } from './support/made-quest';
+import { serveKwanjeong } from './support/top-stops';
 
 // The chosen step on the bar of several requests is drawn in the time card's gold, and the time card carries a caret
 // on its top edge under that step's span (P01 ticket 23, choice 다-1 of the approved page). The fault it removes: the
@@ -39,8 +41,9 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-// ②'s middle, 19:17, is 137 of the bar's 180 minutes in.
+// ②'s middle, 19:17, is 137 of the bar's 180 minutes in; ①'s, 18:15, is 75.
 const DINNER_MIDDLE = (137 / 180) * 100;
+const SEAT_MIDDLE = (75 / 180) * 100;
 
 const GOLD = { borderColor: color.quest, backgroundColor: color.questSoft };
 
@@ -48,6 +51,7 @@ let server: FakeServer;
 
 beforeEach(async () => {
   ({ server } = await startLibraryChat());
+  serveKwanjeong(server);
 });
 
 afterEach(() => {
@@ -86,7 +90,8 @@ function caretAt(): number {
   return typeof left === 'string' ? Number(left.replace('%', '')) : Number.NaN;
 }
 
-// Partitions: the step chosen by its words, by its flag; a step with a time card (②), one without (①, the seat).
+// Partitions: the step chosen by its words, by its flag; a Plan's time card (②), the seat's booking card (①, P03
+// ticket 23).
 describe('the chosen step on the bar of several requests', () => {
   it('stands in gold, its words and its span, and the other step not', async () => {
     const user = await ask();
@@ -116,7 +121,7 @@ describe('the chosen step on the bar of several requests', () => {
     });
   });
 
-  it('moves with a press on a flag: the seat in gold with no caret, as it has no time card, and back', async () => {
+  it("moves with a press on a flag: the seat in gold with the caret on its booking's time card, and back", async () => {
     const user = await ask();
     await pressFlag(user, 2);
     expect(caretAt()).toBeCloseTo(DINNER_MIDDLE, 6);
@@ -125,7 +130,7 @@ describe('the chosen step on the bar of several requests', () => {
 
     expect(screen.getByTestId('step-span-1')).toHaveStyle(GOLD);
     expect(screen.getByTestId('step-span-2')).not.toHaveStyle({ borderColor: color.quest });
-    expect(screen.queryByTestId('time-card-caret')).toBeNull();
+    expect(caretAt()).toBeCloseTo(SEAT_MIDDLE, 6);
 
     await pressFlag(user, 2);
 

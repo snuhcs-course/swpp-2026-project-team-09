@@ -53,6 +53,12 @@ export function chosenOnReply(
   return kept >= 0 ? kept : due;
 }
 
+// Rule 7: a Lookup the steps' reply gave takes the map for that turn, and its card stands under the steps card, which
+// stays with its step chosen; the step's answer comes back with the next reply that draws one (P03 ticket 23). Words
+// alone keep the steps and put no card under them.
+export const lookupTakesTheMap = (reply: Pick<ChatBubble, 'lookup'> | undefined): boolean =>
+  (reply?.lookup ?? null) !== null;
+
 // Rule 6: no other step is chosen while Friends are being picked in the time card ("+ 같이").
 export const mayChooseStep = ({ adding }: { adding: boolean }): boolean => !adding;
 
