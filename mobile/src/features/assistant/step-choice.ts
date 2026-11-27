@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { ReplyStep } from '@/api/assistant-types';
-import { dueStepOf } from './steps-scene';
+import { dueStepOf, type ShownSteps } from './steps-scene';
 import type { ChatBubble } from './use-chat';
 
 // Which step of several is chosen, when the steps name their answers by key (P03 ticket 21). The user decided these
@@ -58,6 +58,22 @@ export function chosenOnReply(
 // alone keep the steps and put no card under them.
 export const lookupTakesTheMap = (reply: Pick<ChatBubble, 'lookup'> | undefined): boolean =>
   (reply?.lookup ?? null) !== null;
+
+// What of a reply of several requests the card shows: the chosen step's own answer, as it shows alone (P03 ticket 23).
+// A seat's or a room's step, the reply's sentence and that step's own card, its ticket; an answer step, its answer's
+// card, which holds the sentence, and no ticket. A step refused, or a reply whose steps are not on the map, as it is.
+export function stepPartsOf(bubble: ChatBubble, steps: ShownSteps | null, active: number): ChatBubble {
+  const shows = steps?.bubbleId === bubble.id ? steps.steps[active]?.shows : undefined;
+  if (shows === undefined || shows === null) {
+    return bubble;
+  }
+  const own = (card: ChatBubble['cards'][number]): boolean =>
+    card.kind !== 'library' ||
+    card.library.action !== 'book' ||
+    (shows.kind === 'card' && card.library.key === shows.key);
+  const cards = bubble.cards.filter((card) => own(card));
+  return shows.kind === 'card' ? { ...bubble, cards, answer: null, answers: [] } : { ...bubble, cards };
+}
 
 // Rule 6: no other step is chosen while Friends are being picked in the time card ("+ 같이").
 export const mayChooseStep = ({ adding }: { adding: boolean }): boolean => !adding;

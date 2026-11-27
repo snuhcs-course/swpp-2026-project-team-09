@@ -14,6 +14,7 @@ The user, on 2026-11-28: with a seat step chosen, the seat's time card should st
 
 - **One rule** (`screens/main/answer/answer-top-card.tsx`, new; `TopBar` moves there from `reply-words.tsx`). `topCardOf` picks the top card of the answer on screen: a booking's card on the map first, else the Lookup's, else the Plan's bar, or the frame an answer with no Plan keeps. A reply to one request draws it as before. Under the steps card, the chosen step draws the same card through the same function (`stepCardOf`, then `topCardOf`).
 - **The seat's booking card stands under the steps card** (`time-bar.tsx`): `BookingBar` takes the steps card's `offset` and `caret`, as `PlanBar` does. It folds in the same three stops, and its caret points at the seat's span.
+- **The card under the map shows the chosen step's own answer** (`stepPartsOf` in `features/assistant/step-choice.ts`, used by `answer-frame.tsx`). The orchestrating session found it in the pictures: with the seat's step chosen, the card still showed the meal's list, the seat's ticket below it. That followed PR 490's "a seat card of several requests keeps the reply's Plan". Now a seat's or a room's step shows the reply's sentence and its own ticket only, and an answer step its answer's card and no ticket. A step refused shows as before.
 - **The steps card draws what it is given** (`steps-bar.tsx`). `StepsTop` takes the card to draw and keeps its strip for a step with none.
 - **Rule 7, a Lookup in the turn of several requests** (`lookupTakesTheMap` in `features/assistant/step-choice.ts`). An app that says `answers` gets the steps back with a Lookup's reply. The steps card stays, its chosen step still gold. The Lookup takes the map, its card stands in the time card's place under the steps card, and its button is the dock's. The answers and the steps still go with the next request, and the next reply that draws an answer brings the chosen step's card back. Words alone keep the steps card and put nothing under it.
 - `BookingBar` and its card moved from `time-bar.tsx` to `booking-bar.tsx`, which keeps both files under their line limit.
@@ -35,6 +36,7 @@ The user, on 2026-11-28: with a seat step chosen, the seat's time card should st
 - [x] The seat step chosen draws its booking's time card under the steps card, which folds in the three stops; a step with no top card keeps the strip. (Integration test, `answer-step-top-card`.)
 - [x] Rule 7: a Lookup with the steps takes the map and the place under the steps card, which stays with its step chosen, until a reply draws the steps again. (Integration test, `answer-step-top-card`.)
 - [x] The seat step's time card carries the caret at the seat's span. (Integration test, `answer-steps-gold`.)
+- [x] The card under the map is the seat's ticket alone for the seat's step and the meal's list alone for dinner's; it failed before the fix. (Integration test, `answer-step-top-card`; unit test, `features/step-choice`.)
 - [x] Which card each kind of step draws from, by the table's partitions. (Unit test, `step-top-card`.)
 - [x] A reply to one request draws its top card as before. (The existing time card and booking tests, unchanged.)
 

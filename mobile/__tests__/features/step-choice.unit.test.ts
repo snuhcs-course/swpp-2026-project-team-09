@@ -6,7 +6,9 @@
 
 import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
-import { chosenOnReply, mayChooseStep, stepIdOf } from '@/features/assistant/step-choice';
+import { stepsReplyOn } from '@/api/mock/data/steps-answer';
+import { chosenOnReply, mayChooseStep, stepIdOf, stepPartsOf } from '@/features/assistant/step-choice';
+import type { ChatBubble } from '@/features/assistant/use-chat';
 
 // Which step of several is chosen (P03 ticket 21), by the rules the user decided on 2026-11-28: on the first reply the
 // step due first, or the step of a plan chosen in words; on a later one the first step whose answer the reply drew, else
@@ -64,5 +66,43 @@ describe('A step chosen by a press', () => {
   it('is refused while Friends are being picked', () => {
     expect(mayChooseStep({ adding: true })).toBe(false);
     expect(mayChooseStep({ adding: false })).toBe(true);
+  });
+});
+
+// The reply of a seat and dinner ("17시 반에 관정 갔다가 19시쯤 저녁 먹을래") as a bubble, its steps on the map or not.
+const REPLY = stepsReplyOn('2026-11-02');
+const LIBRARY = REPLY.cards.flatMap((card) => (card.kind === 'library' ? [card] : []));
+const BUBBLE: ChatBubble = {
+  id: 7,
+  role: 'assistant',
+  text: REPLY.text,
+  cards: LIBRARY,
+  mapButtons: [],
+  proposal: null,
+  failure: null,
+  answer: REPLY.answer,
+  steps: REPLY.steps,
+};
+const ON_MAP = { bubbleId: 7, steps: REPLY.steps ?? [] };
+
+// Partitions: the seat's step chosen, the meal's, a step refused, the steps of another reply on the map.
+describe('What of a reply of several requests the card shows (P03 ticket 23)', () => {
+  it("is, for the seat's step, the reply's sentence and the seat's ticket, without the meal's answer", () => {
+    const part = stepPartsOf(BUBBLE, ON_MAP, 0);
+    expect(part.answer).toBeNull();
+    expect(part.text).toBe(REPLY.text);
+    expect(part.cards).toEqual(LIBRARY);
+  });
+
+  it("is, for the meal's step, its answer and no ticket", () => {
+    const part = stepPartsOf(BUBBLE, ON_MAP, 1);
+    expect(part.answer).toBe(REPLY.answer);
+    expect(part.cards).toEqual([]);
+  });
+
+  it("is the reply as it is for a step refused, or when another reply's steps are on the map", () => {
+    const refused = { ...ON_MAP, steps: ON_MAP.steps.map((step, at) => (at === 0 ? { ...step, shows: null } : step)) };
+    expect(stepPartsOf(BUBBLE, refused, 0)).toBe(BUBBLE);
+    expect(stepPartsOf(BUBBLE, { ...ON_MAP, bubbleId: 8 }, 0)).toBe(BUBBLE);
   });
 });

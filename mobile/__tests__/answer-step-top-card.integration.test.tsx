@@ -81,6 +81,8 @@ function keyed(): AssistantReply {
   return reply;
 }
 
+const ALL = { includeHiddenElements: true };
+
 const headWords = (): ReturnType<typeof screen.getByTestId> =>
   within(screen.getByTestId('time-card-head')).getByTestId('time-band-words');
 
@@ -112,6 +114,25 @@ describe("the seat's step at the top", () => {
     expect(shiftOf(stepsCard())).toBe(0);
     await pull('steps-strip-drag', -400);
     expect(shiftOf(stepsCard())).toBe(-stepsBottom());
+  });
+});
+
+// The card under the map shows the chosen step's own answer, as the review of the pictures asked: the seat's ticket
+// alone for the seat's step, the meal's list alone for dinner's. Before, the seat's step kept the meal's list, its
+// ticket below it. Partitions: the seat chosen, then dinner.
+describe("the chosen step's card under the map", () => {
+  it("is the seat's ticket for the seat's step and the meal's list for dinner's, never both", async () => {
+    const user = await atStep(server, 1);
+    const [card] = stepsReplyOn('2026-11-02').cards;
+    const ticket = `library-book-${card?.kind === 'library' ? card.library.key : ''}`;
+    expect(screen.getByTestId(ticket, ALL)).toBeTruthy();
+    expect(screen.queryByTestId('meal-list', ALL)).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await pass(50);
+
+    expect(screen.getByTestId('meal-list', ALL)).toBeTruthy();
+    expect(screen.queryByTestId(ticket, ALL)).toBeNull();
   });
 });
 

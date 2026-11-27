@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, type userEvent, within } from '@testing-library/react-native';
@@ -128,11 +129,12 @@ describe('A reply to a seat and then dinner', () => {
     expect(screen.getByTestId('step-span-1')).toBeVisible();
     expect(screen.getByTestId('step-span-2')).toBeVisible();
     expect(inFrame().queryByTestId('reply-steps')).toBeNull();
-    // PR 462's review: the seat step's card keeps its own band, and the meal's other candidates its stepper.
+    // PR 462's review: the seat step's card keeps its own band. The meal's other candidates and their stepper are its
+    // own step's card, shown when ② is chosen (P03 ticket 23).
     expect(
       within(inFrame().getByTestId(`library-book-${SEAT_CARD.library.key}`)).getByTestId('slot-band'),
     ).toBeVisible();
-    expect(inFrame().getByTestId('plan-stepper')).toBeVisible();
+    expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
     expect(library.writes()).toEqual([]);
   });
 
@@ -141,15 +143,17 @@ describe('A reply to a seat and then dinner', () => {
 
     expect(flag(1)).toMatch(/^1 관정 7층 열람실 › · \d+번 17:00–18:00$/u);
     expect(beside('예약하기')).toBeVisible();
-    expect(screen.getAllByTestId('time-bar')).toHaveLength(1);
+    // The seat's own time card stands under the steps' bar, as a seat card alone draws it (P03 ticket 23).
+    expect(screen.getAllByTestId('time-bar')).toHaveLength(2);
 
     await pressMarker(user, flag(2) ?? '');
     await pass(100);
 
     expect(beside('만들고 초대 보내기')).toBeVisible();
     expect(beside('예약하기')).toBeNull();
-    // The meal's own bar, with its handles, stands under the steps' bar while ② is shown.
+    // The meal's own bar, with its handles, stands under the steps' bar while ② is shown, and its card in the frame.
     expect(screen.getAllByTestId('time-bar')).toHaveLength(2);
+    expect(inFrame().getByTestId('plan-stepper')).toBeVisible();
     expect(library.writes()).toEqual([]);
   });
 
