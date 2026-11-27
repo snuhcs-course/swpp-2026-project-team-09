@@ -7,11 +7,11 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
-import { color, text } from '@/design-system';
 import { modelWordsOf } from '@/features/assistant/model-words';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import { turnsOf } from '@/features/assistant/turn';
@@ -32,6 +32,7 @@ import { StepsTop } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 import { offeredAnswer } from '@/features/assistant/meal-offered';
+import { SENTENCE } from './sentence-type';
 
 // Which card a reply's words are: the Plan's, or the made Quest's once its Plan was made into one, for the reply the
 // answer on screen came from, the Lookup on screen for its reply, or the reply's own.
@@ -220,5 +221,5 @@ export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): Reac
 }
 
 const styles = StyleSheet.create({
-  words: { ...text.bodyLg, color: color.ink },
+  words: SENTENCE,
 });

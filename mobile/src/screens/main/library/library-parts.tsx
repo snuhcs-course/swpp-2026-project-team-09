@@ -13,6 +13,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import { LIBRARY_FAILURE_TEXT, type LibraryFailure } from '@/library/client';
 import { needsLogin } from './use-library-call';
+import { SENTENCE } from '../answer/sentence-type';
 
 // The parts the library cards share, as the MainChatLib frames draw them inside the Assistant's bubble: white boxes
 // on the bubble's blue, the space as a row with its round icon, the round buttons under it, and the site's notes.
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.svcStudy,
   },
   words: { flex: 1, minWidth: 0 },
-  title: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.ink },
+  title: { ...text.label, color: color.ink },
   meta: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   pill: { justifyContent: 'center', height: 36, paddingHorizontal: 14, borderRadius: radius.full },
@@ -193,9 +194,11 @@ const styles = StyleSheet.create({
   pillLabel: { ...text.label, color: color.snuBlue },
   primaryLabel: { color: color.onPrimary },
   disabledLabel: { color: color.inkMuted },
-  said: { ...text.body, color: color.ink },
-  danger: { color: color.danger },
+  // An outcome or an empty list stands as the answer's sentence; a failure is the smaller failure line, in red (P01
+  // ticket 19).
+  said: SENTENCE,
+  danger: { ...text.body, color: color.danger },
   notes: { gap: 2 },
-  note: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: color.inkMuted },
+  note: { ...text.caption, color: color.inkMuted },
   failure: { gap: space[2] },
 });

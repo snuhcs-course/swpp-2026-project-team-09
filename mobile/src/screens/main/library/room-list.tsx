@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   // The room on screen: the study colour's border.
   inUse: { borderWidth: 1.5, borderColor: color.svcStudy },
   full: { backgroundColor: color.surfaceSunken, borderColor: color.surfaceSunken },
-  cellName: { flexShrink: 1, fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.ink },
+  cellName: { flexShrink: 1, ...text.label, color: color.ink },
   cellCount: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 20, color: color.svcStudy },
   few: { color: color.danger },
   fullWords: { color: color.inkMuted, fontFamily: font.regular },

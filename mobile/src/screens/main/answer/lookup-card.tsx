@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -195,7 +196,7 @@ export function LookupCard(props: LookupCardProps): ReactElement {
   return (
     <View style={styles.card} testID="lookup-card">
       <Chips basis={lookup.basis.length === 0 ? null : { open: basisOpen, toggle: toggleBasis }} chips={lookup.chips} />
-      <AnswerLines lines={refusal?.lines ?? lookup.lines} />
+      <AnswerLines lines={refusal?.lines ?? lookup.lines} refusal={refusal?.lines.length ?? 0} />
       {basisOpen ? (
         <View style={styles.basis}>
           {lookup.basis.map((line) => (
