@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BackHandler } from 'react-native';
@@ -61,7 +62,14 @@ const CARDS = [
     ['오늘 18:00–20:00', '301동 대강당', '같이 갈 파티 1개 모집 중'],
     '같이 갈 사람 찾기',
   ],
-  ["the User's Party", PARTY, 'AI 커리어 설명회 같이 가요', '파티 · 4/6명', ['17:40 301동 앞에서 출발'], '파티 열기'],
+  [
+    "the User's Party",
+    PARTY,
+    'AI 커리어 설명회 같이 가요',
+    '파티 · 4/6명',
+    ['오늘 17:40 301동 앞에서 출발'],
+    '파티 열기',
+  ],
   [
     'the Shared Quest',
     DINNER,

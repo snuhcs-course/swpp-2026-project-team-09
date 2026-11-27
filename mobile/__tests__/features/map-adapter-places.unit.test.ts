@@ -144,9 +144,17 @@ describe("toCards of the User's Quests with a Party", () => {
       kind: 'party',
       marker: { name: '파티 · AI 커리어 설명회 같이 가요', short: 'AI 커리어', count: 2 },
       subLabel: '파티 · 2/4명',
-      lines: [{ icon: 'clock', text: '17:40 301동 앞에서 출발' }],
+      lines: [{ icon: 'clock', text: '오늘 17:40 301동 앞에서 출발' }],
       primary: { label: '참여하기', action: 'room', questId: 'q1' },
     });
+  });
+
+  it('a Party that meets on another day says its day: 10/8(목)', () => {
+    const mine = myParty('q1', [{ ...ME, leader: true, visible: true }]);
+    const later = quest('q1', { joinPolicy: 'open' });
+    const subQuests = later.subQuests.map((step) => ({ ...step, startsAt: '2026-10-08T08:40:00.000Z' }));
+    const [card] = toCards(sources({ quests: [{ ...later, subQuests }], myParty: mine }));
+    expect(card).toMatchObject({ lines: [{ icon: 'clock', text: '10/8(목) 17:40 301동 앞에서 출발' }] });
   });
 
   it('an Open Quest whose Party the User is in → 파티 열기', () => {

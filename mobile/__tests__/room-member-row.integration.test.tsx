@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -76,10 +77,9 @@ describe("the Leader's icons", () => {
 });
 
 describe('내보내기', () => {
-  it('asks first, then takes the Holder out of the Quest and of the Party the User leads', async () => {
+  it('asks first, then takes the Holder out of the Quest, whose activation the main server leaves for them', async () => {
     answerMyParty(server, myPicnicParty(ME_ID));
     server.on(`DELETE ${QUEST}/holders/${MIN_JUN.id}`, { status: 204 });
-    server.on(`DELETE /parties/mine/members/${MIN_JUN.id}`, { status: 204 });
     const user = await openRoom();
 
     await user.press(members().getByRole('button', { name: '김민준님 내보내기' }));
@@ -88,7 +88,8 @@ describe('내보내기', () => {
     await answer(user, '내보내기');
 
     expect(server.received(`DELETE ${QUEST}/holders/${MIN_JUN.id}`)).toHaveLength(1);
-    expect(server.received(`DELETE /parties/mine/members/${MIN_JUN.id}`)).toHaveLength(1);
+    // The main server takes them out of the activation in the same change (P06 ticket 23).
+    expect(server.received(`DELETE /parties/mine/members/${MIN_JUN.id}`)).toHaveLength(0);
     expect(toast()).toHaveTextContent('김민준님을 내보냈어요');
   });
 

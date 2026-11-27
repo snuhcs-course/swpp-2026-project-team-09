@@ -17,6 +17,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -174,11 +175,6 @@ export class QuestsService {
     }
     const roomsOf = await questRoomsOf(this.prisma, [quest]);
     return toQuestDto(quest, userId, now, roomsOf(quest.id));
-  }
-
-  async drop(userId: string, questId: string): Promise<void> {
-    await this.changeShared(userId, questId, (tx) => this.removeHolder(questId, userId, tx));
-    await this.roomRequests.questChanged(questId);
   }
 
   // Locks the Quest's row until the transaction ends, so that changes to one Quest run one after another.

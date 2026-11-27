@@ -14,7 +14,7 @@ import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@
 import type { Board, JoinPolicy, Person, SubQuest } from '@/api/types';
 import type { MyJoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
-import { koreaClock, koreaDay } from '@/korea-time';
+import { dayAndClock } from '@/korea-time';
 import { type PointOnMap, pointOnMap } from '@/features/places/point-on-map';
 import { shownSubQuest } from '@/features/quests/adapter';
 
@@ -70,9 +70,9 @@ export interface PostView {
 
 type Next = Pick<SubQuest, 'startsAt' | 'place'> | null;
 
-// "오늘 19:30", "내일 19:30", "10월 8일 (목) 19:00".
+// "오늘 19:30", "내일 19:30", "10/8(목) 19:00": a 파티's time, as every 파티 screen says it (dayAndClock).
 export function whenOf(instant: string): string {
-  return `${koreaDay(instant, now())} ${koreaClock(instant)}`;
+  return dayAndClock(instant, now());
 }
 
 // When and where a Quest next meets, as its post and an invitation's card say it: "내일 19:30" or "시간 미정", and

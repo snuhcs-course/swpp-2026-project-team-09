@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -108,11 +109,6 @@ const ASKS = {
   remove: { title: (name: string) => `${name}님을 파티에서 내보낼까요?`, confirm: '내보내기', tone: 'danger' },
 } as const;
 
-// The Leader of the Party also takes the Holder out of it.
-function removesFromParty({ activation }: RoomView, member: MemberView): boolean {
-  return activation.state === 'in' && activation.leadsParty && member.state?.tone !== 'waiting';
-}
-
 // 친구 추가 on another member's row and the Leader's 파티장 넘기기 and 내보내기 beside it, icons in a line.
 function MemberControls({
   member,
@@ -210,7 +206,7 @@ function AskDialog({
     } else if (action === 'handOver') {
       void actions.handOver(room.quest.id, member);
     } else {
-      void actions.removeHolder(room.quest.id, member, removesFromParty(room, member));
+      void actions.removeHolder(room.quest.id, member);
     }
   };
   return (
