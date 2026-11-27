@@ -43,6 +43,7 @@ function post(questId: string, tags: string[], place = '자하연'): PostView {
     startsAt: null,
     time: '시간 미정',
     place,
+    point: null,
     members: '최유나',
     createdAt: '2026-10-01T00:00:00.000Z',
     role: { kind: 'open' },

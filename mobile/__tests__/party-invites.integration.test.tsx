@@ -173,3 +173,15 @@ describe('초대 without an invitation', () => {
     expect(screen.getByText('받은 초대가 없어요')).toBeVisible();
   });
 });
+
+describe('the place of an invitation’s 파티 picked on the map', () => {
+  it('opens a small map with its pin from the card', async () => {
+    const user = await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    await user.press(invitation.getByRole('button', { name: '301동 앞' }));
+    await pass(500);
+
+    expect(within(screen.getByLabelText('장소')).getByLabelText('장소 · 301동 앞')).toBeVisible();
+  });
+});

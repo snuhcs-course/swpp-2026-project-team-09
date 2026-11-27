@@ -3,6 +3,7 @@
  *
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { screen } from './support/app';
+import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answer, answerRoom, openRoom, PICNIC } from './support/room';
@@ -163,5 +164,31 @@ describe('a point picked on the map', () => {
         place: { latitude: 37.45091, longitude: 126.95289, label: '301동 앞 로비' },
       },
     ]);
+  });
+});
+
+describe('the place of a Sub Quest in 일정', () => {
+  const station = { placeId: null, label: '서울대입구역', latitude: null, longitude: null };
+  const typed = { ...PICNIC, subQuests: [{ ...MEET, place: station }, PICNIC_STEP] };
+
+  it('opens a small map with its pin when it was picked on the map', async () => {
+    answerRoom(server, PICNIC);
+    const user = await openRoom(PICNIC);
+
+    await user.press(within(screen.getByLabelText('일정')).getByRole('button', { name: '301동 앞' }));
+    await pass(500);
+
+    expect(within(screen.getByLabelText('장소')).getByLabelText('장소 · 301동 앞')).toBeVisible();
+  });
+
+  it('takes no press for words typed alone, nor for a Place of the list', async () => {
+    answerRoom(server, typed);
+    await openRoom(typed);
+
+    const plan = within(screen.getByLabelText('일정'));
+    expect(plan.getByText('서울대입구역')).toBeVisible();
+    expect(plan.queryByRole('button', { name: '서울대입구역' })).toBeNull();
+    expect(plan.getByText('자하연')).toBeVisible();
+    expect(plan.queryByRole('button', { name: '자하연' })).toBeNull();
   });
 });

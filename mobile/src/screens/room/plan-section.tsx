@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -12,7 +13,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import type { SubQuest } from '@/api/types';
 import { color, font, Icon, type IconName, radius, space } from '@/design-system';
+import { type PointOnMap, pointOnMap } from '@/features/places/point-on-map';
 import type { PlanStepView, RoomView } from '@/features/quests/room-adapter';
+import { PlaceWords, usePlaceOnMap } from '../place-map/place-on-map-sheet';
 import { HelpButton, PLAN_HELP } from './help-bubble';
 import { PlanForm } from './plan-form';
 import { SectionTitle } from './section-title';
@@ -31,6 +34,8 @@ interface StepProps {
   editsPlan: boolean;
   onEdit: () => void;
   onCancel: () => void;
+  // A place picked on the map opens it on a small map (P06 ticket 27).
+  onPlace: (point: PointOnMap) => void;
 }
 
 interface SmallButtonProps {
@@ -54,7 +59,7 @@ function SmallButton({ icon, label, onPress }: SmallButtonProps): ReactElement {
 }
 
 // A step after its clock, orange for the step now or next and grey once behind (`plan-steps`).
-function Step({ step, editsPlan, onEdit, onCancel }: StepProps): ReactElement {
+function Step({ step, editsPlan, onEdit, onCancel, onPlace }: StepProps): ReactElement {
   const { subQuest, time, place, next, over } = step;
   return (
     <View style={[styles.step, over && styles.over]} testID="plan-step">
@@ -62,7 +67,11 @@ function Step({ step, editsPlan, onEdit, onCancel }: StepProps): ReactElement {
       <View style={styles.words}>
         {time === '' ? null : <Text style={[styles.time, next && styles.nextTime]}>{time}</Text>}
         <Text style={styles.what}>{subQuest.title}</Text>
-        {place === '' ? null : <Text style={styles.place}>{place}</Text>}
+        {place === '' ? null : (
+          <PlaceWords onOpen={onPlace} point={pointOnMap(subQuest.place)}>
+            <Text style={styles.place}>{place}</Text>
+          </PlaceWords>
+        )}
       </View>
       {editsPlan && !subQuest.attending ? (
         <>
@@ -90,6 +99,7 @@ interface StepsProps extends PlanSectionProps {
 
 function Steps({ room, onEdit, onCancel }: StepsProps): ReactElement {
   const { plan, editsPlan } = room;
+  const placeOnMap = usePlaceOnMap();
   return (
     <View style={styles.steps}>
       {plan.length === 0 ? <Text style={styles.empty}>일정 없음</Text> : null}
@@ -103,9 +113,11 @@ function Steps({ room, onEdit, onCancel }: StepsProps): ReactElement {
           onEdit={() => {
             onEdit(step.subQuest);
           }}
+          onPlace={placeOnMap.open}
           step={step}
         />
       ))}
+      {placeOnMap.sheet}
     </View>
   );
 }

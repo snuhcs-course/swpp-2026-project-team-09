@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -13,6 +14,7 @@ import { boardName } from '@/features/party/boards';
 import type { PostView } from '@/features/party/posts';
 import type { PostDetailView } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
+import { PlaceWords, usePlaceOnMap } from '../place-map/place-on-map-sheet';
 import { Fill } from './post-card';
 import { PostReasons } from './post-reasons';
 
@@ -87,6 +89,7 @@ export function InfoBox({ children }: { children: ReactNode }): ReactElement {
 // The 모집글: the board and the fill, the title, the Leader, a grey box with the time, the place, the members and the
 // event, the description and 추천 이유.
 export function PostContent({ post, reasons }: PostDetailView): ReactElement {
+  const placeOnMap = usePlaceOnMap();
   return (
     <View style={styles.content}>
       <View style={styles.head}>
@@ -102,7 +105,9 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
       />
       <InfoBox>
         <InfoLine icon="clock">{post.time}</InfoLine>
-        <InfoLine icon="pin">{post.place}</InfoLine>
+        <PlaceWords onOpen={placeOnMap.open} point={post.point}>
+          <InfoLine icon="pin">{post.place}</InfoLine>
+        </PlaceWords>
         <InfoLine icon="users">{post.members}</InfoLine>
         {post.event === null ? null : (
           <InfoLine event icon="calendar">
@@ -112,6 +117,7 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
       </InfoBox>
       {post.description === '' ? null : <Text style={styles.description}>{post.description}</Text>}
       {reasons === null ? null : <PostReasons reasons={reasons} />}
+      {placeOnMap.sheet}
     </View>
   );
 }

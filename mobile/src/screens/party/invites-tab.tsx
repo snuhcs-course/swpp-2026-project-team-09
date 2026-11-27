@@ -32,9 +32,11 @@ import {
   text,
 } from '@/design-system';
 import { planWords } from '@/features/party/posts';
+import { pointOnMap } from '@/features/places/point-on-map';
 import { useInvitations, useSentRequests } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
 import { REMOVED_CAPTION } from '@/features/quests/refusals';
+import { PlaceWords, usePlaceOnMap } from '../place-map/place-on-map-sheet';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { Line, openPost } from './post-card';
 import { type PartyActions, showFind, usePartyActions, withdrawAsk } from './use-party-actions';
@@ -47,12 +49,17 @@ function membersOf({ quest }: ShownQuestInvitation): string {
 
 // When and where the 파티 next meets, under the title, since a 비공개 파티's post cannot be read before entering: the
 // clock with its time, then the pin with its place, each on a line of its own.
+// A place picked on the map opens it on a small map (P06 ticket 27).
 function InvitationPlan({ next }: { next: ShownQuestInvitation['nextSubQuest'] }): ReactElement {
   const { time, place } = planWords(next);
+  const placeOnMap = usePlaceOnMap();
   return (
     <View style={styles.plan}>
       <Line icon="clock">{time}</Line>
-      <Line icon="pin">{place}</Line>
+      <PlaceWords onOpen={placeOnMap.open} point={pointOnMap(next?.place)}>
+        <Line icon="pin">{place}</Line>
+      </PlaceWords>
+      {placeOnMap.sheet}
     </View>
   );
 }
