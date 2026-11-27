@@ -19,7 +19,6 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
- * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -30,7 +29,6 @@ export { Avatar, initials, type PresenceStatus } from './avatar';
 export { Badge, type BadgeTone } from './badge';
 export { BottomNav, type BottomNavItem } from './bottom-nav';
 export { BottomSheet } from './bottom-sheet';
-export { type SheetScrollEvent, SheetScrollView } from './sheet-scroll-view';
 export { Button } from './button';
 export { cardStyles } from './card';
 export { DayTile } from './day-tile';

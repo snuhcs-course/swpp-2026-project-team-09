@@ -16,7 +16,7 @@ import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { useInsets } from './insets';
 import { Overlay } from './overlay';
-import { type SheetPull, SheetPullContext, useSheetPan, useSheetPull } from './sheet-pull';
+import { type SheetPull, useSheetPan, useSheetPull } from './sheet-pull';
 import { color, radius, space } from './tokens';
 import { useSlide } from './use-slide';
 
@@ -40,7 +40,7 @@ function useLastContent(open: boolean, children: ReactNode): ReactNode {
   return open ? children : last;
 }
 
-// How the sheet closes, by one call of `onClose`: Android's back while it is open, and the taps and the swipe, which do
+// How the sheet closes, by one call of `onClose`: Android's back while it is open, and the taps and the drag, which do
 // nothing while it slides out.
 function useClose(open: boolean, onClose: () => void): () => void {
   useBackToClose(open, onClose);
@@ -58,7 +58,7 @@ interface ScrimProps {
   onPress: () => void;
 }
 
-// The scrim fades in with the slide, and out as the sheet is swiped down.
+// The scrim fades in with the slide, and out as the sheet is dragged down.
 function Scrim({ label, progress, sheet, onPress }: ScrimProps): ReactElement {
   const { down, height } = sheet;
   const dimmed = useAnimatedStyle(() => ({ opacity: 1 - Math.min(1, down.value / Math.max(height.value, 1)) }));
@@ -77,9 +77,9 @@ function Scrim({ label, progress, sheet, onPress }: ScrimProps): ReactElement {
 }
 
 // A sheet that rises from the bottom over the whole screen, the bottom navigation too, as the frames draw them: a
-// handle, a top radius of 24 and the scrim. A tap on the scrim or on the handle bar, Android's back button, or a swipe
-// down from anywhere on it closes it (`sheet-pull.ts`), each by one call of `onClose`, and it slides down with what it
-// showed. While the phone's keyboard is up the sheet stands on it, at most 90% of what is left above it, so that a
+// handle, a top radius of 24 and the scrim. A tap on the scrim or on the handle bar, a drag down on the handle bar
+// (`sheet-pull.ts`), or Android's back button closes it, each by one call of `onClose`, and it slides down with what it
+// showed. Its body takes no drag, so that its lists scroll as they do anywhere. While the phone's keyboard is up the sheet stands on it, at most 90% of what is left above it, so that a
 // search at its top and the first rows under it stay in view.
 export function BottomSheet({ open, onClose, label, children }: BottomSheetProps): ReactElement | null {
   const { shown, progress } = useSlide(open);
@@ -104,23 +104,22 @@ export function BottomSheet({ open, onClose, label, children }: BottomSheetProps
         <Scrim label={label} onPress={close} progress={progress} sheet={sheet} />
         <View style={[styles.room, { bottom: keyboard }]} testID="sheet-room">
           <Animated.View style={[styles.room, styles.whole, { transform: [{ translateY: risen }] }]}>
-            {/* The swipe stands on the view it moves, as the answer card's does. */}
-            <GestureDetector gesture={pan}>
-              <Reanimated.View
-                accessibilityLabel={label}
-                collapsable={false}
-                onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-                  height.value = nativeEvent.layout.height;
-                }}
-                style={[styles.sheet, { paddingBottom: space[4] + bottom }, pulled]}
-              >
-                {/* The bar's touch row: a tap closes the sheet. The scrim's button is what a screen reader offers. */}
+            <Reanimated.View
+              accessibilityLabel={label}
+              onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+                height.value = nativeEvent.layout.height;
+              }}
+              style={[styles.sheet, { paddingBottom: space[4] + bottom }, pulled]}
+            >
+              {/* The bar's touch row: a tap closes the sheet, and a drag pulls it. The scrim's button is what a screen
+                  reader offers. */}
+              <GestureDetector gesture={pan}>
                 <Pressable accessible={false} onPress={close} style={styles.grip} testID="sheet-handle">
                   <View style={styles.handle} />
                 </Pressable>
-                <SheetPullContext value={sheet}>{content}</SheetPullContext>
-              </Reanimated.View>
-            </GestureDetector>
+              </GestureDetector>
+              {content}
+            </Reanimated.View>
           </Animated.View>
         </View>
       </View>

@@ -7,20 +7,10 @@
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { PickTimeOffer } from '@/api/pick-types';
 import { now } from '@/clock';
-import {
-  BottomSheet,
-  Button,
-  color,
-  font,
-  radius,
-  type SheetScrollEvent,
-  SheetScrollView,
-  space,
-  text,
-} from '@/design-system';
+import { BottomSheet, Button, color, font, radius, space, text } from '@/design-system';
 import { isFreeAt, wheelTimes } from '@/features/assistant/use-picking';
 import { koreaClock, koreaDateKey, koreaDayWord, koreaWeekdayName } from '@/korea-time';
 
@@ -49,13 +39,13 @@ interface WheelProps {
 
 // The rows, which stop with one in the middle band.
 function Wheel({ times, free, first, index, onIndex, onMoving }: WheelProps): ReactElement {
-  const settle = ({ nativeEvent }: SheetScrollEvent): void => {
+  const settle = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>): void => {
     onIndex(Math.min(Math.max(Math.round(nativeEvent.contentOffset.y / ROW), 0), times.length - 1));
   };
   return (
     <View style={styles.wheel}>
       <View pointerEvents="none" style={styles.middle} />
-      <SheetScrollView
+      <ScrollView
         contentContainerStyle={styles.rows}
         contentOffset={{ x: 0, y: first * ROW }}
         decelerationRate="fast"
@@ -86,7 +76,7 @@ function Wheel({ times, free, first, index, onIndex, onMoving }: WheelProps): Re
             </View>
           );
         })}
-      </SheetScrollView>
+      </ScrollView>
     </View>
   );
 }

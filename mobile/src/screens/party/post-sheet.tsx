@@ -6,8 +6,8 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { BottomSheet, EmptyState, ErrorState, LoadingState, SheetScrollView, space } from '@/design-system';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { BottomSheet, EmptyState, ErrorState, LoadingState, space } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
 import { usePost } from '@/features/party/use-party';
 import type { Ask } from '../room/confirm-sheet';
@@ -35,9 +35,9 @@ function SheetBody({ questId, onClose, onJoin, onAsk }: PostSheetProps & { quest
   const { post } = detail;
   return (
     <View style={styles.body}>
-      <SheetScrollView contentContainerStyle={styles.content} style={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.content} style={styles.scroll}>
         <PostContent post={post} reasons={detail.reasons} />
-      </SheetScrollView>
+      </ScrollView>
       <PostFooter
         onAsk={onAsk}
         onGone={onClose}

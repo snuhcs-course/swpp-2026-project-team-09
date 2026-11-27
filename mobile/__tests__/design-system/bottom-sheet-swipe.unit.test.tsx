@@ -5,20 +5,18 @@
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
-import { StyleSheet, Text, type ViewStyle } from 'react-native';
+import { act, render, screen, userEvent } from '@testing-library/react-native';
+import { ScrollView, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
-import { holdSwipe, layList, laySheet, scrollList, swipe } from '../support/sheet-swipe';
+import { dragHandle, holdHandleDrag, laySheet } from '../support/sheet-swipe';
 
 import { BottomSheet } from '@/design-system/bottom-sheet';
 import { Button } from '@/design-system/button';
 import { MOVING, PAN_STARTS } from '@/design-system/sheet-pull';
-import { type SheetScrollEvent, SheetScrollView } from '@/design-system/sheet-scroll-view';
 
-// A swipe down from anywhere on a sheet closes it (P06 ticket 35), by the way the finger moves as it lets go: moving
-// down it closes, moving up it springs back, and at rest it closes past a quarter of its height but never asks for more
-// than 120 points (the user's phone check, 2026-11-28). A swipe that starts in a list closes only when the list was at
-// its top where the finger landed, decided for the whole swipe; any other swipe there scrolls the list.
+// A drag down on a sheet's handle bar closes it (P06 ticket 35), by the way the finger moves as it lets go: moving down
+// it closes, moving up it springs back, and at rest it closes past a quarter of its height but never asks for more than
+// 120 points. The sheet's body takes no drag (the user's decision after the phone check, 2026-11-28).
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
@@ -27,8 +25,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const LABEL = '파티 찾기';
-const LIST = 'sheet-list';
-const ROW = 44;
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -38,12 +34,29 @@ async function renderSheet(onClose: () => void, onJoin: () => void = jest.fn<voi
   await render(
     <BottomSheet label={LABEL} onClose={onClose} open>
       <Text>인원</Text>
-      <SheetScrollView testID={LIST}>
+      <ScrollView>
         <Text>같이 갈 파티</Text>
-      </SheetScrollView>
+      </ScrollView>
       <Button onPress={onJoin}>참여하기</Button>
     </BottomSheet>,
   );
+}
+
+// How far the sheet stands below its place, from its pull's animated style.
+function sheetDown(): number {
+  const style: unknown = getAnimatedStyle(screen.getByLabelText(LABEL));
+  const { transform } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  const shift: unknown = Array.isArray(transform) ? transform[0] : undefined;
+  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : Number.NaN;
+}
+
+// A few of the UI thread's frames, which run on real timers in the tests: the sheet drawn where its pull put it.
+async function frames(): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+  });
 }
 
 // Partitions: a sheet 400 tall, where a quarter, 100, is the most a let-go at rest asks, and one 800 tall, where 120
@@ -54,10 +67,10 @@ describe('a let-go at rest', () => {
     await renderSheet(onClose);
     await laySheet(LABEL, 400);
 
-    await swipe('sheet-drag', 90);
+    await dragHandle(90);
     expect(onClose).not.toHaveBeenCalled();
 
-    await swipe('sheet-drag', 120);
+    await dragHandle(120);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -66,10 +79,10 @@ describe('a let-go at rest', () => {
     await renderSheet(onClose);
     await laySheet(LABEL, 800);
 
-    await swipe('sheet-drag', 100);
+    await dragHandle(100);
     expect(onClose).not.toHaveBeenCalled();
 
-    await swipe('sheet-drag', 140);
+    await dragHandle(140);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -78,10 +91,10 @@ describe('a let-go at rest', () => {
     await renderSheet(onClose);
     await laySheet(LABEL, 400);
 
-    await swipe('sheet-drag', 60, MOVING / 2);
+    await dragHandle(60, MOVING / 2);
     expect(onClose).not.toHaveBeenCalled();
 
-    await swipe('sheet-drag', 200, -MOVING / 2);
+    await dragHandle(200, -MOVING / 2);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
@@ -89,12 +102,12 @@ describe('a let-go at rest', () => {
 // Partitions: moving down or up as the finger lets go; a short swipe and one that went far down on the way; the finger
 // still down.
 describe('a let-go that moves', () => {
-  it('closes the sheet moving down, however short the swipe', async () => {
+  it('closes the sheet moving down, however short the drag', async () => {
     const onClose = jest.fn<void, []>();
     await renderSheet(onClose);
     await laySheet(LABEL, 800);
 
-    await swipe('sheet-drag', 30, MOVING * 2);
+    await dragHandle(30, MOVING * 2);
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -104,7 +117,7 @@ describe('a let-go that moves', () => {
     await renderSheet(onClose);
     await laySheet(LABEL, 400);
 
-    const held = await holdSwipe('sheet-drag');
+    const held = await holdHandleDrag();
     await held.move(390);
     await held.move(300);
     expect(onClose).not.toHaveBeenCalled();
@@ -113,175 +126,36 @@ describe('a let-go that moves', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('never closes it by a swipe up', async () => {
+  it('never closes it by a drag up', async () => {
     const onClose = jest.fn<void, []>();
     await renderSheet(onClose);
     await laySheet(LABEL, 400);
 
-    await swipe('sheet-drag', -200, -MOVING * 5);
+    await dragHandle(-200, -MOVING * 5);
 
     expect(onClose).not.toHaveBeenCalled();
   });
 });
 
-// Partitions: the list at its top and scrolled where the finger lands; the swipe going down first or up first; the list
-// reaching its top during the swipe.
-describe('a swipe that starts in a list', () => {
-  it('closes the sheet when the list was at its top', async () => {
+// Partitions: the finger down on the handle bar, and a press on a button in the body.
+describe('the handle bar and the body', () => {
+  it('pulls the sheet down with the finger on the handle bar, never up past its place', async () => {
     const onClose = jest.fn<void, []>();
     await renderSheet(onClose);
     await laySheet(LABEL, 400);
 
-    await swipe('sheet-list-drag', 200);
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('only scrolls a list that was scrolled, even once it reaches its top, and the next swipe from the top closes', async () => {
-    const onClose = jest.fn<void, []>();
-    await renderSheet(onClose);
-    await laySheet(LABEL, 400);
-    await scrollList(LIST, 150);
-
-    const held = await holdSwipe('sheet-list-drag');
-    await held.move(150);
-    await scrollList(LIST, 0);
-    await held.move(300);
-    await held.letGo(300, MOVING * 5);
-    expect(onClose).not.toHaveBeenCalled();
-
-    await swipe('sheet-list-drag', 200);
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('scrolls the list at its top when the swipe goes up first, though it then comes down', async () => {
-    const onClose = jest.fn<void, []>();
-    await renderSheet(onClose);
-    await laySheet(LABEL, 400);
-
-    const held = await holdSwipe('sheet-list-drag', -PAN_STARTS);
-    await held.move(200);
-    await held.letGo(200, MOVING * 5);
-
-    expect(onClose).not.toHaveBeenCalled();
-  });
-});
-
-// How far the sheet stands below its place, from its pull's animated style.
-function sheetDown(): number {
-  const style: unknown = getAnimatedStyle(screen.getByLabelText(LABEL));
-  const { transform } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
-  const shift: unknown = Array.isArray(transform) ? transform[0] : undefined;
-  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : Number.NaN;
-}
-
-// A few of the UI thread's frames, which run on real timers in the tests: the list scrolled to where its swipe put it,
-// the sheet drawn where its pull put it.
-async function frames(): Promise<void> {
-  await act(async () => {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
-    });
-  });
-}
-
-// Ticket 35's rule 5, with the list scrolled by its own swipe as a finger scrolls it, not by a scroll event, and the
-// sheet's place read as it is drawn. Partitions: the list at its very top as the finger lands, or scrolled from it;
-// in the second, the swipe going on past the list's top.
-describe("a list's own swipe, as rule 5 asks", () => {
-  it('pulls the sheet down with the finger and closes it, when the list was at its very top', async () => {
-    const onClose = jest.fn<void, []>();
-    await renderSheet(onClose);
-    await laySheet(LABEL, 400);
-    await layList(LIST, 300, 2000);
-
-    const held = await holdSwipe('sheet-list-drag');
+    const held = await holdHandleDrag();
     await held.move(150 + PAN_STARTS);
     await frames();
     expect(sheetDown()).toBe(150);
-    await held.letGo(150 + PAN_STARTS, MOVING * 2);
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('only scrolls a list scrolled from its top, though the swipe goes on past its top, and the next swipe from the top closes', async () => {
-    const onClose = jest.fn<void, []>();
-    await renderSheet(onClose);
-    await laySheet(LABEL, 400);
-    await layList(LIST, 300, 2000);
-    const up = await holdSwipe('sheet-list-drag', -PAN_STARTS);
-    await up.move(-150 - PAN_STARTS);
-    await up.letGo(-150 - PAN_STARTS);
-    await frames();
-
-    const down = await holdSwipe('sheet-list-drag');
-    await down.move(400);
-    await frames();
-    expect(sheetDown()).toBe(0);
-    await down.letGo(400, MOVING * 5);
-    await frames();
-    expect(sheetDown()).toBe(0);
-    expect(onClose).not.toHaveBeenCalled();
-
-    await swipe('sheet-list-drag', 200, MOVING * 2);
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-});
-
-// What the phone needs (2026-11-28): on Android a native scroll view that takes the touch makes the gesture handler
-// cancel every gesture, the sheet's swipe too, and the tests' gesture events never go through Android's touch
-// dispatch. So a list in a sheet must take no touch of its own; its swipe scrolls it, and tells what a native scroll
-// tells, for the time wheel's rows.
-describe('a list in a sheet', () => {
-  it('takes no touch of its own scroll view', async () => {
-    await renderSheet(jest.fn<void, []>());
-
-    expect(screen.getByTestId(LIST)).toHaveProp('scrollEnabled', false);
-  });
-
-  it('is scrolled by a swipe up, which runs on to the row its speed points to and tells each moment', async () => {
-    const told = {
-      begin: jest.fn<void, [SheetScrollEvent]>(),
-      end: jest.fn<void, [SheetScrollEvent]>(),
-      momentum: jest.fn<void, [SheetScrollEvent]>(),
-    };
-    await render(
-      <BottomSheet label={LABEL} onClose={jest.fn<void, []>()} open>
-        <SheetScrollView
-          decelerationRate="fast"
-          onMomentumScrollEnd={told.momentum}
-          onScrollBeginDrag={told.begin}
-          onScrollEndDrag={told.end}
-          snapToInterval={ROW}
-          testID={LIST}
-        >
-          <Text>09:00</Text>
-        </SheetScrollView>
-      </BottomSheet>,
-    );
-    await layList(LIST, ROW * 5, ROW * 40);
-
-    const held = await holdSwipe('sheet-list-drag', -PAN_STARTS);
     await held.move(-100);
-    await held.letGo(-100, -1000);
+    await frames();
+    expect(sheetDown()).toBe(0);
+    await held.letGo(-100);
 
-    // Moved 92 past where the swipe took it; a second at 1000 a second carries 100 more, to the row at 176.
-    expect(told.begin).toHaveBeenCalledWith({
-      nativeEvent: { contentOffset: { x: 0, y: 0 }, velocity: { x: 0, y: 0 } },
-    });
-    expect(told.end).toHaveBeenCalledWith({
-      nativeEvent: { contentOffset: { x: 0, y: 92 }, velocity: { x: 0, y: 1 } },
-    });
-    await waitFor(() => {
-      expect(told.momentum).toHaveBeenCalledWith({
-        nativeEvent: { contentOffset: { x: 0, y: ROW * 4 }, velocity: { x: 0, y: 0 } },
-      });
-    });
+    expect(onClose).not.toHaveBeenCalled();
   });
-});
 
-// Partitions: a press on a button inside, and a swipe outside a scrolled list.
-describe('the rest of the sheet', () => {
   it('leaves a press on a button inside a press', async () => {
     const onClose = jest.fn<void, []>();
     const onJoin = jest.fn<void, []>();
@@ -291,16 +165,5 @@ describe('the rest of the sheet', () => {
 
     expect(onJoin).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('leaves a swipe on the sheet outside the list free to close it, though the list is scrolled', async () => {
-    const onClose = jest.fn<void, []>();
-    await renderSheet(onClose);
-    await laySheet(LABEL, 400);
-    await scrollList(LIST, 150);
-
-    await swipe('sheet-drag', 200);
-
-    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
