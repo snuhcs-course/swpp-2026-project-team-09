@@ -18,11 +18,12 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
 // components from here and writes no look of its own.
-export { AppBar, IconButton } from './app-bar';
+export { AppBar, IconButton, TAB_BAR_ROW } from './app-bar';
 export { NOT_AUTOFILLED } from './autofill';
 export { Avatar, initials, type PresenceStatus } from './avatar';
 export { Badge, type BadgeTone } from './badge';
