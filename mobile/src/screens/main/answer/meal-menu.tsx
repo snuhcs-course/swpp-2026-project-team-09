@@ -213,6 +213,7 @@ export function MealMenu({ answer, plan, shown, library, bubbleId }: MealMenuPro
   const date = answer.input.kind === 'meal' ? answer.input.date : '';
   const asked: Meal = answer.input.kind === 'meal' ? answer.input.meal : 'lunch';
   const study = plan.study;
+  const seat = library === undefined || bubbleId === undefined ? null : { actions: library, bubbleId };
   return (
     <View style={styles.menu} testID="meal-menu">
       <View style={styles.top}>
@@ -222,7 +223,7 @@ export function MealMenu({ answer, plan, shown, library, bubbleId }: MealMenuPro
         <Text style={styles.day}>{dayAndMeal(answer)}</Text>
       </View>
       <Head
-        line={study === undefined ? whenOf(plan) : studyLineOf(plan)}
+        line={study === undefined ? whenOf(plan) : studyLineOf(plan, seat !== null && study.book !== null)}
         name={plan.place.label}
         number={shown.index + 1}
         study={study !== undefined}
@@ -237,10 +238,7 @@ export function MealMenu({ answer, plan, shown, library, bubbleId }: MealMenuPro
           find={(menus) => restaurantOf(menus, plan)}
         />
       ) : (
-        <StudyBody
-          chat={library === undefined || bubbleId === undefined ? null : { actions: library, bubbleId }}
-          study={study}
-        />
+        <StudyBody chat={seat} study={study} />
       )}
     </View>
   );
