@@ -6,6 +6,7 @@
 
 import type { AnswerReply, AssistantReply, MealInput, PlanInput } from '@/api/assistant-types';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { NO_PLAN_BAND_ANSWER } from '@/api/mock/data/no-plan-band';
 import { ONE_PM, ONE_SKIPPED_REPLY } from '@/api/mock/data/skipped-classes';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -193,16 +194,11 @@ describe('An answer with no Plan to a meal with a price set', () => {
 });
 
 describe('A first answer with no Plan', () => {
-  it('draws the time card of the band the main server sends with it', async () => {
-    const band = MEAL_ANSWER.plans[0]?.band;
-    if (band === undefined) {
-      throw new Error('The stored answer has no band');
-    }
-    const noPlan = { reason: 'no-shared-time' as const, lines: [[{ text: NO_SHARED, strong: false }]], band };
-    const answer = noPlanTo(MEAL_ANSWER.input, { noPlan });
-    await askOnMap(server, { ...MEAL_ANSWER_REPLY, text: NO_SHARED, answer });
+  it('draws the time card of the band the main server sends with it, its Friends and its Class left out', async () => {
+    await askOnMap(server, { ...MEAL_ANSWER_REPLY, text: NO_SHARED, answer: NO_PLAN_BAND_ANSWER });
 
-    expect(bar().getByRole('button', { name: ADD })).toHaveTextContent('같이 1 ›');
+    expect(bar().getByRole('button', { name: ADD })).toHaveTextContent('같이 2 ›');
+    expect(bar().getByText('12:00 ✕')).toBeOnTheScreen();
     expect(card().getByText(NO_SHARED)).toBeVisible();
   });
 });
