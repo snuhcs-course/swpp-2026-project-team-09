@@ -9,12 +9,14 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Suggestion } from '@/api/types';
 import { forgetTokens } from '@/auth/tokens';
 import { endLibrarySessionInBackground } from '@/library/end-session';
 import { unregisterPush } from '@/push/device';
+import { keepConsent, NO_CONSENT } from '@/consent/kept-consent';
 import { keep } from '@/storage/kept';
 import { forgetReadingAgreement } from '@/storage/reading-notice';
 import { forgetUser } from '@/telemetry';
@@ -43,9 +45,9 @@ export function announce(event: SessionEvent): void {
 }
 
 // The Session is over: the phone is unregistered from push, the tokens are forgotten, the phone no longer keeps that the
-// User signed in nor that they agreed to send timetable pictures (P15-52), and the screens
-// show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
-// it, without the end waiting on the library's site.
+// User signed in, nor its copy of the account's consent, nor that they agreed to send timetable pictures (P15-52), and
+// the screens show the sign-in screen. The library session ends right after the tokens go, whether or not the User
+// logged in to it, without the end waiting on the library's site.
 export async function endSession(replaced: boolean): Promise<void> {
   // First, so that crash reports stop carrying the User's id whatever fails below.
   forgetUser();
@@ -54,7 +56,7 @@ export async function endSession(replaced: boolean): Promise<void> {
   }
   await forgetTokens();
   endLibrarySessionInBackground();
-  await keep({ signedIn: false, suggestion: null });
+  await keepConsent(NO_CONSENT, { signedIn: false, suggestion: null });
   await forgetReadingAgreement();
   announce({ kind: 'ended', replaced });
 }

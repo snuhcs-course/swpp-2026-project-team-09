@@ -11,6 +11,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -44,7 +45,7 @@ import { yearLabel } from '../onboarding/form';
 import { TabScreen } from '../shell/tab-screen';
 import { ActivityCard } from './activity-card';
 import { BuildLine } from './build-line';
-import { ErrorReportsRow } from './error-reports-row';
+import { SendingCard } from './sending-card';
 import { SharingCard } from './sharing-card';
 import { TabTourRow } from './tab-tour-row';
 import { TutorialRow } from './tutorial-row';
@@ -202,7 +203,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
         <ActivityCard />
         <TabTourRow />
         <LibraryCard />
-        <ErrorReportsRow />
+        <SendingCard />
         <SignOut />
         <BuildLine />
       </ScrollView>

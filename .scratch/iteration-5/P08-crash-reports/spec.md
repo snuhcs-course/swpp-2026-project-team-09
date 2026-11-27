@@ -370,13 +370,19 @@ follow each User's own, so a rate can stray a little from 100% when the two chos
 - Consent moves from the phone to the account. The account keeps the consent version the User agreed to, the usage
   choice and when it was given. The app and the main server each hold the current version, `CONSENT_VERSION`, which
   is 1 with this spec and is raised in both in the same pull request.
-- The consent screen shows when the account's version is lower than the app's current one. An account that has
-  agreed to no version is lower, so every User who agreed on the phone before is asked again, once. A new phone, or a
-  sign-in again, does not ask again: the sign-in's answer carries the account's consent.
+- The consent screen shows when the account's version is lower than the app's current one and nothing is carried
+  over. A User who agreed on the phone before (the old `consented: true`) and whose account holds no version is not
+  asked again (the owner's decision of 2026-11-26, after review): at the next start with a kept Session the app sends the
+  current version with usage data off, quietly, and shows no consent screen (not at a sign-in, where the phone's flag
+  may be another User's, kept across a sign-out by the earlier app); usage data stays off until the User turns
+  on "사용 기록 보내기" in 내 정보. A failed send is tried again at the next start, and until it goes through the
+  account and the phone's copy hold no version, which counts as off. Only an account that has never consented sees the
+  screen with the optional item. A new phone, or a sign-in again, does not ask again: the sign-in's answer carries the
+  account's consent.
 - The phone keeps a copy of the account's consent, from the sign-in's answer, the Lobby and the consent's own answer,
   so that a start with a kept Session decides without the network. A User has one Session at a time, so no other
-  phone can change the account's consent meanwhile. The phone's old `consented` flag (`src/storage/kept.ts`) is no
-  longer read.
+  phone can change the account's consent meanwhile. The phone's old `consented` flag (`src/storage/kept.ts`) is read
+  once, for that carry-over only, and set false once the account holds the consent.
 - Nothing of PostHog is sent before the choice is made, and only while a signed-in User whose account holds the current
   version chose usage data. The main server sends nothing for a User whose account chose no, or has not agreed to the
   current version.

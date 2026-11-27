@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -127,7 +128,7 @@ describe('around Onboarding', () => {
     await user.press(button(SIGN_IN));
     await pass(400);
     await user.press(button('동의하고 시작'));
-    await pass(100);
+    await pass(400);
 
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.queryByRole('button', { name: /뒤로|닫기/u })).toBeNull();

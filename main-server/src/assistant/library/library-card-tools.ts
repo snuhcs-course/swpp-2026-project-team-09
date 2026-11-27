@@ -33,12 +33,12 @@ const DEFAULT_SEAT_MINUTES = 120;
 const MY_BOOKINGS_BEFORE_DAYS = 7;
 const MY_BOOKINGS_AFTER_DAYS = 3;
 
-const CANCEL_PRESS = '취소하기를 눌러야 취소돼요.';
+const CANCEL_PRESS = '예약 취소를 눌러야 취소돼요.';
 
 export function proposeLibraryCancel(services: LibraryServices): Tool {
   return defineTool({
     description:
-      "Shows a cancel card for the User's 관정도서관 bookings not yet in use that match what the User said (the day, the space, the start). The card finds them on the phone and cancels nothing until the User presses 취소하기. Answers 'shown' with a summary.",
+      "Shows a cancel card for the User's 관정도서관 bookings not yet in use that match what the User said (the day, the space, the start). The card finds them on the phone and cancels nothing until the User presses 예약 취소. Answers 'shown' with a summary.",
     input: z.object({
       date: dateInput.optional(),
       spaceId: spaceIdInput.optional(),

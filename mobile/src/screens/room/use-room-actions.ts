@@ -9,6 +9,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -32,6 +33,7 @@ import { leavingOnPurpose } from '@/features/quests/leaving';
 import { outOfParty } from '@/features/quests/out-of-party';
 import { refusalWords } from '@/features/quests/refusals';
 import type { MemberView } from '@/features/quests/room-adapter';
+import { trackAction } from '@/telemetry';
 
 // What the room's controls ask of the main server, each with its toast. A refusal says why in Korean, and what the
 // room shows is fetched again, so that it shows what the main server holds now.
@@ -234,7 +236,13 @@ type PeopleActions = Pick<
 function peopleActions({ run }: Tools): PeopleActions {
   return {
     accept: async (questId, { id, user }) => {
-      await run(() => apiClient.acceptJoinRequest(questId, id), `${user.name}님을 멤버로 추가했어요`);
+      await run(
+        () =>
+          trackAction({ action: 'party_join', how: 'request_accepted' }, () =>
+            apiClient.acceptJoinRequest(questId, id),
+          ),
+        `${user.name}님을 멤버로 추가했어요`,
+      );
     },
     decline: async (questId, { id }) => {
       await run(() => apiClient.declineJoinRequest(questId, id), null);

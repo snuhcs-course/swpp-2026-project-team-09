@@ -19,6 +19,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -140,6 +141,20 @@ export const mockClient: ApiClient = {
   setMasterSwitch: (on) =>
     answer('setMasterSwitch', () => {
       masterSwitchOn = on;
+    }),
+  // The phone keeps the account's consent in place of the main server (`mockAccountConsent`), which the mock's sign-in
+  // copies. The mock's Lobby leaves the phone's copy as it is.
+  agreeToConsent: (version, usage) =>
+    answer('agreeToConsent', async () => {
+      await keep({ mockAccountConsent: { version, usage } });
+    }),
+  setUsageConsent: (usage) =>
+    answer('setUsageConsent', async () => {
+      const { mockAccountConsent } = await readKept();
+      if (mockAccountConsent.version === null) {
+        throw new ApiError(409, 'CONSENT_REQUIRED');
+      }
+      await keep({ mockAccountConsent: { ...mockAccountConsent, usage } });
     }),
   // A mock build never registers for push.
   registerPushToken: () => Promise.resolve(),

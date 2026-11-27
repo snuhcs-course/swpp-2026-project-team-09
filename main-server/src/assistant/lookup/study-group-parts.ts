@@ -17,12 +17,15 @@ import {
   type StudyInput,
   type TimeBand,
 } from '../dto/answer.dto.js';
-import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
+import { byStart, clockOf, type DayItem, endOfDay, onDay, startOfDay } from '../free-time/free-time.js';
+import { earliest, type Interval, latest } from '../free-time/meal-fit.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
+import { windowBand } from '../gathering/no-plan-band.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { durationWords } from '../library/booking-rules.js';
+import { type ClockRange } from '../library/catalogue.js';
 import { cardSpace } from '../library/library-card.js';
 import { arrivalsOf } from '../library/study-pick.js';
 import { type GroupRoom, monthDayWords, stayNote } from '../library/study-room.js';
@@ -53,6 +56,8 @@ export interface GroupAnswerArgs {
   walkingMinutes: (fromPlaceId: string, toPlaceId: string) => number;
   placePoint: (placeId: string) => PlacePoint;
   placeLabel: (placeId: string) => string;
+  // The group study rooms' hours, which an answer without a plan draws its band over; null when not known.
+  hours: ClockRange | null;
 }
 
 const BAND_BEFORE_MS = 60 * MINUTE_MS;
@@ -199,6 +204,32 @@ function bandOf({ booking, minutes }: GroupPick, args: GroupAnswerArgs): TimeBan
   };
 }
 
+// The window asked on its date: the rooms' hours narrowed by the window the User set.
+function askedWindow({ date, window }: StudyInput, hours: ClockRange | null): Interval {
+  const on = (clocks: readonly (string | null | undefined)[]): Date[] =>
+    clocks.flatMap((clock) => (clock === null || clock === undefined ? [] : [onDay(date, clock)]));
+  return {
+    start: latest([startOfDay(date), ...on([hours?.open, window.from])]),
+    end: earliest([endOfDay(date), ...on([hours?.close, window.until])]),
+  };
+}
+
+// The band of an answer without a plan (P05 ticket 65): everyone's lanes and the asker's other Friends over the window
+// asked, each Friend with their walk to 관정관 for it.
+function noPlanBand(args: GroupAnswerArgs): TimeBand {
+  const { input, now, people, others, kwanjeong, placeLabel: label } = args;
+  const window = askedWindow(input, args.hours);
+  const plan = { date: input.date, now, placeId: kwanjeong.placeId, start: window.start, end: window.end };
+  return windowBand(window, now, (from, until) => ({
+    lanes: people.map(({ userId, name, me, itemsByDate }) => ({
+      userId,
+      name: me ? '나' : name,
+      busy: busyIn(itemsByDate[input.date] ?? [], from, until, label),
+    })),
+    ...studyOthers(others, plan, { from, until, label }),
+  }));
+}
+
 // When each person comes, and who leaves before the end: "지은 15:19 도착 · 16:56에 먼저 나서요".
 function notesOf({ booking, facts }: GroupPick, people: readonly GroupPerson[]): string[] {
   const arrivals = arrivalsOf(facts, booking);
@@ -266,7 +297,7 @@ export function studyGroupAnswer(args: GroupAnswerArgs): AnswerReply {
   const { time, input } = args;
   const shared = { chips: chipsOf(args), dropped: [], closed: [], choosable: true as const };
   if (time.kind === 'none') {
-    return { input, ...shared, plans: [], noPlan: time.noPlan };
+    return { input, ...shared, plans: [], noPlan: { ...time.noPlan, band: noPlanBand(args) } };
   }
   return {
     input: { ...input, date: time.pick.booking.date },
