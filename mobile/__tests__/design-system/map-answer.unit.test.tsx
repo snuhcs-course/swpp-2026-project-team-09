@@ -278,7 +278,8 @@ describe("MapAnswerMark: a meal candidate's minutes", () => {
 });
 
 // Partitions: a candidate without a round of its own, with its minutes and with them given way. Expected values: the
-// orchestrator's decision (P04 ticket 83), its numbered round inside the capsule, or the round alone with its white ring.
+// orchestrator's decision (P04 ticket 83), its numbered round inside the capsule, or the round alone in its coral rim
+// (P04 ticket 91).
 describe("MapAnswerMark: a meal candidate's minutes beside a spot another mark holds", () => {
   it('holds the numbered round inside the capsule', async () => {
     const minutes: AnswerLabel = { side: 'right', tone: 'minutes', title: '26분', line: null, number: 4 };
@@ -294,7 +295,7 @@ describe("MapAnswerMark: a meal candidate's minutes beside a spot another mark h
     await render(<MapAnswerMark label={number} symbol={null} testID="mark" />);
 
     expect(screen.getByTestId('mark:label:dot')).toHaveTextContent('7');
-    expect(screen.getByTestId('mark:label:dot')).toHaveStyle({ width: 20, backgroundColor: color.meal });
+    expect(screen.getByTestId('mark:label:dot')).toHaveStyle({ width: 20, borderColor: color.meal });
     expect(screen.queryByTestId('mark:label:minutes')).toBeNull();
   });
 });

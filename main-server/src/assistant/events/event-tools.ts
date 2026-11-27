@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { EVENT_IDS_MAX, type EventsInput, type Plan } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
-import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { othersText } from '../others-text.js';
 import { type EventsPlanService } from './events-plan.service.js';
 
@@ -49,7 +50,7 @@ export function planEvents(plans: EventsPlanService): Tool {
     input,
     run: async ({ date, eventIds }, { userId, now, context, found, presented }) => {
       if (outOfReach(date, now)) {
-        return noDay(date);
+        return outOfReachDay(date, presented);
       }
       found.refuseUnfound('globalEvent', eventIds ?? []);
       const planInput: EventsInput = { kind: 'events', date, eventIds: eventIds ?? null };

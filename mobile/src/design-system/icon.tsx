@@ -49,6 +49,11 @@ const ICONS = {
   search: [{ circle: [11, 11, 7] }, { path: 'M20 20l-4-4' }],
   route: [{ path: 'M12 3 20 20l-8-4-8 4z' }],
   book: [{ path: 'M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z' }, { path: 'M4 19V5' }],
+  // Not one of the design system's: the 공부공간 layer's open book, as the canvas's `Main` board draws it.
+  bookOpen: [
+    { path: 'M12 6.8C10.4 5.5 8 5 3.5 5.2v12.6c4.5-.2 6.9.3 8.5 1.6 1.6-1.3 4-1.8 8.5-1.6V5.2C16 5 13.6 5.5 12 6.8z' },
+    { path: 'M12 6.8v12.6' },
+  ],
   meal: [
     { path: 'M7 3v8' },
     { path: 'M4 3v5a3 3 0 0 0 6 0V3' },

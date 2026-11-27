@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { type RefObject, useMemo, useRef, useState } from 'react';
 import type { TextInputSelectionChangeEvent } from 'react-native';
 import type { Mention } from '@/api/mention-types';
 import { friendStatusesQuery, friendsQuery } from '@/api/queries';
@@ -68,6 +69,27 @@ export interface Mentions {
   choose: (friend: MentionFriend) => void;
 }
 
+// Whether the User is in the field, as React draws it and at once, so that the first words typed after focusing count
+// before the field draws again. Words written into the field while the User is not in it are autofill's, never the
+// User's: nobody types or pastes into a field without focusing it, and some autofill services fill fields marked not
+// important, as the library login's saved ID was (P04 ticket 94). The field then shows the words it had.
+function useInField(): { focused: boolean; inField: RefObject<boolean>; onFocus: () => void; onBlur: () => void } {
+  const [focused, setFocused] = useState(false);
+  const inField = useRef(false);
+  return {
+    focused,
+    inField,
+    onFocus: () => {
+      inField.current = true;
+      setFocused(true);
+    },
+    onBlur: () => {
+      inField.current = false;
+      setFocused(false);
+    },
+  };
+}
+
 // The "@" mention of Friends in the AI input: typing "@" at the start or after a space lists the User's Friends, the
 // words after it narrow them by name, and a press puts "@이름 " in as one mention, which one backspace takes away whole.
 export function useMentions(
@@ -78,9 +100,9 @@ export function useMentions(
   const [placed, setPlaced] = useState<readonly PlacedMention[]>([]);
   const [cursor, setCursor] = useState(message.length);
   const [selection, setSelection] = useState<Selection>();
-  const [focused, setFocused] = useState(false);
+  const field = useInField();
   const state = { text: message, placed };
-  const query = focused && friends.length > 0 ? mentionQuery(state, Math.min(cursor, message.length)) : null;
+  const query = field.focused && friends.length > 0 ? mentionQuery(state, Math.min(cursor, message.length)) : null;
   const put = (next: { text: string; placed: readonly PlacedMention[] }, at: number, moved: boolean): void => {
     setPlaced(next.placed);
     setMessage(next.text);
@@ -94,6 +116,9 @@ export function useMentions(
     mentions: mentionsOf(state),
     selection,
     onChangeText: (words) => {
+      if (!field.inField.current) {
+        return;
+      }
       const edited = editMentions(state, words);
       put(edited.state, edited.cursor, edited.whole);
     },
@@ -103,12 +128,8 @@ export function useMentions(
         setSelection(undefined);
       }
     },
-    onFocus: () => {
-      setFocused(true);
-    },
-    onBlur: () => {
-      setFocused(false);
-    },
+    onFocus: field.onFocus,
+    onBlur: field.onBlur,
     choose: (friend) => {
       if (query === null) {
         return;

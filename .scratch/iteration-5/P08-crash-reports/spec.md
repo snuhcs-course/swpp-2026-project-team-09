@@ -372,8 +372,9 @@ follow each User's own, so a rate can stray a little from 100% when the two chos
   is 1 with this spec and is raised in both in the same pull request.
 - The consent screen shows when the account's version is lower than the app's current one and nothing is carried
   over. A User who agreed on the phone before (the old `consented: true`) and whose account holds no version is not
-  asked again (the owner's decision of 2026-11-26, after review): at the next sign-in or start the app sends the
-  current version with usage data off, quietly, and shows no consent screen; usage data stays off until the User turns
+  asked again (the owner's decision of 2026-11-26, after review): at the next start with a kept Session the app sends the
+  current version with usage data off, quietly, and shows no consent screen (not at a sign-in, where the phone's flag
+  may be another User's, kept across a sign-out by the earlier app); usage data stays off until the User turns
   on "사용 기록 보내기" in 내 정보. A failed send is tried again at the next start, and until it goes through the
   account and the phone's copy hold no version, which counts as off. Only an account that has never consented sees the
   screen with the optional item. A new phone, or a sign-in again, does not ask again: the sign-in's answer carries the

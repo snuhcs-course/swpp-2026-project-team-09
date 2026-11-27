@@ -12,6 +12,8 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -23,6 +25,7 @@ import { type FoundIds } from './found-ids.js';
 import { type TravelBox } from './free-time/candidate-fit.js';
 import { type RestaurantCard } from './free-time/restaurant-card.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
+import { type Catalogue } from './library/catalogue.js';
 import { type LibraryCard } from './library/library-card.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
 import { type Refusal } from './refusals/refusal.dto.js';
@@ -93,6 +96,11 @@ export const CLIENT_CAPABILITIES = [
   'party-change',
   'quest-cancel',
   'pick',
+  // Draws a study answer as ranked study places, the meal answer's way (P10).
+  'study-plan',
+  // Draws the study answer together, a 관정 group study room at everyone's free time, with 동의 요청 보내기 (P10 ticket
+  // 07). Without it the group study path is proposeStudyRoom's card.
+  'study-group',
 ] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
@@ -123,6 +131,11 @@ export interface Presented {
   notDone?: NotDone[];
   // The requests of the message in time order, when it asked for two or more (P03).
   steps?: ReplyStep[];
+  // The plan of the meal answer on screen the User chose in words (choosePlan).
+  select?: string;
+  // A request for another plan, or another request, ended with nothing drawn: the plan on screen leaves it (P05 ticket
+  // 55). Left out when the reply may be about the plan on screen.
+  clears?: true;
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.
@@ -191,6 +204,8 @@ export interface Feature {
   // What a run that answered changes in what was presented once every tool has run, such as the steps of a message
   // that asked for several things (P03).
   afterRun?(context: ToolContext): Promise<void>;
+  // The 관정도서관 catalogue, by which a book card sent back is read in words (run-messages.ts).
+  readonly libraryCatalogue?: Catalogue;
 }
 
 // What a tool answers when nothing matches, so that the model says so instead of answering from elsewhere.

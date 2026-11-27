@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -27,6 +28,7 @@ import {
   saysSameDayOnly,
 } from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
+import { closedToday } from './closed-today.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
 import {
@@ -137,7 +139,7 @@ function summaryOf(
   const press = askedToBook
     ? `대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요. ${SIGN_IN_FIRST}`
     : `예약하기를 눌러야 예약돼요. ${SIGN_IN_FIRST}`;
-  return `${where}, ${when}${who} 예약 카드를 보여 줬어요. ${filled}${press}${asks}`;
+  return `${where}, ${when}${who} 예약을 아래에 띄웠어요. ${filled}${press}${asks}`;
 }
 
 const DESCRIPTION =
@@ -150,6 +152,9 @@ export interface BookingOptions {
   fillsSeatTime: boolean;
   // The app draws answers on the map: a card the User asked the Assistant to book says it is their own press.
   notesOwnPress?: boolean;
+  // The app draws answers on the map: a space asked for today after its closing answers closedToday, with 관정 drawn
+  // as closed, as showLibrarySeats does (P05 ticket 61).
+  refusesClosedToday?: boolean;
 }
 
 // What a seat's arrival is read from.
@@ -248,12 +253,17 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
 export function proposeLibraryBooking(services: LibraryServices, options?: BookingOptions): Tool {
   const fillsSeatTime = options?.fillsSeatTime ?? false;
   const description = fillsSeatTime ? FILLING_DESCRIPTION : DESCRIPTION;
+  const refusesClosed = options?.refusesClosedToday ?? false;
   const run = async (asked: z.output<typeof answeringInput>, context: ToolContext): Promise<unknown> => {
     const checked = await bookableSpace(services, asked.spaceId, context);
     if ('answer' in checked) {
       return checked.answer;
     }
     const { space } = checked;
+    const closed = refusesClosed ? closedToday(space, asked.date, context, services.arrival.places) : null;
+    if (closed !== null) {
+      return closed;
+    }
     const party = await partyOf(services, asked, context);
     const people = 'refusal' in party ? undefined : party.people;
     const filling = fillsSeatTime ? await fillingOf(services, context, space, asked) : null;

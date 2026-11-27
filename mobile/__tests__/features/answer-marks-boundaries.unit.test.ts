@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
@@ -104,11 +105,16 @@ describe('a label whose every side is blocked by a neighbour', () => {
 });
 
 // Partitions: two things just within 15 metres of each other, and 16 metres apart. Expected values: the brief's rule
-// of one symbol at a point.
+// of one symbol at a point; the answer is a meal's, so its pick's dot is coral (P04 ticket 90).
 describe('things that stand at one point', () => {
   it.each([
     ['15 metres apart stand at one point: only the Friend draws a symbol', 14.99, null, 1],
-    ['16 metres apart stand at two: the pick draws its own dot', 16, { type: 'dot', role: 'pick', number: 1 }, null],
+    [
+      '16 metres apart stand at two: the pick draws its own dot',
+      16,
+      { type: 'dot', role: 'pick', number: 1, meal: true },
+      null,
+    ],
   ] as const)('%s', (_, metres, symbol, number) => {
     // 민수 is moved north of 302동, where the pick stands.
     const answer = withScene((scene) => ({

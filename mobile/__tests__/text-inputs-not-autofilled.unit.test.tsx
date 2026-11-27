@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 
 import { ChatInput, NOT_AUTOFILLED, SearchField, TextField } from '@/design-system';
 import { AiInput } from '@/screens/main/ai-input';
@@ -61,5 +62,33 @@ describe('the text fields autofill leaves alone', () => {
 
   it('are told off, no and none', () => {
     expect(NOT_AUTOFILLED).toEqual({ autoComplete: 'off', importantForAutofill: 'no', textContentType: 'none' });
+  });
+});
+
+// The props above did not stop it on the user's phone (2026-11-26): after a 관정 login from the seat card, the answer's
+// input held the saved login ID with autofill's highlight and 보내기 lit. Some autofill services fill fields marked not
+// important, so the AI input takes no words while the User is not in it: nobody types or pastes into a field without
+// focusing it first, and only autofill writes into one that is not focused (P04 ticket 94).
+describe('the AI input', () => {
+  const LOGIN_ID = 'library-user-0';
+
+  it('takes no words written into it while the User is not in it, and 보내기 stays off', async () => {
+    await render(<AiInput lift={0} onHeight={noop} onSend={noop} placeholder="이어서 말하기" />);
+    const field = screen.getByLabelText('AI에게 메시지');
+
+    await fireEvent.changeText(field, LOGIN_ID);
+
+    expect(screen.getByLabelText('AI에게 메시지').props.value).toBe('');
+    expect(screen.getByRole('button', { name: '보내기' })).toBeDisabled();
+  });
+
+  it('takes the words the User types in it', async () => {
+    const user = userEvent.setup();
+    await render(<AiInput lift={0} onHeight={noop} onSend={noop} placeholder="이어서 말하기" />);
+
+    await user.type(screen.getByLabelText('AI에게 메시지'), '배고파');
+
+    expect(screen.getByLabelText('AI에게 메시지').props.value).toBe('배고파');
+    expect(screen.getByRole('button', { name: '보내기' })).toBeEnabled();
   });
 });

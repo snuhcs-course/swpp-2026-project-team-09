@@ -18,6 +18,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -40,7 +41,7 @@ import { withoutWalkSentences } from './gathering/plan-reply.js';
 import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
 import { keptRefusal, lookupBeside, textBeside } from './refusals/refusals.js';
-import { FIXED_SENTENCE, wordlessText } from './wordless-reply.js';
+import { warnsOfNoText, wordlessText } from './wordless-reply.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -300,7 +301,7 @@ export async function runFeature(
   const { steps, finishReason } = await generateText({
     model,
     instructions: systemOf(feature, asker.now),
-    messages: messagesFor(messages, asker),
+    messages: messagesFor(messages, asker, feature.libraryCatalogue),
     tools: toolSetOf(feature, context, observer),
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
@@ -362,7 +363,7 @@ async function replyOf(
   if (wordless === null) {
     return null;
   }
-  return { ...presented, text: wordless, noTextFinishReason: wordless === FIXED_SENTENCE ? finishReason : null };
+  return { ...presented, text: wordless, noTextFinishReason: warnsOfNoText(presented, wordless) ? finishReason : null };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an

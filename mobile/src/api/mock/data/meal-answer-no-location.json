@@ -1196,7 +1196,8 @@
     {
       "kind": "open",
       "label": "위치 켜기",
-      "screen": "location"
+      "screen": "location",
+      "hint": "위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요"
     }
   ]
 }

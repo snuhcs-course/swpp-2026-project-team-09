@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
@@ -46,10 +47,10 @@ describe("another answer's pick", () => {
   });
 });
 
-// Partitions: the two values, which equal PR 572's dining tokens. Expected values: the orchestrator's brief.
+// Partitions: the two values, which equal the 식당 layer's coral since PR 572. Expected values: the orchestrator's brief.
 describe('the meal colours', () => {
-  it('are coral and its soft ground, apart from today’s dining magenta', () => {
+  it('are coral and its soft ground, the 식당 layer’s own', () => {
     expect([color.meal, color.mealSoft]).toEqual(['#C4452C', '#FCEBE6']);
-    expect(color.svcDining).toBe('#B8336A');
+    expect([color.svcDining, color.svcDiningSoft]).toEqual([color.meal, color.mealSoft]);
   });
 });

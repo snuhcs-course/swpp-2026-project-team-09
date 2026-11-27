@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -103,7 +104,7 @@ it('opens the main screen after a failed send too, keeps usage data off, and sen
   expect(await readKept()).toMatchObject({ consented: false, consent: { version: 1, usage: false } });
 });
 
-it('is not asked after a sign-in either, when the account holds no version', async () => {
+it("is asked after a sign-in into an account that holds no version: the kept flag may be another User's", async () => {
   await keep({ consented: true });
   server = await askMainServer({ signedIn: false });
   answerMainScreen(server);
@@ -123,6 +124,6 @@ it('is not asked after a sign-in either, when the account holds no version', asy
   await pass(1000);
   await pass(1000);
 
-  expect(screen.queryByRole('header', { name: TITLE })).toBeNull();
-  expect(consentSent()).toEqual([{ version: 1, usage: false }]);
+  expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
+  expect(consentSent()).toEqual([]);
 });

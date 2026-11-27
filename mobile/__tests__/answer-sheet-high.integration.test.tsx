@@ -4,7 +4,6 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
@@ -18,6 +17,7 @@ import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { layFolded } from './support/time-card';
 
 // P04 ticket 63, the user's phone (2026-11-26): "내일 저녁이라고 전송하고 로딩하는 동안에는 높게를 하면 화면 전체를
 // 덮기는 하네". High's top edge is one line for every answer and state, just under the place the folded time card
@@ -78,9 +78,8 @@ describe('high while an answer loads', () => {
     const loading = highHeight();
 
     await pass(ANSWER_MS);
-    await fireEvent(screen.getByTestId('time-bar'), 'layout', {
-      nativeEvent: { layout: { x: 16, y: 8, width: 358, height: 116 } },
-    });
+    // The card's own parts tell its height: the bar itself has no layout handler, so one fired on it reaches the stage.
+    await layFolded(116);
     await pass(50);
 
     expect(highHeight()).toBe(loading);

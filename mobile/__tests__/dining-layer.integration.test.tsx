@@ -163,7 +163,7 @@ describe("a 식당's card", () => {
     const card = screen.getByTestId('map-card');
     expect(card).toHaveTextContent('식당 · 학식 · 63동학생회관식당63동오늘 점심 · 저녁메뉴 보기');
     expect(card).toHaveStyle({ top: 52 });
-    expect(screen.getByText('식당 · 학식 · 63동')).toHaveStyle({ color: '#B8336A' });
+    expect(screen.getByText('식당 · 학식 · 63동')).toHaveStyle({ color: '#C4452C' });
     expect(findButton('가까이 보기')).toBeNull();
   });
 

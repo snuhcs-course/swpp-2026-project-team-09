@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (11; 02, 03, 06, 07, 08, 09 and 10 are done; 01, 04 and 05 are held, see Solution)
+Status: ready-for-agent (16; 02, 03, 06, 07, 08, 09, 10, 11, 12, 13, 14 and 15 are done; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -17,8 +17,13 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 9. **내 정보's cards.** Added by the user on 2026-11-25, on their phone: "관심사 아래 line, 탭 안내 다시 보기 밑에 line, 관정도서관 로그인 밑에 line 있잖아. 이거 해당 블록이 거기서 끝나는데 그 line들이 있을 이유가 없거든?" and "관정도서관 로그인 버튼, 지금 그 칸 기준으로 위에 붙어있잖아, 이거 중앙으로 맞추고 싶어." (`references/09-1-me-cards-mock-up.webp`, the screen as it is and as agreed)
 10. **Full 파티 and 파티 asked for, in 찾기.** Added by the user on 2026-11-26. From UAT 1, never fixed: "자리가 다 찬 파티도 보여줌. → 참여하기 버튼도 활성화가 되어 있고, 눌렀을 때 그제야 '자리가 다 찼어요'를 보여줌." And: "파티를 이미 신청했는데 해당 파티의 참여 신청 버튼이 아직 활성화 되어있음 (모집 중인 파티 탭에서) 이거 신청 취소 버튼으로 만들고 버튼 디자인은 '초대' - '신청 취소' 버튼과 동일하게." (`references/10-1-asked-card-now.jpg`, `references/10-2-asked-post-now.jpg`)
 11. **A class whose days have different hours.** Added by the user on 2026-11-26: such a class has to be made twice, as two classes of one name. The user changed 수업 추가 on the design canvas (board `Timetable`, its form) and asked for that change alone.
+12. **찾기.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "맨 아래에 전체 게시판이랑 모집 중인 파티 옆 전체 게시판 중복 … 그냥 파티 찾기 탭 여기서 게시판 고를 수 있게 하면 되잖아 -전체/식사/진로/취미/공연 이렇게", the cards' time and place on their own lines, the purple square gone, and "파티 검색 저 버튼, 좀 뜬구름잡게 가운데 끼어든 느낌". Settled on wireframes the same day (`references/12-1-find-wireframe.webp`).
+13. **파티's event card.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사가 태그된 파티 안에 들어갔을 때 행사를 누르면 행사 탭으로 아예 넘어가버림, 팝업으로 아래서 위로 뜨게 하는 식으로 하는게 낫지 않나?" (`references/13-1-room-event-sheet.webp`)
+14. **행사's detail sheet.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사/특정행사 누름 올라오는 팝업에서도 제목을 좀더 작게, 언제/어디 글씨는 삭제(아이콘으로 인지 가능), 위에 '내 파티' 이거 뭐임? 삭제." Settled on 2026-11-27 (`references/14-1-event-sheet-wireframe.webp`, `references/14-2-description-spacing.webp`).
+15. **행사's list.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사 다가오는 행사 문구 삭제, 시간이랑 장소, 아이콘(눌렀을때 올라오는 팝업의 아이콘)을 두고 다른 줄로 나누기, 제목과 시간/장소 글씨 크기가 여전히 큼.." Settled on 2026-11-27 (`references/15-1-events-list-wireframe.webp`).
+16. **관련 행사 고르기.** Added by the user on 2026-11-26, from their notes on the 파티 form: "관련행사 고르기 했을때 UI 말도 안되게 못생김 … 일단 눌렀을때 바로 추가되는게 아니라 행사탭처럼 아래서 위로 팝업 하나띄워주고, 추가 버튼을 따로 두고 추가했으면 좋겠음. (진로/이벤트/축제 이건 누가 나누는거지?)" Settled on 2026-11-27 (`references/16-1-event-picker-wireframe.webp`).
 
-Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc on 2026-11-26: none was fixed then.
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 on 2026-11-27: none was fixed then.
 
 ## Solution
 
@@ -35,6 +40,11 @@ One ticket per item, numbered as the items:
 9. [09: 내 정보's cards end without a line, and 관정도서관 로그인's button stands in the row's middle](issues/09-me-cards-end-clean.md)
 10. [10: 찾기 leaves out full 파티, and a card whose request waits offers 신청 취소](issues/10-full-and-asked-posts.md)
 11. [11: The class form takes a time slot per set of hours](issues/11-class-time-slots.md)
+12. [12: 찾기: board filters that stay put, search at their end, plain cards whose 모집글 slides up, and no 전체 게시판](issues/12-find-filter-and-post-sheet.md)
+13. [13: 파티's event card opens the event's detail as a sheet over the room](issues/13-room-event-sheet.md)
+14. [14: 행사's detail sheet: no 내 파티 or source line, no 언제 / 어디 words, smaller type, and the description spaced by its own lines](issues/14-event-sheet-cleaner.md)
+15. [15: 행사's list: no 다가오는 행사 heading, smaller type, time and place on their own lines, titles up to two lines, and no source line](issues/15-events-list-lighter.md)
+16. [16: 관련 행사 고르기: one list without 진로 / 이벤트 / 축제, rows like 행사's, and an event chosen only from its sheet](issues/16-event-picker-one-list.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -46,6 +56,11 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-25 and built at once: 09. It changes `design-system/list-row.tsx` (a way to leave the line out, the default unchanged) and three of 내 정보's cards; no open ticket touches them.
 - Added on 2026-11-26 and built at once: 10. It changes 찾기 (`screens/party/find-tab.tsx`, `post-card.tsx`), 보낸 신청's ask and the party posts' lists (`features/party/`); no open ticket touches them.
 - Added on 2026-11-26 and built at once: 11. It changes the class form (`features/timetable/class-form.ts`, `screens/timetable/`); no open ticket touches them.
+- Added on 2026-11-26 and built at once: 12. It changes 찾기 and 파티 모집글 (`screens/party/`), `ChipRow` (a chip without a count) and the 파티 header, and removes the board screens and their routes; no open ticket touches them.
+- Added on 2026-11-27 and built at once: 13. It changes the room's event card (`screens/room/room-event.tsx`) and `EventDetailSheet` (a way to leave out its party button); no open ticket touches them.
+- Added on 2026-11-27 and built at once: 14. It changes `EventDetailSheet` (`screens/events/event-detail-sheet.tsx`) and adds text styles to the tokens; no open ticket touches them.
+- Added on 2026-11-27 and built at once: 15. It changes `EventRow` (`screens/events/event-row.tsx`), the list's heading (`events-screen.tsx`), the shared `eventText` styles and the 관련 행사 picker's day size (`screens/party/form/event-field.tsx`). Ticket 14 (PR 636) touches `event-row.tsx` and other `eventText` keys too, so whichever lands second merges `5.0/Main` first.
+- Added on 2026-11-27 and built at once: 16. It changes the 관련 행사 picker and field (`screens/party/form/event-field.tsx`), `EventDetailSheet` (a foot button of its own), `withEvent` (`features/party/making.ts`), and deletes `features/party/event-kinds.ts`; no open ticket touches them.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -76,6 +91,14 @@ When the held tickets are taken up, tickets touching the same files never run at
 19. As a User looking for a 파티, I want 찾기 and the boards to leave out 파티 with no place left, so that I never press 참여하기 to hear "자리가 다 찼어요".
 20. As a User who asked to join a 파티, I want its card in 찾기 to offer 신청 취소 instead of 참여 신청.
 21. As a User whose class meets at different hours on different days, I want to enter it as one class with a time slot per set of hours.
+22. As a User looking for a 파티, I want to pick a board right on 찾기, with the filters in view while I scroll, instead of going through 전체 게시판.
+23. As a User skimming 찾기, I want short cards with the board, the time and the place on their own lines, and the whole 모집글 a press away without leaving 찾기.
+24. As a User pressing 관심 없음, I want to be asked first, since a hidden 파티 does not come back.
+25. As a User, I want a 파티's photo and tags shown only once they are its own, not stand-ins.
+26. As a 파티 member pressing its event, I want the event's detail to slide up over the room, so that I never lose my place in the 파티.
+27. As a User reading an event's detail, I want a quieter head and a description broken where its writer broke it, so that I can read it at a glance.
+28. As a User scanning 행사, I want lighter rows with the time and the place on their own lines and titles I can read to the end, so that more events fit and each reads at a glance.
+29. As a User making a 파티 for an event, I want to see the event's detail before I add it, in one list I can search, without kinds the app guesses wrongly.
 
 ## Implementation Decisions
 
@@ -92,6 +115,11 @@ Decided on 2026-11-22:
 - 09 (2026-11-25): the line goes from under the last row of 내 정보's activity card, 탭 안내 다시 보기 and 관정도서관 로그인 only; `ListRow` keeps its line by default, and the 비공개 구역 card on the 위치 공유 screen, which ends the same way, stays. The 관정도서관 로그인 button is centred in its row with `Button`'s existing `centred`.
 - 10 (2026-11-26): full 파티 leave 찾기 and the boards, filtered in the app, so that 파티 모집글 still opens one from a link or a chat card; a 찾기 card whose request waits shows `secondary` `신청 취소` at 참여 신청's size, asking as 보낸 신청 does.
 - 11 (2026-11-26): the canvas's 수업 추가 form, with a slot per set of hours (up to seven), each slot's own Place and room or the first's; the Place stays optional, and the timetable list is unchanged.
+- 12 (2026-11-26): 찾기's board filters are 내 파티's `ChipRow` without counts, fixed under the tabs, with the search's magnifier at their right end (찾기 only); 전체 파티 and the board screens go, so a post hidden with 관심 없음 cannot be brought back. 찾기 gets its own plain card (board, fill, title, time, place, a blue event line, no photo, faces or buttons); the Assistant's cards keep `PostCard`. A card opens its 모집글 as a sheet; the sheet and the 모집글 screen share one content without the stand-in photo and tag badges, and 관심 없음 asks with a centred `Dialog`. `+ 만들기` is centred. The event line opens nothing yet, and the stand-in tags stay in the code.
+- 13 (2026-11-27): the room's event card opens `EventDetailSheet` over the room instead of going to the 행사 tab. In the room the sheet has no party button, since the User is already in a 파티 of that event. An event the app's list no longer holds (ended or withdrawn) leaves the card unpressable. The 행사 tab's focus stays for push notices.
+- 14 (2026-11-27): in `EventDetailSheet` only, the 내 파티 mark and the source line go (the source never shows in the server build), and so do the words 언제 / 어디, which a screen reader still gets. The title becomes 21 Bold, the values 14 SemiBold and the description 14 Regular. The description is laid out by its own lines, 7 apart, with a run of blank lines as one gap of 14, and its words untouched. Its content (e-mails, repeated time and place, a summary) is left as scraped.
+- 15 (2026-11-27): the list loses its 다가오는 행사 heading and its rows' source line. A row's day is 22 Bold over a 12 month line, the title 16 Bold on up to two lines, the time and the place on their own lines with `clock` / `pin` at 13 Medium, the party line 13, and the padding 12. The sizes live in the shared `eventText`, which the 관련 행사 picker also takes (its day override goes), its other changes waiting for its own item. The day words stay 오늘 / 내일 / weekday.
+- 16 (2026-11-27): the picker loses its 진로 / 이벤트 / 축제 tabs and lists every event by date with its search. Its rows follow the 행사 list's: two-line titles, time and place lines with icons, padding 12. A press opens `EventDetailSheet` with 원문 보기 and 이 행사 추가, or a disabled 선택됨 for the event already chosen. The kind rules (`event-kinds.ts`: regular expressions over an event's words, a stopgap) are deleted with their uses: the tabs, the chosen box's kind line and the tags added on picking. Nothing else reads them.
 
 For all tickets:
 
@@ -106,6 +134,7 @@ For all tickets:
 - Only the changed files' tests and those `git grep` finds run locally, with typecheck, lint and format; CI runs the whole suite.
 - Every ticket that changes a screen is checked on an Android emulator with the mock build. The screens go to the orchestrator before the pull request and to the design review for those with design calls (02, 04, 05).
 - From 2026-11-25 (02, 03, 08) the emulator check before the pull request is left out: the user checks the merged change on a phone. A review that asks for screens is answered with emulator screens (02).
+- From 2026-11-26 (12) a pull request that changes a screen shows before and after screens in its body.
 - From 2026-11-25 (09) the pull request opens as a draft. The orchestrator builds the branch as a release APK against the production server, with updates on a channel nobody publishes to, and installs it on the user's wired phone; the user checks it there before the pull request is marked ready.
 
 ## Out of Scope
@@ -135,6 +164,11 @@ Every item received and where it went:
 | 09 내 정보 카드 끝의 줄, 관정도서관 로그인 버튼 위치 (added 2026-11-25) | Ticket 09 |
 | 10 가득 찬 파티, 신청한 파티의 참여 신청 버튼 (added 2026-11-26) | Ticket 10 |
 | 11 요일마다 시간이 다른 수업 (added 2026-11-26) | Ticket 11 |
+| 12 찾기의 게시판 고르기, 카드, 파티 검색, 만들기 정렬 (added 2026-11-26) | Ticket 12. The user's other notes on the 파티 and 행사 tabs wait for their own tickets |
+| 13 파티 상세에서 행사를 누르면 행사 탭으로 넘어감 (added 2026-11-26) | Ticket 13 |
+| 14 행사 팝업의 내 파티, 언제/어디, 제목 크기 (added 2026-11-26) | Ticket 14, with the description's spacing (added 2026-11-27) |
+| 15 행사 목록의 다가오는 행사, 시간/장소 줄, 글씨 크기 (added 2026-11-26) | Ticket 15, with two-line titles (added 2026-11-27) |
+| 16 관련 행사 고르기의 UI, 누르면 팝업과 추가 버튼, 진로/이벤트/축제 (added 2026-11-26) | Ticket 16, with the kind rules deleted (added 2026-11-27) |
 
 Notes for the tickets:
 

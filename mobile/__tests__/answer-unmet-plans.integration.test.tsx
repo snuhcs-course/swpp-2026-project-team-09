@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -24,7 +25,7 @@ import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_REPLY } from '@/api/mock/data/unm
 // Conditions that cannot be met (P02-14), in the answer frame against the fake main server, over its real answers of
 // board n11 (nothing fits 지금) and n11b (eased to 13:00): the buttons and chips that ease a condition or go back ask
 // for a recalculation without the model, and the pick's card holds the basis (n23). The time chips are gone (P04
-// ticket 04): the relax buttons and "처음으로" stand in for them.
+// ticket 04): the relax buttons stand in for them, and a Plan eased from 지금 has no button back (P04 ticket 86).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -101,26 +102,16 @@ describe('board n11: nothing fits 지금', () => {
   });
 });
 
-// Partitions: the relaxed chip; 처음으로.
+// Partitions: the eased Plan's card. Going back would only show again that nothing fits 지금 (P04 ticket 86).
 describe('board n11b: eased to 13:00', () => {
-  it('offers 처음으로, with "만들고 초대 보내기" beside the input', async () => {
+  it('has no 처음으로 and no row of buttons, with "만들고 초대 보내기" beside the input', async () => {
     await askOnMap(server, EASED_REPLY);
 
     expect(
       within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }),
     ).toBeVisible();
-    expect(card().getByRole('button', { name: '처음으로' })).toBeVisible();
-  });
-
-  it('goes back to 지금 with 처음으로', async () => {
-    server.on('POST /assistant/answers', { status: 200, body: NOT_NOW_ANSWER });
-    const user = await askOnMap(server, EASED_REPLY);
-
-    await user.press(card().getByRole('button', { name: '처음으로' }));
-    await pass(500);
-
-    expect(sentInputs()).toEqual([NOW_INPUT]);
-    expect(card().getByText('지금은 셋이 먹을 때가 없어요')).toBeVisible();
+    expect(card().queryByRole('button', { name: '처음으로' })).toBeNull();
+    expect(card().queryByTestId('plan-steps')).toBeNull();
   });
 });
 

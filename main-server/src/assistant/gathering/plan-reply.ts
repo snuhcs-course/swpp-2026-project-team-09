@@ -4,6 +4,13 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { type CuisineWord } from '../../menus/cuisine-words.js';
+import { type AnswerReply, type MealInput, type Plan } from '../dto/answer.dto.js';
+import { hasFinal, withSubject } from './answer-words.js';
+import { listPrice, won } from './meal-menu.js';
+import { fitsUnder, planPrice } from './meal-price.js';
+import { nextItemWords, shownWalk } from './plan-order.js';
+
 // A sentence that gives someone's walk in minutes ("83동에서 도보 3분이에요", "걸어서 5분 걸려요"): the app draws the
 // ways and writes their minutes on the map, and nowhere else (the meal rules: nobody's minutes on the way).
 const WALK_MINUTES = /(?:도보|걸어서|걸음으로|걸음)\s*\d+\s*분|\d+\s*분\s*(?:정도\s*)?(?:걸려|걸어|거리)/u;
@@ -21,4 +28,58 @@ export function withoutWalkSentences(text: string, drawsPlan: boolean): string {
   }
   const [first = '', ...rest] = text.match(SENTENCES) ?? [];
   return [first, ...rest.filter((sentence) => !WALK_MINUTES.test(sentence))].join('').trim();
+}
+
+// The sentence of a meal reply the model wrote no words for, the rules' one sentence made from the plans: the first plan
+// recommended by its Restaurant's name with why it comes first, as the order has it. Without it the reply went back as
+// the stand-in, and the app put the plan's own line in its place ("301동식당 · 11:30 · 걸음 4분 · 돌솥비빔밥 · 6,500원",
+// the user's phone, 2026-11-26). A menu's answer, opened at its Restaurant, recommends nothing: none for it.
+export function wordlessMealSentence(answer: AnswerReply | null): string | null {
+  if (answer === null || answer.input.kind !== 'meal' || answer.opened !== undefined) {
+    return null;
+  }
+  const [first, ...rest] = answer.plans;
+  if (first === undefined) {
+    return null;
+  }
+  // A name's bracketed part is not read for the particle: 아워홈(901동)을.
+  const read = first.id.replace(/\s*\([^)]*\)$/u, '');
+  return `${pricedWhy(first, rest, answer.input)}${first.id}${hasFinal(read) ? '을' : '를'} 추천해요.`;
+}
+
+// Why the first plan comes first with a price condition (P05 ticket 53), the condition named: under the ceiling, the
+// first's reason among the fitting plans; none under it, the cheapest; no price at all, the menus not posted yet; the
+// cheapest first alone, its price as the list writes it.
+function pricedWhy(first: Plan, rest: readonly Plan[], { cuisine, maxPrice, cheapFirst }: MealInput): string {
+  const cheapest = first.menu === undefined ? null : listPrice(first.menu);
+  if (maxPrice === undefined) {
+    return cheapFirst === true && cheapest !== null ? `가장 싼 ${cheapest}인 ` : whyFirst(first, rest, cuisine);
+  }
+  if ([first, ...rest].every((plan) => planPrice(plan) === null)) {
+    return `메뉴가 아직 올라오지 않아 가격으로 거르지 못해서, ${whyFirst(first, rest, cuisine)}`;
+  }
+  if (!fitsUnder(planPrice(first), maxPrice)) {
+    return `${won(maxPrice)} 이하는 없어서, 가장 싼 ${cheapest ?? ''}인 `;
+  }
+  const fitting = rest.filter((plan) => fitsUnder(planPrice(plan), maxPrice));
+  return `${won(maxPrice)} 이하로는 ${whyFirst(first, fitting, cuisine)}`;
+}
+
+// Why the first plan comes first, in the rules' words, or nothing when none can be said truly: the kind of food it
+// serves; the least walking, on to the User's next item when where they set out from is not known, said only when no
+// other plan walks less; or, with neither origin nor next item, the earliest start.
+function whyFirst(first: Plan, rest: readonly Plan[], kind: CuisineWord | null | undefined): string {
+  if (kind !== undefined && kind !== null && first.menu?.dishes.some(({ cuisine }) => cuisine === kind) === true) {
+    return `${withSubject(kind)} 나오는 `;
+  }
+  const me = first.parts.find((part) => part.me);
+  const next = me === undefined || me.origin !== null ? null : nextItemWords(first, me);
+  if (me?.origin === null && next === null) {
+    return '어디서 출발하는지 몰라서 가장 일찍 여는 ';
+  }
+  const least = rest.every((plan) => shownWalk(plan) >= shownWalk(first));
+  if (!least) {
+    return '';
+  }
+  return next === null ? '가장 덜 걷는 ' : `${next}까지 가장 덜 걷는 `;
 }

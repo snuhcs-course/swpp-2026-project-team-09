@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -143,13 +144,17 @@ describe('a failed recalculation', () => {
 
 // Partitions: an answer to a drag that has no Plan.
 describe('an answer without a Plan to a drag', () => {
-  it('shows its lines and "되돌리기", and no mark on the map', async () => {
+  it('shows its lines and "되돌리기" first in the relax row, and no mark on the map (P04 ticket 86)', async () => {
     // The stored fixed-start answer with these two fields changed for the boundary: no Plan, and a reason of the
-    // contract's shape with lines of its own.
+    // contract's shape with lines and a relax button of its own.
     const noPlan: AnswerReply = {
       ...MEAL_ANSWER_FIXED_START,
       plans: [],
-      noPlan: { reason: 'no-shared-time', lines: [[{ text: '같이 먹을 시간이 없어요', strong: false }]] },
+      noPlan: {
+        reason: 'no-shared-time',
+        lines: [[{ text: '같이 먹을 시간이 없어요', strong: false }]],
+        relax: [{ kind: 'from', time: '13:30', label: '13:30 이후' }],
+      },
     };
     server.on('POST /assistant/answers', { status: 200, body: noPlan });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -159,6 +164,9 @@ describe('an answer without a Plan to a drag', () => {
     expect(card().getByText('같이 먹을 시간이 없어요')).toBeVisible();
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
     expect(mapThings().filter((name) => FIRST_PLAN_MARKS.includes(name))).toEqual([]);
+    const [first, second] = within(card().getByTestId('relax-buttons')).getAllByRole('button');
+    expect(first).toHaveTextContent('되돌리기');
+    expect(second).toHaveTextContent('13:30 이후');
     await user.press(card().getByRole('button', { name: '되돌리기' }));
     expect(mapThings()).toContain(PICK);
   });

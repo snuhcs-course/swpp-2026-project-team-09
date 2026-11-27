@@ -192,6 +192,27 @@ Decisions and things inferred:
 - The error reports' test pattern `/이름·이메일·학번이 아니에요/` now matches two paragraphs (the new part says the
   same), so it was made longer to match only the error reports' one.
 
+### Screenshots (2026-11-26)
+
+Taken on an x86_64 emulator from a mock build of this branch, as a new account.
+
+- `../references/11-consent-unticked.png` and `11-consent-ticked.png`: the consent screen's optional item.
+- `../references/11-policy-usage.png`: the item's link opens the policy at "사용 기록" without a scroll by hand. The part
+  is the policy's last, so the screen stops at the document's end and the heading stands a little below the top.
+- `../references/11-me-card-on.png` and `11-me-card-off.png`: 내 정보's card with both switches; "사용 기록 보내기" was on
+  after the item was ticked, and off after a press.
+
+The failure toasts are covered by the integration tests and were not pictured.
+
+### After the review (2026-11-27)
+
+- **The carry-over is at a start with a kept Session only.** At a sign-in the phone's `consented` may be another
+  User's, kept across a sign-out by the earlier app, and the carry-over would record the consent to all three
+  documents on an account whose User never saw them. A sign-in into an account that holds no consent is now asked. A
+  team member who signed out of the earlier app and signs in again sees the screen once.
+- **The usage box takes no press while "동의하고 시작" is at work**, so what is sent is what the box shows.
+- **Rollback**: the app's bundle goes back before the main server, since this bundle calls #599's routes.
+
 ### Agent usage (2026-11-26)
 
 - Agent time: about 2 hours 30 minutes (estimate), one session, most of it waiting on single-file Jest runs.

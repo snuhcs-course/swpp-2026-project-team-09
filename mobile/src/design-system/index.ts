@@ -15,7 +15,9 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -32,7 +34,7 @@ export { DayTile } from './day-tile';
 export { ChatInput } from './chat-input';
 export { ChoiceGrid, choiceRowsWithin, type GridChoice } from './choice-grid';
 export { Chip } from './chip';
-export { type CountedChip, ChipRow } from './chip-row';
+export { ChipRow, type RowChip } from './chip-row';
 export { Dialog } from './dialog';
 export { EventCard, type EventKind } from './event-card';
 export { FullScreenPanel } from './full-screen-panel';
@@ -49,12 +51,16 @@ export {
   type LabelSide,
   type LegTone,
   MapAnswerMark,
+  MEAL_NUMBER,
 } from './map-answer';
 export { MapPerson, type PersonTone } from './map-person';
+export { RoundNumber } from './round-number';
 export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
 export { MapMarkBadge } from './map-mark-badge';
 export { MapTutorialPin, MapTutorialStep, type TutorialStepShape } from './map-tutorial-pin';
-export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant, placeKindLook } from './map-pin';
+export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, placeKindLook } from './map-pin';
+export { MapRestaurant, MapStudyPin } from './map-service-pin';
+export { QuestRound, type QuestRoundTone } from './quest-round';
 export { MapStudyCluster } from './map-study-cluster';
 export { Overlay, OverlayHost } from './overlay';
 export { SearchField } from './search-field';

@@ -23,6 +23,15 @@ export interface OtherLane extends BandLane {
   after?: string;
 }
 
+// One of the asker's Classes left out of a meal's plan (P04 ticket 93): the id of its time, as the input names it,
+// and its whole stretch, labelled as a lane's busy stretch. It is in no lane.
+export interface SkippedClass {
+  id: string;
+  startAt: string;
+  endAt: string;
+  label: string;
+}
+
 // A Plan's time band: the range drawn, now, the people's lanes, and the span with its words.
 export interface TimeBand {
   range: { startAt: string; endAt: string };
@@ -30,6 +39,8 @@ export interface TimeBand {
   lanes: BandLane[];
   // The asker's Friends not in the conditions, for picking; left out by an older main server.
   others?: OtherLane[];
+  // A meal's: the asker's Classes left out of it, in time order; absent for none, and from an older main server.
+  skipped?: SkippedClass[];
   startAt: string;
   endAt: string;
   text: string;

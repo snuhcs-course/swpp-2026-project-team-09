@@ -10,6 +10,8 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -17,8 +19,6 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { Server } from 'node:http';
 import { type Model } from '../src/assistant/adapter.js';
 import { type AssistantReplyDto } from '../src/assistant/dto/assistant-messages.dto.js';
-import { sentProposalOf as sentBackProposal } from '../src/assistant/proposal.js';
-import { idOf } from '../src/assistant/tools/fresh-ids.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type Settings } from '../src/common/settings.js';
 import { postAssistantMessages, type SentMessage } from '../test/assistant.js';
@@ -40,6 +40,7 @@ import { type RunOptions, runName } from './options.ts';
 import { FixtureTravel } from './p4/travel-fixture.ts';
 import { type RawResponses } from './raw-responses.ts';
 import { Recorder } from './recorder.ts';
+import { type OnScreen, onScreenAfter, sendBack } from './sent-back.ts';
 import { runObserverModule } from './run-observer.module.ts';
 import { failureOf, type ReplyTrace, type TurnTrace, usageOf } from './trace.ts';
 import { type Seeded, seedOf, type World } from './world.ts';
@@ -131,22 +132,13 @@ export function requestMessages(turns: readonly CaseTurn[], world: World): SentM
     return {
       role: 'assistant',
       text,
-      cards: cards.map(({ kind, seed }) => ({ kind, id: seedOf(world.seeds, kind, seed).id })),
+      cards: cards.map(({ kind, seed }) => ({
+        kind,
+        id: kind === 'library' ? seed : seedOf(world.seeds, kind, seed).id,
+      })),
       proposal: proposal === null ? null : sentProposalOf(proposal, world),
     };
   });
-}
-
-// The reply sent back with the next message, as the app does: the cards by reference, the Proposal by its values, and
-// a reply with no words beside a Lookup by the Lookup's lines, which the User saw.
-function sentBack({ text, cards, proposal, lookup }: AssistantReplyDto): SentAssistant {
-  const seen = lookup?.lines.map((line) => line.map((part) => part.text).join('')).join('\n') ?? '';
-  return {
-    role: 'assistant',
-    text: text.trim() === '' && seen !== '' ? seen : text,
-    cards: cards.map((card) => ({ kind: card.kind, id: idOf(card) })),
-    proposal: proposal === null ? null : sentBackProposal(proposal),
-  };
 }
 
 // The access token of the User who asks the case.
@@ -215,18 +207,6 @@ export interface CaseRunControls {
   stop?: () => boolean;
 }
 
-// Adds the reply to the conversation as the app does, which sends only the last Proposal back.
-function sendBack(messages: SentMessage[], reply: AssistantReplyDto): void {
-  if (reply.proposal !== null) {
-    for (const message of messages) {
-      if (message.role === 'assistant') {
-        message.proposal = null;
-      }
-    }
-  }
-  messages.push(sentBack(reply));
-}
-
 // Runs a case: its one message, or a live case's messages one by one, each with the replies before it, stopping at a
 // turn that failed.
 export async function runCase(
@@ -259,19 +239,22 @@ export async function runCase(
     return run;
   }
   const messages: SentMessage[] = [];
+  let screen: OnScreen | null = null;
   for (const turn of userTurns) {
     if (run.turns.length > 0 && stop()) {
       break;
     }
     messages.push({ role: 'user', text: turn.user });
+    const sent = screen === null ? fields : { ...fields, context: { ...evalCase.context, ...screen } };
     // oxlint-disable-next-line no-await-in-loop -- each turn is sent with the replies before it
-    const { trace, body } = await sendTurn(evalApp, accessToken, messages, options, fields);
+    const { trace, body } = await sendTurn(evalApp, accessToken, messages, options, sent);
     run.turns.push(trace);
     turnEnded(trace);
     if (body === null || !passed(trace, turn.expect ?? null)) {
       break;
     }
     sendBack(messages, body);
+    screen = evalCase.screen ? onScreenAfter(screen, body) : null;
   }
   return run;
 }
