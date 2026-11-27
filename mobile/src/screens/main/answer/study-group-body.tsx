@@ -16,12 +16,13 @@ import { koreaClock } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
 import { useLibrarySession } from '@/library/library-session';
 import type { TellAct } from '../library/act-stage';
+import { FailureNote } from '../library/library-parts';
 import { OneMorePicker } from '../library/room-ask-more';
 import { RoomTicket } from '../library/room-ticket';
 import { keepUse, keptUse } from '../library/use-chooser';
 import type { LibraryCardActions } from '../library/use-library-call';
 import { usePartyRequest } from '../library/room-party';
-import { useGroupAct } from './study-group-act';
+import { mainOf, useGroupAct } from './study-group-act';
 import { Choosers, type Open, RequestLine, UseLine } from './study-group-parts';
 import { useGroupBooking } from './use-group-booking';
 import { consentWords, groupOfRequest, isOut, outWords, partyCardOf } from './study-group-request';
@@ -34,8 +35,6 @@ import { ChatMarkdown } from '../chat-markdown';
 // logged out of the library, and else "동의 요청 보내기" (`study-group-act.ts`). Once sent (ticket 12) the request runs as
 // a room card's does (`usePartyRequest`): the ticket is held, the consents are said with "요청 취소 ›" at the line's end,
 // and a Friend out is said, with one more Friend asked from the main button.
-
-export const LOG_IN_FOR_ROOMS = '로그인하면 빈 방을 볼 수 있어요';
 
 const COUNTS = ['', '한 명만', '두 명', '세 명'];
 
@@ -67,34 +66,21 @@ interface GroupBodyProps {
   library?: LibraryCardActions;
 }
 
-// The sentence, how many more people the room needs, or who is out of the request; and the login line while logged out
-// of the library.
-function GroupWords({
-  group,
-  said,
-  loggedIn,
-  out,
-}: {
-  group: StudyGroup;
-  said: string;
-  loggedIn: boolean;
-  // Who is out of the request, or none free at the time, or the booking window (P10 tickets 12 and 14).
-  out: string | null;
-}): ReactElement {
-  let words: ReactElement;
+// The sentence, the Friend out once the request is sent, or how many more people the room needs.
+function GroupWords({ group, said, out }: { group: StudyGroup; said: string; out: string | null }): ReactElement {
   if (out !== null) {
-    words = <Text style={styles.words}>{out}</Text>;
-  } else if (group.moreNeeded > 0) {
-    words = <Text style={styles.words}>{shortWords(group.moreNeeded)}</Text>;
-  } else {
-    words = <ChatMarkdown style={styles.words} text={said} />;
+    return <Text style={styles.words}>{out}</Text>;
   }
-  return (
-    <>
-      {words}
-      {loggedIn ? null : <Text style={styles.login}>{LOG_IN_FOR_ROOMS}</Text>}
-    </>
+  return group.moreNeeded > 0 ? (
+    <Text style={styles.words}>{shortWords(group.moreNeeded)}</Text>
+  ) : (
+    <ChatMarkdown style={styles.words} text={said} />
   );
+}
+
+// The seat answer's line under the ticket, said only where the main button is 로그인.
+function LogInNote({ shown }: { shown: boolean }): ReactElement | null {
+  return shown ? <FailureNote failure="noSession" onLogIn={null} /> : null;
 }
 
 // What the card holds: the cell or the line opened, the room chosen, and the use, which starts as the one kept.
@@ -209,6 +195,8 @@ function useGroupBody(props: GroupBodyProps): {
   return { loggedIn, slot, choices, request, booking, onScreen };
 }
 
+// Under the ticket: the login line; a cell's chooser; the use line, and the use's chooser under it (design
+// group-study-design ④ ⑤).
 export function StudyGroupBody(props: GroupBodyProps): ReactElement {
   const { loggedIn, slot, choices, request, booking, onScreen } = useGroupBody(props);
   const { party, out, asking, setAsking } = request;
@@ -221,12 +209,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
   );
   return (
     <View style={styles.body} testID="study-group-body">
-      <GroupWords
-        group={onScreen}
-        loggedIn={loggedIn}
-        out={(out === null ? null : outWords(out)) ?? booking.sentence}
-        said={props.said}
-      />
+      <GroupWords group={onScreen} out={(out === null ? null : outWords(out)) ?? booking.sentence} said={props.said} />
       <RoomTicket
         group={onScreen}
         kindHeld={ready}
@@ -237,7 +220,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
         open={(!held || ready) && (open === 'kind' || open === 'room') ? open : null}
         room={room}
       />
-      {/* A cell's chooser opens right under the ticket, the use's under its line (design group-study-design ④ ⑤). */}
+      <LogInNote shown={mainOf(onScreen, loggedIn, party).main === 'logIn' && open !== 'kind' && open !== 'room'} />
       {held && !ready ? null : chooser(open === 'use' ? null : open)}
       {out === null ? (
         <UseLine onPress={toggle('use')} use={use} />
@@ -261,5 +244,4 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
 const styles = StyleSheet.create({
   body: { gap: space[3] },
   words: { ...text.body, color: color.ink },
-  login: { ...text.caption, color: color.danger },
 });
