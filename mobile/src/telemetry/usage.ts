@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import PostHog, { type PostHogOptions, PostHogPersistedProperty } from 'posthog-react-native';
@@ -51,6 +52,9 @@ let client: PostHog | null = null;
 let userId: string | null = null;
 // The phone's copy of the account's consent allows usage data.
 let allowed = false;
+// The position 내 정보's switch was pressed to, while its request is on its way (`holdUsage`). It wins over `allowed`,
+// so that a Lobby answer read before the account took the press cannot turn sending back on after the User said no.
+let pressed: { chosen: boolean } | null = null;
 // The client is opted in, for `identifiedAs`.
 let sending = false;
 let identifiedAs: string | null = null;
@@ -150,7 +154,7 @@ function follow(): void {
     return;
   }
   const id = userId;
-  const may = id !== null && allowed;
+  const may = id !== null && (pressed === null ? allowed : pressed.chosen);
   if (may && sending && identifiedAs !== id) {
     // Another User without a sign-out between: the first one is forgotten before the second is identified.
     forgetClientUser();
@@ -187,6 +191,21 @@ export function allowUsage(chosen: boolean): void {
   follow();
 }
 
+// At once when 내 정보's switch is pressed: the pressed position holds until the returned function is called, when the
+// switch's request was answered (and its answer kept) or failed. A later press replaces the hold, and an earlier
+// press's release then changes nothing.
+export function holdUsage(chosen: boolean): () => void {
+  const hold = { chosen };
+  pressed = hold;
+  follow();
+  return () => {
+    if (pressed === hold) {
+      pressed = null;
+      follow();
+    }
+  };
+}
+
 // At a sign-in and at a start with a kept Session. PostHog's `identify` gets the User id and no person properties.
 export function identifyUsageUser(id: string): void {
   userId = id;
@@ -198,5 +217,6 @@ export function forgetUsageUser(): void {
   userId = null;
   // The next User's consent comes with their sign-in.
   allowed = false;
+  pressed = null;
   forgetClientUser();
 }
