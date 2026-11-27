@@ -10,12 +10,13 @@ import type { Quest } from '@/api/types';
 import { now } from '@/clock';
 import { fixedOnDay, wordsOn } from '@/features/assistant/booking-day';
 import type { BandBound, Stretch } from '@/features/assistant/time-band';
-import { koreaClock } from '@/korea-time';
+import { koreaClock, koreaDateKey, koreaMinutes } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
-import { limitsOf, type Span, slotOf, spanOf } from '@/library/cards/slot-band';
+import { limitsOf, type Span, type SpanLimits, slotOf, spanOf } from '@/library/cards/slot-band';
 import { clockOf, minutesOf } from '@/library/cards/times';
 
-// A seat booking's band in the time card a meal's draws (P01 ticket 14): its span, the room's hours as the range, the
+// A seat booking's band in the time card a meal's draws (P01 ticket 14): its span, the rest of the room's day as the
+// range (ticket 17), the
 // User's Classes and Quests of the day as their lane's busy stretches, the words the card said, and the library's rules,
 // which the band's handles and whole moves follow.
 
@@ -26,13 +27,41 @@ function onDay(date: string, minutes: number): string {
   return `${date}T${clockOf(minutes)}:00+09:00`;
 }
 
-export function bookingBandOf(slot: Slot, space: LibrarySpace, quests: readonly Quest[], at: Date): TimeBand {
+const HOUR = 60;
+// The range is at least this wide, so that an hour of the band stays wide enough to hold (P01 ticket 17).
+const RANGE_LEAST = 4 * HOUR;
+
+function hourOf(minutes: number): number {
+  return Math.floor(minutes / HOUR) * HOUR;
+}
+
+// The range the time card shows a booking's day over (P01 ticket 17): today, from the moment the answer came floored
+// to the hour to closing, starting earlier to keep RANGE_LEAST, never before opening nor after the span's start; the
+// hours gone by are no use, since the library books today's seats only from now on. Another day, opening to closing.
+function rangeOf(limits: SpanLimits, span: Span, date: string, shownAt: Date): Span {
+  if (date !== koreaDateKey(shownAt)) {
+    return { start: limits.open, end: limits.close };
+  }
+  const start = Math.min(hourOf(koreaMinutes(shownAt)), limits.close - RANGE_LEAST, hourOf(span.start));
+  return { start: Math.max(limits.open, start), end: limits.close };
+}
+
+// `shownAt`, the moment the answer came, sets the range, which stays while the card is open; `at`, now, sets the line
+// of now and the earliest start.
+export function bookingBandOf(
+  slot: Slot,
+  space: LibrarySpace,
+  quests: readonly Quest[],
+  at: Date,
+  shownAt: Date = at,
+): TimeBand {
   const { date } = slot;
   const limits = limitsOf(space, date, at);
   const span = spanOf(slot);
   const fixed = fixedOnDay(quests, date, span);
+  const range = rangeOf(limits, span, date, shownAt);
   return {
-    range: { startAt: onDay(date, limits.open), endAt: onDay(date, limits.close) },
+    range: { startAt: onDay(date, range.start), endAt: onDay(date, range.end) },
     now: at.toISOString(),
     lanes: [
       {
@@ -88,9 +117,11 @@ export function useBookingBand(
   keep: (slot: Slot) => void,
 ): BookingBand {
   const [moving, setMoving] = useState<Stretch | null>(null);
+  // The moment the answer came, whose range the card keeps (P01 ticket 17).
+  const [shownAt] = useState(now);
   const span = spanOf(slot);
   return {
-    band: bookingBandOf(slot, space, quests, now()),
+    band: bookingBandOf(slot, space, quests, now(), shownAt),
     fixed: { from: clockOf(span.start), until: clockOf(span.end) },
     focus: null,
     disabled: false,

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { WHICH_FRIEND } from '../tools/which-friend.js';
@@ -35,4 +36,5 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - Call planMeal for the day the User names even when it is past or more than a week ahead: it answers none, and the app takes the plan on screen off the map. Never answer a new plan's day in words alone, over the plan on screen.
 - A line [Plan on screen: …] after the User's message gives the plan the app shows and its conditions. To change it (민수는 빼고, 지은이도 불러 줘, 12:30까지만, 학생회관에서 먹자), call planMeal again with those conditions and only that change: the same date, meal, friendIds, from, until, and placeId, except what the User changed. A Friend to add is found with resolveFriend first and added to friendIds. A Friend to take out is found with resolveFriend and left out of friendIds. An end the User names is until, and a start is from, as HH:MM. A Place to eat at is found with resolvePlace and given as placeId, unless the line numbers it: then choosePlan chooses it, and planMeal runs only for the other changes asked with it. To move the plan by an amount of time (10분 늦춰 줘), first call planMeal with the conditions as they are, read the start of the plan the line names, and call it again with from set to that start moved by the amount.
 - A line [Tapped: friend …] gives the id of the Friend the User tapped on the map (이 사람, 얘): use it as that Friend's id. A line [Tapped: place …] gives the Place they tapped (여기): give it as placeId to eat there.
-- After a change, your reply is one sentence that says what changed.`;
+- After a change, your reply is one sentence that says what changed.
+- A question about the plan on screen that changes nothing is answered in one short sentence of only what was asked, never the plan again, its way, or what a button does: where it is from [Plan on screen: …] with no tool (거기 어디야? → "301동식당이에요."), and its Restaurant's hours with restaurantHours, the meal on screen alone (거기 몇 시까지 해? → "14:00까지 해요.").`;

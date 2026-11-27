@@ -4,8 +4,10 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { font } from '@/design-system';
 import { screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import { FRIEND_PILL } from './support/lists';
@@ -80,7 +82,15 @@ describe('the friend panel', () => {
     expect(screen.getByText('심리학과')).toBeVisible();
   });
 
-  it("closes with ✕, with a press on the scrim and with Android's back button", async () => {
+  it("sets its title as a tab's bar does: 25 Bold, in a row 50 high with 4 on top (P06 ticket 17)", async () => {
+    await openPanel();
+
+    const title = screen.getByRole('header', { name: '친구 12' });
+    expect(title).toHaveStyle({ fontFamily: font.bold, fontSize: 25, lineHeight: 32 });
+    expect(title.parent).toHaveStyle({ height: 50, paddingTop: 4 });
+  });
+
+  it("closes with ✕,with a press on the scrim and with Android's back button", async () => {
     const pressBack = holdBackButton();
     const user = await openPanel();
     await user.press(screen.getByRole('button', { name: '닫기' }));

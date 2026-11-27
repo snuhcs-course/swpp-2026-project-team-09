@@ -6,10 +6,12 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { koreaDate } from '../korea-time.js';
 import { peopleRefusal } from './booking-people.js';
+import { seatNameOf } from './app-names.js';
 import { type Catalogue, type ClockRange, type EquipmentGroup, type LibrarySpace, seatLabelOf } from './catalogue.js';
 
 export { PARTY_MAX, PARTY_REFUSAL, peopleRefusal } from './booking-people.js';
@@ -132,7 +134,7 @@ export function windowRefusal(space: LibrarySpace, date: string, now: Date, wait
     return { field: 'date', reason, bound: last };
   }
   if (space.closedOnSunday && new Date(`${date}T00:00:00Z`).getUTCDay() === 0) {
-    return closed({ field: 'date', reason: `${space.name}은 일요일에 열지 않아요` });
+    return closed({ field: 'date', reason: `${seatNameOf(space) ?? space.name}은 일요일에 열지 않아요` });
   }
   return null;
 }
@@ -182,7 +184,7 @@ function seatRefusal(space: LibrarySpace, seat: string): Refusal {
     seatLabels === null
       ? [...space.rooms.keys()].join(', ')
       : `${seatLabels.prefix}${String(seatLabels.from).padStart(seatLabels.digits, '0')}–${seatLabels.prefix}${String(seatLabels.to).padStart(seatLabels.digits, '0')}`;
-  return { field: 'seat', reason: `${seat}은 ${space.name}의 자리가 아니에요`, bound: range };
+  return { field: 'seat', reason: `${seat}은 ${seatNameOf(space) ?? space.name}의 자리가 아니에요`, bound: range };
 }
 
 function equipmentOf(space: LibrarySpace, equipment: string): EquipmentGroup | undefined {

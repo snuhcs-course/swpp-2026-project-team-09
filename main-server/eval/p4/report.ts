@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -79,7 +80,11 @@ const LAYERS: readonly Layer[] = [
     checkedBy: ({ cards, mapButtons }) => cards !== undefined || mapButtons !== undefined,
   },
   { layer: 'Proposal', checks: ['proposal'], checkedBy: ({ proposal }) => proposal !== undefined },
-  { layer: WORDS, checks: ['text.mentions', 'text.absent', 'text.none'], checkedBy: ({ text }) => text !== undefined },
+  {
+    layer: WORDS,
+    checks: ['text.mentions', 'text.absent', 'text.none', 'text.maxChars'],
+    checkedBy: ({ text }) => text !== undefined,
+  },
 ];
 
 // Keeps one word from running into the next: the scorer ignores spaces, and reads a word that starts with a digit only

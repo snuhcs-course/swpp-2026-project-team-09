@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Expect } from './expect.ts';
@@ -20,6 +21,7 @@ export type CheckName =
   | 'text.mentions'
   | 'text.absent'
   | 'text.none'
+  | 'text.maxChars'
   | 'steps';
 
 // The reply's steps that differ from those expected, in order.
@@ -49,4 +51,10 @@ export function stepsChecks(
   }
   const failures = stepFailures(steps, reply?.steps);
   return [{ name: 'steps', passed: failures.length === 0, detail: failures.join('; ') }];
+}
+
+// A text longer than `maxChars`, spaces at its ends aside, said as a failure.
+export function lengthFailures(text: string, maxChars: number): string[] {
+  const { length } = text.trim();
+  return length > maxChars ? [`${length} characters, at most ${maxChars}`] : [];
 }
