@@ -13,18 +13,20 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
 import { MOCK_WAIT_MS } from '@/api/mock/answer';
 import { ME } from '@/api/mock/data/frame';
-import { isNothing, isSignInAnswer, type SignInAnswer } from '@/api/server/answers';
+import { consentOf, isNothing, isSignInAnswer, type SignInAnswer } from '@/api/server/answers';
 import { call } from '@/api/server/http';
 import { asksMainServer } from '@/api/servers';
 import type { Onboarding, SignInResult, Suggestion } from '@/api/types';
 import { askGoogle, forgetGoogle, type GoogleAccountPrompt, googleAvailable } from '@/auth/google';
 import { isSnuAccount, readIdToken, subjectOf } from '@/auth/id-token';
 import { forgetTokens, heldTokens, keepTokens } from '@/auth/tokens';
+import { keepConsent, NO_CONSENT } from '@/consent/kept-consent';
 import { namedSignInEnding, signInEnding } from '@/dev-settings';
 import { endLibrarySessionInBackground } from '@/library/end-session';
 import { unregisterPush } from '@/push/device';
@@ -46,10 +48,14 @@ export const MOCK_SUGGESTION: Suggestion = { name: ME.name, department: null };
 
 // Remembers on the phone that the User signed in, and what to suggest for Onboarding.
 async function enter(suggestion: Suggestion): Promise<SignInResult> {
-  // A User who finished Onboarding on this phone before has finished it, as an account on the main server has.
-  const { onboardingCompleted } = await readKept();
+  // A User who finished Onboarding on this phone before has finished it, and one who agreed on it has agreed, as an
+  // account on the main server has.
+  const { onboardingCompleted, mockAccountConsent } = await readKept();
   const onboarding: Onboarding = onboardingCompleted ? { completed: true } : { completed: false, suggestion };
-  await keep({ signedIn: true, suggestion: onboarding.completed ? null : onboarding.suggestion });
+  await keepConsent(mockAccountConsent, {
+    signedIn: true,
+    suggestion: onboarding.completed ? null : onboarding.suggestion,
+  });
   // Crash reports carry the User's id, and nothing else of the User.
   identifyUser(myUserId());
   return { outcome: 'signed-in', onboarding };
@@ -82,7 +88,8 @@ async function enterMainServer(idToken: string): Promise<SignInResult> {
   const onboarding: Onboarding = answer.onboarding.completed
     ? { completed: true }
     : { completed: false, suggestion: answer.onboarding.suggestion ?? { name: null, department: null } };
-  await keep({
+  // The account's consent, which decides whether the consent screen asks (`src/consent/`).
+  await keepConsent(consentOf(answer.consent), {
     signedIn: true,
     onboardingCompleted: onboarding.completed,
     suggestion: onboarding.completed ? null : onboarding.suggestion,
@@ -155,7 +162,7 @@ export async function signOut(): Promise<void> {
     await signOutOfMainServer();
   }
   endLibrarySessionInBackground();
-  await keep({ signedIn: false, suggestion: null });
+  await keepConsent(NO_CONSENT, { signedIn: false, suggestion: null });
   // The next User on this phone is asked again before a timetable picture is sent (P15-52).
   await forgetReadingAgreement();
   if (googleAvailable()) {

@@ -5,6 +5,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, userEvent } from '@testing-library/react-native';
@@ -24,10 +25,11 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 const SIGN_IN = '서울대학교 구글 계정(@snu.ac.kr)으로 로그인';
 const TITLE = '약관에 동의해 주세요';
 const AGREE = '동의하고 시작';
+const NO_CONSENT = { version: null, usage: null };
 
 type User = ReturnType<typeof userEvent.setup>;
 
-async function press(user: User, name: string, wait = 100): Promise<void> {
+async function press(user: User, name: string, wait = 400): Promise<void> {
   await user.press(screen.getByRole('button', { name }));
   await pass(wait);
 }
@@ -60,7 +62,7 @@ describe('the consent screen', () => {
       expect(screen.getByRole('link', { name })).toBeVisible();
     }
     expect(screen.queryByRole('header', { name: ONBOARDING })).toBeNull();
-    expect((await readKept()).consented).toBe(false);
+    expect((await readKept()).consent).toEqual(NO_CONSENT);
   });
 
   it("names the privacy policy's part on error reports, and how to turn them off", async () => {
@@ -77,7 +79,10 @@ describe('the consent screen', () => {
 
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.queryByRole('header', { name: TITLE })).toBeNull();
-    expect((await readKept()).consented).toBe(true);
+    expect(await readKept()).toMatchObject({
+      consent: { version: 1, usage: false },
+      mockAccountConsent: { version: 1, usage: false },
+    });
   });
 
   it('leads a User who finished Onboarding on to the main screen', async () => {
@@ -94,7 +99,7 @@ describe('the consent screen', () => {
     await press(user, '로그아웃');
 
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
-    expect(await readKept()).toMatchObject({ signedIn: false, consented: false });
+    expect(await readKept()).toMatchObject({ signedIn: false, consent: NO_CONSENT, mockAccountConsent: NO_CONSENT });
   });
 });
 
@@ -184,7 +189,8 @@ describe("the privacy policy's part on error reports", () => {
     for (const words of [
       /오류를 찾아 고치기 위해 오류 보고를 보내요/u,
       /오류의 내용\(오류 메시지는 200자까지\)과 앱 코드에서 오류가 난 곳, 그때까지 본 화면의 이름과 앱이 서버에 보낸 요청의 종류·결과\(둘 다 주소에서 id를 지운 것\), 앱의 버전과 업데이트, 휴대폰의 기종과 OS 버전, 계정의 내부 id/u,
-      /이름·이메일·학번이 아니에요/u,
+      // The part on usage data says the same of its own id.
+      /계정의 내부 id가 담겨요\. 내부 id는 SNU Now가 정한 무작위 값이고, 이름·이메일·학번이 아니에요/u,
       /앱을 연 횟수와 오류 없이 끝났는지도 함께 보내요/u,
       /^이름, 이메일, 학번, 위치, 친구, 파티 제목은 보내지 않아요\./u,
       /오류 메시지에 입력한 내용이 섞여 있으면 그 부분이 함께 담길 수 있어요/u,

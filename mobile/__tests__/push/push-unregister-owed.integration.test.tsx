@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Platform } from 'react-native';
@@ -98,7 +99,12 @@ describe('an unregistering that did not go through', () => {
     const phone = givePushPhone({ permission: 'granted' });
     const onboarding = { completed: false, suggestion: { name: '홍길동', department: null } };
     server.on('POST /lobby', refusal(403, 'ONBOARDING_REQUIRED', { onboarding }));
-    await keep({ signedIn: true, consented: true, onboardingCompleted: true, pushUnregisterOwed: true });
+    await keep({
+      signedIn: true,
+      consent: { version: 1, usage: false },
+      onboardingCompleted: true,
+      pushUnregisterOwed: true,
+    });
 
     await startApp();
     await pass(1000);
