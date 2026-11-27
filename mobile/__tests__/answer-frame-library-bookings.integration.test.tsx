@@ -8,6 +8,7 @@
 
 import { within } from '@testing-library/react-native';
 import { libraryCard } from '@/api/mock/data/library';
+import { color } from '@/design-system';
 import { screen } from './support/app';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -131,6 +132,8 @@ describe('the return card', () => {
     expect(shown.getByLabelText('사용 중 · 18:00까지, 7층 열람실, 좌석 7193번')).toBeVisible();
     expectNoWrite(library);
 
+    // 반납하기 ends the seat's use as 예약 취소 ends a booking: it is red as well (P01 ticket 21).
+    expect(dock().getByText('반납하기')).toHaveStyle({ color: color.danger });
     await pressIn(dock(), '반납하기');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
@@ -199,6 +202,31 @@ describe('내 예약', () => {
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
     expect(shown.getByText('예약을 취소했어요.')).toBeVisible();
+  });
+
+  it('stands an armed 예약 취소 or 반납하기 with the ✕ that steps back to the links with nothing sent (P01 ticket 21)', async () => {
+    library.addBooking(bookingRow());
+    library.addBooking(
+      bookingRow({ BSEQNO: 3000002, STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }),
+    );
+    await askForCards({ server, library }, [MINE], { words: '내 예약 보여줘' });
+    const shown = inCard(`library-myBookings-${MINE.library.key}`);
+
+    for (const [link, act, back] of [
+      ['예약 취소 ›', '예약 취소', '취소하지 않기'],
+      ['반납 ›', '반납하기', '반납하지 않기'],
+    ] as const) {
+      await pressIn(shown, link);
+      const row = within(screen.getByTestId('confirm-row'));
+      expect(row.getByText(act)).toHaveStyle({ color: color.danger });
+      expect(dock().queryByRole('button', { name: '가는 길' })).toBeNull();
+
+      await pressIn(row, back);
+
+      expect(screen.queryByTestId('confirm-row')).toBeNull();
+      expect(shown.getByRole('button', { name: link })).toBeVisible();
+    }
+    expectNoWrite(library);
   });
 
   it('says plainly when nothing is booked or in use', async () => {
