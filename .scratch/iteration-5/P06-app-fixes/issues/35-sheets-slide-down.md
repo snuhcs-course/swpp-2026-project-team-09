@@ -108,12 +108,16 @@ All in `BottomSheet` and what it offers, so that every sheet gets it at once.
 
 ## Comments
 
+### Nightly CI (2026-11-28)
+
+[Run 46030608879](https://github.com/snuhcs-course/swpp-2026-project-team-09/actions/runs/46030608879), started by hand on 15814997, runs the whole app integration suite: 2,644 of 2,649 tests pass, in 344 of 349 suites. The new and the sheet suites pass there. Four of the 5 failures fail the same way on `5.0/Main`'s own sources (c1291274): `answer-frame-library-room-reports`, `library-sign-out`, `timetable-class-slots` and `notifications-join-requests`. The fifth, `main-chat`, timed out.
+
 ### Agent usage (2026-11-28)
 
-Estimates. Agent time is this session's wall clock from its start to this entry, about 1 hour 30 minutes. About 55 minutes of that went to Jest runs: a new worktree's cold cache, and another session's Jest on the same machine. No subagents. Tokens are counted up to this entry, so this commit and the pull request's last edit are left out.
+Estimates. Agent time is this session's wall clock from its start to this entry, about 3 hours. About 55 minutes of it went to local Jest runs, slowed by a new worktree's cold cache and another session's Jest on the same machine. About 70 minutes went to waiting for the nightly CI run. About 1 hour was the work itself. No subagents. Tokens are counted up to this entry, so this commit and the pull request's last edit are left out.
 
 | Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
-| Ticket 35 (tests first, `sheet-pull`, `SheetScrollView`, `BottomSheet`, the six scrolling sheets, two merges of `5.0/Main`, checks) | about 1 hour 30 minutes | 39,726,271 | 39,415,934 | 310,029 | 308 | 146,021 |
+| Ticket 35 (tests first, `sheet-pull`, `SheetScrollView`, `BottomSheet`, the six scrolling sheets, two merges of `5.0/Main`, checks, the nightly CI run and its failures on `5.0/Main`) | about 3 hours | 57,995,901 | 57,645,559 | 349,934 | 408 | 168,931 |
 
-Without cache reads, the input is 310,337.
+Without cache reads, the input is 350,342.
