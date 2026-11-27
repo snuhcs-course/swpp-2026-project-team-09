@@ -1,0 +1,27 @@
+{
+  "kind": "InsightVizNode",
+  "source": {
+    "kind": "TrendsQuery",
+    "series": [
+      {
+        "kind": "EventsNode",
+        "event": "app_opened",
+        "name": "app_opened",
+        "math": "dau",
+        "properties": [
+          {
+            "key": "source",
+            "value": "app",
+            "operator": "exact",
+            "type": "event"
+          }
+        ],
+        "custom_name": "DAU"
+      }
+    ],
+    "interval": "day",
+    "dateRange": {
+      "date_from": "-14d"
+    }
+  }
+}
