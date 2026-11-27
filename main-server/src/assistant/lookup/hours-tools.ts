@@ -4,10 +4,12 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { resolved } from '../tools/resolved.js';
 import { hoursLookup } from './hours-lookup.js';
@@ -64,9 +66,7 @@ export function restaurantHours(menus: Pick<MenuLookupService, 'named' | 'at' | 
       const found = hoursWords(key, date, now, cells);
       const place = menus.placeOf(key);
       if (found.result === 'found' && place !== null) {
-        presented.lookup = hoursLookup(found, place, now, { meal, cells });
-        presented.answer = null;
-        presented.mapButtons.length = 0;
+        presentLookup(presented, hoursLookup(found, place, now, { meal, cells }));
       }
       return found;
     },

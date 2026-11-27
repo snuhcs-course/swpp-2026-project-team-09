@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { type StudyInput } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { addDays } from '../library/booking-rules.js';
 import { koreaDate } from '../korea-time.js';
@@ -81,9 +82,7 @@ export function planStudy(studyPlans: StudyPlans): Tool {
         locationMissing: context.locationMissing,
         skipped: skip.skipped,
       });
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       return { ...studyWords(answer), ...skip.said };
     },
   });
