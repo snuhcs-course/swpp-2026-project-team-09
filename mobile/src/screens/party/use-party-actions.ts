@@ -9,6 +9,7 @@
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -31,6 +32,7 @@ import type { MyJoinRequest, QuestInvitation } from '@/api/waiting-types';
 import { type ToastAction, useToast } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
 import { ENTERING, refusalWords } from '@/features/quests/refusals';
+import { type JoinHow, trackAction } from '@/telemetry';
 import type { Ask } from '../room/confirm-sheet';
 import type { PartyTab } from './party-screen';
 
@@ -133,6 +135,11 @@ async function withdrawOnce(run: Run, queryClient: QueryClient, requestId: strin
   }
 }
 
+// A Holder joined, for the usage data.
+function joining<Answer>(how: JoinHow, request: () => Promise<Answer>): Promise<Answer> {
+  return trackAction({ action: 'party_join', how }, request);
+}
+
 export function usePartyActions(): PartyActions {
   const queryClient = useQueryClient();
   const showToast = useToast();
@@ -158,12 +165,15 @@ export function usePartyActions(): PartyActions {
       join: async ({ questId, title, joinPolicy }) => {
         if (joinPolicy === 'approval') {
           await run(() => apiClient.askToJoinQuest(questId), '참여를 신청했어요', undefined, TO_SENT_REQUESTS);
-        } else if (await run(() => apiClient.joinQuest(questId), `${title} 참여 완료`)) {
+        } else if (
+          await run(() => joining('joined_directly', () => apiClient.joinQuest(questId)), `${title} 참여 완료`)
+        ) {
           showMine();
         }
       },
       withdraw: (requestId, questId) => withdrawOnce(run, queryClient, requestId, questId),
-      accept: ({ id }) => run(() => apiClient.acceptInvitation(id), '파티에 참여했어요'),
+      accept: ({ id }) =>
+        run(() => joining('invitation_accepted', () => apiClient.acceptInvitation(id)), '파티에 참여했어요'),
       decline: ({ id }) => run(() => apiClient.declineInvitation(id), null),
     };
   }, [queryClient, showToast]);

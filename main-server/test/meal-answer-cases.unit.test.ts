@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
@@ -26,6 +27,7 @@ import {
   time,
 } from './meal-answers.js';
 import { classAt, id, readWorld } from './worked-example.js';
+import { withoutBand } from './no-plan.js';
 
 // The lines of a plan alone and with one Friend, a Friend whose position is unknown, and each reason for no plan, on
 // the design's worked example (Tuesday 2026-11-17, asked at 11:50).
@@ -153,20 +155,20 @@ describe('No plan', () => {
     const { plans, noPlan } = answerOf([me()], { menus: 'none', candidates: [] });
 
     expect(plans).toEqual([]);
-    expect(noPlan).toEqual({ reason: 'no-menu', lines: [[plain('오늘 메뉴는 아직 올라오지 않았어요')]] });
+    expect(withoutBand(noPlan)).toEqual({ reason: 'no-menu', lines: [[plain('오늘 메뉴는 아직 올라오지 않았어요')]] });
   });
 
   it('says that no Restaurant is open for that meal', () => {
     const { plans, noPlan } = answerOf([me()], { menus: 'closed', candidates: [] });
 
     expect(plans).toEqual([]);
-    expect(noPlan).toEqual({ reason: 'no-menu', lines: [[plain('점심에 여는 식당이 없어요')]] });
+    expect(withoutBand(noPlan)).toEqual({ reason: 'no-menu', lines: [[plain('점심에 여는 식당이 없어요')]] });
   });
 
   it('says that they share no free time at that meal', () => {
     const busy = person(MINSU, '민수', [classAt('11:00', '14:30', '제2공학관')]);
 
-    expect(answerOf([me(), busy]).noPlan).toEqual({
+    expect(withoutBand(answerOf([me(), busy]).noPlan)).toEqual({
       reason: 'no-shared-time',
       lines: [[plain('점심 시간에는 같이 비는 시간이 없어요')]],
     });
@@ -175,7 +177,7 @@ describe('No plan', () => {
   it('says that the asker alone has no free time at that meal', () => {
     const busy = person(ME, '유상', [classAt('11:00', '14:30', '제1공학관')]);
 
-    expect(answerOf([busy]).noPlan).toEqual({
+    expect(withoutBand(answerOf([busy]).noPlan)).toEqual({
       reason: 'no-shared-time',
       lines: [[plain('점심 시간에는 비는 시간이 없어요')]],
     });
@@ -191,11 +193,11 @@ describe('No plan', () => {
 
   it('says that no Restaurant can be reached in the time', () => {
     const late = person(ME, '유상', [classAt('11:00', '12:10', '제1공학관'), classAt('12:30', '14:30', '제1공학관')]);
+    const { noPlan } = answerOf([late], { candidates: [{ key: '학생회관식당', placeId: id('학생회관') }] });
 
-    expect(answerOf([late], { candidates: [{ key: '학생회관식당', placeId: id('학생회관') }] }).noPlan).toEqual({
-      reason: 'no-fit',
-      lines: [[plain('시간 안에 다녀올 수 있는 식당이 없어요')]],
-    });
+    const lines = [[plain('시간 안에 다녀올 수 있는 식당이 없어요')]];
+
+    expect(withoutBand(noPlan)).toEqual({ reason: 'no-fit', lines });
   });
 });
 

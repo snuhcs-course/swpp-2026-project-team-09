@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
@@ -26,6 +27,7 @@ import {
   withBoth,
 } from './meal-answers.js';
 import { at, classAt, id, readWorld } from './worked-example.js';
+import { withoutBand } from './no-plan.js';
 
 // "여기면 어때?": a Place pressed during the worked example's lunch with 민수 and 지은 (Tuesday 2026-11-17, asked at
 // 11:50), recalculated with that Place fixed. Boards a7 (자하연식당, which fits) and a8 (301동식당, which does not), and
@@ -100,7 +102,7 @@ describe('a8: 301동식당 pressed', () => {
   });
 
   it('names 지은, who stays shortest, and the Class 지은 leaves for', () => {
-    expect(pressed([me(), minsu(), jieun()], at301()).noPlan).toEqual(
+    expect(withoutBand(pressed([me(), minsu(), jieun()], at301()).noPlan)).toEqual(
       lines('지은은 12:31에 도착해 13분만 먹어요', '13:00 수업에 가려면 12:44엔 나서야 해요'),
     );
   });
@@ -126,7 +128,7 @@ const nowhere = (start: string, end: string): DayItem => ({
 
 describe('Who stays shortest at a fixed Place, and why', () => {
   it('leaves the asker unnamed, who arrives after they must leave', () => {
-    expect(pressed([late()], studentCenter()).noPlan).toEqual(
+    expect(withoutBand(pressed([late()], studentCenter()).noPlan)).toEqual(
       lines('12:25에야 도착해요', '12:30 수업에 가려면 12:15엔 나서야 해요'),
     );
   });
@@ -134,22 +136,22 @@ describe('Who stays shortest at a fixed Place, and why', () => {
   it('gives the leave-by the User fixed for a Friend', () => {
     const fixed: Fixed = { constraints: { [JIEUN]: [{ kind: 'leaveBy', time: '12:25', source: 'asker' }] } };
 
-    expect(pressed([me(), jieun()], jahayeon(), fixed).noPlan).toEqual(
+    expect(withoutBand(pressed([me(), jieun()], jahayeon(), fixed).noPlan)).toEqual(
       lines('지은은 12:18에 도착해 7분만 먹어요', '12:25엔 나서야 해요'),
     );
   });
 
   it('gives the end the User fixed', () => {
-    expect(pressed([me(), minsu(), jieun()], at301(), { window: { from: null, until: '12:40' } }).noPlan).toEqual(
-      lines('지은은 12:31에 도착해 9분만 먹어요', '12:40까지로 정했어요'),
-    );
+    expect(
+      withoutBand(pressed([me(), minsu(), jieun()], at301(), { window: { from: null, until: '12:40' } }).noPlan),
+    ).toEqual(lines('지은은 12:31에 도착해 9분만 먹어요', '12:40까지로 정했어요'));
   });
 
   // Lunch is served until 14:30, and one who comes in its last 10 minutes is not offered it (P05 ticket 46).
   it('gives a Friend whose position is unknown from when they are free, inside the last 10 minutes of serving', () => {
     const haeun = person('b0c2e3a4-0000-4000-8000-000000000004', '하은', [nowhere('11:00', '14:25')]);
 
-    expect(pressed([person(ME, '유상', []), haeun], studentCenter()).noPlan).toEqual(
+    expect(withoutBand(pressed([person(ME, '유상', []), haeun], studentCenter()).noPlan)).toEqual(
       lines('14:30에 배식이 끝나요', '하은은 14:25에 시간이 돼요'),
     );
   });
@@ -162,7 +164,9 @@ describe('No time at all, or nobody alone the reason', () => {
     const window = { from: '12:45', until: null };
 
     expect(
-      pressed([person(ME, '유상', []), person(MINSU, '민수', minsuDay)], studentCenter(), { window }).noPlan,
+      withoutBand(
+        pressed([person(ME, '유상', []), person(MINSU, '민수', minsuDay)], studentCenter(), { window }).noPlan,
+      ),
     ).toEqual(lines('민수는 시간이 안 돼요', '12:50 수업에 가려면 12:35엔 나서야 해요'));
   });
 
@@ -175,7 +179,7 @@ describe('No time at all, or nobody alone the reason', () => {
     };
     const friends = [person(MINSU, '민수', []), person(JIEUN, '지은', [])] as const;
 
-    expect(pressed([me(), ...friends], studentCenter(), fixed).noPlan).toEqual(
+    expect(withoutBand(pressed([me(), ...friends], studentCenter(), fixed).noPlan)).toEqual(
       lines('같이 있는 시간이 10분뿐이에요', '지은은 12:10부터 시간이 되고 민수는 12:20엔 나서야 해요'),
     );
   });

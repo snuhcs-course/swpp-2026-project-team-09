@@ -9,12 +9,12 @@
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, type TextStyle, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { AppBar, color, font, radius, space, text } from '@/design-system';
 import { seeThrough } from '@/design-system/see-through';
 import type { LoginOutcome } from './client';
-import { LOGIN_FIT_SCRIPT } from './login-fit';
+import { alertWords, LOGIN_PAGE_SCRIPT } from './login-alert';
 import { isLoginDone, LIBRARY_MAIN_URL } from './site';
 
 // How long the User has to log in before the view closes by itself.
@@ -65,48 +65,58 @@ const COVER_WORDS = '로그인하는 중이에요';
 // with ✕, so that the User is never left behind the cover.
 export const COVER_LIMIT_MS = 15_000;
 
-// Whether the view is on its way back from the school's login (P01 ticket 13): from the moment it starts loading the
-// site's main, booking or my-booking screen after a page off them, until it leaves them again. Its page is then covered
-// while it loads and while a check runs, so that the site's own page never shows between the login and the close. Each
-// login view opened starts afresh. `stalled`: the way back has lasted `COVER_LIMIT_MS`.
-function useReturning(visible: boolean): {
-  returning: boolean;
-  landedOn: boolean;
-  stalled: boolean;
-  went: (url: string, loading: boolean) => void;
-} {
-  const away = useRef(false);
-  const [returning, setReturning] = useState(false);
-  const [landedOn, setLandedOn] = useState(false);
-  const [stalled, setStalled] = useState(false);
-  useEffect(() => {
-    if (visible) {
-      away.current = false;
-      setReturning(false);
-      setLandedOn(false);
-      setStalled(false);
-    }
-  }, [visible]);
+// Lifts the cover `COVER_LIMIT_MS` after a way back began.
+function useCoverLimit(returning: boolean, lift: (lifted: true) => void): void {
   useEffect((): (() => void) | void => {
     if (!returning) {
       return;
     }
     const timer = setTimeout(() => {
-      setStalled(true);
+      lift(true);
     }, COVER_LIMIT_MS);
     return (): void => {
       clearTimeout(timer);
     };
-  }, [returning]);
+  }, [returning, lift]);
+}
+
+// Whether the view is on its way back from the school's login (P01 ticket 13): from the moment it starts loading the
+// site's main, booking or my-booking screen after a page off them, until it leaves them again. Its page is then covered
+// while it loads and while a check runs, so that the site's own page never shows between the login and the close. Each
+// login view opened starts afresh. `lifted`: the cover is off for this way back, since it has lasted `COVER_LIMIT_MS`
+// or the page raised an alert (`lift`).
+function useReturning(visible: boolean): {
+  returning: boolean;
+  landedOn: boolean;
+  lifted: boolean;
+  lift: () => void;
+  went: (url: string, loading: boolean) => void;
+} {
+  const away = useRef(false);
+  const [returning, setReturning] = useState(false);
+  const [landedOn, setLandedOn] = useState(false);
+  const [lifted, setLifted] = useState(false);
+  useEffect(() => {
+    if (visible) {
+      away.current = false;
+      setReturning(false);
+      setLandedOn(false);
+      setLifted(false);
+    }
+  }, [visible]);
+  useCoverLimit(returning, setLifted);
   return {
     returning,
     landedOn,
-    stalled,
+    lifted,
+    lift: () => {
+      setLifted(true);
+    },
     went: (url, loading) => {
       if (!isLoginDone(url)) {
         away.current = true;
         setReturning(false);
-        setStalled(false);
+        setLifted(false);
         return;
       }
       if (away.current) {
@@ -117,22 +127,60 @@ function useReturning(visible: boolean): {
   };
 }
 
-// The library's page in the web view, and the cover over it while the view comes back from the school's login.
+// The line a page's alert leaves under the notice (P01 ticket 16). It goes when the User touches the page, as to edit
+// the fields or send the form again, when a way back from the school's login begins, and with each login view opened.
+function useSaid(visible: boolean, returning: boolean): { said: string | null; say: (words: string | null) => void } {
+  const [said, say] = useState<string | null>(null);
+  useEffect(() => {
+    if (visible) {
+      say(null);
+    }
+  }, [visible]);
+  useEffect(() => {
+    if (returning) {
+      say(null);
+    }
+  }, [returning]);
+  return { said, say };
+}
+
+function SaidLine({ said }: { said: string | null }): ReactElement | null {
+  return said === null ? null : (
+    <Text numberOfLines={1} style={styles.said} testID="library-login-said">
+      {said}
+    </Text>
+  );
+}
+
+// The library's page in the web view, the cover over it while the view comes back from the school's login, and the
+// line of a page's alert.
 function LoginPage({
   covered,
+  said,
   went,
+  onAlert,
+  onTouched,
   onLanded,
   onLeft,
 }: Pick<LibraryLoginProps, 'onLanded' | 'onLeft'> & {
   covered: boolean;
+  said: string | null;
   went: (url: string, loading: boolean) => void;
+  onAlert: (words: string) => void;
+  onTouched: () => void;
 }): ReactElement {
   return (
-    <View style={styles.web}>
+    <View onTouchStart={onTouched} style={styles.web} testID="library-login-page">
       <WebView
         incognito={false}
-        injectedJavaScript={LOGIN_FIT_SCRIPT}
-        injectedJavaScriptBeforeContentLoaded={LOGIN_FIT_SCRIPT}
+        injectedJavaScript={LOGIN_PAGE_SCRIPT}
+        injectedJavaScriptBeforeContentLoaded={LOGIN_PAGE_SCRIPT}
+        onMessage={({ nativeEvent }) => {
+          const words = alertWords(nativeEvent.data, nativeEvent.url);
+          if (words !== null) {
+            onAlert(words);
+          }
+        }}
         onNavigationStateChange={(navigation) => {
           went(navigation.url, navigation.loading);
           if (!isLoginDone(navigation.url)) {
@@ -152,22 +200,25 @@ function LoginPage({
           </Text>
         </View>
       ) : null}
+      <SaidLine said={said} />
     </View>
   );
 }
 
 // The full-screen login: the school's own login page in a visible web view. The User types the password there, into
-// the library's page. The only script the view gives a page is the style sheet that fits the login form to the phone
-// (`login-fit.ts`), and the view takes no messages, so the app never sees the password. Once the view is back
-// on the site's main, booking or my-booking screen, the login is done and the session stays in the web view's own
-// cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the session
-// works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after five
-// minutes the view closes as failed. Back from the school's login, a cover hides the site's page until the check ends,
-// for 15 seconds at most.
+// the library's page. The view gives a page two scripts: the style sheet that fits the login form to the phone
+// (`login-fit.ts`), and the one that turns the school's pages' alerts into a line of the app (`login-alert.ts`).
+// Neither reads the page, and the view takes no message but an alert's words, so the app never sees the password. Once
+// the view is back on the site's main, booking or my-booking screen, the login is done and the session stays in the web
+// view's own cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the
+// session works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after
+// five minutes the view closes as failed. Back from the school's login, a cover hides the site's page until the check
+// ends, for 15 seconds at most.
 export function LibraryLogin({ visible, onDone, onLanded, onLeft, checking }: LibraryLoginProps): ReactElement {
   const finish = useFinish(visible, onDone);
   const back = useReturning(visible);
-  const covered = back.returning && !back.stalled && (!back.landedOn || checking);
+  const covered = back.returning && !back.lifted && (!back.landedOn || checking);
+  const { said, say } = useSaid(visible, back.returning);
   return (
     <Modal
       animationType="slide"
@@ -188,11 +239,37 @@ export function LibraryLogin({ visible, onDone, onLanded, onLeft, checking }: Li
           title="관정도서관 로그인"
         />
         <Text style={styles.note}>아이디와 비밀번호는 도서관 로그인 페이지로만 전달돼요</Text>
-        {visible ? <LoginPage covered={covered} onLanded={onLanded} onLeft={onLeft} went={back.went} /> : null}
+        {visible ? (
+          <LoginPage
+            covered={covered}
+            onAlert={(words) => {
+              say(words);
+              back.lift();
+            }}
+            onLanded={onLanded}
+            onLeft={onLeft}
+            onTouched={() => {
+              say(null);
+            }}
+            said={said}
+            went={back.went}
+          />
+        ) : null}
       </View>
     </Modal>
   );
 }
+
+// The look of the app's hints: one line in a see-through pill.
+const PILL: TextStyle = {
+  ...text.label,
+  overflow: 'hidden',
+  paddingVertical: space[2],
+  paddingHorizontal: space[4],
+  borderRadius: radius.full,
+  fontFamily: font.semiBold,
+  color: color.surface,
+};
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
@@ -205,15 +282,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: color.surface,
   },
-  // The look of the app's hints: one line in a see-through pill.
-  coverWords: {
-    ...text.label,
-    overflow: 'hidden',
-    paddingVertical: space[2],
-    paddingHorizontal: space[4],
-    borderRadius: radius.full,
-    backgroundColor: seeThrough(color.ink, 0.62),
-    fontFamily: font.semiBold,
-    color: color.surface,
+  coverWords: { ...PILL, backgroundColor: seeThrough(color.ink, 0.62) },
+  // Just under the notice, over the page's top, letting touches through to the page. The danger colour is less
+  // see-through than a hint's ink, so that the white words stay readable on it.
+  said: {
+    ...PILL,
+    position: 'absolute',
+    top: space[2],
+    alignSelf: 'center',
+    maxWidth: '92%',
+    pointerEvents: 'none',
+    backgroundColor: seeThrough(color.danger, 0.88),
   },
 });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { userEvent } from '@testing-library/react-native';
@@ -32,7 +33,10 @@ export async function signOut(user: User, server: FakeServer, reply: Reply = SIG
 
 // The sign-in screen's button, with Google and the main server answering. The test file mocks `@/auth/google`.
 export async function signIn(user: User, server: FakeServer): Promise<void> {
-  server.on('POST /auth/google', { status: 200, body: { ...TOKENS, onboarding: { completed: true } } });
+  server.on('POST /auth/google', {
+    status: 200,
+    body: { ...TOKENS, onboarding: { completed: true }, consent: { version: 1, usage: false } },
+  });
   jest.mocked(askGoogle).mockResolvedValue({
     kind: 'token',
     idToken: idTokenOf({ email: 'gildong@snu.ac.kr', hd: 'snu.ac.kr', name: '홍길동' }),

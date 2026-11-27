@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
@@ -23,6 +24,7 @@ import {
   time,
 } from './meal-answers.js';
 import { at, classAt, id, readWorld } from './worked-example.js';
+import { withoutBand } from './no-plan.js';
 
 // The words of an answer under what the User fixed (the window, a person's origin, and their leave-by), on the design's
 // worked example (Tuesday 2026-11-17, asked at 11:50).
@@ -243,6 +245,6 @@ describe('A fixed Place', () => {
   it('says that no Restaurant is open there', () => {
     const answer = answerOf([me()], { menus: 'closed-at-place', candidates: [], fixed: { placeId: id('학생회관') } });
 
-    expect(answer.noPlan).toEqual({ reason: 'no-fit', lines: [[plain('그곳에는 여는 식당이 없어요')]] });
+    expect(withoutBand(answer.noPlan)).toEqual({ reason: 'no-fit', lines: [[plain('그곳에는 여는 식당이 없어요')]] });
   });
 });

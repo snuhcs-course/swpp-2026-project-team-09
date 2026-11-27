@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -138,7 +139,7 @@ describe('a push tapped while the app was closed', () => {
   it("opens the invitation's card on the main screen after the loading screen, and is cleared", async () => {
     answerInvitation(server);
     mockLastResponse = tapOn(INVITATION_ADDRESS);
-    await keep({ signedIn: true, consented: true, onboardingCompleted: true });
+    await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: true });
     await startApp();
 
     expect(screen.getByRole('progressbar', { name: '불러오는 중' })).toBeVisible();
@@ -164,7 +165,7 @@ describe('a push tapped while the app was closed', () => {
       }),
     );
     server.on('POST /users/me/onboarding', { status: 204 });
-    await keep({ signedIn: true, consented: true, onboardingCompleted: true });
+    await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: true });
     await startApp();
     await pass(1000);
 
@@ -261,7 +262,7 @@ describe('a tap that comes twice', () => {
     answerInvitation(server);
     const response = tapOn(INVITATION_ADDRESS);
     mockLastResponse = response;
-    await keep({ signedIn: true, consented: true, onboardingCompleted: true });
+    await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: true });
     await startApp();
     await pass(1000);
     await pass(1000);

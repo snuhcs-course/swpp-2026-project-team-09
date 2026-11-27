@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
+import { Dimensions } from 'react-native';
 
 import { type AnswerLabel, color, MapAnswerMark } from '@/design-system';
 
@@ -45,5 +46,37 @@ describe('MapAnswerMark: a study pick', () => {
     expect(screen.getByTestId('m:label')).toHaveStyle({ borderColor: color.svcStudy });
     expect(screen.getByText(' 22:00')).toHaveStyle({ color: color.quest });
     expect(screen.getByText(' ›')).toBeOnTheScreen();
+  });
+});
+
+function setFontScale(fontScale: number): void {
+  Dimensions.set({
+    window: { ...Dimensions.get('window'), fontScale },
+    screen: { ...Dimensions.get('screen'), fontScale },
+  });
+}
+
+// Its label's width as drawn grows with the font scale as its words do (P01 ticket 30). Partitions: 1 and 1.3.
+describe("MapAnswerMark: a pick's label with its time at a larger font", () => {
+  afterEach(() => {
+    setFontScale(1);
+  });
+
+  it.each([
+    [1, 200],
+    [1.3, 260],
+  ])('may be as wide as %s × 200: %s', async (scale, width) => {
+    setFontScale(scale);
+    const label: AnswerLabel = {
+      side: 'above',
+      tone: 'pick',
+      title: '관정 4층 그룹스터디룸',
+      note: '15:00',
+      line: null,
+      number: null,
+    };
+    await render(<MapAnswerMark label={label} symbol={null} testID="m" />);
+
+    expect(screen.getByTestId('m:label')).toHaveStyle({ maxWidth: width });
   });
 });

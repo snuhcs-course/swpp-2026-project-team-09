@@ -143,6 +143,7 @@ export class StudyGroupService {
       walkingMinutes: this.walking,
       placePoint: (placeId) => this.pointOf(this.placeOf(placeId)),
       placeLabel: (placeId) => placeLabelOf(this.placeOf(placeId)),
+      hours: groupRooms(this.catalogue)[0]?.hours ?? null,
     });
   }
 

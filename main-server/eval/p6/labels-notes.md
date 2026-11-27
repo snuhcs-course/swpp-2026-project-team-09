@@ -38,6 +38,8 @@
 
 **Ruling 6 superseded (2026-11-27, P05 ticket 59).** "반납했어?" and "반납 됐어?" now call `showMyLibraryBookings`, whose card lists each booking with its state, and the reply says in one sentence that the states are shown, never whether the return went through. "반납 잘 됐니?" had been refused on the user's phone. `p6-bookings-did-i-return` keeps its frozen label, and a later run fails it by design; `library-answer-did-i-return` (`eval/cases/library-answer.yaml`) holds the new answer, as `supersededAfterFreeze` in `suite.yaml` records.
 
+**The cancel button renamed (2026-11-27, P05 tickets 62 and 63).** The phone's cancel button reads 예약 취소, and the rules and the cancel tool's answer to the model now name it so. `p6-bookings-cancel` and `p6-bookings-cancel-at-three` keep their frozen labels, which mention 취소하기, and a later run fails them by design; `library-answer-cancel` and `library-answer-cancel-at-three` (`eval/cases/library-answer.yaml`) hold the new words, as `supersededAfterFreeze` in `suite.yaml` records.
+
 ## The tutorial copy
 
 The suite reads its own copy of the tutorial, `tutorial.yaml` beside these notes, frozen with C0; a run of the p6 world serves it in the place of `content/tutorial.yaml` (`WORLD_TUTORIAL_FILES` in `eval/cases.ts`). The tutorial labels, such as the quest count of `p6-tutorial-progress`, are drafted from that copy.

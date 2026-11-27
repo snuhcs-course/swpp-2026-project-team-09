@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -25,7 +26,7 @@ export function button(name: string): ReturnType<typeof screen.getByRole> {
 // Starts the app for a User who signed in, agreed and has not finished Onboarding: the loading screen passes and
 // Onboarding shows, filled in from the suggestion.
 export async function arriveAtOnboarding(suggestion: Suggestion): Promise<User> {
-  await keep({ signedIn: true, consented: true, onboardingCompleted: false, suggestion });
+  await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: false, suggestion });
   await startApp();
   await pass(600);
   return userEvent.setup({ advanceTimers: jest.advanceTimersByTime });

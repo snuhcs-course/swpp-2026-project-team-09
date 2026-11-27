@@ -2582,6 +2582,13 @@ Anthropic API as the AI's key says
   reveals no more than a picked person's lane and the words of where they set out from. `walkMinutes` is `null` when
   neither is known, or when the walking table has no row for that Place. An app that does not know `others` or
   `after` ignores them (`src/assistant/gathering/other-friends.ts`).
+  An answer of a meal, a meet, a study together or a new party with no plan keeps its time card: its `noPlan.band` has
+  the shape of a Plan's band, everyone's lanes and, but for a new party, the asker's other Friends over the window
+  asked. That is the meal's window narrowed by the window the User set, the day's 09:00–22:00 narrowed the same way for
+  a meet, the group study rooms' hours on the date asked for a study together, and the time asked for a new party;
+  `startAt` is now, rounded up to the minute, once the window has begun. A meal's band also lists its skipped Classes,
+  and `others` have `walkMinutes` `null` but for a study together's, whose walk is to 관정관. An app that does not know
+  `band` ignores it (`src/assistant/gathering/no-plan-band.ts`).
   A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
