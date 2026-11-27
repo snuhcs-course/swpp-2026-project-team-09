@@ -25,7 +25,7 @@ import { usePartyRequest } from '../library/room-party';
 import { mainOf, useGroupAct } from './study-group-act';
 import { BookingFailure, Choosers, type Open, RequestLine, UseLine } from './study-group-parts';
 import { useGroupBooking } from './use-group-booking';
-import { consentWords, groupOfRequest, isOut, outWords, partyCardOf } from './study-group-request';
+import { consentWords, groupOfRequest, isBooked, isOut, outWords, partyCardOf } from './study-group-request';
 import { ChatMarkdown } from '../chat-markdown';
 import { LOW_LINES } from './card-caps';
 
@@ -137,6 +137,8 @@ function useGroupRequest(
 ): {
   party: ReturnType<typeof usePartyRequest>;
   out: RoomRequest | null;
+  // Booked: sent and no longer out; the card stays as it was, its ticket locked.
+  booked: boolean;
   asking: boolean;
   setAsking: (asking: boolean) => void;
   sent: string | null;
@@ -147,8 +149,9 @@ function useGroupRequest(
     setSent(room.current);
   });
   const out = isOut(party.request) ? party.request : null;
+  const booked = isBooked(party.request);
   const [asking, setAsking] = useState(false);
-  const held = out !== null;
+  const held = out !== null || booked;
   const { lock } = shown;
   // Let go when the card goes, as when the User asks anything else after sending (#656's review).
   useEffect(() => {
@@ -157,7 +160,7 @@ function useGroupRequest(
       lock(false);
     };
   }, [lock, held]);
-  return { party, out, asking, setAsking, sent };
+  return { party, out, booked, asking, setAsking, sent };
 }
 
 // What the card holds and reads: its choices, the request out, and the room and its booking.
@@ -205,10 +208,10 @@ function useGroupBody(props: GroupBodyProps): {
 // group-study-design ④ ⑤).
 export function StudyGroupBody(props: GroupBodyProps): ReactElement {
   const { loggedIn, slot, choices, request, booking, onScreen } = useGroupBody(props);
-  const { party, out, asking, setAsking } = request;
+  const { party, out, booked, asking, setAsking } = request;
   const { open, use, toggle } = choices;
   const { room } = booking;
-  const held = out !== null;
+  const held = out !== null || booked;
   const ready = out?.status === 'ready';
   const chooser = (at: Open): ReactElement => (
     <Choosers {...choices} group={props.group} open={at} room={room} rooms={booking.free} slot={slot} />
@@ -228,7 +231,8 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
       />
       <LogInNote shown={mainOf(onScreen, loggedIn, party).main === 'logIn' && open !== 'kind' && open !== 'room'} />
       {held && !ready ? null : chooser(open === 'use' ? null : open)}
-      {out === null ? (
+      {/* Booked, the done message under the card says it: no line of its own, and nothing to choose or take back. */}
+      {booked ? null : out === null ? (
         <UseLine failed={party.failed} onPress={toggle('use')} use={use} />
       ) : (
         <RequestLine onCancel={party.cancel} words={booking.line ?? consentWords(out)} />

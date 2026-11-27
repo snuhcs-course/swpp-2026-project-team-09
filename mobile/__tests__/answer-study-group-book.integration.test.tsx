@@ -140,3 +140,26 @@ describe('Booking the room of studying together', () => {
     expect(library.writes()).toHaveLength(1);
   });
 });
+
+// Partition, from #657's emulator pictures: the request booked, as the server says once the booking is reported.
+// Expected values: the card stays as while waiting, its ticket locked, nothing on it to send or choose again.
+describe('The room of studying together once booked', () => {
+  it('keeps its ticket locked, with no 사용 용도, 요청 취소 or 동의 요청 보내기, under the done message', async () => {
+    const user = await readyToBook();
+    await user.press(inDock().getByRole('button', { name: '예약하기' }));
+    await pass(500);
+    server.on(`GET /library/room-requests/${REQUEST_ID}`, {
+      status: 200,
+      body: requestOf(['consented', 'consented', 'consented'], 0, 'booked'),
+    });
+    await pass(3500);
+
+    expect(inFrame().getByText(`${FIRST_FREE} 예약되었어요!`)).toBeVisible();
+    expect(inFrame().getByTestId('room-ticket-kind')).toBeDisabled();
+    expect(inFrame().getByTestId('room-ticket-room')).toBeDisabled();
+    expect(inFrame().getByTestId('room-ticket-room')).toHaveTextContent(FIRST_FREE, { exact: false });
+    expect(screen.queryByTestId('room-use-line')).toBeNull();
+    expect(screen.queryByText('요청 취소')).toBeNull();
+    expect(screen.queryByRole('button', { name: '동의 요청 보내기' })).toBeNull();
+  });
+});

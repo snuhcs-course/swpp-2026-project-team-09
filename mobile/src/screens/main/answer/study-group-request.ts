@@ -87,3 +87,8 @@ export function groupOfRequest(group: StudyGroup, request: RoomRequest | null): 
 export function isOut(request: RoomRequest | null): request is RoomRequest {
   return request !== null && (request.status === 'gathering' || request.status === 'ready');
 }
+
+// Whether the request's room is booked: no longer out, but still sent, so nothing on the card is chosen or sent again.
+export function isBooked(request: RoomRequest | null): boolean {
+  return request?.status === 'booked';
+}
