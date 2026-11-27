@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, fireEvent, within } from '@testing-library/react-native';
@@ -14,7 +15,7 @@ import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { fakePostHog } from './support/posthog';
-import { answerParty, RUN } from './support/party';
+import { answerParty, cardName, RUN } from './support/party';
 import { answer, answerRoom, PICNIC } from './support/room';
 import { askMainServer, DINNER, INVITATION, JOIN_REQUESTS, PHONE_NOW } from './support/server';
 import { eventsOfAction, outsideRegistry, recorded } from './support/usage-actions';
@@ -67,8 +68,10 @@ function card(title: string): ReturnType<typeof within> {
   return within(screen.getByLabelText(title));
 }
 
+// 찾기's card opens the 모집글 sheet, whose 참여하기 opens the join sheet.
 async function joinRun(user: Awaited<ReturnType<typeof openWithUsage>>['user']): Promise<void> {
-  await user.press(card(RUN.title).getByRole('button', { name: '참여하기' }));
+  await user.press(screen.getByLabelText(cardName(RUN.title)));
+  await user.press(within(screen.getByLabelText('파티 모집글')).getByRole('button', { name: '참여하기' }));
   await answer(user, '참여하기');
 }
 
