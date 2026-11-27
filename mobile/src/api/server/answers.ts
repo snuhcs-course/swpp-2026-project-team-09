@@ -12,6 +12,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type {
@@ -204,6 +205,10 @@ export function isHolder(value: unknown): value is Person {
   return hasTexts(value, ['id', 'name', 'department']);
 }
 
+function isNamed(value: unknown): value is { id: string; name: string } {
+  return hasTexts(value, ['id', 'name']);
+}
+
 export function isJoinPolicy(value: unknown): value is Party['joinPolicy'] {
   return value === 'open' || value === 'approval' || value === 'closed';
 }
@@ -233,7 +238,8 @@ function isParty(value: unknown): value is Party {
     isNumber(field(value, 'memberCount')) &&
     typeof field(value, 'holdsQuest') === 'boolean' &&
     listOf(isHolder)(field(value, 'friends')) &&
-    hasTexts(field(value, 'leader'), ['id', 'name'])
+    hasTexts(field(value, 'leader'), ['id', 'name']) &&
+    (field(value, 'members') === undefined || listOf(isNamed)(field(value, 'members')))
   );
 }
 

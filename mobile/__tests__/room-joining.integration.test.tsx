@@ -3,10 +3,9 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { act, fireEvent } from '@testing-library/react-native';
-import { router } from 'expo-router';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -23,14 +22,14 @@ import {
   HIS_PICNIC,
   myPicnicParty,
   openRoom,
-  PICNIC,
   PICNIC_PARTY,
   SEO_YEON_HOLDER,
   toast,
 } from './support/room';
-import { askMainServer, LOBBY, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
+import { askMainServer, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
 
-// Entering, leaving and ending a Quest's 활성화, and the User's switch for it, against the fake main server.
+// Entering, leaving and ending a Quest's 활성화, and the User's switch for it, against the fake main server. The
+// Master Switch is on: `room-activation-master` has it off.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -50,10 +49,6 @@ const NOT_DONE = '요청하지 못했어요. 다시 시도해 주세요';
 
 let server: FakeServer;
 
-function sharing(): ReturnType<typeof screen.getByRole> {
-  return screen.getByRole('switch', { name: '내 위치 공유' });
-}
-
 beforeEach(async () => {
   jest.useFakeTimers({ now: PHONE_NOW });
   await startFresh();
@@ -69,7 +64,7 @@ afterEach(() => {
 });
 
 describe('활성화 while the User is in it', () => {
-  it('counts the members the User sees and the User; the Leader ends it for everyone in one request', async () => {
+  it('names those in, the User as 나; the Leader ends it for everyone in one request', async () => {
     answerMyParty(
       server,
       myPicnicParty(ME_ID, [
@@ -81,7 +76,7 @@ describe('활성화 while the User is in it', () => {
     server.on('POST /parties/mine/end', { status: 204 });
     const user = await openRoom();
 
-    expect(activationBox().getByText('3명이 서로 위치를 공유하고 있어요')).toBeVisible();
+    expect(activationBox().getByLabelText('나, 이서연, 김민준 참여 중')).toBeVisible();
     await user.press(screen.getByRole('button', { name: '활성화 끄기' }));
     expect(screen.getByText('모든 멤버의 위치 공유가 멈춰요.\n파티는 그대로 남아요.')).toBeVisible();
     await answer(user, '끄기');
@@ -128,28 +123,17 @@ describe('a refused end of 활성화', () => {
 });
 
 describe("the User's switch for the Party", () => {
-  it("turns the User's switch for the Party at once, and back after a failure", async () => {
-    // The switch takes a change only while the Master Switch is on.
-    server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
-    const mine = answerMyParty(server, myPicnicParty());
-    server.on('PUT /parties/mine/sharing', ({ body }) => {
-      mine.set({ ...myPicnicParty(), sharing: JSON.stringify(body) === '{"on":true}' });
-      return { status: 204 };
-    });
-    await openRoom();
-    expect(sharing()).toBeChecked();
-
-    await fireEvent(sharing(), 'valueChange', false);
-    await pass(0);
-    expect(sharing()).not.toBeChecked();
-    await pass(500);
-    expect(server.received('PUT /parties/mine/sharing').map(({ body }) => body)).toEqual([{ on: false }]);
-
+  it('turns it back on with 위치 공유 켜고 참여, and shows the User not in again after a failure', async () => {
+    answerMyParty(server, { ...myPicnicParty(), sharing: false });
     server.on('PUT /parties/mine/sharing', refusal(500));
-    await fireEvent(sharing(), 'valueChange', true);
+    const user = await openRoom();
+
+    await user.press(activationBox().getByRole('button', { name: '위치 공유 켜고 참여' }));
     await pass(500);
-    expect(sharing()).not.toBeChecked();
+
+    expect(server.received('PUT /parties/mine/sharing').map(({ body }) => body)).toEqual([{ on: true }]);
     expect(toast()).toHaveTextContent(NOT_DONE);
+    expect(activationBox().getByRole('button', { name: '위치 공유 켜고 참여' })).toBeVisible();
   });
 });
 
@@ -158,13 +142,13 @@ describe('활성화 running without the User', () => {
     server.on('GET /parties', { status: 200, body: [PICNIC_PARTY] });
   });
 
-  it('names the Leader who opened it, and enters it with one press', async () => {
+  it('names the Leader who opened it, and enters it with one press of 나도 참여', async () => {
     server.on(`POST /parties/${PICNIC_PARTY.id}/join`, { status: 201, body: myPicnicParty(MIN_JUN.id) });
     const user = await openRoom(HIS_PICNIC);
-    expect(activationBox().getByText('김민준님이 파티를 활성화했어요')).toBeVisible();
-    expect(screen.getByText('활성화에 참여해야 멤버 위치를 볼 수 있어요')).toBeVisible();
+    expect(activationBox().getByLabelText('김민준 참여 중')).toBeVisible();
+    expect(screen.queryByText('활성화에 참여해야 멤버 위치를 볼 수 있어요')).toBeNull();
 
-    await answer(user, '참여');
+    await answer(user, '나도 참여');
 
     expect(server.received(`POST /parties/${PICNIC_PARTY.id}/join`)).toHaveLength(1);
     expect(toast()).toHaveTextContent('활성화에 참여했어요 · 위치 공유 시작');
@@ -176,7 +160,7 @@ describe('활성화 running without the User', () => {
     server.on(`POST /parties/${PICNIC_PARTY.id}/join`, { status: 201, body: myPicnicParty(MIN_JUN.id) });
     const user = await openRoom(HIS_PICNIC);
 
-    await user.press(screen.getByRole('button', { name: '참여' }));
+    await user.press(screen.getByRole('button', { name: '나도 참여' }));
     expect(screen.getByRole('header', { name: '‘자하연 피크닉’ 활성화에 참여할까요?' })).toBeVisible();
     expect(
       screen.getByText(
@@ -189,32 +173,6 @@ describe('활성화 running without the User', () => {
     expect(asked.indexOf('POST /parties/mine/leave')).toBeLessThan(
       asked.indexOf(`POST /parties/${PICNIC_PARTY.id}/join`),
     );
-  });
-});
-
-describe('거절 of a running 활성화', () => {
-  beforeEach(() => {
-    server.on('GET /parties', { status: 200, body: [PICNIC_PARTY] });
-  });
-
-  it('keeps 거절 on the phone: the room opened again shows the declined state, which still enters', async () => {
-    const user = await openRoom(HIS_PICNIC);
-
-    await answer(user, '거절');
-    expect(activationBox().getByText('활성화 중인 파티예요')).toBeVisible();
-    expect(activationBox().getByText('나는 참여하지 않는 중 · 위치를 공유하지 않아요')).toBeVisible();
-    expect(server.received().filter(({ method, path }) => method !== 'GET' && path.startsWith('/parties'))).toEqual([]);
-
-    await act(() => {
-      router.back();
-    });
-    await pass(500);
-    await act(() => {
-      router.push(`/room/${PICNIC.id}`);
-    });
-    await pass(500);
-    expect(activationBox().getByText('활성화 중인 파티예요')).toBeVisible();
-    expect(screen.getByRole('button', { name: '참여' })).toBeVisible();
   });
 });
 
@@ -231,7 +189,7 @@ describe('a refused entry to 활성화', () => {
     const user = await openRoom(HIS_PICNIC);
     const before = server.received('GET /parties').length;
 
-    await answer(user, '참여');
+    await answer(user, '나도 참여');
 
     expect(toast()).toHaveTextContent(words);
     expect(server.received('GET /parties').length).toBeGreaterThan(before);

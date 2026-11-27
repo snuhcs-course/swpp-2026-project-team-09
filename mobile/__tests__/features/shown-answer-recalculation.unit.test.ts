@@ -4,6 +4,8 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -63,6 +65,42 @@ describe('the answer on screen, by the last reply', () => {
   });
 });
 
+// Partitions: the conversation's Classes left out as they are when the recalculation is sent; one put back by a ✕.
+describe('a recalculation with Classes left out (P01 ticket 40)', () => {
+  it('sends the conversation’s Classes left out as they are when it is sent, after a ✕ put one back', async () => {
+    heldBack(recalculate);
+    let list = [
+      { date: '2026-11-17', classId: 'class-13' },
+      { date: '2026-11-17', classId: 'class-15' },
+    ];
+    const held = await hold(ANSWERED, () => list);
+
+    list = list.slice(1);
+    await change(held, ALONE_INPUT);
+
+    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null, [{ date: '2026-11-17', classId: 'class-15' }]);
+  });
+
+  it('puts a Class back from the conversation’s list before it asks, of an answer of any kind', async () => {
+    heldBack(recalculate);
+    let list = [{ date: '2026-11-17', classId: 'class-13' }];
+    const held = await hold(
+      ANSWERED,
+      () => list,
+      (classId) => {
+        list = list.filter((one) => one.classId !== classId);
+      },
+    );
+
+    await act(() => {
+      held.shown().putBack('class-13');
+    });
+
+    expect(recalculate).toHaveBeenCalledWith(MEAL_ANSWER.input, HERE, null, []);
+    expect(recalculate.mock.calls[0]?.[0]).not.toBe(MEAL_ANSWER.input);
+  });
+});
+
 // Partitions: a change that is no drag; the Plan on screen in the new answer or not.
 describe('a recalculation', () => {
   it('sends the input, the location, and no reason for a missing one, and is recalculating until its answer comes', async () => {
@@ -71,7 +109,7 @@ describe('a recalculation', () => {
 
     await change(held, ALONE_INPUT);
 
-    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null);
+    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null, []);
     expect(held.shown().recalculating).toBe(true);
     await reply.come(MEAL_ANSWER_ALONE);
     expect(held.shown().recalculating).toBe(false);

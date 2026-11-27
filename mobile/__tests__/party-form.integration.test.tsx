@@ -6,6 +6,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Keyboard } from 'react-native';
@@ -125,7 +126,7 @@ describe('a public 파티', () => {
       { userId: SEO_YEON_HOLDER.id },
     ]);
     expect(toast()).toHaveTextContent('파티를 올렸어요 · 1명에게 초대 요청 · 1명은 초대하지 못했어요');
-    expect(toastIcon()).toBe('check');
+    expect(toastIcon()).toBe('alert');
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 });
@@ -151,6 +152,21 @@ describe('어디서, typed', () => {
     expect(server.received('POST /quests/own')[0]?.body).toMatchObject({
       subQuest: { title: '보드게임 카페 가실 분', place },
     });
+  });
+});
+
+describe('inviting into a 파티 full at that moment', () => {
+  it('says that a 파티 full when the Friends are invited cannot invite them', async () => {
+    server.on(`POST /quests/${MY_HIKE.id}/invitations`, refusal(409, 'QUEST_FULL'));
+    const user = await openForm();
+    await fillPublic(user);
+    await user.press(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name }));
+
+    await user.press(submit('파티 올리기'));
+    await pass(500);
+
+    expect(toast()).toHaveTextContent('파티를 올렸어요 · 자리가 다 차서 초대할 수 없어요');
+    expect(toastIcon()).toBe('alert');
   });
 });
 

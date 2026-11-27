@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -15,15 +16,14 @@ import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { answerEvents, card, CAREER, MY_CAREER, openEvents, SEO_YEON_GOING, TAE_O_GOING } from './support/events';
-import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { EVENT, lookOf, press, zoomIn } from './support/markers';
+import { givePhone, ON_CAMPUS } from './support/main';
 import { requestFor } from './support/party';
 import { startFresh } from './support/mocks';
 import { answer, MIN_JUN_HOLDER, toast } from './support/room';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
-// 파티 찾기/모집 from an event's row on the 행사 tab and 같이 갈 사람 찾기 on the map: the Quests gathering for a Global Event, joining
-// one, and recruiting one's own, against the fake main server.
+// 파티 찾기/모집 from an event's row on the 행사 tab: the Quests gathering for a Global Event, joining one, and recruiting
+// one's own, against the fake main server. The map's event card is in `map-event-card.integration.test.tsx`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -170,6 +170,37 @@ describe('joining from the sheet', () => {
   });
 });
 
+describe('joining another Quest of the event while holding one alone', () => {
+  it('says before joining that the User’s own Quest of the event goes', async () => {
+    answerEvents(server, { quests: [DINNER, MY_CAREER] });
+    const user = await openPostOf(/^이서연/u);
+
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
+
+    expect(screen.getByText(`이 행사로 올린 내 파티 ‘${MY_CAREER.title}’는 없어져요`)).toBeVisible();
+  });
+
+  it('says nothing of a Quest taken alone ("여기로"), which is no 파티', async () => {
+    answerEvents(server, { quests: [DINNER, { ...MY_CAREER, takenAlone: true }] });
+    const user = await openPostOf(/^이서연/u);
+
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
+
+    expect(screen.getByRole('header', { name: `‘${SEO_YEON_GOING.title}’에 참여할까요?` })).toBeVisible();
+    expect(screen.queryByText(/^이 행사로 올린 내 파티/u)).toBeNull();
+  });
+
+  it('says nothing of it without a Quest of the event', async () => {
+    answerEvents(server);
+    const user = await openPostOf(/^이서연/u);
+
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
+
+    expect(screen.getByRole('header', { name: `‘${SEO_YEON_GOING.title}’에 참여할까요?` })).toBeVisible();
+    expect(screen.queryByText(/^이 행사로 올린 내 파티/u)).toBeNull();
+  });
+});
+
 describe('a refusal on the post', () => {
   it.each([
     ['QUEST_FULL', '자리가 다 찼어요'],
@@ -190,8 +221,8 @@ describe('a refusal on the post', () => {
 });
 
 describe('+ 파티 모집', () => {
-  it('opens 파티 만들기 with the event chosen', async () => {
-    answerEvents(server, { quests: [DINNER, MY_CAREER] });
+  it('opens 파티 만들기 with the event chosen, without a Quest of the event', async () => {
+    answerEvents(server, { quests: [DINNER] });
     const user = await openEvents();
     await openSheet(user);
 
@@ -219,17 +250,27 @@ describe('+ 파티 모집', () => {
   });
 });
 
-describe("the map's event card", () => {
-  it('counts the Quests gathering for the event, and opens 파티 만들기 with it', async () => {
-    // A Favorite Event, which the everyday map keeps.
-    answerEvents(server, { events: [{ ...CAREER, favorite: true }] });
-    const user = await openMain();
-    await zoomIn(user, 2);
-    expect(lookOf(EVENT)).toBe('official:pin:2:starred');
+describe('+ 파티 모집 with a Quest the User holds alone for the event', () => {
+  it('opens the edit form of the Quest the User holds alone for the event', async () => {
+    answerEvents(server, { quests: [DINNER, MY_CAREER] });
+    server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
+    const user = await openEvents();
+    await openSheet(user);
 
-    await press(user, EVENT);
-    expect(screen.getByText('같이 갈 파티 2개 모집 중')).toBeVisible();
-    await press(user, '같이 갈 사람 찾기');
+    await user.press(screen.getByRole('button', { name: '파티 모집' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe(`/party-form?questId=${MY_CAREER.id}`);
+    expect(screen.getByRole('header', { name: '모집글 수정' })).toBeVisible();
+    expect(screen.getByDisplayValue(MY_CAREER.title)).toBeVisible();
+  });
+
+  it('opens 파티 만들기 with the event chosen for a Quest taken alone ("여기로"), which cannot be edited', async () => {
+    answerEvents(server, { quests: [DINNER, { ...MY_CAREER, takenAlone: true }] });
+    const user = await openEvents();
+    await openSheet(user);
+
+    await user.press(screen.getByRole('button', { name: '파티 모집' }));
     await pass(500);
 
     expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);

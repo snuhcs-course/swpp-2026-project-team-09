@@ -34,7 +34,7 @@ import { useToast } from '@/design-system';
 import { type ShownBooking, shownBookingOf, studyBookingOf } from '@/features/assistant/booking-scene';
 import { type ShownCards, shownCardsOf } from '@/features/assistant/cards-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
-import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/steps-scene';
+import { dueStepOf, liveStepsOf, type ShownSteps, shownStepsOf } from '@/features/assistant/steps-scene';
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { CardOutcome, Chat, ChatBubble } from '@/features/assistant/use-chat';
@@ -53,6 +53,7 @@ import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type ActStage, useActStage } from './library/act-stage';
+import { bookingKept } from './library/booking-kept';
 import { type BookingStage, useBookingStage } from './library/booking-stage';
 import { useMenuRaising } from './answer/meal-card';
 import { usePlanOutcomes } from './use-plan-outcomes';
@@ -154,6 +155,31 @@ function useShownOnMap(
   );
 }
 
+// The steps as they stand now (P10 ticket 29): the answer's step at the Plan on screen, and the booking's at the time
+// its card holds, over the reply's steps.
+function useLiveSteps(
+  { steps, booking }: Pick<ChatSheetControl, 'steps' | 'booking'>,
+  shown: ShownAnswer,
+  chat: Chat,
+  bubbles: readonly ChatBubble[],
+): ShownSteps | null {
+  const reply = steps === null ? null : (bubbles.find(({ id }) => id === steps.bubbleId)?.answer ?? null);
+  const slot = booking === null ? null : bookingKept(booking, chat).kept.slot;
+  const key = booking?.card.key ?? null;
+  const [date, start, minutes] = [slot?.date ?? null, slot?.start ?? null, slot?.minutes ?? null];
+  const { answer, plan, index } = shown;
+  return useMemo(() => {
+    if (steps === null) {
+      return null;
+    }
+    const card =
+      key === null || date === null || start === null || minutes === null
+        ? null
+        : { key, slot: { date, start, minutes } };
+    return liveStepsOf(steps, { reply, answer, plan, index, card });
+  }, [steps, reply, answer, plan, index, key, date, start, minutes]);
+}
+
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
 // The answer on screen, kept in `shownNow` for the context of the next request, and the Quest made from its Plan.
@@ -161,6 +187,7 @@ function useAnswerOnScreen(
   bubbles: readonly ChatBubble[],
   { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
+  { leftOut, putBack }: Pick<Chat, 'leftOut' | 'putBack'>,
 ): Pick<ChatSheetControl, 'answer' | 'invitation'> {
   const showToast = useToast();
   const recalculation = {
@@ -169,6 +196,9 @@ function useAnswerOnScreen(
     onFailed: (): void => {
       showToast(NOT_RECALCULATED);
     },
+    // The conversation's Classes left out, read when the recalculation is sent, and one put back (P01 ticket 40).
+    skipped: leftOut,
+    putBack,
   };
   const shown = useShownAnswer(bubbles, recalculation);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
@@ -225,11 +255,12 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const bookingStage = useBookingStage();
   const libraryAct = useActStage();
   const card = useCardRaise(kept.framed);
-  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
+  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow, chat);
   const scene = { bubbles: sceneBubbles, framed: kept.framed };
   const shown = { ...onMap, booking: useStudyBooking(onMap.booking, onScreen.answer, scene, chat) };
   const booking = useBookingLeaving(shown, bookingStage);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
+  const steps = useLiveSteps(shown, onScreen.answer, chat, sceneBubbles);
   const pick = usePicking(chat);
   return {
     chat,
@@ -250,7 +281,8 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     answer: useMenuRaising(onScreen.answer, card.setRaised, chat.bubbles),
     lookup: useShownLookup(sceneBubbles, start, kept.hide),
     ...shown,
-    ...useActiveStep(onMap.steps),
+    steps,
+    ...useActiveStep(steps),
     bookingStage,
     libraryAct,
     leave: useQuestLeaving(),

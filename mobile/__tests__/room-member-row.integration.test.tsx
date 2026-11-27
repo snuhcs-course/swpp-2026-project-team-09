@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -12,11 +13,21 @@ import { sockets } from './support/fake-socket';
 import { screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { answer, answerMyParty, answerRoom, myPicnicParty, openRoom, PICNIC, toast } from './support/room';
+import {
+  answer,
+  answerMyParty,
+  answerRoom,
+  myPicnicParty,
+  openRoom,
+  PICNIC,
+  PICNIC_PARTY,
+  toast,
+} from './support/room';
 import { askMainServer, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
 
-// The Leader's icons on another member's row, 파티장 넘기기 and 내보내기 beside 친구 추가, each asking first, against the
-// fake main server. The User leads the Quest and its Party; 김민준 is a Friend and 이서연 is not.
+// The Leader's icons on another member's row, 파티장 넘기기 and 내보내기 beside 친구 추가, each asking first, and the
+// count beside 멤버, against the fake main server. The User leads the Quest and its Party; 김민준 is a Friend and 이서연
+// is not.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -103,5 +114,18 @@ describe('파티장 넘기기', () => {
 
     expect(server.received(`PUT ${QUEST}/leader`).map(({ body }) => body)).toEqual([{ userId: MIN_JUN.id }]);
     expect(toast()).toHaveTextContent('김민준님이 파티장이 됐어요');
+  });
+});
+
+describe('멤버 of a Closed Quest', () => {
+  it('shows no count, and no lock line while the activation runs without the User', async () => {
+    answerRoom(server, { ...PICNIC, joinPolicy: 'closed' });
+    server.on('GET /parties', { status: 200, body: [PICNIC_PARTY] });
+
+    await openRoom();
+
+    expect(members().getByRole('header', { name: '멤버 3' })).toBeVisible();
+    expect(members().queryByText('3/4명')).toBeNull();
+    expect(screen.queryByText('활성화에 참여해야 멤버 위치를 볼 수 있어요')).toBeNull();
   });
 });

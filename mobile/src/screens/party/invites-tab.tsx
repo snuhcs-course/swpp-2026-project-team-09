@@ -8,6 +8,8 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -29,24 +31,30 @@ import {
   space,
   text,
 } from '@/design-system';
-import { whenOf } from '@/features/party/posts';
+import { planWords } from '@/features/party/posts';
 import { useInvitations, useSentRequests } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
 import { REMOVED_CAPTION } from '@/features/quests/refusals';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
-import { openPost } from './post-card';
+import { Line, openPost } from './post-card';
 import { type PartyActions, showFind, usePartyActions, withdrawAsk } from './use-party-actions';
 
-// `{when} · {where} · {names} 함께`, of what the invitation carries: the server build has none of the three yet, and
-// then the card counts the Holders.
-function metaOf({ quest, startsAt, place }: ShownQuestInvitation): string {
+// `{names} 함께` of the members' faces, which only the mock build adds; otherwise the card counts the Holders.
+function membersOf({ quest }: ShownQuestInvitation): string {
   const companions = quest.faces.slice(1).map(({ name }) => name);
-  const parts = [
-    ...(startsAt === null ? [] : [whenOf(startsAt)]),
-    ...(place === null ? [] : [place]),
-    ...(companions.length === 0 ? [] : [`${companions.join(', ')} 함께`]),
-  ];
-  return parts.length === 0 ? `${quest.holderCount}명 참여 중` : parts.join(' · ');
+  return companions.length === 0 ? `${String(quest.holderCount)}명 참여 중` : `${companions.join(', ')} 함께`;
+}
+
+// When and where the 파티 next meets, under the title, since a 비공개 파티's post cannot be read before entering: the
+// clock with its time, then the pin with its place, each on a line of its own.
+function InvitationPlan({ next }: { next: ShownQuestInvitation['nextSubQuest'] }): ReactElement {
+  const { time, place } = planWords(next);
+  return (
+    <View style={styles.plan}>
+      <Line icon="clock">{time}</Line>
+      <Line icon="pin">{place}</Line>
+    </View>
+  );
 }
 
 function InvitationCard({
@@ -56,22 +64,23 @@ function InvitationCard({
   invitation: ShownQuestInvitation;
   actions: PartyActions;
 }): ReactElement {
-  const { quest, sentAt } = invitation;
+  const { quest, sentAt, invitedBy } = invitation;
   const kind = quest.joinPolicy === 'closed' ? '비공개 파티에' : '파티에';
   return (
     <View accessibilityLabel={quest.title} style={[cardStyles.card, styles.card]}>
       <View style={styles.from}>
-        <Avatar name={quest.leader.name} size="sm" />
-        <Text numberOfLines={1} style={styles.fromWords}>{`${quest.leader.name}님이 ${kind} 초대했어요`}</Text>
+        <Avatar name={invitedBy.name} size="sm" />
+        <Text numberOfLines={1} style={styles.fromWords}>{`${invitedBy.name}님이 ${kind} 초대했어요`}</Text>
         <Text style={styles.ago}>{agoWords(sentAt, now())}</Text>
       </View>
       <Text style={styles.title}>{quest.title}</Text>
+      <InvitationPlan next={invitation.nextSubQuest} />
       {quest.description === '' ? null : (
         <Text numberOfLines={2} style={styles.description}>
           {quest.description}
         </Text>
       )}
-      <Text style={styles.meta}>{metaOf(invitation)}</Text>
+      <Text style={styles.meta}>{membersOf(invitation)}</Text>
       <View style={styles.buttons}>
         <View style={styles.button}>
           <Button full onPress={() => void actions.decline(invitation)} variant="secondary">
@@ -202,6 +211,7 @@ const styles = StyleSheet.create({
   fromWords: { flex: 1, fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.ink },
   ago: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   title: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, letterSpacing: -0.18, color: color.ink },
+  plan: { gap: space[1] },
   description: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
   meta: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[1] },

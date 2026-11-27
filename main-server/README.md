@@ -1374,8 +1374,14 @@ as an invitation is. The routes:
   asked and whether the Leader removed them from it before,
   `{ "id", "user": { "id", "name", "department" }, "sentAt", "removedBefore" }`. `POST /quests/:questId/join-requests/:id/accept` makes
   the User a Holder and `.../decline` ends the request; both answer 204.
-- `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
-  `GET /quest-invitations` answers the User's invitations, `POST /quest-invitations/:id/accept` makes the User a Holder
+- `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204. A
+  Quest its Holders fill at that moment is refused with 409 `QUEST_FULL`; waiting invitations take no place, so a Quest
+  with places left may invite more Friends than it has places.
+  `GET /quest-invitations` answers the User's invitations, each with its Quest's next Sub Quest as the recruiting list
+  carries it (`"nextSubQuest": { "id", "attending", "title", "startsAt", "endsAt", "place" }`), so that the card says
+  when and where the 파티 meets, and with the Leader who sent it (`"invitedBy": { "id", "name", "department" }`), kept
+  past a hand-over; an invitation sent before the sender was kept names the Quest's Leader. `GET /quest-invitations/:id`,
+  the card the invited User opens, names it the same way. `POST /quest-invitations/:id/accept` makes the User a Holder
   and answers 201 with the Quest, and `.../decline` ends the invitation and answers 204.
 - `GET /quests/:questId/invitations` answers the Leader the Quest's waiting invitations with who was invited,
   `{ "id", "user": { "id", "name", "department" }, "sentAt" }`, as the list of requests reads.
@@ -1547,15 +1553,22 @@ without the User's own:
     "joinPolicy": "approval",
     "quest": { "id": "…", "title": "지능형통신 연합전공 설명회", "globalEvent": { "id": "…", "title": "…" } },
     "leader": { "id": "…", "name": "홍길동" },
-    "holdsQuest": false,
-    "friends": [{ "id": "…", "name": "김철수", "department": "경영학과" }]
+    "holdsQuest": true,
+    "friends": [{ "id": "…", "name": "김철수", "department": "경영학과" }],
+    "members": [
+      { "id": "…", "name": "홍길동" },
+      { "id": "…", "name": "김철수" }
+    ]
   }
 ]
 ```
 
 `leader` is the Party's Leader now, its opener until the role passes. `holdsQuest` says whether the reading User holds
-the Party's Quest, and `friends` are the reading User's Friends among the members, in the order they entered. No
-position is in the list.
+the Party's Quest, and `friends` are the reading User's Friends among the members, in the order they entered.
+`members?: { id, name }[]` names every member, in the order they entered. It is present only when the reading User
+holds the Party's Quest, and left out otherwise, so a Friend who does not hold it learns no names beyond `friends`. The
+`party` of `GET /party-join-requests` and `GET /party-invitations` has the same shape (`toVisiblePartyDto`), so it
+carries `members` on the same terms. No position is in the list.
 
 **Who enters.**
 
@@ -2548,6 +2561,50 @@ Anthropic API as the AI's key says
   words alone without it, such as one about the plan on screen ("왜 302동은 없어?"), or a refusal of words that are
   vague or cannot be read (a typo, half a sentence), keeps the answer as before, and so
   does an app that ignores it. It is left out of a reply that draws something of its own.
+
+  An app that sends `"clientCapabilities": ["answers"]` gets every answer of a message that asked for several ("점심이랑
+  저녁 짜줘"), one per request (P05 ticket 73, `src/assistant/presented.ts`):
+  - `answers`: the answers the reply draws or changes, in the order first drawn, `[]` when it draws none. Each carries
+    `key`, the server's name for its request: its kind and day, a meal's meal, a study plan alone or together, the
+    Quests of one Global Event. The key is opaque: the app compares keys and never builds one. An answer replaces the
+    one of the same key on screen and is added otherwise, and an answer on screen the reply does not name stays.
+  - `withdrawn`: the keys of the requests that ended with no answer (a meal over for today, one the User was only
+    invited to). The app takes those answers off. It is left out when there is none.
+  - `select.key`: the request whose answer holds the plan chosen in words, when one of `answers` does.
+  - `clears` is never sent to it: the answers on screen may be of requests other than the one that ended with none.
+  - `POST /assistant/answers` from it answers with `key` too. A changed condition may make the answer another request
+    (a Friend added makes a study place one together, the bar's other meal makes lunch dinner), and the app keeps the
+    answer under that key from then on.
+  - The request's context may carry `answers`: the `input` of every answer on screen, in the order of their steps.
+    `conditions` stays the one the User has open, and the model reads each of the others as
+    `[Another step on screen: …]`.
+
+  `answer` still means, for every app, the answer a tool put there last, which a Lookup after it takes away. An app
+  without `answers` gets none of the above, and its reply is as before. Two requests of one kind and day share a key,
+  and the second replaces the first: two meets, two new 파티, two study requests both alone or both together.
+
+  For such an app a reply's `steps` are the conversation's (P05 ticket 74, `src/assistant/steps/all-steps.ts`):
+  - The request's context may carry `steps`: the reply's `steps` on screen, whole and in order, at most 32. An answer's
+    step without a key is left out, and a step sent twice counts once. `context.answers` comes in the order of the
+    answer steps, and the server pairs them by that order, so an answer keeps the key it has on screen.
+  - The reply's `steps` are the steps on screen, with this message's answers in place of those of the same request,
+    its bookings in place of one of the same unit that day, and its new steps among them by time. They come whenever
+    there are two or more. An answer's step is `shows: { kind: 'answer', key }`. Titles and labels are at most 200
+    characters, reasons 500.
+  - A step that can move (a meal, a meet, a study place) sets out from the place of the step before it, not before it
+    ends: the asker's `from` and `notBefore` constraints with `source: 'step'`, which the server sets again whenever
+    that step changes, while a start the User named (`asker`) holds. It sets out from no step when a Class or Quest of
+    the asker's lies between them. A step whose conditions change is planned again and comes back in `answers` by its
+    key; one that cannot be is `not-done` ("앞 일정이 바뀌었는데 다시 짜지 못했어요").
+  - A step at a fixed time (the events of a day, Quests, a new 파티) never moves. One that starts before a step done
+    before it ends is `not-done` ("앞 일정이 HH:MM에 끝나 제때 갈 수 없어요").
+
+  For every app that draws answers, the steps hold one step per booking request: a refusal leaves once a seat or room of
+  the same unit that day is booked, and of two refusals of one space the last stands. A meal follows a step that
+  starts before an hour-long meal could come first in its window. A step without a plan comes after those with one.
+  When the server plans a meal again from the step before it and the plan is not the one the model worded, the
+  model's words stay and one sentence is added for that step ("앞 일정에 맞춰 13:05 학생회관식당에서 점심으로
+  바꿨어요.").
 
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend

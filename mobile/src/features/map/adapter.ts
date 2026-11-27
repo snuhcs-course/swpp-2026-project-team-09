@@ -17,6 +17,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -107,7 +108,8 @@ export interface CardView {
   title: string;
   lines: { icon: CardIcon; text: string }[];
   // `route` draws the way there; `room` opens the Quest's room; `active-party` opens the room of the User's Party's
-  // Quest; `recruit` opens 파티 만들기 for the Global Event; `private-party` opens it as 비공개 with the Friend invited.
+  // Quest; `recruit` opens the sheet of the Quests gathering for the Global Event, or 파티 만들기 for it when
+  // `recruiting` is 0; `private-party` opens it as 비공개 with the Friend invited.
   // `menu` opens the menu panel at the restaurant. `shuttle-line` shows the shuttle's whole line. `library-seats` asks
   // the Assistant for 관정관's seats in the chat. `not-ready` says "준비 중이에요":
   // the feature belongs to another task. Null for a card without one.
@@ -115,7 +117,7 @@ export interface CardView {
     | { label: string; action: 'route' | 'active-party' | 'not-ready' | 'shuttle-line' | 'library-seats' }
     | { label: string; action: 'menu'; restaurant: string }
     | { label: string; action: 'room' | 'post'; questId: string }
-    | { label: string; action: 'recruit'; eventId: string }
+    | { label: string; action: 'recruit'; eventId: string; recruiting: number }
     | { label: string; action: 'private-party'; userId: string }
     | null;
   secondary: { label: string; action: 'not-ready' } | null;

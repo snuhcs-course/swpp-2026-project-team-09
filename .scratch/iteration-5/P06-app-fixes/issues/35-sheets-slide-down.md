@@ -101,7 +101,7 @@ All in `BottomSheet` and what it offers, so that every sheet gets it at once.
 - **A sheet whose caller keeps it open springs back after a swipe.** 시간표 읽기 does this, and so does the tutorial while it checks 관정.
 - **The handle bar is a `Pressable` with no accessibility element of its own.** The scrim's "{label} 닫기" stays the screen reader's close, and no test finds two buttons of that name.
 - **The old handle drag is gone:** 48 from the handle row, measured when the touch ended. Its unit test now taps the handle. The swipe tests are in `bottom-sheet-swipe.unit`.
-- **시간 고르기 stays mounted so that it can slide.** `PickTimeSheet` takes `offer | null`. It moved from `ReplyPicks` to the end of `OpenAnswer` (`AnswerEnd` in `answer-frame.tsx`), outside the turn's bubbles, so it also slides down when a picked time is sent.
+- **시간 고르기 stays mounted so that it can slide.** `PickTimeSheet` takes `offer | null`. It moved from `ReplyPicks` to the end of `OpenAnswer` in `answer-frame.tsx`, outside the turn's bubbles, so it also slides down when a picked time is sent.
 - **In the tests the slide's animation ends within a few frames.** So the integration test checks the closing sheet right after the tap (the 모집글 was already empty there before the change), then that it is gone.
 - **Not covered by tests:** how the gestures share a touch on a phone (the relations, the real offsets, holding the list at its top). Only the phone check shows it.
 - **Ticket 34's sheets** (장소, 친구 초대) should use `SheetScrollView` for their lists when they merge `5.0/Main`.

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -142,7 +143,7 @@ export function ReceivedInvitationCard(props: ReceivedInvitationCardProps): Reac
   }
   return (
     <View style={styles.card} testID="invitation-card">
-      <Heading onClose={onClose} words={`${card.quest.leader.name}의 파티 초대`} />
+      <Heading onClose={onClose} words={`${card.invitedBy.name}의 파티 초대`} />
       <Invitation busy={busy} card={card} offCampus={offCampus} onAccept={onAccept} onDecline={onDecline} />
     </View>
   );
