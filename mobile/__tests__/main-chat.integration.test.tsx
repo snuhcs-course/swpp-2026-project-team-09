@@ -11,6 +11,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -98,6 +99,7 @@ describe("the bar's input", () => {
 });
 
 describe('what the conversation sends', () => {
+  // Eleven turns: about 40 seconds alone, past Jest's 60 on a loaded runner.
   it('sends only the latest 20 messages', async () => {
     const user = await openMain();
     for (let sent = 1; sent <= 11; sent += 1) {
@@ -113,7 +115,7 @@ describe('what the conversation sends', () => {
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
       expect.objectContaining({ messages: latest }),
     );
-  });
+  }, 150000);
 
   it('keeps the User from writing more than a message takes', async () => {
     await openMain();
