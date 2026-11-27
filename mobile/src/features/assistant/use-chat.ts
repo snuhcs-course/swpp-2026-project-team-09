@@ -40,7 +40,7 @@ import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { TicketView } from '@/library/cards/bookings';
 import type { LibraryDone } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
-import { useAskApp } from './app-turn';
+import { useAppTurn } from './app-turn';
 import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
 import { useLetGo, useWaiting } from './let-go';
@@ -78,6 +78,9 @@ export interface ChatBubble {
   offers?: ReplyOffer[];
   // Each request of the message, in time order, when it asked for two or more (P03). They are not sent back.
   steps?: ReplyStep[];
+  // An answer the app asked from a card (P10 ticket 15): taking every Friend out of it takes its turn back, which shows
+  // that card again. Not sent back.
+  fromCard?: true;
   // The plan the reply chose in words, of the answer on screen or of its own (P05 ticket 51). Not sent back.
   select?: string;
   // The answer on screen leaves with this reply, which draws nothing in its place (P05 ticket 55). Not sent back.
@@ -167,13 +170,15 @@ export interface Chat {
   addRecalculated: (asked: string, answer: AnswerReply) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
   // User's words and `reply`'s answer as the Assistant's. `forgotten` when the conversation was forgotten meanwhile;
-  // a failure takes the turn back. `onShown` is given, once the answer is shown, that answer and the way back to the
-  // conversation as it was before the turn (P10 ticket 15).
+  // a failure takes the turn back. `fromCard` marks an answer asked from a card, which can go back to it.
   askApp: (
     asked: string,
     reply: () => Promise<AnswerReply>,
-    onShown?: (answer: AnswerReply, back: () => void) => void,
+    fromCard?: boolean,
   ) => Promise<'shown' | 'forgotten' | 'failed'>;
+  // Takes back a turn the app asked, its words and that reply, and nothing else: the conversation goes on from before
+  // it, such as the card an answer was asked from (P10 ticket 15).
+  takeBackTurn: (replyId: number) => void;
   // How each library card of the conversation ended, by the card's place: its bubble and its key.
   outcomes: ReadonlyMap<string, CardOutcome>;
   finish: (card: string, outcome: CardOutcome) => void;
@@ -369,8 +374,8 @@ export function useChat(readContext: () => RequestContext): Chat {
   }, [ask, said, show]);
 
   const own = useAddOwn(add, takeBack);
-  const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
+  const appTurn = useAppTurn({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, askApp, ...cardsKept, proposalMade };
+  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, ...appTurn, ...cardsKept, proposalMade };
 }

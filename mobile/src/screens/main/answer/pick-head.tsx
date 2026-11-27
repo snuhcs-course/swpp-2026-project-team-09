@@ -23,7 +23,7 @@ import {
   previewOf,
   walkGuessOf,
 } from '@/features/assistant/people-picking';
-import { backToSeatCard } from '@/features/assistant/seat-together';
+import type { Stretch } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { FriendView } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
@@ -70,14 +70,15 @@ export interface PickingBar {
   inPlan: number;
 }
 
-// 완료: one recalculation with everyone checked. A meet needs a Friend: one left with none checked goes back to the card
-// of the Friend it was made with, as the last ✕ did.
-function finishOf(shown: ShownAnswer, onClose: () => void): () => void {
+// 완료: one recalculation with everyone checked. An answer asked from a card goes back to that card once every Friend is
+// out of it, with no request (`toCard`, P10 ticket 15). A meet needs a Friend: one left with none checked goes back to
+// the card of the Friend it was made with, as the last ✕ did.
+function finishOf(shown: ShownAnswer, onClose: () => void, toCard: (() => void) | null): () => void {
   return () => {
-    const { answer, picked, source } = shown;
-    // A study answer together that a seat card asked goes back to that card once every Friend is out (P10 ticket 15).
-    if (picked?.length === 0 && backToSeatCard(source)) {
+    const { answer, picked } = shown;
+    if (toCard !== null && picked?.length === 0) {
       shown.setAdding(false);
+      toCard();
       return;
     }
     const first = answer?.input.kind === 'meet' ? (answer.input.people[1]?.userId ?? null) : null;
@@ -132,7 +133,7 @@ function useListedFriends(): readonly FriendView[] | null {
 }
 
 // Who picks people in a time card: the answer on screen, or the seat answer's "＋ 같이" (P10 ticket 15), whose
-// picking the card keeps itself. Both draw the same rows and head.
+// picking the card keeps itself. Both draw the same rows and head, and 완료 is given the span the bar shows.
 export interface PickSource {
   picked: readonly string[] | null;
   asked: readonly string[] | null;
@@ -143,10 +144,11 @@ export interface PickSource {
   pick: (userId: string) => void;
   setAdding: (open: boolean) => void;
   // 완료.
-  finish: () => void;
+  finish: (shown: Stretch) => void;
 }
 
-export function answerPickSource(shown: ShownAnswer, onClose: () => void): PickSource {
+// `toCard`, the way back to the card an answer was asked from, or null.
+export function answerPickSource(shown: ShownAnswer, onClose: () => void, toCard: (() => void) | null): PickSource {
   return {
     picked: shown.picked,
     asked: shown.asked,
@@ -155,7 +157,7 @@ export function answerPickSource(shown: ShownAnswer, onClose: () => void): PickS
     keepPickOrder: shown.keepPickOrder,
     pick: shown.pick,
     setAdding: shown.setAdding,
-    finish: finishOf(shown, onClose),
+    finish: finishOf(shown, onClose, toCard),
   };
 }
 
@@ -188,7 +190,13 @@ export function usePickingBar(source: PickSource, plan: Frame, { busy }: { busy:
         disabled={busy}
         done={doneWordsOf(rows.length)}
         onCancel={leave}
-        onDone={rows.length === 0 ? leave : source.finish}
+        onDone={
+          rows.length === 0
+            ? leave
+            : () => {
+                source.finish(band);
+              }
+        }
       />
     ),
     inPlan: others,

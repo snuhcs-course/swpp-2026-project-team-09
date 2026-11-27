@@ -10,9 +10,8 @@ import { apiClient } from '@/api/client';
 import { myUserId } from '@/auth/sign-in';
 import type { Frame } from '@/features/assistant/answer-frame';
 import { toggled } from '@/features/assistant/people-picking';
-import { keepSeatCard, seatTogetherInput } from '@/features/assistant/seat-together';
+import { seatTogetherInput } from '@/features/assistant/seat-together';
 import type { Chat } from '@/features/assistant/use-chat';
-import type { Slot } from '@/library/cards/payloads';
 import { AddChip } from './condition-chips';
 import type { Picking } from './person-rows';
 import { type PickSource, usePickingBar } from './pick-head';
@@ -22,9 +21,9 @@ const SEAT_TOGETHER = '같이 공부할 자리';
 const SEAT_ADD = addNameOf('study') ?? '같이 공부할 친구 추가';
 
 // The answers' picker on the seat card, whose picking the card keeps itself, since it has no answer. 완료 with Friends
-// asks the study answer together for the card's day and time, which takes the card's place; the card is kept, and
-// shown again once every Friend is taken out of that answer (`backToSeatCard`).
-function useSeatPicking(slot: Slot, seat: LibrarySpace, askApp: Chat['askApp']): PickSource {
+// asks the study answer together for the span the bar shows, which takes the card's place as the app's own turn; every
+// Friend taken out of that answer takes the turn back, which shows the card again (`fromCard`).
+function useSeatPicking(seat: LibrarySpace, askApp: Chat['askApp']): PickSource {
   const [picked, setPicked] = useState<readonly string[] | null>(null);
   const [pickOrder, setPickOrder] = useState<readonly string[] | null>(null);
   const setAdding = (open: boolean): void => {
@@ -43,39 +42,34 @@ function useSeatPicking(slot: Slot, seat: LibrarySpace, askApp: Chat['askApp']):
       setPicked((last) => toggled(last ?? [], userId));
     },
     setAdding,
-    finish: () => {
+    finish: (shown) => {
       const friends = picked ?? [];
       setAdding(false);
       if (friends.length === 0) {
         return;
       }
-      const input = seatTogetherInput(slot, seat, [myUserId(), ...friends]);
-      void askApp(
-        SEAT_TOGETHER,
-        () => apiClient.recalculateAnswer(input, null),
-        (answer, back) => {
-          keepSeatCard(answer, back);
-        },
-      );
+      const input = seatTogetherInput(shown, seat, [myUserId(), ...friends]);
+      void askApp(SEAT_TOGETHER, () => apiClient.recalculateAnswer(input, null), true);
     },
   };
 }
 
-// "＋ 같이" on the seat answer alone (P10 ticket 15): the time card's own chip, picker and head, as a meal's.
+// "＋ 같이" on the seat answer alone (P10 ticket 15): the time card's own chip, picker and head, as a meal's. While the
+// conversation waits, for that answer or another, neither the chip nor 완료 asks again.
 export function useSeatTogether(
-  slot: Slot,
   seat: LibrarySpace,
   band: Frame['band'],
-  askApp: Chat['askApp'],
+  chat: Pick<Chat, 'askApp' | 'waiting'>,
 ): { band: Frame['band']; picking: Picking | null; add: ReactNode } {
-  const source = useSeatPicking(slot, seat, askApp);
-  const bar = usePickingBar(source, { band, parts: [], place: null }, { busy: false });
+  const source = useSeatPicking(seat, chat.askApp);
+  const busy = chat.waiting;
+  const bar = usePickingBar(source, { band, parts: [], place: null }, { busy });
   return {
     band: bar.band,
     picking: bar.picking,
     add: bar.head ?? (
       <AddChip
-        disabled={false}
+        disabled={busy}
         inBar
         name={SEAT_ADD}
         onAdd={() => {

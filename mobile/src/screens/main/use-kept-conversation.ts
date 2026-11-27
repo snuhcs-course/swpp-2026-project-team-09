@@ -86,9 +86,9 @@ function useShowing(chat: Chat, show: () => void, end: number | undefined): Show
         show();
         sendNew(text, tapped, mentions);
       },
-      askApp: (asked, reply, onShown) => {
+      askApp: (asked, reply, fromCard) => {
         show();
-        return askApp(asked, reply, onShown);
+        return askApp(asked, reply, fromCard);
       },
       addRecalculated: (asked, answer) => {
         show();

@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, TimeBand } from '@/api/assistant-types';
@@ -249,5 +250,41 @@ describe('the span the combined bar previews', () => {
       endAt: BAND.endAt,
       text: BAND.text,
     });
+  });
+});
+
+// Partitions: words of a length in minutes (above), of a length in hours, and of what the span runs into. Expected
+// values: the words a band says, "식사 28분", "2시간", "14:00 수업과 겹쳐요", and `lengthWords`.
+describe('the words of the span the combined bar previews', () => {
+  // A seat card's band says what its span runs into (P10 ticket 15): moved off it, the preview says its length instead.
+  it('drops the words of what the span ran into once it moves off it, and says its length', () => {
+    const seat: TimeBand = {
+      ...BAND,
+      range: { startAt: at('13:00'), endAt: at('18:00') },
+      lanes: [{ userId: 'me', name: '나', busy: [busy('14:00', '15:15')] }],
+      others: [],
+      startAt: at('14:00'),
+      endAt: at('15:00'),
+      text: '14:00–15:00 · 14:00 수업과 겹쳐요',
+    };
+
+    expect(previewOf(seat, seat.lanes).text).toBe('15:15–16:15 · 1시간');
+  });
+
+  it('says a length in hours anew, as in minutes', () => {
+    const study: TimeBand = {
+      ...BAND,
+      range: { startAt: at('13:00'), endAt: at('18:00') },
+      lanes: [
+        { userId: 'me', name: '나', busy: [] },
+        { userId: 'minsu', name: '민수', busy: [busy('14:00', '14:30'), busy('15:30', '16:00')] },
+      ],
+      others: [],
+      startAt: at('14:00'),
+      endAt: at('16:00'),
+      text: '14:00–16:00 · 2시간',
+    };
+
+    expect(previewOf(study, study.lanes).text).toBe('14:30–15:30 · 1시간');
   });
 });

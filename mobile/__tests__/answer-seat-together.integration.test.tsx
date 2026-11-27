@@ -7,7 +7,7 @@
 import { within } from '@testing-library/react-native';
 import { STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
 import { READING_ROOM } from '@/api/mock/data/library';
-import type { Place } from '@/api/types';
+import type { Place, Quest } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -19,7 +19,7 @@ import { layStage } from './support/lists';
 import { checkedRows, pickDone, pickRow, pickRows } from './support/picking';
 import { YU_NA } from './support/party';
 import { SEO_YEON_HOLDER as SEO_YEON } from './support/room';
-import { ME_ID, MIN_JUN } from './support/server';
+import { DINNER, ME_ID, MIN_JUN } from './support/server';
 
 // P10 ticket 15: the 관정 seat answer alone gets the time card's shared "＋ 같이", the meal's chip and picker. Friends
 // picked ask the study answer together for the seat card's day and time; every Friend taken out again shows the seat
@@ -47,6 +47,26 @@ const KWANJEONG: Place = {
   latitude: 37.45903,
   longitude: 126.95247,
 };
+// The User's own Quest today from 17:00 to 17:30, which the card's hour runs into.
+const SEMINAR: Quest = {
+  ...DINNER,
+  id: '9a7e0c1d-0000-4f00-8000-00000000e001',
+  title: '세미나',
+  subQuests: [
+    {
+      id: '9a7e0c1d-0000-4f00-8000-00000000e002',
+      attending: false,
+      title: '세미나',
+      startsAt: '2026-11-02T08:00:00.000Z',
+      endsAt: '2026-11-02T08:30:00.000Z',
+      place: { placeId: 'p63', label: '학생회관 (63동)', latitude: 37.45932, longitude: 126.95058 },
+      completion: 'by_time',
+      cancelled: false,
+      done: false,
+      ended: false,
+    },
+  ],
+};
 const ADD = '같이 공부할 친구 추가';
 const ANSWERS = 'POST /assistant/answers';
 
@@ -56,7 +76,8 @@ let library: FakeLibrary;
 beforeEach(async () => {
   ({ server, library } = await startLibraryChat());
   server.on('GET /places', { status: 200, body: [...PLACES, KWANJEONG] });
-  server.on(ANSWERS, { status: 200, body: STUDY_GROUP_TO_SEND });
+  // The group answer to send, for the input asked, as the main server answers with the input it was given.
+  server.on(ANSWERS, ({ body }) => ({ status: 200, body: { ...STUDY_GROUP_TO_SEND, input: inputOf(body) } }));
 });
 
 afterEach(() => {
@@ -131,14 +152,8 @@ describe('"＋ 같이" on the seat answer alone, every Friend taken out again', 
     const asked = server.received(ANSWERS).length;
 
     await user.press(bar().getByRole('button', { name: /^같이 \d+ ›$|같이 공부할 친구 추가/u }));
-    while (checkedRows().length > 0) {
-      const [row] = within(screen.getByTestId('time-card-rows')).getAllByRole('checkbox', { checked: true });
-      if (row === undefined) {
-        break;
-      }
-      // oxlint-disable-next-line no-await-in-loop -- one press at a time
-      await user.press(row);
-    }
+    await user.press(within(screen.getByTestId('time-card-rows')).getByRole('checkbox', { checked: true }));
+    expect(checkedRows()).toEqual([]);
     await user.press(pickDone());
     await pass(500);
 
@@ -146,5 +161,38 @@ describe('"＋ 같이" on the seat answer alone, every Friend taken out again', 
     expect(screen.queryByTestId('study-group-body')).toBeNull();
     expect(bar().getByText('17:00–18:00 · 1시간')).toBeVisible();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeOnTheScreen();
+  });
+});
+
+describe('"＋ 같이" on the seat answer alone, the time asked', () => {
+  it("asks the span the picker shows, which leaves the User's own Quest, and says its length, not the clash", async () => {
+    server.on('GET /quests', { status: 200, body: [SEMINAR] });
+    const user = await seatAnswer();
+
+    await user.press(bar().getByRole('button', { name: ADD }));
+    expect(bar().getByText('17:30–18:30 · 1시간')).toBeVisible();
+    await user.press(pickRow(YU_NA.name));
+    await user.press(pickDone());
+    await pass(500);
+
+    expect(server.received(ANSWERS).map(({ body }) => inputOf(body))).toEqual([
+      expect.objectContaining({ window: { from: '17:30', until: '18:30' }, minutes: 60 }),
+    ]);
+  });
+
+  it('cannot be asked twice while its answer is on its way', async () => {
+    server.on(ANSWERS, { status: 200, body: STUDY_GROUP_TO_SEND, afterMs: 3000 });
+    const user = await seatAnswer();
+
+    await user.press(bar().getByRole('button', { name: ADD }));
+    await user.press(pickRow(YU_NA.name));
+    await user.press(pickDone());
+    await pass(500);
+
+    expect(bar().getByRole('button', { name: ADD })).toBeDisabled();
+    await user.press(bar().getByRole('button', { name: ADD }));
+    expect(screen.queryByTestId('time-card-pick-done')).toBeNull();
+    await pass(3000);
+    expect(server.received(ANSWERS)).toHaveLength(1);
   });
 });

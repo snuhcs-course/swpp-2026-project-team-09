@@ -186,6 +186,8 @@ interface PlanBarProps {
   onClose: () => void;
   onHeight: (height: number) => void;
   offset?: number;
+  // The way back to the card the answer was asked from, or null (P10 ticket 15).
+  toCard?: (() => void) | null;
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
@@ -193,7 +195,7 @@ interface PlanBarProps {
 // for in words (P04 ticket 82). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
 // the Plan can take more people (P04 ticket 14), so that the dock is the input's row alone.
 export function PlanBar(props: PlanBarProps): ReactElement {
-  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
+  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset, toCard = null } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
   const addName = settled ? null : addNameOf(answer.input.kind);
@@ -201,7 +203,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const busy = shown.recalculating || shown.locked || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
-  const pickingBar = usePickingBar(answerPickSource(shown, onClose), plan, { busy });
+  const pickingBar = usePickingBar(answerPickSource(shown, onClose, toCard), plan, { busy });
   return (
     <Bar
       picking={pickingBar.picking}
@@ -266,7 +268,7 @@ export function BookingBar({
   onHeight,
 }: {
   booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'askApp'>;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
   const { kept, keep, live } = bookingKept(booking, chat);
@@ -277,7 +279,7 @@ export function BookingBar({
     <BookingCard
       // A new answer's card sets its range anew (P01 ticket 17).
       key={booking.place}
-      askApp={chat.askApp}
+      chat={chat}
       keep={(slot) => {
         keep({ slot });
       }}
@@ -294,11 +296,11 @@ function BookingCard(p: {
   space: LibrarySpace;
   quests: readonly Quest[];
   keep: (slot: Slot) => void;
-  askApp: Chat['askApp'];
+  chat: Pick<Chat, 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement {
   const band = useBookingBand(p.slot, p.space, p.quests, p.keep);
-  const together = useSeatTogether(p.slot, p.space, band.band, p.askApp);
+  const together = useSeatTogether(p.space, band.band, p.chat);
   return (
     <Bar add={together.add} band={{ ...band, band: together.band }} onHeight={p.onHeight} picking={together.picking} />
   );
