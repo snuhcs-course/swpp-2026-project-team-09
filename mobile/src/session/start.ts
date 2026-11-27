@@ -16,8 +16,9 @@ import { asksMainServer } from '@/api/servers';
 import { myUserId } from '@/auth/sign-in';
 import { loadTokens } from '@/auth/tokens';
 import { consentScreenAsks } from '@/consent/choices';
+import { usageChosen } from '@/consent/kept-consent';
 import { openKept } from '@/storage/kept';
-import { identifyUser } from '@/telemetry';
+import { allowUsage, identifyUser } from '@/telemetry';
 import { behindConsent, type Opened } from './session';
 
 // The work of the loading screen: reads what the phone keeps and, for a User who is signed in, whose copy of the
@@ -37,7 +38,9 @@ export async function readStart(queryClient: QueryClient, onKeptRead: () => void
   if (!signedIn || (server && tokens === null)) {
     return { status: 'signed-out', suggestion: null };
   }
-  // A start with a kept Session: crash reports carry the User's id, and nothing else of the User.
+  // A start with a kept Session: crash reports and usage data carry the User's id, and nothing else of the User. Usage
+  // data is sent only when the phone's copy of the account's consent allows it.
+  allowUsage(usageChosen(consent));
   identifyUser(myUserId());
   // The phone's copy of the account's consent decides, before the Lobby: a copy without the current version asks,
   // unless the phone kept the earlier consent, which is carried over first (`consentScreenAsks`).

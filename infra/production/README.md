@@ -1019,9 +1019,16 @@ repository secret `KAKAO_NATIVE_APP_KEY`. It alone has `contents: write`, to cre
 | `PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME` | `GOOGLE_IOS_URL_SCHEME`            |
 | `PRODUCTION_APP_INVITE_LINK_HOST`      | `INVITE_LINK_HOST`                 |
 | `PRODUCTION_APP_SENTRY_DSN`            | `EXPO_PUBLIC_SENTRY_DSN`           |
+| `PRODUCTION_APP_POSTHOG_TOKEN`         | `EXPO_PUBLIC_POSTHOG_TOKEN`        |
 
 Each must equal the native build's value: a different one changes the fingerprint or points the bundle elsewhere.
-`PRODUCTION_APP_SENTRY_DSN` alone may be unset: the app then reports no crash, and the Release goes on.
+`PRODUCTION_APP_SENTRY_DSN` and `PRODUCTION_APP_POSTHOG_TOKEN` alone may be unset: the app then reports no crash, or
+sends no usage data, and the Release goes on. Neither is among `fingerprint-and-decide`'s required settings, and
+neither changes the fingerprint.
+
+**`PRODUCTION_APP_POSTHOG_TOKEN` stays unset until P08 tickets 11 to 13 are on the main line; ticket 15 is where a
+person sets it.** With it set, the app sends usage data to PostHog in the United States, only for a User who chose it
+(mobile/README.md, "Usage data").
 
 **`PRODUCTION_APP_SENTRY_DSN` is what turns the reports on, and it stays unset until the privacy policy's part on
 crash reports and the switch in 내 정보 (P08 tickets 03 and 05) are on the main line.** The first app Release with the
