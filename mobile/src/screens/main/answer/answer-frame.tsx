@@ -118,7 +118,7 @@ function slotHeld({ chat }: ChatSheetControl): boolean {
 
 // A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
 // booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review), and a
-// study answer's 관정관 opened its reply's words, which hold the ticket (P10 ticket 26).
+// study answer's 관정관 opened its reply's words, which hold the ticket (P10 ticket 27).
 function dockedBubble({ booking, steps }: ChatSheetControl): number | null {
   return booking !== null && steps === null && booking.inPlan !== true ? booking.bubbleId : null;
 }

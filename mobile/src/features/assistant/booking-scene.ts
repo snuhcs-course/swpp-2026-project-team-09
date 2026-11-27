@@ -29,7 +29,7 @@ export interface ShownBooking {
   point: PlacePoint;
   // Booked: the map keeps it with "· 예약됨" until 확인 closes the answer (P01 ticket 03).
   booked: boolean;
-  // The card is a study answer's 관정관 opened (P10 ticket 26): the opened place holds it, not the reply's cards, so the
+  // The card is a study answer's 관정관 opened (P10 ticket 27): the opened place holds it, not the reply's cards, so the
   // reply's words stay.
   inPlan?: true;
 }
@@ -80,7 +80,7 @@ export function shownBookingOf(
   };
 }
 
-// 관정관 opened from a study answer alone (P10 tickets 22 and 26): its Plan's book card is the booking on the map, as
+// 관정관 opened from a study answer alone (P10 tickets 22 and 27): its Plan's book card is the booking on the map, as
 // a seat card the reply gave alone is, so that the opened place is the framed seat answer's: the one time card on top,
 // which the ticket books, the ticket, and 예약하기 beside the input. Null for any other place, or the list.
 export function studyBookingOf(

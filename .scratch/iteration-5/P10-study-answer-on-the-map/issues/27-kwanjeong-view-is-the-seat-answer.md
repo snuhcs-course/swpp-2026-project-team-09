@@ -1,4 +1,4 @@
-# 26: 관정관 opened from a study answer is the framed seat answer
+# 27: 관정관 opened from a study answer is the framed seat answer
 
 Parent: [P10 spec](../spec.md). Found on the user's phone on 2026-11-27, with #685 against the real server: "왜 관정 도서관을 클릭하면 채팅 카드에도 시간 축이 존재하지?" 관정관 opened from the list showed the top time card ("22:05–23:00 · 55분"), and under it the chat's old seat card whole: its own slider, "22:30–23:00 · 30분", the ticket, and 예약하기 / 예약 안 함. There were two time axes that disagreed, and a second pair of buttons. The seat answer asked directly ("관정 열람실 자리 있어?") has one time card on top, the ticket in the card, and 예약하기 as the main button.
 Status: ready-for-human

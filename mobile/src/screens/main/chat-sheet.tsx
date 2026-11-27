@@ -179,7 +179,7 @@ function useAnswerOnScreen(
   return { answer: shown, invitation };
 }
 
-// The booking on the map: the seat card the reply gave alone, else a study answer's 관정관 opened (P10 ticket 26).
+// The booking on the map: the seat card the reply gave alone, else a study answer's 관정관 opened (P10 ticket 27).
 function useStudyBooking(
   replied: ShownBooking | null,
   shown: ShownAnswer,

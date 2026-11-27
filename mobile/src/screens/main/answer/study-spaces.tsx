@@ -20,7 +20,7 @@ const MINUTE_MS = 60_000;
 
 // "걸음 4분 · 15:50까지 2시간 30분": the way there, or the arrival when it is not known, then until when and how long the
 // User can stay. Over 관정관's seat ticket, the way alone: the time card on top is the one time, which the ticket books
-// (P10 ticket 26).
+// (P10 ticket 27).
 export function studyLineOf(plan: Pick<Plan, 'parts' | 'scene' | 'startAt' | 'endAt'>, seated = false): string {
   const way = travelWords(plan) ?? `${koreaClock(plan.startAt)} 도착`;
   if (seated) {

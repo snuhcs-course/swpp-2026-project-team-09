@@ -19,7 +19,7 @@ import { expectNoWrite, inDock, inFrame, sendFromBar, startLibraryChat } from '.
 import { openMain } from './support/main';
 
 // 관정관 opened from a study answer alone (P10 ticket 22): its view is today's seat ticket, the book card the main
-// server sends with the Plan (its ticket 21), in the place of its spaces. It is the framed seat answer's (P10 ticket 26,
+// server sends with the Plan (its ticket 21), in the place of its spaces. It is the framed seat answer's (P10 ticket 27,
 // the user's phone, 2026-11-27: "왜 관정 도서관을 클릭하면 채팅 카드에도 시간 축이 존재하지?"): one time card on top,
 // which the ticket books, the ticket in the card with no band and no 예약 안 함 of its own, and 예약하기 beside the
 // input. Nothing is written to the library before 예약하기.
