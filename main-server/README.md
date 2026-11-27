@@ -1626,6 +1626,8 @@ Party's Quest leaves the membership as it is.
   is refused.
 - `PUT /parties/mine/leader` with `{ "userId": "..." }` hands the role to that member and answers 204.
 - `DELETE /parties/mine/members/:userId` removes that member and answers 204. A removed member may enter again.
+  A User the Leader removed from the Party's Quest (`quest_removals`) left the Party with that removal, so the call for
+  them answers 204 too, rather than `NOT_PARTY_MEMBER`: the app from before P06 ticket 23 sends it after 내보내기.
 - `POST /parties/mine/end` ends the Party for every member and answers 204: every member is taken out, and the Party is
   deleted with its requests and invitations, as when its last member leaves. A repeat is refused as a User in no Party,
   so it takes no `Idempotency-Key`. It locks every member, in the order of their ids, and then the Party, so a User

@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -21,6 +22,17 @@ const notMember = (): NotFoundException => notFound('NOT_PARTY_MEMBER', 'This Us
 
 // The Leader's controls, and the check that a User leads their Party. A Leader's action that adds or takes out a User
 // locks that User before the Party, as every way in and out does, and checks the Leader once the Party is locked.
+// Whether the Leader removed the User from the Party's Quest, which took the User out of the Party too.
+async function removedFromQuest(
+  { questId }: Pick<Party, 'questId'>,
+  userId: string,
+  tx: Prisma.TransactionClient,
+): Promise<boolean> {
+  return (
+    questId !== null && (await tx.questRemoval.findUnique({ where: { questId_userId: { questId, userId } } })) !== null
+  );
+}
+
 @Injectable()
 export class LeaderService {
   constructor(
@@ -106,7 +118,9 @@ export class LeaderService {
     this.signals.send(audience, 'party-changed');
   }
 
-  // Nothing records the removal, so the member may enter again.
+  // Nothing records the removal, so the member may enter again. A User the Leader removed from the Party's Quest has
+  // left the Party with that removal (P06 ticket 23): the call an app from before that change sends next is answered as
+  // done, not refused.
   async remove(userId: string, memberId: string): Promise<void> {
     const partyId = await this.ledBy(userId);
     const memberIds = await this.visibility.announceRemovals(memberId, () =>
@@ -115,6 +129,9 @@ export class LeaderService {
         const party = await this.lockLed(partyId, userId, tx);
         const membership = await tx.partyMember.findUnique({ where: { userId: memberId } });
         if (membership?.partyId !== party.id) {
+          if (await removedFromQuest(party, memberId, tx)) {
+            return [];
+          }
           throw notMember();
         }
         return this.parties.removeMember(party, memberId, tx);
