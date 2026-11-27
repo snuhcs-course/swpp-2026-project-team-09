@@ -5,18 +5,19 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, Icon, type IconName, radius, shadow, size, space, text } from '@/design-system';
+import { color, Icon, type IconName, kindTone, radius, shadow, size, space, text } from '@/design-system';
 
 // The asks the agentic map answers best, each tried against the main server's Assistant (P02 ticket 36): a meal's
-// Plan, the day's events, and a seat. Each with an icon in its layer's colour; the events take the Party's.
+// Plan, the day's events, and a seat. Each with an icon in its kind's colour (`kindTone`).
 const EXAMPLES: readonly { words: string; icon: IconName; tint: string }[] = [
-  { words: '배고파', icon: 'meal', tint: color.svcDining },
-  { words: '오늘 볼 만한 거 있어?', icon: 'calendar', tint: color.party },
-  { words: '공부할 자리', icon: 'bookOpen', tint: color.svcStudy },
+  { words: '배고파', icon: 'meal', tint: kindTone.meal.ink },
+  { words: '오늘 볼 만한 거 있어?', icon: 'calendar', tint: kindTone.event.ink },
+  { words: '공부할 자리', icon: 'bookOpen', tint: kindTone.study.ink },
 ];
 
 // The frame's chip height.

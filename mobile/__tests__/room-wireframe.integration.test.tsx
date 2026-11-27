@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -98,8 +99,8 @@ describe("the room's head", () => {
     expect(screen.getByText('컴퓨터공학부 · 18시간 전')).toBeVisible();
     expect(screen.getByText('자하연에서 피크닉 해요')).toBeVisible();
     expect(screen.queryByLabelText('태그')).toBeNull();
-    expect(screen.getByText('오늘 17:40')).toBeVisible();
-    // The box's place and the step's.
+    // The box's time and place, and the step's.
+    expect(screen.getAllByText('오늘 17:40')).toHaveLength(2);
     expect(screen.getAllByText('301동 앞')).toHaveLength(2);
   });
 

@@ -9,6 +9,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -302,7 +303,7 @@ describe('the tab opened at one event', () => {
     expect(screen.getByTestId(`event-${MAJOR.id}`)).not.toHaveStyle({ backgroundColor: MARKED });
   });
 
-  it('names the event on the Badge and card of a Quest the Leader titled otherwise', async () => {
+  it("names the event on the head's event line of a Quest the Leader titled otherwise", async () => {
     const titled = { ...MY_CAREER, title: '설명회 같이 가요' };
     answerRoom(server, titled);
     answerEvents(server, { quests: [DINNER, titled] });
@@ -311,7 +312,7 @@ describe('the tab opened at one event', () => {
     expect(screen.getByRole('header', { name: '설명회 같이 가요' })).toBeVisible();
     const eventCard = screen.getByRole('button', { name: `행사 · ${CAREER.title}` });
     expect(within(eventCard).getByText(CAREER.title)).toBeVisible();
-    // The official Badge over the title, the card, and the attending Sub Quest in the plan.
-    expect(screen.getAllByText(CAREER.title)).toHaveLength(3);
+    // The event's line in the head's box and the attending Sub Quest in the plan; the room has no Badge.
+    expect(screen.getAllByText(CAREER.title)).toHaveLength(2);
   });
 });
