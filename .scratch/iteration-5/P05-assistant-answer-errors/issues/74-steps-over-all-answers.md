@@ -74,5 +74,5 @@ These were decided by the orchestrating session, or here where noted, and may be
 
 ### Agent usage (2026-11-28)
 
-- Agent time: about 70 minutes, an estimate from this session's transcript (gaps under 5 minutes). That covers the first version on 2026-11-27, the rework for the corner-case review (keys, the conversation's steps, faults C2, G6, G5, A2 and A4) past midnight, and the fixes for the independent read of #703 and #710. Its pinned integration files ran one at a time in the background for about 3 hours in all besides, while the session worked on.
-- Tokens: input 60M, of which 59.7M cache reads, 0.25M cache writes and about 260 uncached; output 185k. No subagents.
+- Agent time: about 87 minutes, an estimate from this session's transcript (gaps under 5 minutes). That covers the first version on 2026-11-27, the rework for the corner-case review past midnight, the fixes for the independent read of #703 and #710, and the reviews' README, step added between and limits. Its pinned integration files ran one at a time in the background for about 3.5 hours in all besides, while the session worked on.
+- Tokens: input 83M, of which 82.6M cache reads, 0.3M cache writes and about 340 uncached; output 212k. No subagents.

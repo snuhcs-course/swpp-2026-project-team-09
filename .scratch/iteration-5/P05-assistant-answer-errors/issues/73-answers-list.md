@@ -51,3 +51,9 @@ Known limit: two requests of one kind and day share a key, and the second replac
 
 - Agent time: about 27 minutes, an estimate from this session's transcript (gaps under 5 minutes): about 15 for the first version and 12 for the keys, `withdrawn` and the contract note asked for after the review. Its 15 pinned integration files ran one at a time in the background for about 40 minutes besides, while the session worked on ticket 74.
 - Tokens: input 29.2M, of which 29.1M cache reads, 0.13M cache writes and about 180 uncached; output 88k. No subagents.
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 12 more minutes for the review after the PR opened: merging `5.0/Main` in, the README, and three fixes (`clears` beside a withdrawal, the recalculation's key, `reviseAnswer` in place). An estimate from this session's transcript (gaps under 5 minutes), split by hand from the work on ticket 74 done beside it. Its 12 pinned integration files ran in the background for about 40 minutes besides.
+- Tokens: input about 15M, nearly all cache reads (under 0.05M cache writes, under 100 uncached); output about 25k. No subagents.
+
