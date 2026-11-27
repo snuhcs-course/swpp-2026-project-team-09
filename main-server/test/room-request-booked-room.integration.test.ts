@@ -56,6 +56,7 @@ describe('The room the library booked', () => {
     await stage.result(booker, id, { ok: true, room: ' G412 ' }).expect(204);
 
     expect(await stage.status(booker, id)).toMatchObject({ status: 'booked', bookedRoom: 'G412' });
+    expect((await stage.notices(party[1] ?? booker)).at(-1)).toMatch(/ 예약을 마쳤어요 · G412$/u);
     for (const holder of party) {
       // oxlint-disable-next-line no-await-in-loop -- one Holder at a time
       expect(await bookedRoomOn(holder, questId)).toBe('G412');
@@ -74,11 +75,28 @@ describe('The room the library booked', () => {
     await stage.result(booker, id, { ok: true }).expect(204);
 
     expect((await stage.status(booker, id)).bookedRoom).toBeNull();
+    expect((await stage.notices(minsu)).at(-1)).toMatch(/ 예약을 마쳤어요$/u);
     expect(await bookedRoomOn(minsu, questId)).toBeNull();
 
     await stage.result(booker, id, { ok: true, room: 'G405' }).expect(204);
 
     expect(await bookedRoomOn(minsu, questId)).toBe('G405');
+  });
+});
+
+describe('The room the library booked, in the notice and in the report', () => {
+  it("is cut in the companions' notice past 12 characters, and kept whole", async () => {
+    const { id, questId, party } = await partyWithOneOut('방길');
+    const [booker, minsu] = party;
+    if (booker === undefined || minsu === undefined) {
+      throw new Error('A party has its booker and a companion');
+    }
+    const long = '그룹스터디룸 G412 (4층 창가)';
+
+    await stage.result(booker, id, { ok: true, room: long }).expect(204);
+
+    expect((await stage.notices(minsu)).at(-1)).toMatch(/ 예약을 마쳤어요 · 그룹스터디룸 G412…$/u);
+    expect(await bookedRoomOn(minsu, questId)).toBe(long);
   });
 
   it('comes with ok only, and is a short text', async () => {

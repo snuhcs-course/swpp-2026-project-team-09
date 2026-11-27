@@ -2357,7 +2357,8 @@ fact of the library it is told is the room a booking got, which the booker's pho
   `gathering` for that companion, who is asked to check their 내 정보, and neither leaves it `ready`. `room`, with `ok`
   only (else 400), is the room the library booked as it names it (`"G412"`, 1–40 characters, trimmed), kept as
   `booked_room`: `GET …/:id` gives it to the requester as `bookedRoom`, and the Quest replies give it to the Holders of
-  the request's Quest. A repeat of `ok` with a `room` sets it, and the booked time is the request's own.
+  the request's Quest. A repeat of `ok` with a `room` sets it, and the booked time is the request's own. The
+  companions' notice then names it, "… 예약을 마쳤어요 · G412", the room cut to 12 characters with "…" past that.
 - `POST …/:id/cancelled`, with no body, is the requester's only while `booked`, and safe to repeat. A booking party
   made for the request is deleted with its Sub Quest, so it no longer blocks its members' Free Time.
 

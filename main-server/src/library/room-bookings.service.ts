@@ -37,6 +37,12 @@ type Companions = { refused: RoomRequestStatus } | { userIds: string[] };
 
 const ENDING_AHEAD_MS = 10 * 60 * 1000;
 
+// The room the companions' notice names after "예약을 마쳤어요 · " (P05 ticket 68): the library's name, as "G412", cut to
+// keep the notice one line on the phone.
+const NOTICE_ROOM_MAX = 12;
+const noticeRoom = (room: string): string =>
+  room.length <= NOTICE_ROOM_MAX ? room : `${room.slice(0, NOTICE_ROOM_MAX - 1)}…`;
+
 @Injectable()
 export class RoomBookingsService {
   constructor(
@@ -136,7 +142,8 @@ export class RoomBookingsService {
       data: { status: RoomRequestStatus.booked, bookedRoom: room },
     });
     const companions = held.consents.filter(isIn).map(({ userId }) => userId);
-    await this.sync.notify(settling, held, companions, await this.doneText(held, '예약을 마쳤어요'));
+    const done = await this.doneText(held, '예약을 마쳤어요');
+    await this.sync.notify(settling, held, companions, room === null ? done : `${done} · ${noticeRoom(room)}`);
     await this.tellEnding(settling, held);
     await this.sync.finish(settling, held, { keepQuest: true });
   }
