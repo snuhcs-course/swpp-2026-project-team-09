@@ -91,7 +91,7 @@ All in `BottomSheet` and what it offers, so that every sheet gets it at once.
 - [x] A tap on the handle bar closes the sheet, and so does a tap on the scrim. (App integration test; the handle tap fails before the change.)
 - [x] A drag down on the handle bar follows the finger and closes the sheet when the finger lets go moving down, or at rest past the threshold. Let go moving up, it springs back, however far it went; it never closes while the finger is down. (Gesture unit test; the let-go by direction fails before the first phone check's change.)
 - [x] The sheet's body takes no drag: its text, footer and lists do what they do anywhere, a button press stays a press, and lists scroll natively as on `5.0/Main`. (Gesture unit test for the press; the sheets' own files are as on `5.0/Main`.)
-- [ ] Checked on the user's phone with the pull request's release build.
+- [x] Checked on the user's phone with the pull request's release build: 82bfa5ca passed on 2026-11-28.
 - [x] No native file changes; lint, format and types pass on the changed files.
 
 ## Decided while building
