@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -33,7 +34,8 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 
 // A card's look at a level of detail. A person is the frames' teardrop at every level, small while the whole campus is
 // in view, dimmed while their position is old, and with a green dot for a Friend seen at the exact level. A place is a
-// dot there, and a pin with its count closer; a restaurant, a study building and the shuttle's stops and vehicles look
+// dot there, a pin with its count closer, and from the "names" level a 행사, a 파티, a 퀘스트 and a group have their
+// short name in their tag; a restaurant, a study building and the shuttle's stops and vehicles look
 // the same at every level: a stop a dot and a vehicle a pin, so that a vehicle standing at its stop is seen, and stops
 // at one place stay a dot. A study building none of whose spaces the User may use is grey, and study pins merged at the
 // overview level are their cluster. Things of several kinds at one place are a group's dot or pin. A Favorite Event,
@@ -43,6 +45,7 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // lines above it, as an answer draws its pick.
 function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
   const far = detail === 'overview';
+  const named = detail === 'names' ? { label: marker.short } : {};
   if (kind === 'made-quest') {
     const { title, line } = flag ?? { title: marker.name, line: null };
     const label = { side: 'above', tone: 'pick', title, line, number: null } as const;
@@ -59,8 +62,8 @@ function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetai
   const starred = mark.starred === true;
   if (mark.type === 'group') {
     return starred
-      ? { kind: 'group', kinds: mark.kinds, form: 'pin', selected, starred }
-      : { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected };
+      ? { kind: 'group', kinds: mark.kinds, form: 'pin', selected, starred, ...named }
+      : { kind: 'group', kinds: mark.kinds, form: far ? 'dot' : 'pin', selected, ...named };
   }
   if (kind === 'event-cluster') {
     return { kind: mark.place, form: 'pin', count: marker.count, selected, ...(starred ? { starred } : {}) };
@@ -75,11 +78,11 @@ function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetai
     return { kind: 'shuttle', form: kind === 'shuttle-vehicle' ? 'pin' : 'dot', selected };
   }
   if (starred) {
-    return { kind: mark.place, form: 'pin', count: marker.count, selected, starred };
+    return { kind: mark.place, form: 'pin', count: marker.count, selected, starred, ...named };
   }
   return far
     ? { kind: mark.place, form: 'dot', selected }
-    : { kind: mark.place, form: 'pin', count: marker.count, selected };
+    : { kind: mark.place, form: 'pin', count: marker.count, selected, ...named };
 }
 
 // Every look the cards have at any level, unselected: asked for when the cards come, so that a change of level
@@ -92,7 +95,7 @@ type Marks = ReadonlyMap<string, InterestMark>;
 const NO_MARKS: Marks = new Map();
 
 // The words under a person's Avatar from the "names" level of detail: the full name, and for an old position its age,
-// "김민준 · 3분 전". A place has none: words of places side by side overlap, and its card says what it is.
+// "김민준 · 3분 전". A place has none under it: a 행사's, a 파티's or a 퀘스트's short name is in its tag.
 function wordsOf({ mark, marker }: CardView, detail: ZoomDetail): string | undefined {
   if (detail !== 'names' || mark.type !== 'person') {
     return undefined;

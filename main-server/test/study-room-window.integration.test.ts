@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -18,7 +19,7 @@ vi.setConfig({ testTimeout: 20_000, hookTimeout: 30_000 });
 
 const stage = new StudyStage();
 
-beforeAll(() => stage.start(inject('settings')));
+beforeAll(() => stage.start(inject('settings'), { ownDatabase: true }));
 
 afterAll(() => stage.stop());
 
@@ -55,7 +56,7 @@ describe('A study on Monday, after the booking window', () => {
     expect(result).toMatchObject({
       result: 'shown',
       summary:
-        '2026-11-09(월) 09:00–12:00 관정 4층 6인실, 4명 예약 카드를 보여 줬어요. 예약 창은 11월 6일 09:00에 열려요. 동의를 먼저 받아 두고, 그때 알려 드려요.',
+        '2026-11-09(월) 09:00–12:00 관정 4층 6인실, 4명 예약을 아래에 띄웠어요. 예약 창은 11월 6일 09:00에 열려요. 동의를 먼저 받아 두고, 그때 알려 드려요.',
       windowOpens: '2026-11-06',
     });
   });

@@ -36,7 +36,6 @@ import {
 import { paddingOf } from './answer-padding';
 import type { Room } from './layout';
 import { facesClearOf, othersOf, useFacePoints, useFaces } from './use-answer-faces';
-import { useChoosingRing } from './use-choosing-ring';
 
 export { othersOf };
 import { useAnswerWalks, useMealWays } from './use-answer-walks';
@@ -325,9 +324,8 @@ export function useAnswerMap(
   const sent = sending || settled || changing || leftAlone;
   const avoid = useFacePoints(faces);
   const { held, looks } = useHeldViews(answer, sent, standings, framing, avoid, base);
-  const ring = useChoosingRing(draw, looks, index);
   const press = pressableWhile(sent);
-  const drawn = useDrawnMap(ring.draw, base, answer, ring.looks, map, framing, routes, press, avoid, held);
+  const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, press, avoid, held);
   if (drawn === null) {
     return null;
   }

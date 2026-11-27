@@ -3,9 +3,11 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readReply, scriptFor } from './call-script';
+import { type NoteCall, printCall } from './call-timing';
 import { isLibraryPage, isOnLibrarySite, LIBRARY_LOGOUT_URL, LIBRARY_MAIN_URL, type LibraryEndpoint } from './site';
 import type { LibraryTransport, TransportReply } from './transport';
 
@@ -39,13 +41,17 @@ export class HiddenViewTransport implements LibraryTransport {
   private handle: HiddenViewHandle | null = null;
   private page: PageState = 'detached';
   private readonly waiters = new Set<(readiness: Readiness) => void>();
-  private readonly pending = new Map<string, (reply: TransportReply) => void>();
+  // Each pending call's end, with the reply's size when one came.
+  private readonly pending = new Map<string, (reply: TransportReply, size?: number) => void>();
   // The logout in progress: whether its URL was asked of the view yet, and how it ends.
   private logoutDone: ((loaded: boolean) => void) | null = null;
   private logoutAsked = false;
   // The view is wanted for a logout though neither the flag nor a check mounts it.
   private wanted = false;
   private readonly wantListeners = new Set<() => void>();
+
+  // `note` hears what each call took (`call-timing.ts`).
+  constructor(private readonly note: NoteCall = printCall) {}
 
   wantsView(): boolean {
     return this.wanted;
@@ -119,7 +125,7 @@ export class HiddenViewTransport implements LibraryTransport {
     if (settle === undefined) {
       return;
     }
-    settle(reply.ok ? { ok: true, result: reply.result } : { ok: false, error: reply.error });
+    settle(reply.ok ? { ok: true, result: reply.result } : { ok: false, error: reply.error }, data.length);
   }
 
   // The page loaded afresh before the next call, as for each check of a login: a page the site sent off its screens,
@@ -133,20 +139,27 @@ export class HiddenViewTransport implements LibraryTransport {
   }
 
   async call(endpoint: LibraryEndpoint, body: Readonly<Record<string, string>>): Promise<TransportReply> {
+    const started = Date.now();
     const readiness = await this.whenReady();
     const handle = this.handle;
+    const asked = Date.now();
+    const note = (reply: TransportReply, size: number): TransportReply => {
+      const pageMs = asked - started;
+      this.note({ endpoint, outcome: reply.ok ? 'ok' : reply.error, size, pageMs, callMs: Date.now() - asked });
+      return reply;
+    };
     if (readiness !== 'ready' || handle === null) {
-      return { ok: false, error: readiness === 'ready' ? 'sessionEnded' : readiness };
+      return note({ ok: false, error: readiness === 'ready' ? 'sessionEnded' : readiness }, 0);
     }
     const id = freshId();
     return new Promise<TransportReply>((resolve) => {
       const timer = setTimeout(() => {
         settle({ ok: false, error: 'network' });
       }, CALL_MS);
-      const settle = (reply: TransportReply): void => {
+      const settle = (reply: TransportReply, size = 0): void => {
         clearTimeout(timer);
         this.pending.delete(id);
-        resolve(reply);
+        resolve(note(reply, size));
       };
       this.pending.set(id, settle);
       handle.inject(scriptFor({ id, endpoint, body }));

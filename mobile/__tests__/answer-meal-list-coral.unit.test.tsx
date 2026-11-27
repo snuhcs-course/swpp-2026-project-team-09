@@ -18,7 +18,7 @@ import { freshWrapper } from './support/queries';
 // and its ground soft coral with a coral border in place of the gold; every other number soft coral with a coral rim
 // and number.
 
-const SHOWN = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark };
+const SHOWN = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark, change: ignoreMark };
 const MENU_SHOWN = { index: 0, closeMenu: ignoreMark };
 const [PLAN] = MEAL_ANSWER_MENUS.plans;
 if (PLAN === undefined) {

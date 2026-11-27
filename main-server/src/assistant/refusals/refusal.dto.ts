@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type Lookup } from '../dto/answer.dto.js';
@@ -91,8 +92,9 @@ export interface Refusal {
 // nothing, as an app before P02-13 does.
 export type LocationMissing = 'permission' | 'off-campus' | null;
 
-// An answer's offers only open screens, as a refusal's `open` offers do.
-export type AnswerOffer = Extract<RefusalOffer, { kind: 'open' }>;
+// An answer's offers only open screens, as a refusal's `open` offers do. `hint` is the one line that says what the
+// screen would add, which a meal's Plan draws in place of the button (P04 ticket 86); an app before it reads the label.
+export type AnswerOffer = Extract<RefusalOffer, { kind: 'open' }> & { hint?: string };
 
 // An answer's part when an input was missing.
 export interface WithMissing {

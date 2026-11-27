@@ -1,10 +1,10 @@
 # 06: The map: quiet marks, new layer pins, a glass friend panel, no "가까이 보기"
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: 01 (the glass layer), for the glass parts only. The rest can start immediately.
 
-Native files: none. Releases: an app OTA update only.
+Native files: `Things.kt` of the map module (see Comments). Releases: a native Release, `version` 1.0.5.
 
 ## What happens now
 
@@ -69,10 +69,35 @@ Check on the emulator that translucent marks come out right in the pictures the 
 
 ## Acceptance criteria
 
-- [ ] No marker card shows "가까이 보기". (`main-card`, which fails before the change.)
-- [ ] Quest rows tell 공개 from 비공개 by an icon a screen reader names. (Unit or integration test.)
-- [ ] Layers, the friend panel and pressing marks work as before. (Existing tests.)
-- [ ] "Before" and "after" emulator screens go in the pull request: the map at each zoom level with 행사, 파티 and 퀘스트 marks; the 식당 and 공부공간 layers; the friend panel; a marker card; the Quest list.
-- [ ] No native file changes; lint, format and types pass on the app.
+- [x] No marker card shows "가까이 보기". (`main-card`, which fails before the change.)
+- [x] Quest rows tell 공개 from 비공개 by an icon a screen reader names. (Unit or integration test.)
+- [x] Layers, the friend panel and pressing marks work as before. (Existing tests.)
+- [x] "Before" and "after" emulator screens go in the pull request: the map at each zoom level with 행사, 파티 and 퀘스트 marks; the 식당 and 공부공간 layers; the friend panel; a marker card; the Quest list.
+- [x] ~~No native file changes~~ (one, agreed: see Comments); lint, format and types pass on the app.
 
 ## Comments
+
+### The see-through marks and a native change (2026-11-26)
+
+- On the emulator the map's tags came out grey in the pictures the native map places: white at 80% looked like grey at 80%, though the map showed through. The quest rounds and the friend panel, which are views and not pictures, were right.
+- The cause: the Android module read the picture with its colours already multiplied by their alpha, and Kakao's SDK multiplies them again. `Things.kt` now hands the SDK the picture with straight alpha. Checked on the emulator after a new native build: the tags are white at 80% with the map's words faintly through.
+- Asked first, as the ticket says. The user chose the native fix over drawing the tags opaque, and to raise `version` to 1.0.5 in this pull request. The native Release after the merge is the user's.
+- iOS (`Things.swift`) was not looked at.
+
+### Choices beyond the ticket
+
+- A place where several kinds stand together is the same light tag, with a round for each kind.
+- From the "names" level a 행사's, a 파티's, a 퀘스트's and a group's short name is in its tag, drawn into its picture, as the canvas does. A person's name stays the map's own text.
+- Tags sit on their middle, as the canvas places them; pins with a tail still stand on their tip.
+- The 70% look is on both the 퀘스트 tags on the map and the Quest list's rounds over the map.
+- 강의 keeps its grey round: the changelog's § 4-1 unifies only the 파티 rounds.
+
+### Agent usage (2026-11-26)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person, for the heavy-job lock another session held, and for the native builds is left out. The two subagents are the code review's Standards and Spec reviewers. Counted up to the writing of this entry, so the review watch after the pull request is left out.
+
+| Session                                                                                                                            | Agent time       | Input      | Cache reads | Cache writes | Uncached | Output  |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- | ------------ | -------- | ------- |
+| Ticket 06 (the code, the tests, the emulator checks and the native fix, the code review, the pull request), with its two subagents | about 56 minutes | 88,261,771 | 87,657,550  | 603,613      | 608      | 154,972 |
+
+Without cache reads, the input is 604,221.

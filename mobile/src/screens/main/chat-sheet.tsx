@@ -37,6 +37,7 @@ import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/s
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
+import { useAskedAgain } from '@/features/assistant/use-asked-again';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type Picking, usePicking } from '@/features/assistant/use-picking';
 import { type QuestLeaving, useQuestLeaving } from '@/features/assistant/use-quest-leaving';
@@ -167,6 +168,7 @@ function useAnswerOnScreen(
   };
   const shown = useShownAnswer(bubbles, recalculation);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
+  useAskedAgain(shown, position, invitation);
   useEffect(() => {
     shownNow.current = shown;
   });
@@ -216,7 +218,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
       booking,
     },
     ...onScreen,
-    answer: useMenuRaising(onScreen.answer, card.setRaised),
+    answer: useMenuRaising(onScreen.answer, card.setRaised, chat.bubbles),
     lookup: useShownLookup(sceneBubbles, start, kept.hide),
     ...onMap,
     ...useActiveStep(onMap.steps),

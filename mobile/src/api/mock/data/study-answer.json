@@ -1,0 +1,530 @@
+{
+  "input": {
+    "kind": "study",
+    "date": "2026-11-04",
+    "what": "any",
+    "people": [
+      {
+        "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "constraints": []
+      }
+    ],
+    "together": false,
+    "window": {
+      "from": null,
+      "until": null
+    },
+    "area": null,
+    "minutes": null,
+    "chosen": {
+      "seatSpaceId": null,
+      "roomSpaceId": null
+    }
+  },
+  "chips": [
+    {
+      "kind": "origin",
+      "text": "301동에서",
+      "userId": null
+    },
+    {
+      "kind": "what",
+      "text": "공부할 곳",
+      "userId": null
+    }
+  ],
+  "plans": [
+    {
+      "id": "공대 신양학술정보관",
+      "title": "공대 신양학술정보관에서 공부",
+      "place": {
+        "placeId": "6f1b2c3d-0000-4000-8000-000000000441",
+        "label": "공대 신양학술정보관",
+        "latitude": 37.4504,
+        "longitude": 126.9529
+      },
+      "startAt": "2026-11-04T19:12:00+09:00",
+      "endAt": "2026-11-04T22:12:00+09:00",
+      "togetherMinutes": 180,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "name": "나",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-04T19:10:00+09:00",
+          "walkMinutes": 2,
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "3층 자유열람실",
+            "strong": true
+          },
+          {
+            "text": " · 24시간",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["3층 자유열람실: 학기 중 24시간 · 방학 08:00–24:00"],
+      "scene": {
+        "people": [],
+        "places": [
+          {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000441",
+              "label": "공대 신양학술정보관",
+              "latitude": 37.4504,
+              "longitude": 126.9529
+            },
+            "role": "pick",
+            "tag": "공대 신양학술정보관"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+            "role": "me",
+            "from": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "to": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000441",
+              "label": "공대 신양학술정보관",
+              "latitude": 37.4504,
+              "longitude": 126.9529
+            },
+            "minutes": 2
+          }
+        ],
+        "flags": []
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-04T19:00:00+09:00",
+          "endAt": "2026-11-04T22:12:00+09:00"
+        },
+        "now": "2026-11-04T19:10:00+09:00",
+        "lanes": [],
+        "others": [
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a4",
+            "name": "최준호",
+            "busy": [],
+            "walkMinutes": 5
+          }
+        ],
+        "startAt": "2026-11-04T19:12:00+09:00",
+        "endAt": "2026-11-04T22:12:00+09:00",
+        "text": "19:12–22:12"
+      },
+      "study": {
+        "spaces": [
+          {
+            "key": "sinyang-eng-free",
+            "name": "3층 자유열람실",
+            "kind": "reading",
+            "hours": "학기 중 24시간 · 방학 08:00–24:00",
+            "open": "open",
+            "closesAt": null
+          }
+        ],
+        "book": null,
+        "liveSeats": null
+      }
+    },
+    {
+      "id": "관정관",
+      "title": "관정관에서 공부",
+      "place": {
+        "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+        "label": "관정관",
+        "latitude": 37.4594,
+        "longitude": 126.9502
+      },
+      "startAt": "2026-11-04T19:24:00+09:00",
+      "endAt": "2026-11-04T23:00:00+09:00",
+      "togetherMinutes": 216,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "name": "나",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-04T19:10:00+09:00",
+          "walkMinutes": 14,
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "7층 열람실",
+            "strong": true
+          },
+          {
+            "text": " · 23:00까지",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["관정관: 7A·7B·8A열람실 07:00–23:00"],
+      "scene": {
+        "people": [],
+        "places": [
+          {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+              "label": "관정관",
+              "latitude": 37.4594,
+              "longitude": 126.9502
+            },
+            "role": "candidate",
+            "tag": "관정관"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+            "role": "me",
+            "from": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "to": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+              "label": "관정관",
+              "latitude": 37.4594,
+              "longitude": 126.9502
+            },
+            "minutes": 14
+          }
+        ],
+        "flags": []
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-04T19:00:00+09:00",
+          "endAt": "2026-11-04T23:00:00+09:00"
+        },
+        "now": "2026-11-04T19:10:00+09:00",
+        "lanes": [],
+        "others": [
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a4",
+            "name": "최준호",
+            "busy": [],
+            "walkMinutes": 17
+          }
+        ],
+        "startAt": "2026-11-04T19:24:00+09:00",
+        "endAt": "2026-11-04T23:00:00+09:00",
+        "text": "19:24–23:00"
+      },
+      "study": {
+        "spaces": [
+          {
+            "key": "kwanjeong",
+            "name": "관정관",
+            "kind": "reading",
+            "hours": "7A·7B·8A열람실 07:00–23:00",
+            "open": "open",
+            "closesAt": "23:00"
+          }
+        ],
+        "book": {
+          "spaceId": "7F-7A-zone2"
+        },
+        "liveSeats": "kwanjeong"
+      }
+    },
+    {
+      "id": "법학도서관",
+      "title": "법학도서관에서 공부",
+      "place": {
+        "placeId": "6f1b2c3d-0000-4000-8000-000000000072",
+        "label": "법학도서관",
+        "latitude": 37.4615,
+        "longitude": 126.9512
+      },
+      "startAt": "2026-11-04T19:26:00+09:00",
+      "endAt": "2026-11-05T01:00:00+09:00",
+      "togetherMinutes": 334,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "name": "나",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-04T19:10:00+09:00",
+          "walkMinutes": 16,
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "열람실",
+            "strong": true
+          },
+          {
+            "text": " · 01:00까지",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["열람실: 06:00–01:00"],
+      "scene": {
+        "people": [],
+        "places": [
+          {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000072",
+              "label": "법학도서관",
+              "latitude": 37.4615,
+              "longitude": 126.9512
+            },
+            "role": "candidate",
+            "tag": "법학도서관"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+            "role": "me",
+            "from": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "to": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000072",
+              "label": "법학도서관",
+              "latitude": 37.4615,
+              "longitude": 126.9512
+            },
+            "minutes": 16
+          }
+        ],
+        "flags": []
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-04T19:00:00+09:00",
+          "endAt": "2026-11-05T01:00:00+09:00"
+        },
+        "now": "2026-11-04T19:10:00+09:00",
+        "lanes": [],
+        "others": [
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a4",
+            "name": "최준호",
+            "busy": [],
+            "walkMinutes": 19
+          }
+        ],
+        "startAt": "2026-11-04T19:26:00+09:00",
+        "endAt": "2026-11-05T01:00:00+09:00",
+        "text": "19:26–01:00"
+      },
+      "study": {
+        "spaces": [
+          {
+            "key": "law-reading",
+            "name": "열람실",
+            "kind": "reading",
+            "hours": "06:00–01:00",
+            "open": "open",
+            "closesAt": "01:00"
+          }
+        ],
+        "book": null,
+        "liveSeats": null
+      }
+    },
+    {
+      "id": "인문대 신양학술정보관",
+      "title": "인문대 신양학술정보관에서 공부",
+      "place": {
+        "placeId": "6f1b2c3d-0000-4000-8000-000000000004",
+        "label": "인문대 신양학술정보관",
+        "latitude": 37.4601,
+        "longitude": 126.9531
+      },
+      "startAt": "2026-11-04T19:25:00+09:00",
+      "endAt": "2026-11-04T22:25:00+09:00",
+      "togetherMinutes": 180,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "name": "나",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "basis": "location"
+          },
+          "leaveAt": "2026-11-04T19:10:00+09:00",
+          "walkMinutes": 15,
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "1층 라운지",
+            "strong": true
+          }
+        ],
+        [
+          {
+            "text": "여는 시간을 몰라요",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": ["1층 라운지: 여는 시간 정보 없음"],
+      "scene": {
+        "people": [],
+        "places": [
+          {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000004",
+              "label": "인문대 신양학술정보관",
+              "latitude": 37.4601,
+              "longitude": 126.9531
+            },
+            "role": "candidate",
+            "tag": "인문대 신양학술정보관"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+            "role": "me",
+            "from": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "to": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000004",
+              "label": "인문대 신양학술정보관",
+              "latitude": 37.4601,
+              "longitude": 126.9531
+            },
+            "minutes": 15
+          }
+        ],
+        "flags": []
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-04T19:00:00+09:00",
+          "endAt": "2026-11-04T22:25:00+09:00"
+        },
+        "now": "2026-11-04T19:10:00+09:00",
+        "lanes": [],
+        "others": [
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a4",
+            "name": "최준호",
+            "busy": [],
+            "walkMinutes": 18
+          }
+        ],
+        "startAt": "2026-11-04T19:25:00+09:00",
+        "endAt": "2026-11-04T22:25:00+09:00",
+        "text": "19:25–22:25"
+      },
+      "study": {
+        "spaces": [
+          {
+            "key": "sinyang-hum-lounge",
+            "name": "1층 라운지",
+            "kind": "lounge",
+            "hours": null,
+            "open": "unknown",
+            "closesAt": null
+          }
+        ],
+        "book": null,
+        "liveSeats": null
+      }
+    }
+  ],
+  "dropped": [
+    {
+      "place": {
+        "placeId": "6f1b2c3d-0000-4000-8000-000000000058",
+        "label": "경영학도서관",
+        "latitude": 37.4621,
+        "longitude": 126.9476
+      },
+      "reason": "경영대학 학생만 쓸 수 있어요"
+    }
+  ],
+  "closed": [
+    {
+      "place": {
+        "placeId": "6f1b2c3d-0000-4000-8000-000000000016",
+        "label": "사회과학도서관",
+        "latitude": 37.4622,
+        "longitude": 126.9499
+      },
+      "notices": ["오늘 18:00에 닫았어요"]
+    }
+  ],
+  "noPlan": null,
+  "choosable": true
+}

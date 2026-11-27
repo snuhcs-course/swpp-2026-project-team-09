@@ -5,17 +5,18 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
 import type { Board, JoinPolicy, Person, SubQuest } from '@/api/types';
 import type { MyJoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
-import { koreaClock, koreaDay, koreaShortDate, sameKoreaDay } from '@/korea-time';
+import { koreaClock, koreaDay } from '@/korea-time';
 import { shownSubQuest } from '@/features/quests/adapter';
 
-// A recruiting post, as 찾기's cards, a board and 파티 모집글 show it: another's recruiting Quest, or one of the
-// User's own Quests.
+// A recruiting post, as 찾기's cards and 파티 모집글 show it: another's recruiting Quest, or one of the User's own
+// Quests.
 
 // How the post reads to the User: its Leader, another Holder, or one who may join an Open Quest or ask to join an
 // Approval one, with the request that waits. `removed`: the Leader removed the User, so that even an Open Quest takes
@@ -202,11 +203,4 @@ export function boardPosts(
     .map((entry) => entryPost(entry, requests, [], removedIds))
     .filter((post) => hasRoom(post));
   return [...own, ...others].toSorted(newestFirst);
-}
-
-// When a post was made: "13:21" today, "10/03 (토) 15:57" before.
-export function postedWords(createdAt: string, today: Date): string {
-  const instant = new Date(createdAt);
-  const clock = koreaClock(createdAt);
-  return sameKoreaDay(instant, today) ? clock : `${koreaShortDate(instant)} ${clock}`;
 }

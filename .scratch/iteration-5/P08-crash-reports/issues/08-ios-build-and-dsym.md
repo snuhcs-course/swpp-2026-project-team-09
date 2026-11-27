@@ -1,7 +1,7 @@
 # 08: iOS: the build, its dSYM upload and its check
 
 Parent: [P08 spec](../spec.md)
-Status: needs-info
+Status: ready-for-human
 Blocked by: 07
 
 Native files: none in the repository beyond ticket 02's. Releases: the iOS build by hand.
@@ -22,3 +22,8 @@ made, and the app's code for iOS is ticket 02's all the same.
 - [ ] The test error from an iPhone is in Sentry with a readable stack, and nothing arrives with the switch off.
 
 ## Comments
+
+### On hold (2026-11-26)
+
+The beta has iPhones, so this ticket is needed. The owner has no Mac or iPhone for the build, so it waits for a team
+member who has them to build and check it. Until then the app's code for iOS is ticket 02's, unchecked on a device.

@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,16 +14,16 @@ import request from 'supertest';
 import { z } from 'zod';
 import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
+import { connect, ownDatabase } from './containers.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
 import { patchProfile } from './profile.js';
-import { connectToDatabase } from './quests.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
 
 // The stage of the room requests: the app on a clock that stands at Wednesday 2026-11-04 10:05 in Korea, as the
-// library tools' stage does. Requests are for Thursday 2026-11-05, so that only a file that moves the clock on that
-// day expires them; every file asks as Users of its own.
+// library tools' stage does, and on a database of its own (ownDatabase): a read of a room request expires every request
+// in the database and applies every deadline by the file's own clock. Requests are for Thursday 2026-11-05.
 
 export const NOW = new Date('2026-11-04T10:05:00+09:00');
 
@@ -99,16 +100,21 @@ export class RoomStage {
   // Every reply body the stage received, to look for a 학번 in.
   readonly replies: string[] = [];
 
-  async start(settings: Record<string, string | undefined>): Promise<void> {
-    this.app = await startApp(settings, [], refuseKakao);
+  private dropDatabase!: () => Promise<void>;
+
+  async start(settings: { DATABASE_URL: string } & Record<string, string | undefined>): Promise<void> {
+    const database = await ownDatabase(settings);
+    this.dropDatabase = database.drop;
+    this.app = await startApp(database.settings, [], refuseKakao);
     this.clock = this.app.get<Clock>(CLOCK);
     vi.spyOn(this.clock, 'now').mockReturnValue(NOW);
-    this.prisma = connectToDatabase();
+    this.prisma = connect(database.url);
   }
 
   async stop(): Promise<void> {
     await this.prisma.$disconnect();
     await this.app.close();
+    await this.dropDatabase();
   }
 
   // A User with a 학번 and a registered name in 내 정보, unless `details` is false.

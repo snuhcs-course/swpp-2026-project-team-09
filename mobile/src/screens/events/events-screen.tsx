@@ -8,11 +8,12 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { color, EmptyState, ErrorState, eventText, IconButton, LoadingState, space } from '@/design-system';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { color, EmptyState, ErrorState, IconButton, LoadingState, space } from '@/design-system';
 import { type EventFilter, type EventSources, type EventView, toEventViews } from '@/features/events/adapter';
 import type { Quest } from '@/api/types';
 import { useEventSources } from '@/features/events/use-events';
@@ -46,9 +47,6 @@ function List({ sources, filter, search, focused, scroll, onCardAt, onOpen, onPa
   }
   return (
     <ScrollView contentContainerStyle={styles.list} ref={scroll}>
-      <Text accessibilityRole="header" style={styles.heading}>
-        다가오는 행사
-      </Text>
       {views.map((event) => (
         <EventRow
           event={event}
@@ -85,9 +83,12 @@ function Sheets({ opened, onOpen, sheets, quests }: SheetsProps): ReactElement {
         onClose={() => {
           onOpen(null);
         }}
-        onParty={(event) => {
-          onOpen(null);
-          sheets.setRecruitEvent(event);
+        action={{
+          kind: 'party',
+          onPress: (event) => {
+            onOpen(null);
+            sheets.setRecruitEvent(event);
+          },
         }}
       />
       <EventSheets quests={quests} sheets={sheets} />
@@ -155,5 +156,4 @@ const styles = StyleSheet.create({
   // The frame draws the tab white under its app bar.
   ground: { flex: 1, backgroundColor: color.surface },
   list: { paddingHorizontal: space[4], paddingBottom: space[6] },
-  heading: { ...eventText.heading, marginTop: 6, color: color.inkMuted },
 });

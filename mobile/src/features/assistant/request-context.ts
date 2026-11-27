@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { RequestContext } from '@/api/assistant-types';
@@ -19,5 +20,9 @@ export function contextFor(
 ): MentionedContext {
   const said = withSaidOf(context, bubbles);
   const replied = bubbles.some(({ role, failure }) => role === 'assistant' && failure === null);
-  return replied ? said : { ...said, conditions: null, planId: null };
+  if (replied) {
+    return said;
+  }
+  const { planIds: _listed, ...rest } = said;
+  return { ...rest, conditions: null, planId: null };
 }

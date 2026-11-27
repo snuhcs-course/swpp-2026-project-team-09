@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen } from './support/app';
@@ -107,14 +108,14 @@ describe('the map of the main screen, closer', () => {
 });
 
 describe('the map of the main screen, closest', () => {
-  it('writes the full name under a person and no words under a place', async () => {
+  it("writes the full name under a person, and a place's short name in its tag", async () => {
     const user = await openMain();
 
+    await zoomIn(user, 3);
     await press(user, FRIEND);
-    await press(user, '가까이 보기');
 
     expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
-    expect(lookOf(DINNER)).toBe('party:pin');
+    expect(lookOf(DINNER)).toBe('party:pin:label="저녁 약속"');
     expect(wordsUnder(FRIEND, '김민준')).toBeVisible();
     expect(wordsUnder(DINNER, '저녁 약속')).toBeNull();
   });
@@ -122,8 +123,7 @@ describe('the map of the main screen, closest', () => {
   it("writes the full name under a member of the User's Party too", async () => {
     const user = await openMain();
 
-    await press(user, MEMBER);
-    await press(user, '가까이 보기');
+    await zoomIn(user, 3);
 
     expect(wordsUnder(MEMBER, '오현우')).toBeVisible();
   });
@@ -131,12 +131,12 @@ describe('the map of the main screen, closest', () => {
   it('writes no words under a Global Event or a Party, which keep their names for a screen reader', async () => {
     const user = await openMain();
 
+    await zoomIn(user, 3);
     await press(user, EVENT);
-    await press(user, '가까이 보기');
 
     // The Global Event "AI 커리어 설명회" and the Party "AI 커리어 설명회 같이 가요", which stand side by side.
-    expect(lookOf(EVENT)).toBe('official:pin:starred:selected');
-    expect(lookOf(PARTY)).toBe('party:pin:4');
+    expect(lookOf(EVENT)).toBe('official:pin:starred:selected:label="AI 커리어"');
+    expect(lookOf(PARTY)).toBe('party:pin:4:label="AI 커리어"');
     expect(wordsUnder(EVENT, 'AI 커리어')).toBeNull();
     expect(wordsUnder(PARTY, 'AI 커리어')).toBeNull();
   });

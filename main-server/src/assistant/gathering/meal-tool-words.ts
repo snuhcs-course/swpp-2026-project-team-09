@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type CuisineWord } from '../../menus/cuisine-words.js';
@@ -13,6 +14,10 @@ import { clockOf } from '../free-time/free-time.js';
 import { othersText } from '../others-text.js';
 import { type BusyItem } from './meal-plan-parts.js';
 import { type AlreadyIn } from './meal-adding.js';
+import { listPrice, menuWords, type ServedMenu } from './meal-menu.js';
+import { type PriceCondition, planPriceWords, priceConditionWords } from './meal-price.js';
+import { orderWords } from './plan-order.js';
+import { timesAndWays } from './plan-times.js';
 
 // What planMeal tells the model beside the plans: the Restaurants that serve the kind of food on screen, the meal the
 // User already put in their schedule, and the User's items that fill the meal's time when none is free.
@@ -107,3 +112,33 @@ export const busyWords = (busy: readonly BusyItem[]): object =>
           end,
         })),
       };
+
+// The Restaurant's menu for the meal in words and when it closes, so that a User who picks by food is answered from
+// the plans.
+function planWords(plan: Plan, served: ReadonlyMap<string, ServedMenu>, condition: PriceCondition): object {
+  const menu = served.get(plan.id);
+  const words = menu === undefined ? {} : { menu: menuWords(menu.lines), closesAt: menu.closesAt };
+  const price = plan.menu === undefined ? null : listPrice(plan.menu);
+  const priced = planPriceWords(plan, condition);
+  return { restaurant: plan.id, ...words, ...(price === null ? {} : { price }), ...priced, ...timesAndWays(plan) };
+}
+
+// The plans in words for the model, and with a kind of food, the Restaurants that serve it.
+export function plannedWords(
+  answer: AnswerReply,
+  served: ReadonlyMap<string, ServedMenu>,
+  { meal, kind }: { meal: MealInput['meal']; kind: CuisineWord | null },
+): object {
+  const condition = answer.input.kind === 'meal' ? answer.input : {};
+  return {
+    result: 'planned',
+    meal,
+    plans: answer.plans.map((plan) => planWords(plan, served, condition)),
+    ...priceConditionWords(answer.plans, condition),
+    dropped: answer.dropped.map(({ place }) => place.label),
+    ...(kind === null ? {} : { cuisine: kind, servedBy: servingKind(answer.plans, kind) }),
+    ...orderWords(answer.plans),
+    ...alreadySetWords(answer.mealSet, answer.planSet),
+    ...relatedWords(answer.related),
+  };
+}

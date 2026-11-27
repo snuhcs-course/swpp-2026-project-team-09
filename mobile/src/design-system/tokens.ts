@@ -14,6 +14,7 @@
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -57,16 +58,21 @@ export const color = {
   dangerSoft: '#FCE8E8',
   warning: '#9A5200',
   warningSoft: '#FDF1E0',
-  svcDining: '#B8336A',
-  svcDiningSoft: '#FBE7EF',
+  // The 식당 layer's coral (changelog 11.24 § 4-5), dark enough for white words on it (4.96:1): its button, a 식당's
+  // card and the chat's restaurant cards. The pin itself is the lighter `pinDining`.
+  svcDining: '#C4452C',
+  svcDiningSoft: '#FCEBE6',
   // A meal answer's Restaurants on the map and in its list (P04 ticket 85, the user's "3안"): coral and its soft ground.
-  // The values PR 572 gives `svcDining` and `svcDiningSoft`, kept apart from today's magenta `svcDining`.
+  // The same coral as `svcDining`, kept as their own tokens so the meal answer's marks stay put if the layer's colour changes.
   meal: '#C4452C',
   mealSoft: '#FCEBE6',
   svcShuttle: '#6B46C1',
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
   svcStudySoft: '#E3F1FA',
+  // The 식당 layer's pin, as the changelog of 11.24 (§ 4-5) colours it. 공부공간 keeps `svcStudy` for its pin too: the
+  // changelog's sky sank into the map's light-blue campus.
+  pinDining: '#EE6A4C',
   // A meal Plan's way on to the next fixed thing, a lighter band under the way there (P04 ticket 76). On foot, a mid
   // blue at about half of `snuBlue`'s strength, at least 3:1 against the map's light blue campus, where a paler blue
   // sank into it. By the shuttle, the purple of `svcShuttle` at about a third, which stands apart by its hue. Opaque,
@@ -103,6 +109,9 @@ export const shadow = {
   // Around a small mark that sits on the map itself, as the `Main` frame draws it: the dot of a Friend's row and the
   // round of a Quest's row. A white ring of 2 over a soft shadow.
   mapMark: '0 0 0 2px #FFFFFF, 0 1px 4px rgba(14, 19, 48, 0.25)',
+  // Around a Quest's round on the map, lighter than `mapMark`, as the changelog of 11.24 (§ 4-1) and the `Main` board
+  // draw it: a white ring of 2 at 80% over a soft shadow.
+  mapQuestMark: '0 0 0 2px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(14, 19, 48, 0.14)',
   // Around the rail that joins the Quest list's rows, as the `Main` frame draws it: a white ring of 1.5.
   mapRail: '0 0 0 1.5px #FFFFFF',
   // Under a floating button in the key colour, as the `Main` frame draws "활성 파티": the floating shadow, darker.
@@ -119,8 +128,12 @@ export const halo = {
   selected: 'rgba(0, 26, 114, 0.18)',
   // Around a selected dot, as the `Main` frame draws it: the key colour at 25%.
   selectedDot: 'rgba(0, 26, 114, 0.25)',
-  // Around merged study pins, the frame's translucent outer square: the study colour at 22%.
-  study: 'rgba(3, 105, 161, 0.22)',
+  // Around merged study pins, the `Main` board's see-through outer round: the study colour at 20%, with a rim of it
+  // at 25%.
+  study: 'rgba(3, 105, 161, 0.2)',
+  studyRim: 'rgba(3, 105, 161, 0.25)',
+  // Around a chosen tag of the map, as the `Main` board rings it: the key colour at 16%.
+  selectedTag: 'rgba(0, 26, 114, 0.16)',
 } as const;
 
 // The glass layer's surfaces, as the changelog of 11.24 (§ 5-1) sets their grounds and its Mf5Kit board draws the
@@ -158,13 +171,13 @@ export const presence = {
   member: color.party,
 } as const;
 
-// The colour of a row of the main screen's Quest list, which its round, its kicker and its icon share, as the `Main`
-// frame draws them: a class in the muted ink; `open`, a Party that others may join, in a blue that no token of the
-// design system names; `closed`, a Party that takes nobody else and a Shared Quest, in the Party's colour.
+// The colours of a row of the Quest list, on the map and on the whole screen, as the changelog of 11.24 (§ 4-1) sets
+// them: a class's round and kicker in the muted ink; every Party's round in the key colour, told apart by its icon, and
+// its kicker near-black.
 export const questTone = {
-  class: color.inkMuted,
-  open: '#2F6FC0',
-  closed: color.party,
+  class: { round: color.inkMuted, kicker: color.inkMuted },
+  open: { round: color.snuBlue, kicker: color.ink },
+  closed: { round: color.snuBlue, kicker: color.ink },
 } as const;
 
 // The 새내기 튜토리얼's warm look, as the `Main` and `Profile` frames draw it: the Quest colour's ink on a cream ground.
@@ -297,27 +310,25 @@ export const mapText = {
   smallLine: { fontFamily: font.medium, fontSize: 10, lineHeight: 13 },
 } as const satisfies Record<string, TextStyle>;
 
-// The text of the 행사 tab and its sheet, as the `Events` frame draws it: sizes the eight styles lack. The frame's weight
-// 800 is drawn in Bold, the heaviest the app loads.
+// The text of the 행사 tab and its sheet, as the `Events` frame draws it and P06 ticket 15 made the list's smaller: sizes
+// the eight styles lack. The frame's weight 800 is drawn in Bold, the heaviest the app loads.
 export const eventText = {
   // The day of the month in the date column, and the month and day name under it.
-  day: { fontFamily: font.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.48 },
-  dayLine: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
-  // The source over the title.
+  day: { fontFamily: font.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.44 },
+  dayLine: { fontFamily: font.medium, fontSize: 12, lineHeight: 16 },
+  // The source over the 관련 행사 picker's title.
   source: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
-  title: { fontFamily: font.bold, fontSize: 20, lineHeight: 28, letterSpacing: -0.3 },
+  title: { fontFamily: font.bold, fontSize: 16, lineHeight: 23, letterSpacing: -0.24 },
   // The time and the place.
-  line: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
+  line: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
   // The filters, chosen and not.
   filter: { fontFamily: font.medium, fontSize: 16, lineHeight: 22 },
   filterChosen: { fontFamily: font.bold, fontSize: 16, lineHeight: 22 },
-  // "다가오는 행사".
-  heading: { fontFamily: font.bold, fontSize: 16, lineHeight: 24 },
   // "모집 중인 파티 {n}", and "함께 갈 파티 찾기".
-  party: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
-  partyFind: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 20 },
-  // The detail sheet, whose title is `text.titleLg`: a row's key and value, and the description.
-  key: { fontFamily: font.medium, fontSize: 14, lineHeight: 22 },
-  value: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22 },
-  description: { fontFamily: font.regular, fontSize: 15, lineHeight: 23 },
+  party: { fontFamily: font.bold, fontSize: 13, lineHeight: 18 },
+  partyFind: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18 },
+  // The detail sheet: its title, the time's and the place's value, and the description.
+  sheetTitle: { fontFamily: font.bold, fontSize: 21, lineHeight: 29, letterSpacing: -0.315 },
+  value: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 21 },
+  description: { fontFamily: font.regular, fontSize: 14, lineHeight: 22 },
 } as const satisfies Record<string, TextStyle>;

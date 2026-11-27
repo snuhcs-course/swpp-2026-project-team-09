@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerOffer, REFUSAL_SCREENS, type WithMissing } from '@/api/refusal-types';
@@ -12,8 +13,12 @@ import { field, isText, listOf } from './answers';
 
 function isAnswerOffer(value: unknown): value is AnswerOffer {
   const screen = field(value, 'screen');
+  const hint = field(value, 'hint');
   return (
-    field(value, 'kind') === 'open' && isText(field(value, 'label')) && REFUSAL_SCREENS.some((one) => one === screen)
+    field(value, 'kind') === 'open' &&
+    isText(field(value, 'label')) &&
+    REFUSAL_SCREENS.some((one) => one === screen) &&
+    (hint === undefined || isText(hint))
   );
 }
 

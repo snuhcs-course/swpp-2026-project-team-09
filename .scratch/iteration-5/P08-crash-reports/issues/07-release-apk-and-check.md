@@ -1,7 +1,7 @@
 # 07: The Release, the 1.0.4 APK to the testers, and the check on the Release's build
 
 Parent: [P08 spec](../spec.md)
-Status: ready-for-human
+Status: done
 Blocked by: 02, 03, 04, 05, 06
 
 Native files: none. Releases: `all` or `app`, by a person.
@@ -29,3 +29,14 @@ Native files: none. Releases: `all` or `app`, by a person.
 - [ ] The testers have the 1.0.4 APK before they start. The beta test starts on 2026-11-25.
 
 ## Comments
+
+### The check on a phone (2026-11-26)
+
+- Steps 1 and 2: the retention was read on the account and put in the policy (#549), `PRODUCTION_APP_SENTRY_DSN` was
+  set, and the Release `snunow/all/26.11.25-1` published the bundle. The 1.0.4 APK had been built by the Release of
+  2026-11-24, so this Release published an update only; a phone on 1.0.4 takes it on its next starts.
+- Step 3 and the arrival in step 4: the owner sent the test error from a phone on that update, and it arrived in
+  Sentry. It was also posted in `#team9-app-crash` (ticket 09).
+- Not recorded here: the stack's file and line, the tags, the event's contents beyond its arrival, step 5 (the switch
+  off) and a screenshot. The owner closed the ticket on 2026-11-26 with these left unchecked, so the criteria above
+  stay unticked as a record of what was not written down; ticket 04's last criterion stays open for the same reason.

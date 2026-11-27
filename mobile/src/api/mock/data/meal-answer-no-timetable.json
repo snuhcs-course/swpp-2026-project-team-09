@@ -973,7 +973,8 @@
     {
       "kind": "open",
       "label": "시간표 넣기",
-      "screen": "timetable"
+      "screen": "timetable",
+      "hint": "시간표를 넣으면 나설 시각까지 알려 드려요"
     }
   ],
   "note": "시간표를 넣으면 나설 시각까지 알려 드려요"

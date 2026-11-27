@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Tool } from '../feature.js';
@@ -44,6 +45,7 @@ export function answeringOptions(drawsAnswers: boolean): LibraryToolOptions {
   return {
     fillsSeatTime: drawsAnswers,
     notesOwnPress: drawsAnswers,
+    refusesClosedToday: drawsAnswers,
     picksStudyTime: drawsAnswers,
     picksFirstSeat: drawsAnswers,
   };

@@ -13,8 +13,8 @@ import { z } from 'zod';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { closureNotices } from '../../menus/open-rule.js';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
-import { mealWindow } from '../free-time/meal-fit.js';
-import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { mealByClock, mealWindow } from '../free-time/meal-fit.js';
+import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { dayWordsFrom, koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { resolved } from '../tools/resolved.js';
@@ -27,7 +27,12 @@ import { type MenuFound, type MenuLookupService } from './menu.service.js';
 
 const input = z.object({
   date: dateInput,
-  meal: z.enum(['lunch', 'dinner']).describe('lunch or dinner.'),
+  meal: z
+    .enum(['lunch', 'dinner'])
+    .optional()
+    .describe(
+      "lunch or dinner, only when the User's words name the meal (점심, 저녁). Left out otherwise: the server opens the meal nearest in time, today the one being served now or the next one, on another day lunch, and the app's tabs show the other.",
+    ),
   restaurant: z
     .string()
     .trim()
@@ -68,7 +73,11 @@ function reasonOf(
 }
 
 // The Restaurants the words name, else those at the Place the User tapped; null with neither.
-function namesOf(menus: MenuLookupService, words: string | undefined, tapped: string | null): string[] | null {
+function namesOf(
+  menus: Pick<MenuLookupService, 'named' | 'at'>,
+  words: string | undefined,
+  tapped: string | null,
+): string[] | null {
   if (words !== undefined) {
     return menus.named(words);
   }
@@ -87,15 +96,17 @@ function planningAt({ now, context, capabilities }: Pick<ToolContext, 'now' | 'c
   return { now, location, locationMissing, setsAside: capabilities.has('plan-set') };
 }
 
-export function findMenu(menus: MenuLookupService): Tool {
+export function findMenu(menus: Pick<MenuLookupService, 'named' | 'at' | 'find'>): Tool {
   return defineTool({
     description:
-      "Shows one Restaurant's menu for lunch or dinner of a day from today to a week ahead: the app opens it as a meal plan's place, with its menu, when the User is there and the way, and the button to make it. Answers result 'found' with the Restaurant, when its menu was collected (collectedAt), the menu's lines, and when the User can eat there (start, end, eatingMinutes) and from where; result 'several' with the Restaurants the words could name; or result 'none' with the reason.",
+      "Shows one Restaurant's menu for lunch or dinner of a day from today to a week ahead, the meal nearest in time when none is given: the app opens it as a meal plan's place, with its menu, when the User is there and the way, and the button to make it. Answers result 'found' with the Restaurant, when its menu was collected (collectedAt), the menu's lines, and when the User can eat there (start, end, eatingMinutes) and from where; result 'several' with the Restaurants the words could name; or result 'none' with the reason.",
     input,
-    run: async ({ date, meal, restaurant }, { userId, now, context, presented, capabilities }) => {
+    run: async ({ date, meal: named, restaurant }, { userId, now, context, presented, capabilities }) => {
       if (outOfReach(date, now)) {
-        return noDay(date);
+        return outOfReachDay(date, presented);
       }
+      // A menu asked with no meal ("내일 예술계 메뉴") opens the meal nearest in time (P05 ticket 52).
+      const meal = named ?? mealByClock(date, now);
       const names = namesOf(menus, restaurant, context.tapped?.kind === 'place' ? context.tapped.placeId : null);
       if (names === null) {
         return noneFound('Give the words of the Restaurant the User named.');
@@ -140,7 +151,7 @@ export function findMenu(menus: MenuLookupService): Tool {
 // answers.
 export const MENU_RULES = `A Restaurant's menu is shown by the app: the server finds the menu, the way there, and how long the User can eat before their next item, and the app shows them as that Restaurant opened from a meal plan's list, with its menu, its time, and the button to make it.
 
-- When the User asks for the menu of a Restaurant they name (오늘 301동식당 메뉴 뭐야?, 자하연 점심 뭐 나와?), call findMenu with the day (when they name none, the day the conversation is about, such as the day of the plan on the screen or of the question before; else today), the meal (lunch or dinner; when they name none, the one being served now or the next one), and their words for the Restaurant as restaurant. Do not call getMenus for it. A line [Tapped: place …] with no Restaurant named (여기 메뉴 뭐야?) leaves restaurant out.
+- When the User asks for the menu of a Restaurant they name (오늘 301동식당 메뉴 뭐야?, 자하연 점심 뭐 나와?), call findMenu with the day (when they name none, the day the conversation is about, such as the day of the plan on the screen or of the question before; else today), the meal only when their words name one (lunch for 점심, dinner for 저녁; left out otherwise, such as for 내일 예술계 메뉴: the server opens the meal nearest in time, and the app's tabs show the other), and their words for the Restaurant as restaurant. Do not call getMenus for it, also when they name no meal or ask for the whole day's menu. A line [Tapped: place …] with no Restaurant named (여기 메뉴 뭐야?) leaves restaurant out.
 - Only a question about what a Restaurant the User names serves is a menu question. One that names no Restaurant (오늘 점심 뭐야?, 월요일에 뭐 먹을까, 한식 뭐 있어?) is a meal wish: call planMeal by the meal rules, whose plans carry their menus, and never list menus in words. A question about breakfast, which planMeal does not plan, is answered with getMenus.
 - When findMenu answers several, ask which one, listing the names, and call it again with the name the User chose. When it answers none because no Restaurant on the map has that name, call getMenus with the same words.
 - When findMenu answers found, write nothing: the app shows the menu, the time, and the way. Never list the menu or its dishes in words, and do not call showOnMap for a menu.

@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -111,7 +112,7 @@ describe('A seat asked for today without a start, from an app that draws answers
     expect(result).toEqual({
       result: 'shown',
       summary:
-        '7층 7A 열람실 2 구역, 오늘 14:00–20:00 예약 카드를 보여 줬어요. 13:54에 도착해 14:00부터예요. 16:00 수업이라 15:56엔 나서요. 20:00까지 쓰지 않으면 카드에서 끝 시간을 당겨요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
+        '7층 7A 열람실 2 구역, 오늘 14:00–20:00 예약을 아래에 띄웠어요. 13:54에 도착해 14:00부터예요. 16:00 수업이라 15:56엔 나서요. 20:00까지 쓰지 않으면 카드에서 끝 시간을 당겨요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
       arrival: { at: '13:54', from: places.b24.name, walkMinutes: 4 },
       leaveBy: { at: '15:56', for: '수업', start: '16:00' },
     });
@@ -125,7 +126,7 @@ describe('A seat asked for today without a start, from an app that draws answers
     expect(result).toEqual({
       result: 'shown',
       summary:
-        '7층 7A 열람실 2 구역, 오늘 14:00–16:00 예약 카드를 보여 줬어요. 13:54에 도착해 14:00부터예요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
+        '7층 7A 열람실 2 구역, 오늘 14:00–16:00 예약을 아래에 띄웠어요. 13:54에 도착해 14:00부터예요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
       arrival: { at: '13:54', from: places.b24.name, walkMinutes: 4 },
       leaveBy: null,
     });
@@ -156,7 +157,7 @@ describe('A User who asks the Assistant to book it, from an app that draws answe
     expect(result).toMatchObject({
       result: 'shown',
       summary:
-        '7층 7A 열람실 2 구역, 오늘 14:00–20:00 예약 카드를 보여 줬어요. 13:54에 도착해 14:00부터예요. 16:00 수업이라 15:56엔 나서요. 20:00까지 쓰지 않으면 카드에서 끝 시간을 당겨요. 대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
+        '7층 7A 열람실 2 구역, 오늘 14:00–20:00 예약을 아래에 띄웠어요. 13:54에 도착해 14:00부터예요. 16:00 수업이라 15:56엔 나서요. 20:00까지 쓰지 않으면 카드에서 끝 시간을 당겨요. 대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
     });
     expect(model.system()).toContain('"그냥 예약해 줘" or "예약까지 해 줘"');
   });
@@ -169,7 +170,7 @@ describe('From an app that draws answers, as today', () => {
     expect(result).toEqual({
       result: 'shown',
       summary:
-        '7층 7A 열람실 2 구역, 오늘 17:00–18:00 예약 카드를 보여 줬어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
+        '7층 7A 열람실 2 구역, 오늘 17:00–18:00 예약을 아래에 띄웠어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
     });
     expect(cards[0]?.notes.some((note) => note.includes('채웠어요'))).toBe(false);
     expect(cards[0]).not.toHaveProperty('arrival');

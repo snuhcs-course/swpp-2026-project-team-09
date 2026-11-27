@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -88,7 +89,8 @@ describe('the Timetable card', () => {
     await choose(user, '종료 시각 · 시', '14');
     await user.press(screen.getByRole('button', { name: '저장' }));
     await pass(500);
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    // Back from 시간표 to the map.
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(500);
 
     expect(server.received('POST /timetable/classes')).toHaveLength(1);

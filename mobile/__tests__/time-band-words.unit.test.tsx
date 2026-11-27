@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -28,15 +29,7 @@ const noop = (): void => undefined;
 
 function element(props: Partial<Props>): ReactElement {
   return (
-    <TimeBand
-      band={band}
-      disabled={false}
-      focus={null}
-      ghost={null}
-      onDrop={noop}
-      fixed={{ from: null, until: null }}
-      {...props}
-    />
+    <TimeBand band={band} disabled={false} focus={null} onDrop={noop} fixed={{ from: null, until: null }} {...props} />
   );
 }
 
