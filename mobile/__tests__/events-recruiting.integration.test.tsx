@@ -16,15 +16,14 @@ import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { answerEvents, card, CAREER, MY_CAREER, openEvents, SEO_YEON_GOING, TAE_O_GOING } from './support/events';
-import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { EVENT, lookOf, press, zoomIn } from './support/markers';
+import { givePhone, ON_CAMPUS } from './support/main';
 import { requestFor } from './support/party';
 import { startFresh } from './support/mocks';
 import { answer, MIN_JUN_HOLDER, toast } from './support/room';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
-// 파티 찾기/모집 from an event's row on the 행사 tab and 같이 갈 사람 찾기 on the map: the Quests gathering for a Global Event, joining
-// one, and recruiting one's own, against the fake main server.
+// 파티 찾기/모집 from an event's row on the 행사 tab: the Quests gathering for a Global Event, joining one, and recruiting
+// one's own, against the fake main server. The map's event card is in `map-event-card.integration.test.tsx`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -272,23 +271,6 @@ describe('+ 파티 모집 with a Quest the User holds alone for the event', () =
     await openSheet(user);
 
     await user.press(screen.getByRole('button', { name: '파티 모집' }));
-    await pass(500);
-
-    expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
-  });
-});
-
-describe("the map's event card", () => {
-  it('counts the Quests gathering for the event, and opens 파티 만들기 with it', async () => {
-    // A Favorite Event, which the everyday map keeps.
-    answerEvents(server, { events: [{ ...CAREER, favorite: true }] });
-    const user = await openMain();
-    await zoomIn(user, 2);
-    expect(lookOf(EVENT)).toBe('official:pin:2:starred');
-
-    await press(user, EVENT);
-    expect(screen.getByText('같이 갈 파티 2개 모집 중')).toBeVisible();
-    await press(user, '같이 갈 사람 찾기');
     await pass(500);
 
     expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
