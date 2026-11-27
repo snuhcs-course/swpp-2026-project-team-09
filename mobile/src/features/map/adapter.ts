@@ -34,7 +34,7 @@ import {
 } from '@/features/quests/adapter';
 import { placeWithRoom } from '@/features/quests/booked-room';
 import { type RequestFlag, requestFlagOf, requestWords } from '@/features/quests/room-request-flag';
-import { koreaClock, koreaDay } from '@/korea-time';
+import { dayAndClock } from '@/korea-time';
 import { eventCards } from './event-cards';
 import { placeGroupId } from './place-groups';
 import { givenName, shortTitle, withParticle } from './short-name';
@@ -217,8 +217,7 @@ export interface MapSources {
 function openPartyCard(
   questId: string,
   party: QuestParty,
-  start: string | null,
-  label: string,
+  { start, label, now }: { start: string | null; label: string; now: Date },
 ): Omit<CardView, 'id' | 'position'> {
   return {
     kind: 'party',
@@ -231,7 +230,7 @@ function openPartyCard(
     },
     subLabel: `파티 · ${party.memberCount}/${party.capacity}명`,
     title: party.title,
-    lines: [line('clock', start === null ? label : `${koreaClock(start)} ${label}에서 출발`)],
+    lines: [line('clock', start === null ? label : `${dayAndClock(start, now)} ${label}에서 출발`)],
     primary: { label: party.mine ? '파티 열기' : '참여하기', action: 'room', questId },
     secondary: null,
   };
@@ -250,7 +249,7 @@ function partyCard(
   const start = subQuest?.startsAt ?? null;
   const label = subQuest?.place?.label ?? '';
   if (party !== null && quest.joinPolicy !== 'closed') {
-    return openPartyCard(quest.id, party, start, label);
+    return openPartyCard(quest.id, party, { start, label, now });
   }
   const alone = party === null && others === '';
   // Worded as the Quest list words the same Quest, by its own Join Policy: "공개 파티 · 4명", or "비공개 파티" with
@@ -267,7 +266,7 @@ function partyCard(
     subLabel: heldAlone(quest) ? '퀘스트' : kindWords,
     title,
     lines: [
-      ...(start === null ? [] : [line('clock', `${koreaDay(start, now)} ${koreaClock(start)}`)]),
+      ...(start === null ? [] : [line('clock', dayAndClock(start, now))]),
       line('pin', placeWithRoom(label, quest.bookedRoom)),
       ...(party === null && !alone ? [line('info', '활성화에 참여하면 서로 위치가 공유돼요')] : []),
     ],

@@ -14,6 +14,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -39,6 +40,7 @@ import { SlotHeld } from './sentence-slot';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
+import { PickTimeSheet } from './pick-time-sheet';
 import { LeaveRow } from './leave-button';
 import { MarkRows } from './mark-rows';
 import { MadeMarkCard } from './made-mark-card';
@@ -136,6 +138,8 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
         <OpenPart key={bubble.id} {...props} after={after} bubble={bubble} docked={docked} />
       ))}
       {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}
+      {/* Here, outside the turn's bubbles, the time's wheel slides down also when a time is sent (P06 ticket 35). */}
+      <PickTimeSheet offer={control.pick.time} onClose={control.pick.stop} onPick={control.pick.chooseTime} />
     </>
   );
 }

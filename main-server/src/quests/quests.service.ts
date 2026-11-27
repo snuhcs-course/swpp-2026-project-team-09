@@ -241,14 +241,16 @@ export class QuestsService {
 
   // Removes the Holder with the Holder's progress, and the Quest with its Sub Quests when nobody holds it any more.
   // When the Leader goes, the Holder who entered earliest leads. Lock the Quest first.
-  async removeHolder(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<void> {
+  // Answers the Holder who leads now when the Leader went, else null.
+  async removeHolder(questId: string, userId: string, tx: Prisma.TransactionClient): Promise<string | null> {
     await tx.questHolder.delete({ where: { questId_userId: { questId, userId } } });
     const [earliest] = await this.holderIds(questId, tx);
     if (earliest === undefined) {
       await tx.quest.delete({ where: { id: questId } });
-    } else {
-      await tx.quest.updateMany({ where: { id: questId, leaderId: userId }, data: { leaderId: earliest } });
+      return null;
     }
+    const data = { leaderId: earliest };
+    return (await tx.quest.updateMany({ where: { id: questId, leaderId: userId }, data })).count > 0 ? earliest : null;
   }
 
   // In the order they entered.

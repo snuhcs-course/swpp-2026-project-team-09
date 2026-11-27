@@ -13,6 +13,7 @@ import {
   chainFrom,
   clock,
   DATE,
+  eventPlanned,
   meal,
   OLD_APP,
   originOf,
@@ -89,7 +90,7 @@ describe('Dinner and then an event at a fixed time', () => {
     const id = await eventAt('동아리 정기공연', '18:30', '20:00');
 
     const reply = await asked(
-      [meal('dinner', { from: '18:00' }), { tool: 'planEvents', input: { date: DATE } }, said],
+      [meal('dinner', { from: '18:00' }), ...eventPlanned(id), said],
       '18시에 저녁 먹고 공연 가자',
     );
 
@@ -107,7 +108,7 @@ describe('Dinner and then an event at a fixed time', () => {
     const id = await eventAt('밤 공연', '20:30', '21:30');
 
     const reply = await asked(
-      [meal('dinner', { from: '18:00' }), { tool: 'planEvents', input: { date: DATE } }, said],
+      [meal('dinner', { from: '18:00' }), ...eventPlanned(id), said],
       '18시에 저녁 먹고 공연 가자',
     );
 

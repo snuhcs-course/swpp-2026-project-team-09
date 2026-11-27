@@ -248,13 +248,6 @@ export function stepBeforeMeal(steps: readonly ReplyStep[], input: MealInput): R
   return stepBeforeAt(steps, input.date, new Date(latest));
 }
 
-// The meal's conditions set out from the step before it among those shown so far, or as they are. planMeal calls it,
-// so that the plan the model reads and words is the one the app shows.
-export function afterStepsShown(input: MealInput, steps: readonly ReplyStep[]): MealInput {
-  const before = stepBeforeMeal(steps, input);
-  return (before === null ? null : chainedInput(input, before)) ?? input;
-}
-
 // An answer's step without a plan has only the time it asked for, so it comes after the steps that have one, in the
 // order they came (P05 ticket 74): a dinner too late for today is not ① before a seat after it.
 const planless = ({ shows, place, status }: ReplyStep): boolean =>

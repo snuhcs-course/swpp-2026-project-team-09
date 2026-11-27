@@ -75,7 +75,7 @@ export class StepsStage {
     return replySchema.parse(response.body);
   }
 
-  // The one event of the day: the events planned are the day's, which only a search of the message could narrow.
+  // An event of the day, which `eventPlanned` plans alone.
   async eventAt(title: string, start: string, end: string): Promise<string> {
     if (this.prisma === null) {
       throw new Error('The stage has not started');
@@ -99,6 +99,14 @@ export const meal = (which: 'lunch' | 'dinner', more: object = {}): Step => ({
   tool: 'planMeal',
   input: { date: DATE, meal: which, ...more },
 });
+
+// The event searched for and planned by its id, as the tool's rules ask for "공연 가자". Planned without ids, the events of
+// the day are every published event on it, those other files store included (one from 2000 to 2099 stays the longest),
+// and the longest stay comes first.
+export const eventPlanned = (id: string): Step[] => [
+  { tool: 'searchGlobalEvents', input: { from: DATE, to: DATE, words: ['공연'] } },
+  { tool: 'planEvents', input: { date: DATE, eventIds: [id] } },
+];
 
 export const said: Step = { text: '순서대로 짰어요.' };
 
