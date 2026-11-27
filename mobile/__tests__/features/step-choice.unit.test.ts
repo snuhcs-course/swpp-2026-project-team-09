@@ -7,7 +7,14 @@
 import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { stepsReplyOn } from '@/api/mock/data/steps-answer';
-import { chosenOnReply, mayChooseStep, stepIdOf, stepPartsOf } from '@/features/assistant/step-choice';
+import { LEAVE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
+import {
+  chosenOnReply,
+  lookupTakesTheMap,
+  mayChooseStep,
+  stepIdOf,
+  stepPartsOf,
+} from '@/features/assistant/step-choice';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 
 // Which step of several is chosen (P03 ticket 21), by the rules the user decided on 2026-11-28: on the first reply the
@@ -104,5 +111,22 @@ describe('What of a reply of several requests the card shows (P03 ticket 23)', (
     const refused = { ...ON_MAP, steps: ON_MAP.steps.map((step, at) => (at === 0 ? { ...step, shows: null } : step)) };
     expect(stepPartsOf(BUBBLE, refused, 0)).toBe(BUBBLE);
     expect(stepPartsOf(BUBBLE, { ...ON_MAP, bubbleId: 8 }, 0)).toBe(BUBBLE);
+  });
+});
+
+// Rule 7. Partitions: a Lookup with steps that name their answers by key; with steps that name none, as a main server
+// before `answers` can send a booking's steps beside a Lookup (TaeHyun79's review of #729); no Lookup.
+describe('A Lookup the steps came with', () => {
+  const { lookup } = LEAVE_LOOKUP_REPLY;
+
+  it('takes the map when the steps name their answers by key', () => {
+    expect(lookupTakesTheMap({ lookup, steps: STEPS })).toBe(true);
+  });
+
+  it('leaves the map to the steps of a main server before answers, and to a reply with no Lookup', () => {
+    expect(
+      lookupTakesTheMap({ lookup, steps: [SEAT, { ...SEAT, title: '스터디룸', kind: 'room', shows: null }] }),
+    ).toBe(false);
+    expect(lookupTakesTheMap({ lookup: null, steps: STEPS })).toBe(false);
   });
 });

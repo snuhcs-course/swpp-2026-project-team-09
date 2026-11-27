@@ -55,9 +55,12 @@ export function chosenOnReply(
 
 // Rule 7: a Lookup the steps' reply gave takes the map for that turn, and its card stands under the steps card, which
 // stays with its step chosen; the step's answer comes back with the next reply that draws one (P03 ticket 23). Words
-// alone keep the steps and put no card under them.
-export const lookupTakesTheMap = (reply: Pick<ChatBubble, 'lookup'> | undefined): boolean =>
-  (reply?.lookup ?? null) !== null;
+// alone keep the steps and put no card under them. Only for steps that name their answers by key, which an app that
+// says `answers` gets: a main server before it can send a booking's steps beside a Lookup, which stay as they were
+// (TaeHyun79's review of #729).
+export const lookupTakesTheMap = (reply: Pick<ChatBubble, 'lookup' | 'steps'> | undefined): boolean =>
+  (reply?.lookup ?? null) !== null &&
+  (reply?.steps ?? []).some(({ shows }) => shows?.kind === 'answer' && shows.key !== undefined);
 
 // What of a reply of several requests the card shows: the chosen step's own answer, as it shows alone (P03 ticket 23).
 // A seat's or a room's step, the reply's sentence and that step's own card, its ticket; an answer step, its answer's
