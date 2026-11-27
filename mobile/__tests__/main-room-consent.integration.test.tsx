@@ -98,25 +98,6 @@ describe('the main screen', () => {
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/consent`)).toHaveLength(1);
   });
 
-  it("closes the dialog on Android's back without declining (P01 ticket 21)", async () => {
-    server.on('GET /library/room-requests', { status: 200, body: { asks: [ASK], notices: [] } });
-    server.on(`POST /library/room-requests/${REQUEST_ID}/decline`, { status: 200, body: GATHERING });
-    await askForCards({ server, library }, [], { words: '안녕' });
-
-    let modal = screen.getByTestId('room-consent').parent;
-    while (modal !== null && modal.props.onRequestClose === undefined) {
-      modal = modal.parent;
-    }
-    if (modal === null) {
-      throw new Error('The consent dialog stands in no Modal');
-    }
-    await fireEvent(modal, 'requestClose');
-    await pass(100);
-
-    expect(screen.queryByTestId('room-consent')).toBeNull();
-    expect(server.received(`POST /library/room-requests/${REQUEST_ID}/decline`)).toHaveLength(0);
-  });
-
   it('shows each notice once and marks it seen', async () => {
     const notice = {
       id: 'dddddddd-0000-4000-8000-000000000005',
@@ -129,6 +110,32 @@ describe('the main screen', () => {
 
     expect(screen.getByText('파티 구성원이 제안을 거절했습니다')).toBeVisible();
     expect(server.received(`POST /library/room-notices/${notice.id}/seen`)).toHaveLength(1);
+  });
+});
+
+// The Modal the consent dialog stands in, whose onRequestClose is Android's back.
+function consentModal(): ReturnType<typeof screen.getByTestId> {
+  let modal = screen.getByTestId('room-consent').parent;
+  while (modal !== null && modal.props.onRequestClose === undefined) {
+    modal = modal.parent;
+  }
+  if (modal === null) {
+    throw new Error('The consent dialog stands in no Modal');
+  }
+  return modal;
+}
+
+describe("the consent dialog's back (P01 ticket 21)", () => {
+  it("closes the dialog on Android's back without declining", async () => {
+    server.on('GET /library/room-requests', { status: 200, body: { asks: [ASK], notices: [] } });
+    server.on(`POST /library/room-requests/${REQUEST_ID}/decline`, { status: 200, body: GATHERING });
+    await askForCards({ server, library }, [], { words: '안녕' });
+
+    await fireEvent(consentModal(), 'requestClose');
+    await pass(100);
+
+    expect(screen.queryByTestId('room-consent')).toBeNull();
+    expect(server.received(`POST /library/room-requests/${REQUEST_ID}/decline`)).toHaveLength(0);
   });
 });
 
