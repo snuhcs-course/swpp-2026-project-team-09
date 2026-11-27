@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -65,6 +66,8 @@ export const mockRoomRequests: RoomRequestsClient = {
     made.set(request.id, request);
     return Promise.resolve(request);
   },
+  // The mock rebuilds no answer: as a main server before the route, so the sending phone shows the one it kept.
+  answer: () => Promise.reject(new ApiError(404, 'NOT_FOUND')),
   get: (id) => {
     const request = mockRequest(id);
     const next: RoomRequest =

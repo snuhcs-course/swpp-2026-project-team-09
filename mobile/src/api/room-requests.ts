@@ -6,11 +6,13 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { AnswerReply } from './assistant-types';
 import type { StudyInput } from './study-plan-types';
 import { queryOptions } from '@tanstack/react-query';
 import { mockRoomRequests } from './mock/room-requests';
 import { field, hasTexts, isNothing, isNumber, isText, isTextOrNull, listOf } from './server/answers';
 import { call } from './server/http';
+import { isAnswerReply } from './server/plan-answers';
 import { asksMainServer } from './servers';
 
 // The room requests of a group study room booked with companions (main-server `src/library/`, P06 spec "Group study
@@ -92,6 +94,8 @@ export type RoomRequestMaking = { key: string; useDesc?: string; input?: StudyIn
 export interface RoomRequestsClient {
   make: (making: RoomRequestMaking, idempotencyKey: string) => Promise<RoomRequest>;
   get: (id: string) => Promise<RoomRequest>;
+  // The study answer the request was sent from, rebuilt by the main server at its room, time and people (P10 ticket 08).
+  answer: (id: string) => Promise<AnswerReply>;
   inbox: () => Promise<RoomInbox>;
   consent: (id: string) => Promise<RoomRequest>;
   decline: (id: string) => Promise<void>;
@@ -105,6 +109,10 @@ export interface RoomRequestsClient {
 }
 
 const STATUSES = new Set(['gathering', 'ready', 'booked', 'cancelled', 'dissolved', 'expired']);
+
+export function isRoomRequestStatus(value: unknown): value is RoomRequestStatus {
+  return STATUSES.has(String(value));
+}
 const COMPANION_STATES = new Set(['asked', 'consented', 'declined', 'unanswered']);
 
 function isPerson(value: unknown): value is RoomPerson {
@@ -188,6 +196,7 @@ export const serverRoomRequests: RoomRequestsClient = {
       headers: { 'Idempotency-Key': idempotencyKey },
     }),
   get: (id) => call('GET', path(id), isRoomRequest),
+  answer: (id) => call('GET', path(id, 'answer'), isAnswerReply),
   inbox: () => call('GET', '/library/room-requests', isInbox),
   consent: (id) => call('POST', path(id, 'consent'), isRoomRequest),
   decline: (id) => send(path(id, 'decline')),
@@ -210,6 +219,7 @@ function chosen(): RoomRequestsClient {
 export const roomRequests: RoomRequestsClient = {
   make: (making, key) => chosen().make(making, key),
   get: (id) => chosen().get(id),
+  answer: (id) => chosen().answer(id),
   inbox: () => chosen().inbox(),
   consent: (id) => chosen().consent(id),
   decline: (id) => chosen().decline(id),

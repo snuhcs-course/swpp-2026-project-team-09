@@ -8,11 +8,13 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MyParty, Party, Quest } from '@/api/types';
 import { koreaClock, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 import { heldAlone, shownSubQuest, waitWords } from '@/features/quests/adapter';
+import { requestFlagOf, requestLine } from '@/features/quests/room-request-flag';
 import { boardName } from './boards';
 import { whenOf } from './posts';
 
@@ -54,6 +56,9 @@ export interface MineCardView {
   waiting: number;
   // A past Quest, which has no room to open.
   past: boolean;
+  // A booking party whose room request of studying together is out: a press opens that answer again, not the room
+  // (P10 ticket 13), and its time line says the request: "내일 15:00 · 동의 1/3 · 기다리는 중".
+  reopens?: true;
 }
 
 export interface MineGroup {
@@ -179,6 +184,8 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
           parties.find((party) => party.quest?.id === quest.id),
           declined,
         );
+  const request = past ? null : requestFlagOf(quest, start, now);
+  const group = past ? PAST : groupOf(live, strip, start, now);
   return {
     questId: quest.id,
     title: quest.title,
@@ -186,12 +193,19 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
     tag: tagOf(quest),
     leads: quest.leader?.id === meId,
     count: countOf(quest, meId),
-    time: start === null ? '시간 미정' : whenWords(start, now),
+    // Under a heading that says the day (오늘, 내일) the request's line says none (#662's pictures).
+    time:
+      request === null
+        ? start === null
+          ? '시간 미정'
+          : whenWords(start, now)
+        : requestLine(request, group !== '오늘' && group !== '내일'),
     place: placeOf(next?.place?.label ?? ''),
     event: quest.globalEvent?.title ?? null,
+    ...(request === null ? {} : { reopens: true }),
     live,
     strip,
-    group: past ? PAST : groupOf(live, strip, start, now),
+    group,
     start: start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime(),
     waiting: past ? 0 : quest.waitingJoinRequests,
     past,
