@@ -47,7 +47,8 @@ The group answer gets a new face on today's room request logic (`screens/main/li
   - a request taken back or ended on the server can be sent again, with a new idempotency key;
   - a send that failed says the room card's words; "요청 취소 ›" works once at a time and only on a booking party's request;
   - every Friend still in consented while one more is needed: "동의 2/2 · 친구를 더 불러 주세요".
-  - Still open: a time card's handle dragged on a held answer stays where it was let go. Holding the band still is a line in `time-bar.tsx`, left until #637 merges.
+  - a held answer's band is held too: `busy` in `time-bar.tsx` counts `shown.locked`, so a handle stays where it is.
+- **From #655's pictures (ticket 11's card, fixed here since #655 is approved):** at the lowest step the card cut the room ticket's top under the sentence. The low step shows two lines of an answer's words (`LOW_LINES`, `text.bodyLg`); the card's sentence was `text.body`, one line, so the ticket rose into them once the login line moved under it. The sentence is now an answer's words in `text.bodyLg`, in a block at least those two lines high, so the ticket starts under them, logged in or out.
 - **Taking it back:**
   - "요청 취소 ›" is P01 ticket 15's `TicketLine` link;
   - `PartyRequest.cancel` ends the booking party (`POST /quests/:id/end`) and forgets the card's request, so the card is to send again.

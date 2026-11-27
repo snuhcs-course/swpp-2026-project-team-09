@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import type { RoomRequest } from '@/api/room-requests';
 import type { StudyGroup } from '@/api/study-plan-types';
@@ -32,6 +32,7 @@ import { SEND_FAILED, usePartyRequest } from '../library/room-party';
 import { mainOf, useGroupAct } from './study-group-act';
 import { consentWords, groupOfRequest, isOut, outWords, partyCardOf } from './study-group-request';
 import { ChatMarkdown } from '../chat-markdown';
+import { LOW_LINES } from './card-caps';
 
 // The study answer together in the meal's frame (P10 ticket 11; design group-study-design ② ③ 가): the Assistant's one
 // sentence, or how many more people the room needs; the room ticket (ticket 10) with the kind's first room free for the
@@ -134,15 +135,16 @@ function Choosers(props: {
   return open === 'use' ? <UseChooser chosen={use} onChoose={props.onUse} options={group.useDescOptions} /> : null;
 }
 
-// The sentence, the Friend out once the request is sent, or how many more people the room needs.
+// The sentence, the Friend out once the request is sent, or how many more people the room needs. Written as an
+// answer's words, it takes the lines the card shows at its lowest step whole, so that the ticket under it never shows
+// cut there (#655's pictures).
 function GroupWords({ group, said, out }: { group: StudyGroup; said: string; out: string | null }): ReactElement {
-  if (out !== null) {
-    return <Text style={styles.words}>{out}</Text>;
-  }
-  return group.moreNeeded > 0 ? (
-    <Text style={styles.words}>{shortWords(group.moreNeeded)}</Text>
-  ) : (
-    <ChatMarkdown style={styles.words} text={said} />
+  const { fontScale } = useWindowDimensions();
+  const words = out ?? (group.moreNeeded > 0 ? shortWords(group.moreNeeded) : null);
+  return (
+    <View style={{ minHeight: LOW_LINES * text.bodyLg.lineHeight * fontScale }} testID="study-group-words">
+      {words === null ? <ChatMarkdown style={styles.words} text={said} /> : <Text style={styles.words}>{words}</Text>}
+    </View>
   );
 }
 
@@ -284,7 +286,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
 
 const styles = StyleSheet.create({
   body: { gap: space[3] },
-  words: { ...text.body, color: color.ink },
+  words: { ...text.bodyLg, color: color.ink },
   useLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   hint: { ...text.caption, color: color.inkMuted },
   link: { ...text.caption, fontFamily: font.semiBold, color: color.snuBlue },
