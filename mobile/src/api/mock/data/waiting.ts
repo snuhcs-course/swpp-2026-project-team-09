@@ -36,7 +36,7 @@ export const QUEST_INVITATIONS: QuestInvitation[] = [
 
 // The Notifications the main server keeps for the User: 김민준's answers to the User's requests to join, one accepted
 // into the AI 커리어 설명회 party the User holds and one declined from the board's 알고리즘 코테 스터디; and a 파티 its
-// Leader 최유나 ended, whose row says it is gone when pressed.
+// Leader 최유나 ended, whose row says it is gone when pressed; and the 파티 저녁 약속, whose Leader the User became.
 export const KEPT_NOTIFICATIONS: KeptNotification[] = [
   {
     id: 'join-accepted:party:q-ai',
@@ -64,5 +64,14 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
     line: '버들골 저녁 러닝 크루 · 최유나님이 없앴어요',
     at: frameTime('09:30'),
     url: '/main?card=party-gone:post-0',
+  },
+  {
+    id: 'became-leader:party:q-dinner',
+    kind: 'became-leader',
+    title: '파티장이 됐어요',
+    ahead: null,
+    line: '저녁 약속 · 김민준님이 넘겼어요',
+    at: frameTime('09:10'),
+    url: '/main?card=party:q-dinner',
   },
 ];

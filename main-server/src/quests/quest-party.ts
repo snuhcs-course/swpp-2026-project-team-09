@@ -4,7 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
@@ -12,7 +12,10 @@ import { type Party, type Prisma } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { PARTY_INCLUDE } from '../parties/dto/party.dto.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
+import { CLOCK, type Clock } from './clock.js';
+import { newLeaderTold, tellNewLeader } from './new-leader.js';
 import { QuestsService } from './quests.service.js';
 
 // The Party running for a Quest (its activation), as the Quest's changes reach it, and the one rule of a member's way
@@ -22,6 +25,8 @@ import { QuestsService } from './quests.service.js';
 // drop of the Quest, lives here too, as the Quest change that closes the Party, and sends its own signals.
 @Injectable()
 export class QuestParty {
+  private readonly logger = new Logger(QuestParty.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly friends: FriendsService,
@@ -30,19 +35,31 @@ export class QuestParty {
     private readonly signals: SignalsService,
     private readonly roomRequests: RoomRequestSync,
     private readonly users: UsersService,
+    private readonly notifications: NotificationsService,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
-  // A Holder's drop of the Quest. The last Holder's deletes the Quest, and closes its Party, if one runs, first.
+  // A Holder's drop of the Quest. The last Holder's deletes the Quest, and closes its Party, if one runs, first. The
+  // Leader's makes the Holder who entered earliest Leader, who is told.
   async drop(userId: string, questId: string): Promise<void> {
-    const partyAudience = await this.visibility.announceRemovals(await this.memberIdsOf(questId), () =>
+    const { partyAudience, newLeader } = await this.visibility.announceRemovals(await this.memberIdsOf(questId), () =>
       this.quests.changeShared(userId, questId, async (tx) => {
         const last = (await this.quests.holderIds(questId, tx)).length === 1;
         const closed = last ? await this.close(questId, tx) : [];
-        await this.quests.removeHolder(questId, userId, tx);
-        return closed;
+        const told = last ? null : await newLeaderTold(questId, userId, 'left', tx);
+        const leaderId = await this.quests.removeHolder(questId, userId, tx);
+        return { partyAudience: closed, newLeader: leaderId === null || told === null ? null : { leaderId, told } };
       }),
     );
     this.signals.send(partyAudience, 'party-changed');
+    if (newLeader !== null) {
+      tellNewLeader(
+        { notifications: this.notifications, logger: this.logger },
+        newLeader.leaderId,
+        newLeader.told,
+        this.clock.now(),
+      );
+    }
     await this.roomRequests.questChanged(questId);
   }
 

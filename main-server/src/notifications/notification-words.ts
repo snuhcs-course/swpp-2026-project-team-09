@@ -208,6 +208,19 @@ function goneWords({ kind, questId, questTitle, leaderName }: PartyGone): Notifi
   };
 }
 
+// In 알림 only. The title says what happened and the line names the 파티 and the one who led it.
+function newLeaderWords({ questId, questTitle, formerName, how }: Of<'became-leader'>): NotificationWords {
+  return {
+    title: '파티장이 됐어요',
+    ahead: null,
+    line: `${questTitle} · ${formerName}님이 ${how === 'left' ? '나갔어요' : '넘겼어요'}`,
+    card: { kind: 'party', id: questId },
+    about: null,
+    rings: false,
+    body: null,
+  };
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
@@ -255,5 +268,5 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       body: null,
     };
   }
-  return roomWords(told);
+  return told.kind === 'became-leader' ? newLeaderWords(told) : roomWords(told);
 }

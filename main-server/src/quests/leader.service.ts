@@ -20,13 +20,14 @@ import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, Prisma, Quest } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
-import { type GoneKind, type PartyGone } from '../notifications/notification.js';
+import { type GoneKind, type NewLeader, type PartyGone } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { fitsJoinPolicy, type UpdateQuestDto } from './dto/quest-requests.dto.js';
 import { QuestDto } from './dto/quest.dto.js';
+import { newLeaderTold, tellNewLeader } from './new-leader.js';
 import { QuestParty } from './quest-party.js';
 import { QuestsService } from './quests.service.js';
 import { conflict, notFound, notLeader, questNotFound, takenAloneRefused } from './refusals.js';
@@ -148,13 +149,24 @@ export class LeaderService {
     await this.roomRequests.questChanged(questId);
   }
 
+  // The new Leader is told in 알림.
   async handOver(userId: string, questId: string, newLeaderId: string): Promise<void> {
+    const handed: { told?: NewLeader } = {};
     await this.changeAsLeader(userId, questId, async (tx, _quest, holderIds) => {
       if (!holderIds.includes(newLeaderId)) {
         throw notHolder();
       }
+      handed.told = await newLeaderTold(questId, userId, 'handed', tx);
       await tx.quest.update({ where: { id: questId }, data: { leaderId: newLeaderId } });
     });
+    if (handed.told !== undefined) {
+      tellNewLeader(
+        { notifications: this.notifications, logger: this.logger },
+        newLeaderId,
+        handed.told,
+        this.clock.now(),
+      );
+    }
   }
 
   // The Holder goes as one who dropped the Quest, with their progress. The removal is kept, so that the User comes back

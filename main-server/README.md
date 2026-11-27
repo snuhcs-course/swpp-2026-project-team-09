@@ -4105,6 +4105,7 @@ calls throw when the database fails too, so a caller that must not fail catches 
 | `party-removed`        | The Holder removed                            | The Leader removes them                                                                                                        | `파티에서 내보내졌어요`                                    | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party-gone:<questId>`                       | Yes   |
 | `join-cancelled`       | Each User whose request to join waited        | The Leader ends the Quest                                                                                                      | `파티가 없어져 신청이 취소됐어요`                          | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party-gone:<questId>`                       | No    |
 | `invitation-cancelled` | Each User whose invitation waited             | The Leader ends the Quest                                                                                                      | `파티가 없어져 초대가 취소됐어요`                          | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party-gone:<questId>`                       | No    |
+| `became-leader`        | The Holder who leads the Quest now            | The Leader leaves it (`DELETE /quests/:questId`) and they entered earliest, or the Leader hands it over                        | `파티장이 됐어요`                                          | None                           | `<Quest's title> · <Leader's name>님이 나갔어요`, or `… 넘겼어요`                   | `party:<questId>`                            | No    |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
 `leave-by`, `<Place>까지 걸어서 <N>분이에요.`; for a room request's kinds, the line as a sentence ("모두 동의했어요" adds
@@ -4128,6 +4129,10 @@ again and again; and once none waits it is cancelled, so the next request rings 
 but the Leader, after it is deleted, without the answer waiting; the Leader's own `join-asked` for it is cancelled.
 `party-removed` is kept by `LeaderService.remove` for the Holder removed. Their card, `party-gone:<questId>`, is on no
 map: the app says the 파티 is gone. A Quest that ends because its time passed, and a Holder's own drop, keep none.
+
+`became-leader` is kept for the Holder who leads a Quest now, in 알림 only: by `QuestParty.drop` when the Leader's drop
+makes the Holder who entered earliest Leader (`QuestsService.removeHolder` answers them), and by `LeaderService.handOver`.
+Other ways a Leader leaves a Quest, such as replacing a held meal, tell nobody.
 
 `step-changed`, `arrived` and `late` stand for the words a party's members cannot say to each other, for the room has
 no chat. Each is kept once per member who caused it (`about`), so a later one replaces the earlier and rings again.
