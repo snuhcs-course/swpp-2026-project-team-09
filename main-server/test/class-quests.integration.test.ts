@@ -22,6 +22,9 @@ import { refused } from './signals.js';
 import { startApp } from './start-app.js';
 import { aClass, addClass, aTime, deleteClass, replaceClass, twoPlaceIds } from './timetable.js';
 
+// A Quest with no room request and no room booked (P05 ticket 68).
+const NO_ROOMS = { roomRequest: null, bookedRoom: null };
+
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
 let place: Place;
@@ -110,7 +113,7 @@ describe('The Quest list on a day with a class', () => {
       takenAlone: false,
       waitingJoinRequests: 0,
       members: [],
-      roomRequest: null,
+      ...NO_ROOMS,
     });
   });
 });

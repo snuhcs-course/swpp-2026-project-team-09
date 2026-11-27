@@ -1222,6 +1222,9 @@ A Quest reads:
   in, how many consented and how many were asked; once booked, both are the party's other Holders. It is `null` for
   every other Quest, an existing Quest a request asks the Holders of too. It is read as stored, without applying the
   room requests' deadlines or expiries, which the next read of a room request applies.
+- `bookedRoom` is the room the library booked for the Quest's latest booked room request, as the booker's phone
+  reported it (`"G412"`), a booking party's or an existing Quest's; `null` for every other Quest and for a booking
+  reported without it. Only Holders are shown a Quest, so only the party sees it.
 
 The refusals each have a `code`:
 
@@ -2300,7 +2303,8 @@ kind does not accept gets 400 with `COMPLETION_NOT_ACCEPTED`.
 ## Group study room requests
 
 A 관정 group study room is booked with companions through a room request (`src/library/`). The routes are the app's,
-never the Assistant's tools, and the phone alone talks to the library: the server never sees a library reply.
+never the Assistant's tools, and the phone alone talks to the library: the server never sees a library reply. The one
+fact of the library it is told is the room a booking got, which the booker's phone reports with it.
 
 - `POST /library/room-requests` with `{ key, friendIds }` or `{ key, questId }`, and `useDesc` when the card chose it,
   takes an `Idempotency-Key`. `input`, optional, is the study input of the study answer the request is sent from (P10),
@@ -2349,8 +2353,12 @@ never the Assistant's tools, and the phone alone talks to the library: the serve
 - `GET …/:id/companions` answers `[{ userId, registeredName, studentNumber }]` with `Cache-Control: no-store`, only to
   the requester (else 403) and only while `ready` (else 409), for the current Holders who consented, read when the
   reply is built. It is the only reply with a 학번 or a registered name.
-- `POST …/:id/result` with `{ ok, failedUserId? }`: `ok` books it, a `failedUserId` sends it back to `gathering` for
-  that companion, who is asked to check their 내 정보, and neither leaves it `ready`.
+- `POST …/:id/result` with `{ ok, failedUserId?, room? }`: `ok` books it, a `failedUserId` sends it back to
+  `gathering` for that companion, who is asked to check their 내 정보, and neither leaves it `ready`. `room`, with `ok`
+  only (else 400), is the room the library booked as it names it (`"G412"`, 1–40 characters, trimmed), kept as
+  `booked_room`: `GET …/:id` gives it to the requester as `bookedRoom`, and the Quest replies give it to the Holders of
+  the request's Quest. A repeat of `ok` with a `room` sets it, and the booked time is the request's own. The
+  companions' notice then names it, "… 예약을 마쳤어요 · G412", the room cut to 12 characters with "…" past that.
 - `POST …/:id/cancelled`, with no body, is the requester's only while `booked`, and safe to repeat. A booking party
   made for the request is deleted with its Sub Quest, so it no longer blocks its members' Free Time.
 

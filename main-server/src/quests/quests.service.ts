@@ -47,7 +47,7 @@ import {
   subQuestContentsOf,
   toQuestDto,
 } from './dto/quest.dto.js';
-import { roomRequestsOf } from './quest-room-requests.js';
+import { questRoomsOf } from './quest-room-requests.js';
 import { notFound, questNotFound } from './refusals.js';
 import { columnsOf } from './sub-quest-columns.js';
 import { forgetLeaveBy, gatheringFrom } from './taken-alone.js';
@@ -142,9 +142,9 @@ export class QuestsService {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     const now = this.clock.now();
-    const rooms = await roomRequestsOf(this.prisma, quests);
+    const roomsOf = await questRoomsOf(this.prisma, quests);
     return [
-      ...quests.map((quest) => toQuestDto(quest, userId, now, rooms.get(quest.id) ?? null)),
+      ...quests.map((quest) => toQuestDto(quest, userId, now, roomsOf(quest.id))),
       ...(await this.classQuests.todayFor(userId, now)),
     ].filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
   }
@@ -172,8 +172,8 @@ export class QuestsService {
       }
       return classQuest;
     }
-    const rooms = await roomRequestsOf(this.prisma, [quest]);
-    return toQuestDto(quest, userId, now, rooms.get(quest.id) ?? null);
+    const roomsOf = await questRoomsOf(this.prisma, [quest]);
+    return toQuestDto(quest, userId, now, roomsOf(quest.id));
   }
 
   async drop(userId: string, questId: string): Promise<void> {
