@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -114,6 +115,12 @@ async function stepIdOf({ leader, questId }: Holders): Promise<string> {
   return step.id;
 }
 
+// "11/18(수) 14:10 정문 앞에서 만나기": a changed step's date, then its clock in Korea, then its title.
+const datedLine = (startsAt: string, title: string): unknown =>
+  expect.stringMatching(
+    new RegExp(`^\\d{1,2}/\\d{1,2}\\([일월화수목금토]\\) ${clockOf(new Date(startsAt))} ${title}$`, 'u'),
+  );
+
 describe('A Holder changing a step', () => {
   it('tells the other Holder who changed it and to what, and not the Holder who changed it', async () => {
     const { leader, minsu, questId } = await twoHolders();
@@ -126,7 +133,7 @@ describe('A Holder changing a step', () => {
         expect.objectContaining({
           id: `step-changed:party:${questId}:${minsu.id}`,
           title: '민수가 일정을 바꿨어요',
-          line: `${clockOf(new Date(step.startsAt))} 정문 앞에서 만나기`,
+          line: datedLine(step.startsAt, '정문 앞에서 만나기'),
           url: `/main?card=party:${questId}`,
         }),
       ]);

@@ -10,6 +10,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -229,7 +230,7 @@ describe('지난 일정 in the build that asks the main server', () => {
     await pass(500);
 
     expect(groups()).toEqual(['오늘']);
-    expect(card('어제 시작한 여행').getByText('10월 5일 (월) 19:00')).toBeVisible();
+    expect(card('어제 시작한 여행').getByText('10/5(월) 19:00')).toBeVisible();
   });
 });
 

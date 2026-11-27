@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { cardAddress } from '../src/notifications/card-address.js';
@@ -66,11 +67,11 @@ describe('The words of a new match of a watched interest', () => {
     expect(wordsOf({ ...news, subject: 'event', title: '2026 하반기 채용박람회' }, AT)).toEqual({
       title: '2026 하반기 채용박람회가 떴어요',
       ahead: null,
-      line: '12:18 학생회관',
+      line: '11/17(화) 12:18 학생회관',
       card: { kind: 'event', id: QUEST_ID },
       about: null,
       rings: true,
-      body: '12:18 학생회관이에요.',
+      body: '11/17(화) 12:18 학생회관이에요.',
     });
   });
 
@@ -84,13 +85,41 @@ describe('The words of a new match of a watched interest', () => {
   it.each([
     [null, '학생회관', '학생회관', '학생회관이에요.'],
     [null, '아크로', '아크로', '아크로예요.'],
-    [AT, null, '12:18', '12:18에 시작해요.'],
+    [AT, null, '11/17(화) 12:18', '11/17(화) 12:18에 시작해요.'],
     [null, null, '', '맡겨 둔 관심에 맞아요.'],
   ])('leaves out what is unknown: %s and %s give "%s" and "%s"', (startsAt, placeLabel, line, body) => {
     expect(wordsOf({ ...news, subject: 'event', title: '전시', startsAt, placeLabel }, AT)).toMatchObject({
       line,
       body,
     });
+  });
+});
+
+describe('The day of a time in a Notification', () => {
+  const news = { kind: 'interest-new', id: QUEST_ID, subject: 'event', title: '전시', placeLabel: null } as const;
+  // AT is Tuesday 17 November 2026 at 12:18 in Korea. A Notification is read on later days too, so even today's and
+  // tomorrow's times say their date.
+  it.each([
+    ['later today', '2026-11-17T14:00:00Z', '11/17(화) 23:00'],
+    ['tomorrow just after midnight in Korea', '2026-11-17T15:10:00Z', '11/18(수) 00:10'],
+    ['any later day, without a year', '2026-11-27T05:00:00Z', '11/27(금) 14:00'],
+    ['a day of another year', '2027-01-04T00:30:00Z', '1/4(월) 09:30'],
+  ])('says the date %s', (_case, startsAt, line) => {
+    expect(wordsOf({ ...news, startsAt: new Date(startsAt) }, AT).line).toBe(line);
+  });
+
+  it('says the date of a changed step', () => {
+    const changed = {
+      kind: 'step-changed',
+      questId: QUEST_ID,
+      byId: FRIEND_ID,
+      byName: '민수',
+      stepTitle: '정문 앞에서 만나기',
+      startsAt: new Date('2026-11-18T05:10:00Z'),
+      cancelled: false,
+    } as const;
+
+    expect(wordsOf(changed, AT).line).toBe('11/18(수) 14:10 정문 앞에서 만나기');
   });
 });
 

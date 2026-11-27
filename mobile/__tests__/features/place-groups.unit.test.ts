@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
@@ -46,7 +47,7 @@ const TALK = placeCard('event:e4', 'global-event', 'official', '컴퓨터공학�
   { icon: 'pin', text: '301동 대강당' },
 ]);
 const PARTY = placeCard('party:q-ai', 'party', 'party', 'AI 커리어 설명회 같이 가요', [
-  { icon: 'clock', text: '17:40 301동 앞에서 출발' },
+  { icon: 'clock', text: '오늘 17:40 301동 앞에서 출발' },
 ]);
 const DINNER = placeCard('party:q-dinner', 'shared-quest', 'party', '저녁 약속', [
   { icon: 'clock', text: '오늘 20:10' },
@@ -92,7 +93,7 @@ describe('things at the same coordinates', () => {
       primary: null,
       choices: [
         { id: EVENT.id, kind: 'official', title: 'AI 커리어 설명회', detail: '오늘 18:00–20:00' },
-        { id: PARTY.id, kind: 'party', title: 'AI 커리어 설명회 같이 가요', detail: '17:40 301동 앞에서 출발' },
+        { id: PARTY.id, kind: 'party', title: 'AI 커리어 설명회 같이 가요', detail: '오늘 17:40 301동 앞에서 출발' },
       ],
     });
     // Each keeps its card, for a row that opens it, and draws no marker of its own.
@@ -114,7 +115,7 @@ describe('things at the same coordinates', () => {
       ['dining', '오늘 점심 · 저녁'],
       ['quest', '오늘 21:00'],
       ['party', '오늘 20:10'],
-      ['party', '17:40 301동 앞에서 출발'],
+      ['party', '오늘 17:40 301동 앞에서 출발'],
       ['official', '오늘 18:00–20:00'],
     ]);
   });
