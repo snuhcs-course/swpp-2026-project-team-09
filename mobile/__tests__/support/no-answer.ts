@@ -17,6 +17,7 @@ export const NO_ANSWER: ShownAnswer = {
   source: null,
   answer: null,
   plan: null,
+  frame: null,
   index: 0,
   browse: nothing,
   show: nothing,

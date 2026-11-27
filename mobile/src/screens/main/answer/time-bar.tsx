@@ -178,7 +178,8 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
 interface PlanBarProps {
   shown: ShownAnswer;
   answer: AnswerReply;
-  plan: Plan;
+  // The Plan on screen, or the frame an answer with no Plan keeps (P01 ticket 31).
+  plan: Pick<Plan, 'band' | 'parts'> & { place: Plan['place'] | null };
   invitation: PlanInvitation;
   focus: BandFocus;
   onClose: () => void;

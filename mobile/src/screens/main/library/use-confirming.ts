@@ -26,6 +26,9 @@ export const NOT_YET_USED = '아직 쓰기 전이라 반납 대신 예약을 취
 // How a ticket reads once its booking ended here.
 export const ENDED_WORDS: Record<Act, string> = { cancel: '취소됨', return: '반납함' };
 
+// The ✕ of an armed cancel or return, for a screen reader: it does not do it (P01 ticket 21).
+export const BACK_WORDS: Record<Act, string> = { cancel: '취소하지 않기', return: '반납하지 않기' };
+
 export const ACT_WORDS: Record<Act, { confirm: string; done: string; none: string; failed: string }> = {
   cancel: {
     confirm: '예약 취소',

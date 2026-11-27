@@ -47,7 +47,7 @@ async function sent(back = SENT): Promise<void> {
 
 const said = (): ReturnType<typeof screen.queryByTestId> => screen.queryByTestId('library-login-said');
 
-// Partitions: a wrong password, then the right one; the line's look. Expected values: the ticket.
+// Partitions: a wrong password, then the right one; the line's look and place. Expected values: the tickets (16, 34).
 describe('A wrong password at the library’s login', () => {
   it('says to check the ID and password in one line, which goes at a touch, and the right one then logs in', async () => {
     answerFromFakeLibrary();
@@ -69,16 +69,33 @@ describe('A wrong password at the library’s login', () => {
     await expect(isLibraryLoggedIn()).resolves.toBe(true);
   });
 
-  it('is one line under the notice, in a see-through pill of the danger colour, with no button', async () => {
+  // P01 ticket 34 (the #641 follow-up): the line stood over the library's page, on its logo, in a pill.
+  it("stands in the app's own row under the notice, over the page and never on it, in red words with no pill", async () => {
     answerFromFakeLibrary();
     await openForm();
     await alerted('SSO 응답 오류', FORM);
 
     const line = screen.getByText(WRONG);
-    expect(line).toHaveProp('numberOfLines', 1);
-    expect(line).toHaveStyle({ backgroundColor: 'rgba(196, 43, 43, 0.88)', color: color.surface });
-    expect(line).toHaveStyle({ borderRadius: radius.full });
+    expect(line).toHaveStyle({ color: color.danger });
+    expect(line).not.toHaveStyle({ backgroundColor: 'rgba(196, 43, 43, 0.88)' });
+    expect(line).not.toHaveStyle({ borderRadius: radius.full });
+    expect(within(screen.getByTestId('library-login-page')).queryByText(WRONG)).toBeNull();
+    expect(within(screen.getByTestId('library-login-said-row')).getByText(WRONG)).toBeVisible();
     expect(within(screen.getByTestId('library-login-page')).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('keeps its row before the line comes, so that the page does not move when it does', async () => {
+    answerFromFakeLibrary();
+    await openForm();
+
+    const row = screen.getByTestId('library-login-said-row', { includeHiddenElements: true });
+    expect(within(row).queryByText(WRONG)).toBeNull();
+    expect(within(row).getByText(WRONG, { includeHiddenElements: true })).toBeOnTheScreen();
+
+    await alerted('SSO 응답 오류', FORM);
+
+    expect(screen.getByTestId('library-login-said-row')).toBe(row);
+    expect(within(row).getByText(WRONG)).toBeVisible();
   });
 });
 

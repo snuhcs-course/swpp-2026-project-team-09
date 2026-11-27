@@ -3,14 +3,16 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { type ReactElement, type ReactNode, useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { Plan, TimeBand } from '@/api/assistant-types';
+import type { TimeBand } from '@/api/assistant-types';
 import { color, font, radius, space, text } from '@/design-system';
 import { metresBetween } from '@/features/assistant/answer-drawing';
+import type { Frame } from '@/features/assistant/answer-frame';
 import {
   doneWordsOf,
   inOrder,
@@ -87,15 +89,16 @@ function finishOf(shown: ShownAnswer, onClose: () => void): () => void {
 // is placed by the phone's guess of their walk.
 // The rows while picking, before their order (`useOpenOrder`): each Friend with the walk the Plan or `others` gives, or
 // the phone's guess from where the Friend is.
-function rowsOf(plan: Plan, picked: readonly string[], friends: readonly FriendView[]): PickRow[] {
-  const walks = new Map(plan.parts.map(({ userId, walkMinutes }) => [userId, walkMinutes]));
+function rowsOf(frame: Frame, picked: readonly string[], friends: readonly FriendView[]): PickRow[] {
+  const { place } = frame;
+  const walks = new Map(frame.parts.map(({ userId, walkMinutes }) => [userId, walkMinutes]));
   const guessed = friends.map(({ id, name, department, position }) => ({
     id,
     name,
     department,
-    walkMinutes: walkGuessOf(position === null ? null : metresBetween(position, plan.place)),
+    walkMinutes: walkGuessOf(position === null || place === null ? null : metresBetween(position, place)),
   }));
-  return pickRowsOf({ band: plan.band, picked, walks, friends: guessed });
+  return pickRowsOf({ band: frame.band, picked, walks, friends: guessed });
 }
 
 // The rows in the order worked out as picking opened, which the answer's state keeps until it ends, so that a check
@@ -124,7 +127,7 @@ function useListedFriends(): readonly FriendView[] | null {
 
 export function usePickingBar(
   shown: ShownAnswer,
-  plan: Plan,
+  plan: Frame,
   { busy, onClose }: { busy: boolean; onClose: () => void },
 ): PickingBar {
   const friends = useListedFriends();
