@@ -227,10 +227,10 @@ export class BetterPlanService {
       startsAt: first?.startsAt ?? null,
       cancelled: false,
     };
-    const keptAgain = holderIds.filter((id) => id !== by.userId);
+    const byTimetable = holderIds.filter((id) => id !== by.userId);
     await tellStepChanged({ notifications, logger, timesToLeave }, holderIds, told, {
       now: this.clock.now(),
-      keptAgain,
+      byTimetable,
     });
   }
 

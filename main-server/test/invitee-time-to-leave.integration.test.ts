@@ -146,9 +146,7 @@ describe('An invited User’s accepting when the time to leave cannot be kept', 
       expect(accepted.status).toBe(201);
       expect(accepted.body).toMatchObject({ id: party.quest.id });
       await vi.waitFor(() => {
-        expect(warn).toHaveBeenCalledWith(
-          `An invited User's time to leave was not kept: Error: Redis refused the write`,
-        );
+        expect(warn).toHaveBeenCalledWith(`A Holder's time to leave was not kept: Error: Redis refused the write`);
       });
     } finally {
       schedule.mockRestore();

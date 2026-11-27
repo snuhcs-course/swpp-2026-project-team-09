@@ -35,18 +35,20 @@ export class InviteeTimeToLeave implements OnModuleInit {
     this.invitations.onAccepted((userId, questId) => {
       void this.keep(userId, questId);
     });
-    this.timesToLeave.register((userId, questId) => this.keep(userId, questId));
+    this.timesToLeave.onStepsChanged((userId, questId) => this.keep(userId, questId, { onlyAhead: true }));
   }
 
-  // Never fails: the accept does not wait for it.
-  async keep(userId: string, questId: string): Promise<void> {
+  // Never fails: an accept does not wait for it, and a step change waits without failing. `onlyAhead`, after a step
+  // change: a time to leave that has already come is not kept, so that a change made then, even to a title alone, does
+  // not ring "지금 나서요" at once for every Holder.
+  async keep(userId: string, questId: string, { onlyAhead = false } = {}): Promise<void> {
     try {
       const kept = await this.timeToLeave(userId, questId);
-      if (kept !== null) {
+      if (kept !== null && !(onlyAhead && kept.at <= this.reader.now())) {
         await this.notifications.schedule(userId, kept.told, kept.at);
       }
     } catch (error) {
-      this.logger.warn(`An invited User's time to leave was not kept: ${String(error)}`);
+      this.logger.warn(`A Holder's time to leave was not kept: ${String(error)}`);
     }
   }
 

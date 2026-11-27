@@ -27,25 +27,22 @@ export interface StepChanged {
 // invitation's uses. A Holder whose way cannot be worked out gets none. It never fails.
 export type KeepTimeToLeave = (userId: string, questId: string) => Promise<void>;
 
-// Where that rule waits for a change of steps: plans/invitee-time-to-leave.service.ts registers it, since this module
-// cannot import that one. Before it registers, nobody's is kept again.
+// The listeners that keep a time to leave once steps change, as InvitationsService.onAccepted's hear an acceptance:
+// plans/invitee-time-to-leave.service.ts gives the Timetable rule, since this module cannot import that one.
 @Injectable()
 export class TimesToLeave {
-  private keeper: KeepTimeToLeave | null = null;
+  private readonly keepers: KeepTimeToLeave[] = [];
 
-  register(keeper: KeepTimeToLeave): void {
-    this.keeper = keeper;
+  onStepsChanged(keeper: KeepTimeToLeave): void {
+    this.keepers.push(keeper);
   }
 
   async keepAgain(userIds: readonly string[], questId: string): Promise<void> {
-    const { keeper } = this;
-    if (keeper !== null) {
-      await Promise.all(userIds.map((userId) => keeper(userId, questId)));
-    }
+    await Promise.all(this.keepers.flatMap((keep) => userIds.map((userId) => keep(userId, questId))));
   }
 }
 
-// Awaited for the times to leave, as leaving the Quest awaits it; neither ever fails the change. `keptAgain` are the
+// Awaited for the times to leave, as leaving the Quest awaits it; neither ever fails the change. `byTimetable` are the
 // Holders whose time to leave is kept again by the Timetable rule: every Holder, unless the caller keeps one its own way.
 export async function tellStepChanged(
   {
@@ -55,7 +52,7 @@ export async function tellStepChanged(
   }: { notifications: NotificationsService; logger: Logger; timesToLeave: TimesToLeave },
   holderIds: readonly string[],
   changed: StepChanged,
-  { now, keptAgain = holderIds }: { now: Date; keptAgain?: readonly string[] },
+  { now, byTimetable = holderIds }: { now: Date; byTimetable?: readonly string[] },
 ): Promise<void> {
   const told = { kind: 'step-changed' as const, ...changed };
   for (const holderId of holderIds.filter((id) => id !== changed.byId)) {
@@ -70,5 +67,5 @@ export async function tellStepChanged(
       }),
     ),
   );
-  await timesToLeave.keepAgain(keptAgain, changed.questId);
+  await timesToLeave.keepAgain(byTimetable, changed.questId);
 }
