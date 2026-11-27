@@ -1374,11 +1374,15 @@ as an invitation is. The routes:
   asked and whether the Leader removed them from it before,
   `{ "id", "user": { "id", "name", "department" }, "sentAt", "removedBefore" }`. `POST /quests/:questId/join-requests/:id/accept` makes
   the User a Holder and `.../decline` ends the request; both answer 204.
-- `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
+- `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204. A
+  Quest its Holders fill at that moment is refused with 409 `QUEST_FULL`; waiting invitations take no place, so a Quest
+  with places left may invite more Friends than it has places.
   `GET /quest-invitations` answers the User's invitations, each with its Quest's next Sub Quest as the recruiting list
   carries it (`"nextSubQuest": { "id", "attending", "title", "startsAt", "endsAt", "place" }`), so that the card says
-  when and where the 파티 meets. `POST /quest-invitations/:id/accept` makes the User a Holder and answers 201 with the
-  Quest, and `.../decline` ends the invitation and answers 204.
+  when and where the 파티 meets, and with the Leader who sent it (`"invitedBy": { "id", "name", "department" }`), kept
+  past a hand-over; an invitation sent before the sender was kept names the Quest's Leader. `GET /quest-invitations/:id`,
+  the card the invited User opens, names it the same way. `POST /quest-invitations/:id/accept` makes the User a Holder
+  and answers 201 with the Quest, and `.../decline` ends the invitation and answers 204.
 - `GET /quests/:questId/invitations` answers the Leader the Quest's waiting invitations with who was invited,
   `{ "id", "user": { "id", "name", "department" }, "sentAt" }`, as the list of requests reads.
   `DELETE /quests/:questId/invitations/:id` cancels a waiting invitation and answers 204. An invitation that is not

@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, type userEvent } from '@testing-library/react-native';
@@ -105,7 +106,12 @@ export function requestFor(quest: RecruitingQuest, id = 'qr1'): MyJoinRequest {
 }
 
 export function invitationTo(quest: RecruitingQuest, id: string): QuestInvitation {
-  return { ...requestFor(quest, id), sentAt: '2026-10-06T03:40:00.000Z', nextSubQuest: quest.nextSubQuest };
+  return {
+    ...requestFor(quest, id),
+    sentAt: '2026-10-06T03:40:00.000Z',
+    nextSubQuest: quest.nextSubQuest,
+    invitedBy: quest.leader,
+  };
 }
 
 interface Answers {

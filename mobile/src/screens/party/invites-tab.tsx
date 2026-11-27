@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -63,13 +64,13 @@ function InvitationCard({
   invitation: ShownQuestInvitation;
   actions: PartyActions;
 }): ReactElement {
-  const { quest, sentAt } = invitation;
+  const { quest, sentAt, invitedBy } = invitation;
   const kind = quest.joinPolicy === 'closed' ? '비공개 파티에' : '파티에';
   return (
     <View accessibilityLabel={quest.title} style={[cardStyles.card, styles.card]}>
       <View style={styles.from}>
-        <Avatar name={quest.leader.name} size="sm" />
-        <Text numberOfLines={1} style={styles.fromWords}>{`${quest.leader.name}님이 ${kind} 초대했어요`}</Text>
+        <Avatar name={invitedBy.name} size="sm" />
+        <Text numberOfLines={1} style={styles.fromWords}>{`${invitedBy.name}님이 ${kind} 초대했어요`}</Text>
         <Text style={styles.ago}>{agoWords(sentAt, now())}</Text>
       </View>
       <Text style={styles.title}>{quest.title}</Text>
