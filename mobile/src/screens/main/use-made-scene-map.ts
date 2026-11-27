@@ -4,8 +4,10 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { FrameKey } from './framed-camera';
 import { useEffect, useMemo } from 'react';
 import type { LibrarySpace, MapScene, ReplyStep } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
@@ -59,12 +61,17 @@ type Me = { position: LatLng | null; avatars: readonly MapAvatar[] };
 
 // A scene the app made, with its setting, and the point of its flag, which a press opens the card of.
 interface Made {
-  // The reply drawn, which the camera follows.
+  // The reply drawn.
   source: object;
+  // What the camera frames (`FrameKey`): the reply's scene, and the step shown. The phone's position, the free seats, and
+  // the time on the bar frame nothing.
+  frame: FrameKey;
   scene: MapScene;
   setting: SceneSetting;
   flag: LatLng;
 }
+
+const NOTHING_MADE: FrameKey = { reply: null, chosen: [] };
 
 function isPick(id: string): boolean {
   return id.startsWith(MADE_FLAG_ID) || stepNumberOf(id) !== null || cardNumberOf(id) !== null;
@@ -99,7 +106,8 @@ function useSceneMap(
   const base = useBase(draw);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useFadedFaces(others);
-  const drawn = useDrawnMap(draw, base, made?.source ?? null, NO_LOOKS, map, framing, made?.scene.routes, isPick);
+  const frame = { key: made?.frame ?? NOTHING_MADE, from: made?.source ?? null };
+  const drawn = useDrawnMap(draw, base, frame, NO_LOOKS, map, framing, made?.scene.routes, isPick);
   if (drawn === null || made === null) {
     return null;
   }
@@ -122,11 +130,12 @@ function isCardStep(step: ReplyStep, key: string | null): boolean {
 
 // Several requests as numbered flags (P04 ticket 09): the step due, or pressed, carries the seat its card offers.
 function stepsMade(
-  { steps }: ShownSteps,
+  shownSteps: ShownSteps,
   active: number,
   booking: { key: string | null; seat: string | null; space: LibrarySpace | null },
   position: LatLng | null,
 ): Made | null {
+  const { steps } = shownSteps;
   const { key, seat, space } = booking;
   const first = steps.find(({ place }) => place !== null)?.place;
   if (first === undefined || first === null) {
@@ -140,6 +149,7 @@ function stepsMade(
   const setting = { ...BOOKING_SETTING, drafts: stepDrafts(steps, lines, titles, opens) };
   return {
     source: steps,
+    frame: { reply: `steps:${String(shownSteps.bubbleId)}`, chosen: [active] },
     scene: stepsScene(steps, position),
     setting,
     flag: { latitude: first.latitude, longitude: first.longitude },
@@ -154,7 +164,14 @@ function cardsMade(shown: ShownCards, position: LatLng | null): Made | null {
   }
   const { mine, walk } = meAndWalk(position, first.position);
   const scene = { people: mine, places: [], routes: walk, flags: [] };
-  return { source: shown, scene, setting: { ...BOOKING_SETTING, drafts: cardDrafts(shown) }, flag: first.position };
+  const frame = { reply: `cards:${String(shown.bubbleId)}`, chosen: [] };
+  return {
+    source: shown,
+    frame,
+    scene,
+    setting: { ...BOOKING_SETTING, drafts: cardDrafts(shown) },
+    flag: first.position,
+  };
 }
 
 // The scene of several requests (ticket 09), of the Proposal on screen (P04 ticket 06), or of the seat card's booking (ticket 07) with the room, the
@@ -185,7 +202,8 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
       const { latitude, longitude } = proposal.place;
       const scene = proposalScene(proposal, position, friends);
       const setting = proposalSetting(proposal.proposal, now());
-      return { source: proposal, scene, setting, flag: { latitude, longitude } };
+      const frame = { reply: `proposal:${String(proposal.bubbleId)}`, chosen: [] };
+      return { source: proposal, frame, scene, setting, flag: { latitude, longitude } };
     }
     if (cards !== null) {
       return cardsMade(cards, position);
@@ -195,7 +213,8 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
     }
     const { latitude, longitude } = booking.point;
     const scene = bookingScene(booking.point, space, line, position);
-    return { source: booking, scene, setting: studySetting(start), flag: { latitude, longitude } };
+    const frame = { reply: `booking:${booking.place}`, chosen: [] };
+    return { source: booking, frame, scene, setting: studySetting(start), flag: { latitude, longitude } };
   }, [steps, activeStep, seat, proposal, cards, booking, line, space, start, position, friends]);
 }
 

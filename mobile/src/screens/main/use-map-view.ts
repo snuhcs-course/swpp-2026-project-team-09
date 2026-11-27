@@ -12,6 +12,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -29,6 +30,7 @@ import { useAwaySeats } from './library/use-away-seats';
 import {
   ANSWER_LIMITS,
   type AnswerMap,
+  type EverydayAvatars,
   ignorePress,
   useAnswerMap,
   useEverydayLimits,
@@ -128,6 +130,26 @@ function pressTarget(
   return { target: picking ? { place: null, selectPlace: chat.pick.choosePlace } : otherwise, picking };
 }
 
+// The answer the map draws: a scene the app made over the Plan, and the Plan over the Lookup. Only the one drawn is
+// framed (`Frame`, P10 ticket 30).
+function useDrawnAnswer(
+  chat: ChatSheetControl,
+  map: MainMap,
+  room: Room,
+  people: EverydayAvatars,
+  me: Me,
+): AnswerMap | null {
+  const drawn = onMap(chat);
+  const seats = useAwaySeats(awayPlaceOf(drawn.lookup.lookup));
+  const openMark = useMarkOpening(chat.openMark, map.camera, room.stage);
+  const scene = useMadeSceneMap(chat, map, room, people, me, openMark);
+  const menu = withMealMenu(chat, openMark);
+  const plan = useAnswerMap(drawn.answer, map, room, people, chat.invitation, menu, scene === null);
+  const shownLookup = scene === null && plan === null;
+  const lookup = useLookupMap(drawn.lookup, map, room, people, me.avatars, seats, chat.card.raise, shownLookup);
+  return scene ?? plan ?? lookup;
+}
+
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press, and the lines. A tap on a
 // building opens its card and the Place is marked, and a press on an interest mark opens its answer instead of a card.
@@ -150,13 +172,8 @@ export function useMapView(
   const marks = useMarkPresses(chat.chat, me, cards);
   const things = useThings(cards, map.detail, selection.selected?.id ?? null, marks.byId);
   useViewport(chat, map, room);
-  const drawn = onMap(chat);
-  const seats = useAwaySeats(awayPlaceOf(drawn.lookup.lookup));
   const people = useMemo(() => ({ avatars: things.avatars, cards }), [things.avatars, cards]);
-  const lookup = useLookupMap(drawn.lookup, map, room, people, me.avatars, seats, chat.card.raise);
-  const openMark = useMarkOpening(chat.openMark, map.camera, room.stage);
-  const plan = useAnswerMap(drawn.answer, map, room, people, chat.invitation, withMealMenu(chat, openMark));
-  const answer = useMadeSceneMap(chat, map, room, people, me, openMark) ?? plan ?? lookup;
+  const answer = useDrawnAnswer(chat, map, room, people, me);
   const unasked = invitation.shown || made.shown !== null;
   const cardScene = invitation.shown ? invitation.scene : made.scene;
   const way = useInvitationMap(cardScene, map, room);
