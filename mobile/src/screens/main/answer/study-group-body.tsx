@@ -23,7 +23,7 @@ import { keepUse, keptUse } from '../library/use-chooser';
 import type { LibraryCardActions } from '../library/use-library-call';
 import { usePartyRequest } from '../library/room-party';
 import { mainOf, useGroupAct } from './study-group-act';
-import { Choosers, type Open, RequestLine, UseLine } from './study-group-parts';
+import { BookingFailure, Choosers, type Open, RequestLine, UseLine } from './study-group-parts';
 import { useGroupBooking } from './use-group-booking';
 import { consentWords, groupOfRequest, isOut, outWords, partyCardOf } from './study-group-request';
 import { ChatMarkdown } from '../chat-markdown';
@@ -231,6 +231,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
       ) : (
         <RequestLine onCancel={party.cancel} words={booking.line ?? consentWords(out)} />
       )}
+      <BookingFailure failure={booking.failure} onLogIn={booking.logIn} />
       {out !== null && asking ? (
         <OneMorePicker
           onAsked={party.update}

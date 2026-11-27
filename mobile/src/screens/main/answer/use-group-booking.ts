@@ -13,10 +13,17 @@ import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { Slot } from '@/library/cards/payloads';
 import { freeRooms } from '@/library/cards/rooms';
 import type { LibraryRoomTimes } from '@/library/replies';
+import { bookedHere } from '@/library/room-bookings';
 import { bookRoom, type RoomWrite } from '../library/book-room-card';
 import type { PartyRequest } from '../library/room-party';
 import { roomTimesFor } from '../library/room-times';
-import { type LibraryCardActions, useLibraryLoad, useWrite } from '../library/use-library-call';
+import {
+  type CardFailure,
+  type LibraryCardActions,
+  useLibraryLoad,
+  useWrite,
+  type Write,
+} from '../library/use-library-call';
 import { againWords, noRoomOf, readyLineOf, roomOnReady, waitWords } from './study-group-booking';
 
 // The room of the study answer together, read from the library, and its booking once everyone has consented (P10
@@ -25,13 +32,43 @@ import { againWords, noRoomOf, readyLineOf, roomOnReady, waitWords } from './stu
 // at the next free time, which takes the request back first, since a new time needs new consents.
 
 // The kind's rooms of the time's day, read while logged in; null until read.
-function useRoomTimes(group: StudyGroup, slot: Slot, loggedIn: boolean): LibraryRoomTimes[] | null {
+function useRoomTimes(
+  group: StudyGroup,
+  slot: Slot,
+  loggedIn: boolean,
+): { all: LibraryRoomTimes[] | null; reload: () => void } {
   const kind = group.room.space;
-  const { loaded } = useLibraryLoad(
+  const { loaded, reload } = useLibraryLoad(
     () => (loggedIn ? roomTimesFor(kind, slot.date) : Promise.resolve([])),
     `${kind.id} ${slot.date} ${slot.start} ${String(slot.minutes)} ${String(loggedIn)}`,
   );
-  return loaded.state === 'ready' && loggedIn ? loaded.value : null;
+  return { all: loaded.state === 'ready' && loggedIn ? loaded.value : null, reload };
+}
+
+// The request booked from this phone: at once on the booking, and on showing again from what the phone keeps, since
+// the server may still say ready (#657's review).
+function useBooked(out: RoomRequest | null): { booked: boolean; markBooked: () => void } {
+  const [booked, setBooked] = useState<string | null>(null);
+  const id = out?.id ?? null;
+  useEffect(() => {
+    let current = true;
+    if (id !== null) {
+      void bookedHere(id).then((here) => {
+        if (here && current) {
+          setBooked(id);
+        }
+      });
+    }
+    return (): void => {
+      current = false;
+    };
+  }, [id]);
+  return {
+    booked: id !== null && booked === id,
+    markBooked: () => {
+      setBooked(id);
+    },
+  };
 }
 
 export interface GroupBookingOf {
@@ -57,24 +94,72 @@ export interface GroupBooking {
   sentence: string | null;
   again: string | null;
   booking: boolean;
+  // Booked from this phone, though the server may still say ready: 예약하기 is not offered again.
+  booked: boolean;
+  // What the booking came to when it failed, as a room card says it, and its login that books again.
+  failure: CardFailure | null;
+  logIn: () => void;
   onBook: () => void;
+  // "로그인하고 예약": once logged in, the booking waits for the kind's rooms, read again.
+  onLoggedIn: () => void;
   onAgain: () => void;
 }
 
 const ignore = (): void => undefined;
 
+// The booking, which reads the rooms again after any failure, since the room may have been taken meanwhile; and the
+// one asked for before a login, made once the rooms are read.
+function useBooking(
+  of: GroupBookingOf,
+  room: RoomWrite | null,
+  reload: () => void,
+): {
+  write: Write<RoomWrite>;
+  booked: boolean;
+  onLoggedIn: () => void;
+} {
+  const { group, slot, library, out } = of;
+  const { booked, markBooked } = useBooked(out);
+  const write = useWrite<RoomWrite>(async (args, press) => {
+    const space = group.room.space;
+    const failed = await bookRoom({ space, notes: [], addOwn: library?.addOwn ?? ignore }, slot, args, press);
+    if (failed === null) {
+      markBooked();
+    } else {
+      reload();
+    }
+    return failed;
+  }, reload);
+  const [afterLogIn, setAfterLogIn] = useState(false);
+  useEffect(() => {
+    if (afterLogIn && room !== null && !booked && !write.busy) {
+      setAfterLogIn(false);
+      write.run(room);
+    }
+  }, [afterLogIn, room, booked, write]);
+  return {
+    write,
+    booked,
+    onLoggedIn: () => {
+      setAfterLogIn(true);
+    },
+  };
+}
+
 export function useGroupBooking(of: GroupBookingOf): GroupBooking {
-  const { group, slot, loggedIn, shown, party, out, library } = of;
-  const all = useRoomTimes(group, slot, loggedIn);
+  const { group, slot, loggedIn, shown, party, out } = of;
+  const { all, reload } = useRoomTimes(group, slot, loggedIn);
   const free = all === null ? null : freeRooms(all, group.room.space.seatNos, slot);
   const ready = out?.status === 'ready';
   const placed = roomOnReady(of.sent, free ?? []);
   const room = ready ? placed.room : (of.chosen ?? free?.[0]?.NAME ?? null);
   const noRoom = ready && free !== null && free.length === 0 ? noRoomOf(group, all ?? [], slot) : null;
   const nextFree = noRoom?.again ?? null;
-  const write = useWrite<RoomWrite>((args, press) =>
-    bookRoom({ space: group.room.space, notes: [], addOwn: library?.addOwn ?? ignore }, slot, args, press),
-  );
+  const times = free?.find(({ NAME }) => NAME === room) ?? null;
+  const useDesc = out?.useDesc ?? of.use;
+  const toBook =
+    loggedIn && times !== null && useDesc !== null && out !== null ? { room: times, useDesc, request: out } : null;
+  const { write, booked, onLoggedIn } = useBooking(of, toBook, reload);
   const [againAt, setAgainAt] = useState<string | null>(null);
   const { change, locked } = shown;
   useEffect(() => {
@@ -84,20 +169,22 @@ export function useGroupBooking(of: GroupBookingOf): GroupBooking {
       setAgainAt(null);
     }
   }, [againAt, out, locked, change]);
-  const times = free?.find(({ NAME }) => NAME === room) ?? null;
-  const useDesc = out?.useDesc ?? of.use;
   return {
     free,
     room,
     line: ready ? readyLineOf(loggedIn, placed.switched) : null,
     sentence: noRoom?.words ?? waitWords(group, slot, now()),
     again: nextFree === null ? null : againWords(nextFree, slot.minutes),
-    booking: write.busy || (loggedIn && (times === null || useDesc === null)),
+    booking: booked || write.busy || (loggedIn && (times === null || useDesc === null)),
+    booked,
+    failure: write.failure,
+    logIn: write.logIn,
     onBook: () => {
-      if (times !== null && useDesc !== null && out !== null) {
-        write.run({ room: times, useDesc, request: out });
+      if (toBook !== null && !booked) {
+        write.run(toBook);
       }
     },
+    onLoggedIn,
     onAgain: () => {
       if (nextFree !== null) {
         setAgainAt(nextFree);

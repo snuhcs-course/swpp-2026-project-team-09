@@ -17,6 +17,7 @@ import { useRoomKindCounts } from '../library/room-kind-counts';
 import { RoomNumberChooser } from '../library/room-number-chooser';
 import { SEND_FAILED } from '../library/room-party';
 import { UseChooser } from '../library/use-chooser';
+import type { CardFailure } from '../library/use-library-call';
 import { useRooms } from '../library/use-room-counts';
 
 // The parts under the study answer together's room ticket (P10 tickets 11 and 12): the use line, the choosers, and the
@@ -89,6 +90,19 @@ export function RequestLine({ words, onCancel }: { words: string; onCancel: (() 
     <View testID="study-group-line">
       <TicketLine link={onCancel === null ? null : { words: '요청 취소', onPress: onCancel }} words={words} />
     </View>
+  );
+}
+
+// What the booking came to when it failed, as a room card says it, with its 로그인 when the session ended.
+export function BookingFailure({
+  failure,
+  onLogIn,
+}: {
+  failure: CardFailure | null;
+  onLogIn: () => void;
+}): ReactElement | null {
+  return failure === null ? null : (
+    <FailureNote failure={failure.failure} message={failure.message} onLogIn={onLogIn} />
   );
 }
 
