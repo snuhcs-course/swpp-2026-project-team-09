@@ -12,7 +12,7 @@ import { type NotificationsService } from '../notifications/notifications.servic
 // What the member who becomes a Quest's Leader is told (P06 ticket 32): `became-leader`, in 알림 only, whether the
 // Leader left and the Holder who entered earliest leads now, or the Leader handed the role over.
 
-// Read in the change's transaction, as it stands before the Leader goes: the Quest's title and the Leader's name.
+// Read in the change's transaction: the Quest's title and the former Leader's name.
 export async function newLeaderTold(
   questId: string,
   formerId: string,

@@ -46,8 +46,9 @@ export class QuestParty {
       this.quests.changeShared(userId, questId, async (tx) => {
         const last = (await this.quests.holderIds(questId, tx)).length === 1;
         const closed = last ? await this.close(questId, tx) : [];
-        const told = last ? null : await newLeaderTold(questId, userId, 'left', tx);
         const leaderId = await this.quests.removeHolder(questId, userId, tx);
+        // The Quest and the Leader's row stay: one who leads now means others hold it.
+        const told = leaderId === null ? null : await newLeaderTold(questId, userId, 'left', tx);
         return { partyAudience: closed, newLeader: leaderId === null || told === null ? null : { leaderId, told } };
       }),
     );

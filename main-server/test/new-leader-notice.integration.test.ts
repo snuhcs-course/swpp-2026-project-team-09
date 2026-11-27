@@ -112,5 +112,19 @@ describe('The Leader handing the 파티 over', () => {
         expect.objectContaining({ title: '파티장이 됐어요', line: '저녁 같이 먹어요 · 홍길동님이 넘겼어요' }),
       ]);
     });
+    expect(
+      await prisma.notification.findFirst({
+        where: { userId: second.id, kind: 'became-leader' },
+        select: { rings: true },
+      }),
+    ).toEqual({ rings: false });
+  });
+
+  it('to the Leader themselves tells nobody', async () => {
+    const { leader, questId } = await party();
+
+    expect((await handOver(app, leader, questId, leader.id)).status).toBe(204);
+
+    expect(await leaderNotices(leader)).toEqual([]);
   });
 });

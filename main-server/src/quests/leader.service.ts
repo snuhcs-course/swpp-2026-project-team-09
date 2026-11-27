@@ -149,14 +149,16 @@ export class LeaderService {
     await this.roomRequests.questChanged(questId);
   }
 
-  // The new Leader is told in 알림.
+  // The new Leader is told in 알림; a Leader who names themselves is told nothing.
   async handOver(userId: string, questId: string, newLeaderId: string): Promise<void> {
     const handed: { told?: NewLeader } = {};
     await this.changeAsLeader(userId, questId, async (tx, _quest, holderIds) => {
       if (!holderIds.includes(newLeaderId)) {
         throw notHolder();
       }
-      handed.told = await newLeaderTold(questId, userId, 'handed', tx);
+      if (newLeaderId !== userId) {
+        handed.told = await newLeaderTold(questId, userId, 'handed', tx);
+      }
       await tx.quest.update({ where: { id: questId }, data: { leaderId: newLeaderId } });
     });
     if (handed.told !== undefined) {
