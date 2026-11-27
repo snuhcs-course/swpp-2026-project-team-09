@@ -34,7 +34,7 @@ import {
 } from '@/features/quests/adapter';
 import { placeWithRoom } from '@/features/quests/booked-room';
 import { type RequestFlag, requestFlagOf, requestWords } from '@/features/quests/room-request-flag';
-import { dayAndClock, koreaClock, koreaDay } from '@/korea-time';
+import { dayAndClock } from '@/korea-time';
 import { eventCards } from './event-cards';
 import { placeGroupId } from './place-groups';
 import { givenName, shortTitle, withParticle } from './short-name';
@@ -265,7 +265,7 @@ function partyCard(
     subLabel: heldAlone(quest) ? '퀘스트' : kindWords,
     title,
     lines: [
-      ...(start === null ? [] : [line('clock', `${koreaDay(start, now)} ${koreaClock(start)}`)]),
+      ...(start === null ? [] : [line('clock', dayAndClock(start, now))]),
       line('pin', placeWithRoom(label, quest.bookedRoom)),
       ...(party === null && !alone ? [line('info', '활성화에 참여하면 서로 위치가 공유돼요')] : []),
     ],

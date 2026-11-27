@@ -13,10 +13,11 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
-import { koreaClock, koreaDate, koreaDay, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
+import { dayAndClock, koreaClock, koreaDate, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
 import { placeWithRoom } from './booked-room';
 import { requestFlagOf, requestLine, requestShortLine } from './room-request-flag';
 
@@ -218,8 +219,8 @@ function sharedKicker(quest: Quest, switchedOn: boolean, meId: string): string {
 function meta(subQuest: SubQuest | null, now: Date, bookedRoom: string | null | undefined): string {
   const label = placeWithRoom(subQuest?.place?.label ?? '', bookedRoom);
   const start = subQuest?.startsAt ?? null;
-  const day = start === null || koreaDaysAfter(now, new Date(start)) === 0 ? '' : `${koreaDay(start, now)} `;
-  return [start === null ? '' : `${day}${koreaClock(start)}`, label].filter((part) => part !== '').join(' · ');
+  const time = start === null ? '' : today(start, now) ? koreaClock(start) : dayAndClock(start, now);
+  return [time, label].filter((part) => part !== '').join(' · ');
 }
 
 function today(start: string | null, now: Date): boolean {

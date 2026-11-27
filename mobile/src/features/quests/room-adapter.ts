@@ -13,7 +13,7 @@
 
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { LatLng, MyParty, Party, SubQuest } from '@/api/types';
-import { dayAndClock, koreaClock, koreaDay } from '@/korea-time';
+import { dayAndClock, koreaClock } from '@/korea-time';
 import { shownSubQuest } from './adapter';
 import { placeWithRoom } from './booked-room';
 import { standingsOf } from './plan-steps';
@@ -254,7 +254,7 @@ export function toRoom(sources: RoomSources): RoomView {
     host: hostOf(quest, now),
     text: quest.description,
     tags: quest.tags.map((tag) => `#${tag}`),
-    time: start === null ? '시간 미정' : `${koreaDay(start, now)} ${koreaClock(start)}`,
+    time: start === null ? '시간 미정' : dayAndClock(start, now),
     place: orange === undefined || orange.place === '' ? '장소 미정' : orange.place,
     destination: destinationOf(plan),
     editsPlan: editsSubQuests(quest, meId),

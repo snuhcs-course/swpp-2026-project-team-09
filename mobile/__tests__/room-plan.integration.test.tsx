@@ -72,22 +72,6 @@ describe('일정', () => {
     }
   });
 
-  it('says the day of a step that is not today: tomorrow, or its date', async () => {
-    const [meet, picnic] = PICNIC.subQuests;
-    const later = {
-      ...PICNIC,
-      subQuests: [
-        ...(meet === undefined ? [] : [{ ...meet, startsAt: '2026-10-07T05:00:00.000Z' }]),
-        ...(picnic === undefined ? [] : [{ ...picnic, startsAt: '2026-10-08T10:00:00.000Z', endsAt: null }]),
-      ],
-    };
-    answerRoom(server, later);
-    await openRoom(later);
-
-    expect(plan().getByText('내일 14:00')).toBeVisible();
-    expect(plan().getByText('10/8(목) 19:00')).toBeVisible();
-  });
-
   it('says so without a Sub Quest', async () => {
     const empty = { ...PICNIC, subQuests: [] };
     answerRoom(server, empty);
@@ -105,6 +89,39 @@ describe('일정', () => {
     for (const name of ['일정 추가', '일정 수정', '일정 삭제', '완료로 표시', '완료 취소']) {
       expect(screen.queryByRole('button', { name })).toBeNull();
     }
+  });
+});
+
+describe('the days of 일정', () => {
+  it('says the day of a step that is not today: tomorrow, or its date', async () => {
+    const [meet, picnic] = PICNIC.subQuests;
+    const later = {
+      ...PICNIC,
+      subQuests: [
+        ...(meet === undefined ? [] : [{ ...meet, startsAt: '2026-10-07T05:00:00.000Z' }]),
+        ...(picnic === undefined ? [] : [{ ...picnic, startsAt: '2026-10-08T10:00:00.000Z', endsAt: null }]),
+      ],
+    };
+    answerRoom(server, later);
+    await openRoom(later);
+
+    expect(plan().getByText('내일 14:00')).toBeVisible();
+    expect(plan().getByText('10/8(목) 19:00')).toBeVisible();
+    // The time box above 일정 says the next step's day the same way.
+    expect(screen.getAllByText('내일 14:00')).toHaveLength(2);
+  });
+
+  it('says a step after tomorrow alike in the time box and in 일정', async () => {
+    const [, picnic] = PICNIC.subQuests;
+    const later = {
+      ...PICNIC,
+      subQuests: picnic === undefined ? [] : [{ ...picnic, startsAt: '2026-10-08T10:00:00.000Z', endsAt: null }],
+    };
+    answerRoom(server, later);
+    await openRoom(later);
+
+    expect(screen.getAllByText('10/8(목) 19:00')).toHaveLength(2);
+    expect(screen.queryByText(/10월 8일/u)).toBeNull();
   });
 });
 
