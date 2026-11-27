@@ -25,7 +25,7 @@ Keep it thin, an override where the steps are made: the main server is making st
 - [x] Another candidate on the meal's step moves its flag and span. (Unit and integration tests.)
 - [x] An answer with no Plan on screen makes the answer's step not done, with its reasons. (Unit test.)
 - [x] The seat's time changed on its card moves its flag and span. (Unit and integration tests.)
-- [ ] Pictures of the seat booked inside a steps reply, the meal still there and the right main button, at font scale 1.0 and 1.3.
+- [x] Pictures of the seat booked inside a steps reply, the meal still there and the right main button, at font scale 1.0 and 1.3. (In #706.)
 - [x] Whole lint, format and types.
 
 ## How it is built
@@ -40,3 +40,8 @@ Keep it thin, an override where the steps are made: the main server is making st
 - The flag line of a booking made says its seat and "예약됨" (`stepLine`), as a lone booking's label does.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 45 minutes (an estimate), in one session: about 33 minutes from reading the review to the pull request (23:26 to 23:59 KST), then about 12 minutes on the emulator pictures, in a sitting shared with P10 ticket 15's.
+- Tokens: input about 140 uncached, with cache reads about 40.4M and cache writes about 125k; output about 57k. No subagents.
