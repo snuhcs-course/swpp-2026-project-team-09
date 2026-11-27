@@ -10,7 +10,8 @@ import { type Interval, mealWindow } from '../free-time/meal-fit.js';
 import { koreaTime } from '../korea-time.js';
 import { type GatheringArgs, type GatheringNaming, type Naming, type OtherFriend } from './answer-words.js';
 import { MINUTE_MS } from './gathering.js';
-import { halfHoursAround, lanesOf, otherLane, skippedOf } from './meal-scene.js';
+import { skippedBand } from '../free-time/left-out-classes.js';
+import { busyLabel, halfHoursAround, lanesOf, otherLane, skippedOf } from './meal-scene.js';
 import { meetHours, meetWindow } from './meet-gathering.js';
 import { windowOf } from './plan-conditions.js';
 
@@ -70,13 +71,16 @@ export function mealNoPlanBand(naming: Naming): TimeBand {
   }));
 }
 
-// A meeting's: the day's hours as the User narrowed them, or the day's own when that left none.
+// A meeting's: the day's hours as the User narrowed them, or the day's own when that left none, and the Classes left out
+// (P05 ticket 70).
 export function meetNoPlanBand(naming: GatheringNaming<GatheringArgs<MeetInput>>): TimeBand {
   const { input, now, others } = naming.args;
   const asked = meetWindow(input);
+  const { skipped = [] } = naming.asker;
   const label = (placeId: string): string => naming.placeLabel(placeId);
   return windowBand(asked.start < asked.end ? asked : meetHours(input.date), now, (from, until) => ({
     lanes: lanesOf(naming, from, until),
     ...othersWithoutPlace(others, { from, until, label }),
+    ...skippedBand(skipped, (item) => busyLabel(item, label)),
   }));
 }

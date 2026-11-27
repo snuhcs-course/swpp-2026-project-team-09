@@ -8,7 +8,10 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
 import { StudySpacesService } from '../../study-spaces/study-spaces.service.js';
-import { type AnswerReply, type LocationMissing, type StudyInput } from '../dto/answer.dto.js';
+import { type AnswerReply, type LeftOutClass, type LocationMissing, type StudyInput } from '../dto/answer.dto.js';
+import { type DayItem } from '../free-time/free-time.js';
+import { idsOn, skippedOut } from '../free-time/left-out-classes.js';
+import { UserDayService } from '../free-time/user-day.service.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from '../library/catalogue.js';
 import { isTogether } from './study-group.js';
@@ -26,14 +29,24 @@ export class StudyPlanService {
     private readonly studySpaces: StudySpacesService,
     private readonly places: PlaceLookup,
     private readonly groups: StudyGroupService,
+    private readonly days: UserDayService,
     @Inject(LIBRARY_CATALOGUE) private readonly catalogue: Catalogue,
   ) {}
 
-  // Where the User is counts only when they set out now; a `from` constraint names where they set out from.
+  // The asker's Classes of the day, among which a tool names a Class to leave out (P05 ticket 70).
+  readonly classesOn = (askerId: string, date: string): Promise<DayItem[]> => this.days.classesOn(askerId, date);
+
+  // Where the User is counts only when they set out now; a `from` constraint names where they set out from. The asker's
+  // Classes the conversation leaves out (P05 ticket 70) are free.
   async plan(
     askerId: string,
     input: StudyInput,
-    at: { now: Date; location: Position | null; locationMissing?: LocationMissing },
+    at: {
+      now: Date;
+      location: Position | null;
+      locationMissing?: LocationMissing;
+      skipped?: readonly LeftOutClass[];
+    },
   ): Promise<AnswerReply> {
     const [asker] = input.people;
     if (asker?.userId !== askerId) {
@@ -48,7 +61,7 @@ export class StudyPlanService {
     }
     const ready = readyAt(input, at.now);
     const now = ready.getTime() - at.now.getTime() < MINUTE_MS;
-    const [way, buildings, others] = await Promise.all([
+    const [read, buildings, others] = await Promise.all([
       this.ways.argsFor(
         askerId,
         { fromPlaceId, toPlaceId: null, by: null },
@@ -57,6 +70,7 @@ export class StudyPlanService {
       this.studySpaces.listFor(askerId),
       this.groups.othersOf(askerId, input),
     ]);
+    const way = { ...read, me: { ...read.me, ...skippedOut(read.me.items, idsOn(at.skipped ?? [], input.date)) } };
     return studyPlanAnswer({
       input,
       way,

@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { type StudyInput } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { leftOutNow, skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { dateInput } from '../free-time/tool-parts.js';
 import { gated, type LibraryServices } from '../library/library-parts.js';
 import { WHICH_FRIEND } from '../tools/which-friend.js';
@@ -41,12 +42,15 @@ const input = z.object({
     .max(1440)
     .optional()
     .describe('How long, in minutes, only when the User said a length: 2시간 is 120.'),
+  ...skipParameters,
 });
 
 const DESCRIPTION =
   "Plans studying together in a 관정 group study room, drawn on the map as one plan whose button asks the Friends' consent. Give the Friends the User named (none when they named nobody), the one day as date or a period as firstDay and lastDay (neither for the days a room can be booked now), from or until only when the User said a time, and minutes only when they said a length (3 hours otherwise). The server picks the day and the start at which nobody is left out and the shortest stay is longest, and the smallest room for the head count. Answers 'planned' with the room, the time, each person's stay, how many more people the room needs (moreNeeded, 4 at the least), when the booking window opens for a day after it, the other days' best times, and why, the one sentence to say; or 'none' with the reason.";
 
-export function planStudyGroup(groups: Pick<StudyGroupService, 'plan' | 'aheadDays'>, library: LibraryServices): Tool {
+type StudyGroups = Pick<StudyGroupService, 'plan' | 'aheadDays'> & Partial<Pick<StudyGroupService, 'classesOn'>>;
+
+export function planStudyGroup(groups: StudyGroups, library: LibraryServices): Tool {
   return defineTool({
     description: DESCRIPTION,
     input,
@@ -74,11 +78,18 @@ export function planStudyGroup(groups: Pick<StudyGroupService, 'plan' | 'aheadDa
         minutes: asked.minutes ?? null,
         chosen: { seatSpaceId: null, roomSpaceId: null },
       };
-      const { answer, otherDays } = await groups.plan(userId, studyInput, { now, location: context.location }, dates);
+      // Classes named to leave out are of the first day asked; those the conversation left out apply on any day asked.
+      const skip = await skipFor(groups.classesOn, { userId, date, context, presented }, asked);
+      if ('result' in skip) {
+        return skip;
+      }
+      const skipped = leftOutNow({ context, presented });
+      const at = { now, location: context.location, skipped };
+      const { answer, otherDays } = await groups.plan(userId, studyInput, at, dates);
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;
-      return studyGroupWords(answer, otherDays);
+      return { ...studyGroupWords(answer, otherDays), ...skip.said };
     },
   });
 }
@@ -94,7 +105,7 @@ export const STUDY_GROUP_RULES = `Studying together is planned on the map: the s
 // An app that says `study-group` gets the answer together in the place of proposeStudyRoom (P10, 2026-11-27).
 export function withStudyGroup(
   planned: { rules: string[]; tools: Record<string, Tool> },
-  groups: Pick<StudyGroupService, 'plan' | 'aheadDays'>,
+  groups: StudyGroups,
   library: LibraryServices,
   drawsStudyGroup: boolean,
 ): { rules: string[]; tools: Record<string, Tool> } {
