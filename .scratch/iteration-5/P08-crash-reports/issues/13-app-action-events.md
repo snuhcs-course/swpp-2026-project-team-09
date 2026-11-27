@@ -171,4 +171,4 @@ supports `__tests__/support/usage-actions.ts` and `usage-app.ts`.
 
 - Agent time: about 3 hours 30 minutes (estimate), over two sessions (the machine's session restarted between), much
   of it waiting on single-file Jest runs.
-- Tokens: to be filled in by the orchestrator.
+- Tokens: 320,279 in all for the implementation sessions, as their usage reports; the split into input, cache reads, cache writes and output was not available.
