@@ -1,0 +1,34 @@
+{
+  "kind": "InsightVizNode",
+  "source": {
+    "kind": "TrendsQuery",
+    "series": [
+      {
+        "kind": "EventsNode",
+        "event": "screen_viewed",
+        "name": "screen_viewed",
+        "math": "total",
+        "properties": [
+          {
+            "key": "source",
+            "value": "app",
+            "operator": "exact",
+            "type": "event"
+          }
+        ],
+        "custom_name": "화면 조회"
+      }
+    ],
+    "breakdownFilter": {
+      "breakdown": "route",
+      "breakdown_type": "event"
+    },
+    "trendsFilter": {
+      "display": "ActionsTable"
+    },
+    "interval": "day",
+    "dateRange": {
+      "date_from": "-7d"
+    }
+  }
+}

@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { OPEN_SUB_QUEST_SECONDS } from '../../travel/judgement-constants.js';
@@ -196,6 +197,10 @@ function openBand(band: TimeBand, plan: EventPlan, { args }: Naming): TimeBand {
   return open ? { ...band, text: `${clockOf(plan.start)}부터` } : band;
 }
 
+// The band of the asker's part, which an answer without a plan keeps too (P05 ticket 65), over the time asked.
+const askerBand = (plan: EventPlan, naming: Naming): TimeBand =>
+  openBand(bandOf(plan, naming, naming.args.people.slice(1)), plan, naming);
+
 function planOf(naming: Naming): Plan {
   const plan = askerPlan(naming);
   const { args } = naming;
@@ -212,7 +217,7 @@ function planOf(naming: Naming): Plan {
     lines: linesOf(plan, naming),
     basis: basisOf(plan, naming),
     scene: sceneWithFriends(plan, naming),
-    band: openBand(bandOf(plan, naming, args.people.slice(1)), plan, naming),
+    band: askerBand(plan, naming),
     candidates: candidatesOf(naming),
   };
 }
@@ -235,6 +240,9 @@ export function newQuestAnswer(args: NewQuestAnswerArgs): AnswerReply {
     chips: chipsWithFriends(naming),
     plans,
     dropped: [],
-    noPlan: plans.length > 0 ? null : { reason: 'no-fit', lines: [plain('그 시간엔 모일 수 없어요')] },
+    noPlan:
+      plans.length > 0
+        ? null
+        : { reason: 'no-fit', lines: [plain('그 시간엔 모일 수 없어요')], band: askerBand(askerPlan(naming), naming) },
   };
 }

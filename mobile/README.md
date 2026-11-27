@@ -2161,6 +2161,8 @@ an import anywhere else (`__tests__/telemetry/sentry-import-boundary.unit.test.t
 - `identifyUser(id)` also calls PostHog's `identify(id)`, with no person properties; `forgetUser()` also flushes the
   client and then calls `reset()`.
 - `scrubbedRoute(path)` and `serverCode(code)`, the only ways to make a `route` and a main server's `code`.
+- `trackAction(action, request)` and `seatBooking()`, the five actions' stages, and `requestFailed(method, path, error)`,
+  which `call` uses for `api_request_failed` ("The events", below).
 
 The client is made the first time a User is identified while usage is allowed, never before. Nothing is sent or
 queued until then, nothing for a User who chose no, and nothing after `forgetUser()` until the next User is
@@ -2215,12 +2217,48 @@ a name outside it, a property it does not list, or a free string does not compil
 made only by `scrubbedRoute` (the crash reports' route-word rule, `scrubPath`), a main server's code a `ServerCode`,
 made only by `serverCode` (one word of capitals), and every other property is a union of fixed words.
 
-This ticket sends two of them; the five actions' stages and `api_request_failed` come with P08 ticket 13.
+| Event                   | Where it is sent                                                                                                                                                                                                       | Properties                     |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `app_opened`            | sending starts in a run (the sign-in, a start, the switch on), and each return to the front                                                                                                                            | none                           |
+| `screen_viewed`         | each change of screen, from `RouteBreadcrumb` in the root layout                                                                                                                                                       | `route`                        |
+| `assistant_reply_*`     | a message to the Assistant: `askAssistant` in `src/features/assistant/tracked-requests.ts`, called by `answerTo` in `use-chat.ts`                                                                                      | `_failed`: `reason`, `code`    |
+| `party_creation_*`      | the 파티 form's send, `making` in `src/screens/party/form/use-send.ts` (`POST /quests/own`, and `POST /quests` for a Global Event); a Plan sent that makes a 파티, `sendPlan` in `tracked-requests.ts` (`POST /plans`) | `visibility`; `reason`, `code` |
+| `party_join_*`          | 찾기's 참여하기 and an invitation's 수락, `joining` in `src/screens/party/use-party-actions.ts`; the Leader's 수락 of a join request in `src/screens/room/use-room-actions.ts`                                         | `how`; `reason`, `code`        |
+| `friendship_creation_*` | a Friend Request's 수락 and an Invite Link's 수락, `befriending` in `src/features/friends/use-friend-changes.ts`                                                                                                       | `how`; `reason`, `code`        |
+| `seat_booking_*`        | 예약하기 on a reading-room seat, `sendBooking` in `src/screens/main/library/seat-booking.ts`, just before `library.book`                                                                                               | `_failed`: `reason`, `code`    |
+| `api_request_failed`    | every request to the main server that failed for good, from `call` in `src/api/server/http.ts`                                                                                                                         | `route`, `method`, `reason`    |
 
-| Event           | When                                                                                        | Properties |
-| --------------- | ------------------------------------------------------------------------------------------- | ---------- |
-| `app_opened`    | sending starts in a run (the sign-in, a start, the switch on), and each return to the front | none       |
-| `screen_viewed` | each change of screen, from `RouteBreadcrumb` in the root layout                            | `route`    |
+Each of the five actions has three stages: `<action>_requested` before its request, then `<action>_completed` once the
+answer reached the phone or `<action>_failed`. `trackAction(action, request)` in `src/telemetry/actions.ts` sends them
+around a request to the main server and works out `reason` and `code` from what the request threw; it gives back what
+the request gave and throws what it threw, and a failure of PostHog's own never reaches the action:
+
+- status 0 given up by the request's own timer (`timeoutMs`): `timeout`; status 0 otherwise: `network`. `send` marks
+  the `ApiError` it throws with `givenUp`, `timeout` for its timer and `caller` for its caller's `signal`, the first of
+  the two to abort; the message stays "The main server answered 0.", as the crash reports had it;
+- a 4xx with the main server's code (one word of capitals): `refused`, with that `code`;
+- a 5xx, a 4xx without a code, an answer of a shape the app does not know (`UNEXPECTED_ANSWER`), or anything else
+  thrown: `server_error`;
+- a request its caller gave up is no failure: it sends no `_failed` and no `api_request_failed`.
+
+A seat's booking goes to 관정도서관 from the phone, never to the main server, so it has its own stages
+(`seatBooking()`): a `LibraryError` `network` is `network`; `sessionEnded`, `noSession` and `notAllowed` are `refused`
+with `session_ended`, `no_session` and `not_allowed`; an answer without a booking is `refused` with `seat_taken` when a
+read of the seats after it finds the seat no longer free, `not_allowed` otherwise. No event carries anything of the
+library but these words. A press that the card's own checks turn away before `library.book` (seats not read for the
+time, a start gone by) sends nothing, and a group study room's booking is not counted.
+
+What is counted, as the spec's "Which flows count" has it: a 파티 made by the form (an edit is not), whose
+`visibility` is the form's 공개/비공개; recruiting for a Global Event counts whether or not the main server made a
+new Quest, since its answer does not say, while the main server counts only a new one (and sends `private` for it, a
+Global Event's new Quest being Closed until the form changes it), so the two sides may differ by those sends; a Plan
+sent, `public` for a new recruiting Quest and `private` for a meal or a meeting with Friends, and not a Plan taken
+alone. A Leader's acceptance is sent from the Leader's phone.
+
+`api_request_failed` is sent by `call` after the Session followed the refusal, so a 401 that a renewal mended sends
+nothing, nor does a successful request. Its `route` is the request's path by the layer's scrubbing
+(`/quests/42/join` is `/quests/:id/join`), never the query. A refusal that is a route's answer for "none", such as
+GET /parties/mine's 404 NOT_IN_PARTY for a User in no Party, is a refusal too and is counted.
 
 A return to the front is React Native's `AppState` going from `background` or `inactive` to `active`. The route of
 `screen_viewed` is expo-router's pattern with every segment that is not a route word as `:id`: `/room/[questId]` is
@@ -2247,7 +2285,11 @@ fingerprint.
 Every test runs with a stand-in for `posthog-react-native` (`__tests__/support/posthog.ts`, set up in
 `jest-setup.ts`), which records the clients and their calls and models 4.87.3's queue: an opted-out client queues
 nothing, `optOut()` and `reset()` keep the queue, and `flush()` sends it. `__tests__/telemetry/usage.unit.test.ts` and
-`usage-events.unit.test.ts` load the layer anew for each test, with a fake `AppState`.
+`usage-events.unit.test.ts` load the layer anew for each test, with a fake `AppState`. The five actions:
+`__tests__/telemetry/actions.unit.test.ts` (each failure's `reason` and `code`) and `__tests__/api/http-usage.unit.test.ts`
+(the timer, the caller's abort, a mended 401), and the `usage-*.integration.test.tsx` files over the fake main server
+and the library's stand-in, each of which checks every recorded event against the registry (`outsideRegistry` in
+`__tests__/support/usage-actions.ts`).
 
 ## 관정도서관 (P06)
 
@@ -2263,6 +2305,8 @@ hidden-transport.ts  the app's one transport, the hidden web view: waits for its
 hidden-view.tsx      the hidden web view, mounted at the app's root while the flag is set
 call-script.ts       the one fixed script injected per call, and the message protocol
 login-view.tsx       the full-screen login web view
+login-fit.ts         the script that fits the login form to the phone
+login-alert.ts       the script that sends a login page's alert to the app, and the line the app says for one
 library-session.tsx  the login, the flag and the logout for the screens (`useLibrarySession()`)
 flag.ts              the "logged in" flag, `kwanjeong.loggedIn` in AsyncStorage
 end-session.ts       "end the library session", the one shared logout step

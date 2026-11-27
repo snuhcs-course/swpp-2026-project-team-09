@@ -6,6 +6,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -26,6 +27,7 @@ import { sentToastOf } from './invited-words';
 import { useKeepMadeQuest } from './made-quest-ids';
 import { samePlanConditions } from './plan-conditions';
 import { setRefusalWords } from './set-refusals';
+import { sendPlan, takenAlone } from './tracked-requests';
 import { usePlanChange } from './use-plan-change';
 import type { ShownAnswer } from './use-shown-answer';
 
@@ -79,11 +81,6 @@ const TAKEN = '여기로 정했어요';
 const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
 // "여기로" invites nobody.
 const NOT_TAKEN = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
-
-// A Plan "여기로" takes alone: an events Plan, or a meal's or a meet's for the asker only.
-function takenAlone(input: AnswerReply['input']): boolean {
-  return input.kind === 'events' || ((input.kind === 'meal' || input.kind === 'meet') && input.people.length < 2);
-}
 
 // The first request for a Plan and its idempotency key. A press again sends the same request: the main server tells a
 // retry by the key and the whole body, which carries where the User was.
@@ -230,7 +227,7 @@ function useInvite(
       const { shown: after } = live.current;
       return after.answer === answer && after.plan?.id === plan.id;
     };
-    apiClient.makePlanQuest(first.making, first.key).then(
+    sendPlan(answer.input, first.making, first.key).then(
       (made) => {
         keepMade(made);
         askForPush();

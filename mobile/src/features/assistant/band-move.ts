@@ -2,17 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, ConditionChip, TimeBand } from '@/api/assistant-types';
 import { withParticle } from '@/features/map/short-name';
 
-import { clockAt, clockOf, msOf, onBandDay, STEP_MS, type Stretch } from './time-band';
+import { clockAt, clockOf, earliestMsOf, msOf, onBandDay, stepMsOf, type Stretch } from './time-band';
 
 // The time band moved whole: its width kept, by whole steps of the distance moved, inside the range; and who cannot
 // come in the time it covers.
 
-type Band = Pick<TimeBand, 'range' | 'startAt' | 'endAt'>;
+type Band = Pick<TimeBand, 'range' | 'startAt' | 'endAt' | 'rules'>;
 type Lane = TimeBand['lanes'][number];
 type Busy = Lane['busy'][number];
 
@@ -28,19 +29,20 @@ export interface Clash {
 function movedBy(band: Band, distance: number): Stretch {
   const start = msOf(band.startAt);
   const width = msOf(band.endAt) - start;
-  const moved = Math.min(Math.max(start + distance, msOf(band.range.startAt)), msOf(band.range.endAt) - width);
+  const moved = Math.min(Math.max(start + distance, earliestMsOf(band)), msOf(band.range.endAt) - width);
   return { startAt: onBandDay(clockAt(moved), band), endAt: onBandDay(clockAt(moved + width), band) };
 }
 
 // `share` is the distance dragged as a share of the range's width; less than half a step moves nothing.
 export function bandMoved(band: Band, share: number): Stretch {
   const distance = share * (msOf(band.range.endAt) - msOf(band.range.startAt));
-  const steps = Math.sign(distance) * Math.floor(Math.abs(distance) / STEP_MS + 0.5);
-  return movedBy(band, steps * STEP_MS);
+  const step = stepMsOf(band);
+  const steps = Math.sign(distance) * Math.floor(Math.abs(distance) / step + 0.5);
+  return movedBy(band, steps * step);
 }
 
 export function bandStepped(band: Band, direction: 1 | -1): Stretch {
-  return movedBy(band, direction * STEP_MS);
+  return movedBy(band, direction * stepMsOf(band));
 }
 
 // In lane order, and in each lane in the order of its stretches, which the main server sorts by time.

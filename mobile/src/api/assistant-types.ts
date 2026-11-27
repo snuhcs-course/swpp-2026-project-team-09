@@ -417,4 +417,4 @@ export interface AssistantReply extends WithRefusal {
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';
 
-export type { TimeBand } from './time-band-types';
+export type { BandRules, TimeBand } from './time-band-types';
