@@ -11,6 +11,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -68,7 +69,7 @@ export interface RoomActions {
   accept: (questId: string, request: JoinRequest) => Promise<void>;
   decline: (questId: string, request: JoinRequest) => Promise<void>;
   cancelInvitation: (questId: string, invitation: JoinRequest) => Promise<void>;
-  removeHolder: (questId: string, member: MemberView, fromParty: boolean) => Promise<void>;
+  removeHolder: (questId: string, member: MemberView) => Promise<void>;
   handOver: (questId: string, member: MemberView) => Promise<void>;
   // `party` is how the User is in the Quest's Party, and `alone` whether the Quest is taken alone, a 퀘스트 in its
   // words. True once the Quest is left.
@@ -247,13 +248,9 @@ function peopleActions({ run }: Tools): PeopleActions {
     cancelInvitation: async (questId, { id, user }) => {
       await run(() => apiClient.cancelInvitation(questId, id), `${user.name}님 초대를 취소했어요`);
     },
-    removeHolder: async (questId, { id, name }, fromParty) => {
-      await run(async () => {
-        await apiClient.removeHolder(questId, id);
-        if (fromParty) {
-          await apiClient.removePartyMember(id);
-        }
-      }, `${name}님을 내보냈어요`);
+    // The main server takes the Holder out of the Quest's activation too (P06 ticket 23).
+    removeHolder: async (questId, { id, name }) => {
+      await run(() => apiClient.removeHolder(questId, id), `${name}님을 내보냈어요`);
     },
     handOver: async (questId, { id, name }) => {
       await run(() => apiClient.handOverQuest(questId, id), `${name}님이 파티장이 됐어요`);
