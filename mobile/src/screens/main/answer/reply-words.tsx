@@ -8,6 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -35,6 +36,7 @@ import type { TellAct } from '../library/act-stage';
 import type { LibraryCardActions } from '../library/use-library-call';
 import { offeredAnswer } from '@/features/assistant/meal-offered';
 import { SENTENCE } from './line-types';
+import { useSlotHeld } from './sentence-slot';
 
 // Which card a reply's words are: the Plan's, or the made Quest's once its Plan was made into one, for the reply the
 // answer on screen came from, the Lookup on screen for its reply, or the reply's own.
@@ -123,15 +125,16 @@ interface WordsProps extends OnScreen {
 
 // The card of the answer on screen a reply's words are, by `wordsKindOf`, with a refusal's lines over the Plan's when
 // the refusal keeps what is on screen; null when they are not one.
-function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
+function onScreenCard(props: WordsProps, kind: WordsKind, held: boolean): ReactElement | null {
   const { bubble, shown, invitation, room, onClose, focus } = props;
   const over = keepsShown(bubble) ? bubble.refusal?.lines : undefined;
   const { answer, plan } = shown;
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
     const steps = (bubble.steps?.length ?? 0) > 1;
-    // A choice's words are not the card's: the history list keeps them (P05 ticket 56).
-    const said = bubble.select === undefined ? bubble.text : '';
+    // A choice's words are not the card's: the history list keeps them (P05 ticket 56). Nor are they under a later
+    // bubble that holds the slot (P10 ticket 29).
+    const said = bubble.select === undefined && !held ? bubble.text : '';
     const group = { act: props.group?.act, bubbleId: bubble.id, library: props.group?.library };
     return <PlanCard {...card} {...group} focus={focus} said={said} steps={steps} />;
   }
@@ -149,7 +152,7 @@ export function Words(props: WordsProps): ReactElement {
   const { bubble, onAsk, addRecalculated } = props;
   const { answer, refusal = null } = bubble;
   const kind = wordsKindOf(bubble, props);
-  const own = onScreenCard(props, kind);
+  const own = onScreenCard(props, kind, useSlotHeld());
   if (own !== null) {
     return own;
   }

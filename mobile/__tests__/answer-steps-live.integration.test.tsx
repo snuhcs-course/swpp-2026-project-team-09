@@ -42,6 +42,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const WORDS = '17시에 관정 갔다가 18시쯤 저녁 먹으려고 하는데 7층 예약하고 스케줄 짜줘';
+const SAID = '자리 카드를 띄웠고, 18:04에 학생회관식당에서 먹어요.';
 const KWANJEONG = {
   placeId: 'a9b1c2d3-0000-4000-8000-000000000621',
   label: '62-1동',
@@ -98,7 +99,7 @@ async function askSteps(): Promise<ReturnType<typeof userEvent.setup>> {
   server.on('POST /assistant/messages', {
     status: 200,
     body: {
-      text: '자리 카드를 띄웠고, 18:04에 학생회관식당에서 먹어요.',
+      text: SAID,
       mapButtons: [],
       proposal: null,
       cards: [SEAT_CARD],
@@ -138,6 +139,20 @@ describe('The seat booked from the steps of a seat and a meal', () => {
     expect(inFrame().getByTestId('plan-stepper')).toBeVisible();
     expect(beside('가는 길')).toBeVisible();
     expect(beside('만들고 초대 보내기')).toBeNull();
+  });
+
+  // The card's one sentence slot (P01 ticket 20): the app's own line made by a button takes it from the model's reply,
+  // as a seat answer alone's ticket does; the answer's card stays.
+  it('gives the card’s sentence to the booking: the reply’s words go, its ticket stands, the meal’s card stays', async () => {
+    const user = await askSteps();
+    expect(inFrame().getByText(SAID)).toBeOnTheScreen();
+
+    await user.press(beside('예약하기') ?? screen.getByText('예약하기'));
+    await pass(500);
+
+    expect(inFrame().queryByText(SAID)).toBeNull();
+    expect(inFrame().getByTestId('library-done')).toBeOnTheScreen();
+    expect(inFrame().getByTestId('plan-stepper')).toBeOnTheScreen();
   });
 
   it('goes on to the meal: ② makes its button the button, and ① gives the ticket’s back', async () => {
