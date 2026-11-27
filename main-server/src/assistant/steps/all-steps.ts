@@ -217,15 +217,17 @@ const sameConstraints = (a: Movable, b: Movable): boolean => constraintsOf(a) ==
 // The conditions set out from the step before. Without one they stay as they are, unless the steps on screen are known,
 // when a chain of an earlier step is dropped with it; so is a chain over a start the User named. When an item of the
 // asker's day lies between the step before's end and their start, they set out from no step: the planner sets the asker
-// out from that item itself. A Class left out is no such item.
+// out from that item itself. A Class left out is no such item. An app before `answers` reads the chain as the asker's
+// own (`source`, P05 ticket 77).
 export async function startAfter<Input extends Movable>(
   input: Input,
   before: ReplyStep | null,
   asking: Asking,
   services: Pick<AllStepsServices, 'itemsOn'>,
+  source: 'asker' | 'step' = 'step',
 ): Promise<Input> {
   const end = before?.endAt ?? before?.startAt ?? null;
-  const chained = before === null ? null : chainedInput(input, before, 'step');
+  const chained = before === null ? null : chainedInput(input, before, source);
   if (before === null && asking.context.steps === undefined) {
     return input;
   }
@@ -242,25 +244,27 @@ export async function startAfter<Input extends Movable>(
 
 // The meal's conditions set out from the step before it while the model plans it, so that the plan the model reads and
 // words is the one the app shows: a meal on screen follows the step before it there; a new one, by time, the step a
-// meal follows (`stepBeforeMeal`).
+// meal follows (`stepBeforeMeal`), among this message's bookings and answers. So does it for an app before `answers`,
+// which is shown that meal alone and reads the chain as the asker's own (P05 ticket 77).
 export function mealAfterSteps(
   input: MealInput,
   asking: Asking,
   kwanjeong: () => PlaceDto | null,
   services: Pick<AllStepsServices, 'itemsOn'>,
+  source: 'asker' | 'step' = 'step',
 ): Promise<MealInput> {
   const key = keyFor(onScreen(asking.context), input);
   const slots = slotsOf(asking, kwanjeong);
   const own = slots.findIndex((slot) => slot.key === key && slot.onScreen);
   const slot = slots[own];
   if (slot !== undefined) {
-    return startAfter(input, stepBeforeSlot(slots.with(own, { ...slot, input }), own), asking, services);
+    return startAfter(input, stepBeforeSlot(slots.with(own, { ...slot, input }), own), asking, services, source);
   }
   const before = stepBeforeMeal(
     slots.filter((other) => other.key !== key).map(({ step }) => step),
     input,
   );
-  return startAfter(input, before, asking, services);
+  return startAfter(input, before, asking, services, source);
 }
 
 interface Settled {
