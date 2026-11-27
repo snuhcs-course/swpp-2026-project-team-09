@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
@@ -18,9 +19,11 @@ import {
 } from '../dto/answer.dto.js';
 import { type Card, type NotDone, type ToolContext } from '../feature.js';
 import { onDay } from '../free-time/free-time.js';
+import { withTopic, withToward } from '../gathering/answer-words.js';
 import { windowOf } from '../gathering/plan-conditions.js';
 import { placeLabelOf } from '../gathering/place-naming.js';
-import { koreaDate, koreaTime } from '../korea-time.js';
+import { LONGEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
+import { clockWithDay, dayWordsFrom, koreaDate, koreaTime } from '../korea-time.js';
 import { type LibrarySpace } from '../library/catalogue.js';
 import { type LibraryCard } from '../library/library-card.js';
 import { reviseAnswer } from '../presented.js';
@@ -236,17 +239,19 @@ export function afterEarlierSteps(input: MealInput, steps: readonly ReplyStep[])
   return (before === null ? null : chainedInput(input, before)) ?? input;
 }
 
-// The step a meal follows while the model plans it: of the steps shown so far at a place on its day, the latest that
-// starts before the meal's window ends. The model is told to call the tools in time order, so a step shown before the
-// meal comes before it, even one that starts inside its window ("5시 반부터 관정 있다가 저녁", P05 ticket 74).
-export function stepShownBefore(steps: readonly ReplyStep[], input: MealInput): ReplyStep | null {
-  return stepBeforeAt(steps, input.date, new Date(windowOf(input).end.getTime() - MINUTE_MS));
+// The step a meal follows while the model plans it, by time alone: of the steps shown so far at a place on its day, the
+// latest that starts before an hour-long meal could come first in its window. A seat from 17:30 comes before dinner
+// ("5시 반부터 관정 있다가 저녁"); one from 19:00 after it ("저녁 먹고 7시부터 관정"), whatever order the model called the
+// tools in (P05 ticket 74).
+export function stepBeforeMeal(steps: readonly ReplyStep[], input: MealInput): ReplyStep | null {
+  const latest = windowOf(input).start.getTime() + LONGEST_MEAL_SECONDS * 1000 - MINUTE_MS;
+  return stepBeforeAt(steps, input.date, new Date(latest));
 }
 
-// The meal's conditions set out from the step shown before it, or as they are. planMeal calls it, so that the plan the
-// model reads and words is the one the app shows.
+// The meal's conditions set out from the step before it among those shown so far, or as they are. planMeal calls it,
+// so that the plan the model reads and words is the one the app shows.
 export function afterStepsShown(input: MealInput, steps: readonly ReplyStep[]): MealInput {
-  const before = stepShownBefore(steps, input);
+  const before = stepBeforeMeal(steps, input);
   return (before === null ? null : chainedInput(input, before)) ?? input;
 }
 
@@ -268,17 +273,19 @@ export const planChanged = (worded: AnswerReply, planned: AnswerReply): boolean 
   return before !== undefined && (after?.id !== before.id || after.startAt !== before.startAt);
 };
 
-// The reply's words when the server changed a plan the model had worded (P05 ticket 74): one short sentence per step,
-// in their order, made from the steps alone, so that the words never contradict the plan drawn.
-export function stepsSentence(steps: readonly ReplyStep[]): string {
-  return steps
-    .map(({ title, startAt, status, reason }) =>
-      status === 'not-done'
-        ? `${title}: ${reason ?? '하지 못했어요'}`
-        : `${startAt === null ? '' : `${clockOf(new Date(startAt))} `}${title}`,
-    )
-    .map((line) => (/[.!?]$/u.test(line) ? line : `${line}.`))
-    .join(' ');
+const ended = (line: string): string => (/[.!?]$/u.test(line) ? line : `${line}.`);
+
+// The sentence the reply adds to the model's words for a step the server planned into another plan than the one the
+// model worded (P05 ticket 74): its new time and title, with its day when that is not today, or why it has none now.
+// The model's words stay whole: what else it said (a shuttle's time, an invitation sent, a question back) is kept.
+export function movedStepSentence({ title, startAt, status, reason }: ReplyStep, now: Date): string {
+  if (status === 'not-done' || startAt === null) {
+    const day = startAt === null ? '' : dayWordsFrom(koreaDate(new Date(startAt)), now);
+    return ended(
+      `${day === '' ? '' : `${day} `}${withTopic(title)} 앞 일정에 맞춰 다시 짜 보니 ${reason ?? '맞는 계획이 없어요'}`,
+    );
+  }
+  return `앞 일정에 맞춰 ${clockWithDay(new Date(startAt), now)} ${withToward(title)} 바꿨어요.`;
 }
 
 // Puts the steps of the run in what it presented, when there are two or more. A meal the model planned before the
@@ -295,18 +302,18 @@ export async function presentSteps(context: ToolContext, services: StepsServices
   if (others.length < 2 && presented.answer === null) {
     return;
   }
-  const retold = await mealAfterBookings(context, others, services);
+  const moved = await mealAfterBookings(context, others, services);
   const all = presented.answer === null ? others : [...others, answerStep(presented.answer)];
   presented.steps = stepOrder(all);
-  if (retold) {
-    presented.retold = stepsSentence(presented.steps);
+  if (moved && presented.answer !== null) {
+    presented.addedWords = movedStepSentence(answerStep(presented.answer), context.now);
   }
 }
 
 // A meal the model planned before the booking it follows, or together with it, planned again from that booking, and
 // whether the plan is then another than the one the model worded. A replan that fails keeps the meal as the model
 // planned it, so the rest of the reply still reaches the User. The plan set out from the booking stands; when the model
-// worded another, the steps say it instead (P05 ticket 74).
+// worded another, the reply adds a sentence for it (P05 ticket 74).
 async function mealAfterBookings(
   context: ToolContext,
   bookings: readonly ReplyStep[],

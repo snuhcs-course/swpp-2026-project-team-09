@@ -19,18 +19,20 @@ import { type DayItem, onDay } from '../free-time/free-time.js';
 import { idsOn, leftOutNow } from '../free-time/left-out-classes.js';
 import { windowOf } from '../gathering/plan-conditions.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
-import { requestKey, settleAnswer } from '../presented.js';
+import { settleAnswer } from '../presented.js';
 import {
   answerStep,
   bookingSteps,
   chainedInput,
   isBookCard,
+  movedStepSentence,
   planChanged,
   pointOf,
+  stepBeforeMeal,
   stepOrder,
-  stepsSentence,
   withoutChain,
 } from './plan-steps.js';
+import { keyFor, keyOf, onScreen, withScreenKeys } from './steps-on-screen.js';
 
 // The steps of a conversation for an app that says `answers` (P05 ticket 74): the steps on screen as the app sends them
 // back (`context.steps`, with each answer's conditions in `context.answers`), this message's answers and bookings in the
@@ -46,8 +48,22 @@ import {
 
 export type Movable = MealInput | MeetInput | StudyInput;
 
-export const isMovable = (input: PlanInput): input is Movable =>
-  input.kind === 'meal' || input.kind === 'meet' || input.kind === 'study';
+// How each kind of answer stands among the steps: one that `moves` sets out from the step before it, one `fixed` keeps
+// its own time. A new kind of answer (a party of its own, say) is added here, where the compiler asks for it, and, when
+// it moves, to `Movable`, whose people take the asker's constraints. An app before `answers` chains a meal alone
+// (`presentSteps`).
+const STEP_KINDS: Record<PlanInput['kind'], 'moves' | 'fixed'> = {
+  meal: 'moves',
+  meet: 'moves',
+  study: 'moves',
+  events: 'fixed',
+  quests: 'fixed',
+  'new-quest': 'fixed',
+};
+
+export const isMovable = (input: PlanInput): input is Movable => STEP_KINDS[input.kind] === 'moves';
+
+const isFixed = ({ kind }: ReplyStep): boolean => kind !== 'seat' && kind !== 'room' && STEP_KINDS[kind] === 'fixed';
 
 export interface AllStepsServices {
   // The Place of 관정도서관.
@@ -60,11 +76,7 @@ export interface AllStepsServices {
 
 type Asking = Pick<ToolContext, 'userId' | 'context' | 'presented'>;
 
-const MINUTE_MS = 60_000;
-
 const clockOf = (at: number): string => koreaTime(new Date(at)).slice(11, 16);
-
-const keyOf = ({ shows }: ReplyStep): string | null => (shows?.kind === 'answer' ? (shows.key ?? null) : null);
 
 const isBooking = ({ kind }: ReplyStep): boolean => kind === 'seat' || kind === 'room';
 
@@ -114,13 +126,13 @@ function placed(slots: readonly Slot[], slot: Slot, replaces: (other: Slot) => b
 }
 
 // The conversation's steps: those on screen the message did not withdraw, then this message's bookings in the place of
-// one of the same unit that day, and its answers in the place of one of the same request.
+// one of the same unit that day, and its answers in the place of the one of the same request, under its key.
 function slotsOf({ context, presented }: Asking, kwanjeong: () => PlaceDto | null): Slot[] {
-  const inputs = new Map((context.answers ?? []).map((input) => [requestKey(input), input]));
-  const withdrawn = new Set(presented.withdrawn ?? []);
-  const screen = (context.steps ?? []).flatMap((step): Slot[] => {
+  const screen = onScreen(context);
+  const withdrawn = new Set((presented.withdrawn ?? []).map((key) => screen.keys.get(key) ?? key));
+  const shown = screen.steps.flatMap((step): Slot[] => {
     const key = keyOf(step);
-    const input = key === null ? undefined : inputs.get(key);
+    const input = key === null ? undefined : screen.inputs.get(key);
     const movable = input !== undefined && isMovable(input) ? input : null;
     return key !== null && withdrawn.has(key)
       ? []
@@ -133,10 +145,10 @@ function slotsOf({ context, presented }: Asking, kwanjeong: () => PlaceDto | nul
         { step, key: null, input: null, answer: null, onScreen: false, fresh: true },
         (other) => isBooking(other.step) && other.step.kind === step.kind && dayOf(other.step) === dayOf(step),
       ),
-    screen,
+    shown,
   );
   return (presented.answers ?? []).reduce((slots, answer) => {
-    const key = requestKey(answer.input);
+    const key = keyFor(screen, answer.input);
     const input = isMovable(answer.input) ? answer.input : null;
     const slot = { step: answerStep(answer, key), key, input, answer, onScreen: false, fresh: true };
     return placed(slots, slot, (other) => other.key === key);
@@ -217,40 +229,37 @@ export async function startAfter<Input extends Movable>(
 }
 
 // The meal's conditions set out from the step before it while the model plans it, so that the plan the model reads and
-// words is the one the app shows: a meal on screen follows the step before it there; a new one, the latest step on
-// screen that starts no later than its window, or the latest this message showed before it, in the order the model
-// is told to call the tools, that starts before its window ends ("5시 반부터 관정 있다가 저녁").
+// words is the one the app shows: a meal on screen follows the step before it there; a new one, by time, the step a
+// meal follows (`stepBeforeMeal`).
 export function mealAfterSteps(
   input: MealInput,
   asking: Asking,
   kwanjeong: () => PlaceDto | null,
   services: Pick<AllStepsServices, 'itemsOn'>,
 ): Promise<MealInput> {
-  const key = requestKey(input);
+  const key = keyFor(onScreen(asking.context), input);
   const slots = slotsOf(asking, kwanjeong);
   const own = slots.findIndex((slot) => slot.key === key && slot.onScreen);
   const slot = slots[own];
   if (slot !== undefined) {
     return startAfter(input, stepBeforeSlot(slots.with(own, { ...slot, input }), own), asking, services);
   }
-  const usable = usableOn(input.date);
-  const { start, end } = windowOf(input);
-  const before = latestOf(
-    slots.filter(
-      (other) =>
-        other.key !== key &&
-        usable(other) &&
-        startOf(other.step) <= (other.fresh ? end.getTime() - MINUTE_MS : start.getTime()),
-    ),
+  const before = stepBeforeMeal(
+    slots.filter((other) => other.key !== key).map(({ step }) => step),
+    input,
   );
   return startAfter(input, before, asking, services);
 }
 
 interface Settled {
   slots: Slot[];
-  // Whether a plan the model worded was planned again into another.
-  retold: boolean;
+  // The keys of the answers the model worded that were planned again into another plan.
+  moved: string[];
 }
+
+// The step whose conditions changed but could not be planned again: it stays as it was, not done, since it no longer
+// follows the step before it.
+const NOT_REPLANNED = '앞 일정이 바뀌었는데 다시 짜지 못했어요';
 
 // A slot whose conditions changed, planned again. A replan that fails keeps the answer it had, so that the rest of the
 // reply still reaches the User.
@@ -261,22 +270,22 @@ async function settled(
   services: AllStepsServices,
 ): Promise<Settled> {
   const slot = slots[at];
-  if (slot?.input === null || slot === undefined) {
-    return { slots: [...slots], retold: false };
+  if (slot?.input === null || slot === undefined || slot.key === null) {
+    return { slots: [...slots], moved: [] };
   }
   const input = await startAfter(slot.input, stepBeforeSlot(slots, at), context, services);
-  const planned = sameConstraints(input, slot.input) ? null : await services.replan(input, context).catch(() => null);
+  if (sameConstraints(input, slot.input)) {
+    return { slots: [...slots], moved: [] };
+  }
+  const planned = await services.replan(input, context).catch(() => null);
   if (planned === null) {
-    return { slots: [...slots], retold: false };
+    const step = { ...slot.step, status: 'not-done' as const, reason: NOT_REPLANNED };
+    return { slots: slots.with(at, { ...slot, step }), moved: [] };
   }
   settleAnswer(context.presented, planned);
-  const next = {
-    ...slot,
-    step: answerStep(planned, slot.key ?? requestKey(planned.input)),
-    input: isMovable(planned.input) ? planned.input : null,
-    answer: planned,
-  };
-  return { slots: slots.with(at, next), retold: slot.answer !== null && planChanged(slot.answer, planned) };
+  const next = { ...slot, step: answerStep(planned, slot.key), input, answer: planned };
+  const moved = slot.answer !== null && planChanged(slot.answer, planned);
+  return { slots: slots.with(at, next), moved: moved ? [slot.key] : [] };
 }
 
 // The order the steps that can move are settled in: those on screen in their order, then the new ones by when they
@@ -296,43 +305,51 @@ function settleOrder(slots: readonly Slot[]): number[] {
   ];
 }
 
-const FIXED_KINDS: ReadonlySet<ReplyStep['kind']> = new Set(['events', 'quests', 'new-quest']);
-
-// A step at a fixed time that starts before a step before it ends cannot be reached: it stays, not done, with why. A
-// step on screen once out of reach is judged again.
+// A step at a fixed time that starts before a step before it ends cannot be reached: it stays, not done, with why. Only
+// the steps done keep the User busy: a refused seat or an event out of reach holds no time. A step on screen once out
+// of reach is judged again.
 function withReach(steps: readonly ReplyStep[]): ReplyStep[] {
-  return steps.map((each, at): ReplyStep => {
-    if (!FIXED_KINDS.has(each.kind) || each.place === null || each.startAt === null) {
-      return each;
-    }
-    const step = { ...each, status: 'shown' as const, reason: null };
-    const latest = Math.max(...steps.slice(0, at).flatMap(({ endAt }) => (endAt === null ? [] : [Date.parse(endAt)])));
-    return latest > startOf(step)
-      ? { ...step, status: 'not-done', reason: `앞 일정이 ${clockOf(latest)}에 끝나 제때 갈 수 없어요` }
-      : step;
-  });
+  const judged: ReplyStep[] = [];
+  for (const each of steps) {
+    judged.push(reachOf(each, judged));
+  }
+  return judged;
+}
+
+// The step judged after the steps before it.
+function reachOf(each: ReplyStep, before: readonly ReplyStep[]): ReplyStep {
+  if (!isFixed(each) || each.place === null || each.startAt === null) {
+    return each;
+  }
+  const step = { ...each, status: 'shown' as const, reason: null };
+  const ends = before.flatMap(({ status, endAt }) => (status === 'shown' && endAt !== null ? [Date.parse(endAt)] : []));
+  const latest = Math.max(...ends);
+  return latest > startOf(step)
+    ? { ...step, status: 'not-done', reason: `앞 일정이 ${clockOf(latest)}에 끝나 제때 갈 수 없어요` }
+    : step;
 }
 
 // Puts the conversation's steps in what the run presented, when there are two or more, each step that can move set out
-// from the one before it. When the server planned a step the model had worded into another plan, the steps say it in
-// the model's place: the plan set out from the step before stands.
+// from the one before it, and gives every answer of the reply its key on screen. The plan set out from the step before
+// stands: when it is not the one the model worded, the reply adds a sentence for that step to the model's words.
 export async function presentAllSteps(context: ToolContext, services: AllStepsServices): Promise<void> {
   const { presented } = context;
   const slots = slotsOf(context, services.kwanjeong);
   delete presented.notDone;
-  if (slots.length < 2) {
-    return;
+  if (slots.length >= 2) {
+    const done = await settleOrder(slots).reduce(
+      async (sofar: Promise<Settled>, at) => {
+        const { slots: current, moved } = await sofar;
+        const next = await settled(current, at, context, services);
+        return { slots: next.slots, moved: [...moved, ...next.moved] };
+      },
+      Promise.resolve({ slots, moved: [] }),
+    );
+    presented.steps = withReach(stepOrder(done.slots.map(({ step }) => step)));
+    const added = presented.steps.filter((step) => done.moved.includes(keyOf(step) ?? ''));
+    if (added.length > 0) {
+      presented.addedWords = added.map((step) => movedStepSentence(step, context.now)).join(' ');
+    }
   }
-  const done = await settleOrder(slots).reduce(
-    async (sofar: Promise<Settled>, at) => {
-      const { slots: current, retold } = await sofar;
-      const next = await settled(current, at, context, services);
-      return { slots: next.slots, retold: retold || next.retold };
-    },
-    Promise.resolve({ slots, retold: false }),
-  );
-  presented.steps = withReach(stepOrder(done.slots.map(({ step }) => step)));
-  if (done.retold) {
-    presented.retold = stepsSentence(presented.steps);
-  }
+  Object.assign(presented, withScreenKeys(onScreen(context.context), presented));
 }

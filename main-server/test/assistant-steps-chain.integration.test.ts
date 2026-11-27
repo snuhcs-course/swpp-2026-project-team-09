@@ -2,109 +2,39 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { z } from 'zod';
-import { type AnswerReply, type PlanInput, type ReplyStep } from '../src/assistant/dto/answer.dto.js';
-import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { find } from './library.js';
-import { MealPlanStage } from './meal-plan.js';
-import { menusMessage, restaurant } from './menus.js';
-import { connectToDatabase, storeEvent } from './quests.js';
 import { type Step } from './scripted-model.js';
-import { sendAsWorker } from './worker.js';
+import {
+  ANSWERS_APP,
+  askerConstraints,
+  chainFrom,
+  clock,
+  DATE,
+  meal,
+  OLD_APP,
+  originOf,
+  said,
+  seatAt,
+  StepsStage,
+} from './steps-stage.js';
 
-// The steps of one message over every answer, for an app that says `answers` (P05 ticket 74), at the Assistant's
-// endpoint with the scripted model, the seed's walking table, Places and study spaces. On a Tuesday at 09:00 the asker
-// has a Class in 301동 from 09:30 to 10:45. A later step that can move sets out from the step before it when that one
-// ends; one at a fixed time stays, and says when it cannot be reached.
+// The steps of one message over every answer, for an app that says `answers` (P05 ticket 74), on the stage of
+// `steps-stage.ts`. A later step that can move sets out from the step before it when that one ends; one at a fixed time
+// stays, and says when it cannot be reached.
 
-const stage = new MealPlanStage();
-let prisma: PrismaClient;
-const stored: string[] = [];
+const steps = new StepsStage();
+const { stage } = steps;
+const asked = steps.asked.bind(steps);
+const eventAt = steps.eventAt.bind(steps);
 
-const DATE = '2088-03-09';
-const RESTAURANTS = ['301동식당', '학생회관식당', '자하연식당 2층'];
-const ANSWERS_APP = { clientCapabilities: ['library', 'answer', 'events', 'study-plan', 'answers'] };
-const OLD_APP = { clientCapabilities: ['library', 'answer', 'events', 'study-plan'] };
+beforeAll(() => steps.start());
 
-const bothMeals = (name: string): object =>
-  restaurant({
-    name,
-    lines: [
-      { meal: 'lunch', text: '제육볶음 : 6,000원', kind: 'dish', name: '제육볶음', price: 6000 },
-      { meal: 'dinner', text: '돈까스 : 6,500원', kind: 'dish', name: '돈까스', price: 6500 },
-    ],
-  });
+afterAll(() => steps.stop());
 
-beforeAll(async () => {
-  await stage.start();
-  prisma = connectToDatabase();
-});
-
-afterAll(async () => {
-  await prisma.globalEvent.deleteMany({ where: { id: { in: stored } } });
-  await prisma.$disconnect();
-  await stage.stop();
-});
-
-beforeEach(async () => {
-  await stage.asking(DATE, '09:00');
-  await sendAsWorker(
-    stage.app,
-    '/menus/collected',
-    menusMessage([{ date: DATE, restaurants: RESTAURANTS.map((name) => bothMeals(name)) }]),
-  );
-  await stage.classAt(stage.asker, '09:30', '10:45', '301');
-});
-
-const replySchema = z.object({
-  text: z.string(),
-  answer: z.custom<AnswerReply | null>(),
-  answers: z.custom<AnswerReply[]>().optional(),
-  steps: z.custom<ReplyStep[]>().optional(),
-});
-
-type Reply = z.infer<typeof replySchema>;
-
-async function asked(steps: Step[], text: string, app: object = ANSWERS_APP, context?: object): Promise<Reply> {
-  const response = await stage.send(steps, context === undefined ? app : { ...app, context }, text);
-  expect(response.status).toBe(200);
-  return replySchema.parse(response.body);
-}
-
-const meal = (which: 'lunch' | 'dinner', more: object = {}): Step => ({
-  tool: 'planMeal',
-  input: { date: DATE, meal: which, ...more },
-});
-const said: Step = { text: '순서대로 짰어요.' };
-
-const originOf = (answer: AnswerReply | undefined): { placeId: string; basis: string } | null => {
-  const origin = answer?.plans[0]?.parts[0]?.origin ?? null;
-  return origin === null ? null : { placeId: origin.place.placeId, basis: origin.basis };
-};
-
-const askerConstraints = (input: PlanInput | undefined): unknown =>
-  input !== undefined && 'people' in input ? input.people[0]?.constraints : null;
-
-const clock = (at: string | null | undefined): string | null =>
-  at === null || at === undefined ? null : at.slice(11, 16);
-
-// The one event of the day: the events planned are the day's, which only a search of the message could narrow.
-async function eventAt(title: string, start: string, end: string): Promise<string> {
-  await prisma.globalEvent.deleteMany({ where: { id: { in: stored.splice(0) } } });
-  const { latitude, longitude } = await stage.numbered('73');
-  const event = await storeEvent(prisma, {
-    title,
-    startsAt: new Date(`${DATE}T${start}:00+09:00`),
-    endsAt: new Date(`${DATE}T${end}:00+09:00`),
-    place: '문화관',
-    latitude,
-    longitude,
-  });
-  stored.push(event.id);
-  return event.id;
-}
+beforeEach(() => steps.morning());
 
 describe('Lunch and then dinner', () => {
   it('are two steps, each showing its own answer, and dinner sets out from lunch when it ends', async () => {
@@ -211,93 +141,13 @@ describe('A 관정 seat and then a study place', () => {
   });
 });
 
-const seatAt = (start: string, end: string): Step => ({
-  tool: 'proposeLibraryBooking',
-  input: { spaceId: '7F-7A-zone2', date: DATE, start, end },
-});
-
-const chainFrom = (placeId: string, time: string, source = 'step'): object[] => [
-  { kind: 'from', placeId, source },
-  { kind: 'notBefore', time, source },
-];
-
-// Fault C2 and a follow-up on one step: the app sends back the steps on screen and every answer's conditions.
-describe('A follow-up that moves the seat', () => {
-  it('plans lunch again from the seat at its new end, gives it back by its key, and gives every step', async () => {
-    const kwanjeong = await stage.numbered('62-1');
-    const first = await asked(
-      [find(['7F-7A-zone2']), seatAt('11:00', '13:00'), meal('lunch'), said],
-      '11시부터 13시까지 관정 7층 잡고 점심',
-    );
-    const [lunch] = first.answers ?? [];
-    expect(askerConstraints(lunch?.input)).toEqual(chainFrom(kwanjeong.id, '13:00'));
-
-    const context = { conditions: lunch?.input, answers: [lunch?.input], steps: first.steps };
-    const reply = await asked(
-      [find(['7F-7A-zone2']), seatAt('11:00', '12:00'), { text: '자리를 12시까지로 줄였어요.' }],
-      '자리는 12시까지만',
-      ANSWERS_APP,
-      context,
-    );
-
-    expect(reply.answers?.map(({ key }) => key)).toEqual([lunch?.key]);
-    expect(askerConstraints(reply.answers?.[0]?.input)).toEqual(chainFrom(kwanjeong.id, '12:00'));
-    expect(reply.steps?.map(({ kind, endAt }) => ({ kind, end: clock(endAt) }))).toEqual([
-      { kind: 'seat', end: '12:00' },
-      { kind: 'meal', end: clock(reply.answers?.[0]?.plans[0]?.endAt) },
-    ]);
-    expect(reply.steps?.[1]?.shows).toEqual({ kind: 'answer', key: lunch?.key });
-  });
-});
-
-describe('A follow-up that moves dinner later', () => {
-  it('brings the event on screen back as not done, without giving its answer again', async () => {
-    await eventAt('저녁 공연', '19:00', '20:30');
-    const first = await asked(
-      [meal('dinner', { from: '17:30' }), { tool: 'planEvents', input: { date: DATE } }, said],
-      '5시 반에 저녁 먹고 공연 가자',
-    );
-    expect(first.steps?.map(({ status }) => status)).toEqual(['shown', 'shown']);
-    const [dinner, events] = first.answers ?? [];
-
-    const context = { conditions: dinner?.input, answers: [dinner?.input, events?.input], steps: first.steps };
-    const reply = await asked(
-      [meal('dinner', { from: '18:30' }), { text: '저녁을 6시 반으로 옮겼어요.' }],
-      '저녁 6시 반으로',
-      ANSWERS_APP,
-      context,
-    );
-
-    expect(reply.answers?.map(({ key }) => key)).toEqual([dinner?.key]);
-    expect(reply.steps?.map(({ kind, status, shows }) => ({ kind, status, shows }))).toEqual([
-      { kind: 'meal', status: 'shown', shows: { kind: 'answer', key: dinner?.key } },
-      { kind: 'events', status: 'not-done', shows: { kind: 'answer', key: events?.key } },
-    ]);
-  });
-});
-
-// Fault G5: the model planned lunch before the seat, and worded that lunch.
-describe('Lunch planned before the seat it follows', () => {
-  it('stands as planned again from the seat, and the steps say it in the place of the words of the model', async () => {
-    const reply = await asked(
-      [meal('lunch'), find(['7F-7A-zone2']), seatAt('11:00', '13:00'), { text: '11시에 301동식당에서 점심 먹어요.' }],
-      '11시부터 13시까지 관정 7층 잡고 점심',
-    );
-
-    const lunch = reply.answers?.[0];
-    expect(Date.parse(lunch?.plans[0]?.startAt ?? '')).toBeGreaterThanOrEqual(Date.parse(`${DATE}T13:00:00+09:00`));
-    expect(reply.text).toBe(
-      `11:00 7층 7A 열람실 2 구역. ${clock(lunch?.plans[0]?.startAt)} ${lunch?.plans[0]?.title ?? ''}.`,
-    );
-  });
-});
-
-// Fault A2: the model was told to call the tools in time order, so the seat it showed first comes before dinner.
-describe('A seat that starts inside the dinner window, then dinner', () => {
+// Fault A2, by time alone: a seat that starts inside the dinner window before an hour-long dinner could come first is
+// before it; one later is after it, whatever order the model called the tools in.
+describe('A seat inside the dinner window and dinner', () => {
   it.each([
     ['an app that says answers', ANSWERS_APP, 'step'],
     ['an app before it', OLD_APP, 'asker'],
-  ])('sets dinner out from 관정 when the seat ends, for %s', async (_case, app, source) => {
+  ])('sets dinner out from 관정 when a seat from 17:30 ends, for %s', async (_case, app, source) => {
     const kwanjeong = await stage.numbered('62-1');
     const reply = await asked(
       [find(['7F-7A-zone2']), seatAt('17:30', '19:00'), meal('dinner'), said],
@@ -306,5 +156,19 @@ describe('A seat that starts inside the dinner window, then dinner', () => {
     );
 
     expect(askerConstraints(reply.answer?.input)).toEqual(chainFrom(kwanjeong.id, '19:00', source));
+  });
+
+  it.each([
+    ['an app that says answers', ANSWERS_APP],
+    ['an app before it', OLD_APP],
+  ])('keeps dinner before a seat from 19:00 booked first, for %s', async (_case, app) => {
+    const reply = await asked(
+      [find(['7F-7A-zone2']), seatAt('19:00', '21:00'), meal('dinner'), said],
+      '저녁 먹고 7시부터 관정',
+      app,
+    );
+
+    expect(askerConstraints(reply.answer?.input)).toEqual([]);
+    expect(Date.parse(reply.answer?.plans[0]?.endAt ?? '')).toBeLessThanOrEqual(Date.parse(`${DATE}T19:00:00+09:00`));
   });
 });

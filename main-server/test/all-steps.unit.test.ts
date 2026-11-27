@@ -18,7 +18,7 @@ import { requestKey } from '../src/assistant/presented.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
 import { readyAt } from '../src/assistant/lookup/study-plan.js';
 import { type AllStepsServices, askedStart, presentAllSteps, startAfter } from '../src/assistant/steps/all-steps.js';
-import { chainedInput, stepShownBefore } from '../src/assistant/steps/plan-steps.js';
+import { chainedInput, stepBeforeMeal } from '../src/assistant/steps/plan-steps.js';
 
 // Where a step that can move sets out from, among the steps of a conversation, and the steps on screen sent back (P05
 // ticket 74), on a made-up Tuesday.
@@ -163,11 +163,12 @@ describe('A step set out after the one before it', () => {
   });
 });
 
-// Fault A2: a seat that starts inside the meal's window, shown before the meal.
+// Fault A2, by time alone: a seat that starts inside the meal's window before an hour-long meal could come first.
 describe('The step a meal follows while the model plans it', () => {
-  it('is one shown before it that starts inside its window', () => {
-    expect(stepShownBefore([seatAt('17:30', '19:00')], dinner())?.title).toBe('7층 7A 열람실 2 구역');
-    expect(stepShownBefore([seatAt('21:30', '22:30')], dinner())).toBeNull();
+  it('is one that starts before an hour-long meal could come first in its window', () => {
+    expect(stepBeforeMeal([seatAt('17:30', '19:00')], dinner())?.title).toBe('7층 7A 열람실 2 구역');
+    expect(stepBeforeMeal([seatAt('19:00', '21:00')], dinner())).toBeNull();
+    expect(stepBeforeMeal([seatAt('21:30', '22:30')], dinner())).toBeNull();
   });
 });
 

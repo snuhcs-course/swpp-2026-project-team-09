@@ -7,7 +7,7 @@
 import { type AnswerReply, type MealInput, type Plan, type ReplyStep } from '../src/assistant/dto/answer.dto.js';
 import { type NotDone, type Presented } from '../src/assistant/feature.js';
 import { type LibraryCard } from '../src/assistant/library/library-card.js';
-import { bookingSteps, planChanged, stepOrder, stepsSentence } from '../src/assistant/steps/plan-steps.js';
+import { bookingSteps, movedStepSentence, planChanged, stepOrder } from '../src/assistant/steps/plan-steps.js';
 
 // The steps of one message every app gets (P05 ticket 74): one request is one step, a step without a plan comes after
 // those with one, and when the server planned again a plan the model had worded, the steps say it. On a made-up
@@ -40,8 +40,6 @@ const stepOf = (more: Partial<ReplyStep>): ReplyStep => ({
   shows: { kind: 'answer', key: 'lunch' },
   ...more,
 });
-
-const lunchStep = stepOf({});
 
 const seatAt = (start: string, end: string, more: Partial<ReplyStep> = {}): ReplyStep =>
   stepOf({
@@ -163,10 +161,15 @@ describe('A plan the model worded, planned again', () => {
     expect(planChanged(answerAt('학생회관식당', at('12:00')), { ...answerAt('x', at('12:00')), plans: [] })).toBe(true);
   });
 
-  it('is said by the steps, one short sentence each', () => {
-    const late = stepOf({ title: '저녁', place: null, status: 'not-done', reason: '그 시간에는 비는 시간이 없어요' });
-    expect(stepsSentence([seatAt('11:00', '13:00'), lunchStep, late])).toBe(
-      '11:00 7층 7A 열람실 2 구역. 12:00 학생회관식당에서 점심. 저녁: 그 시간에는 비는 시간이 없어요.',
+  it('adds one short sentence for the step it changed, with its day when that is not today', () => {
+    const now = new Date(at('09:00'));
+    expect(movedStepSentence(stepOf({ startAt: at('13:05') }), now)).toBe(
+      '앞 일정에 맞춰 13:05 학생회관식당에서 점심으로 바꿨어요.',
     );
+    expect(movedStepSentence(stepOf({ startAt: '2087-01-08T13:05:00+09:00' }), now)).toBe(
+      '앞 일정에 맞춰 내일(수) 13:05 학생회관식당에서 점심으로 바꿨어요.',
+    );
+    const none = stepOf({ title: '저녁', place: null, status: 'not-done', reason: '그 시간에는 비는 시간이 없어요' });
+    expect(movedStepSentence(none, now)).toBe('저녁은 앞 일정에 맞춰 다시 짜 보니 그 시간에는 비는 시간이 없어요.');
   });
 });

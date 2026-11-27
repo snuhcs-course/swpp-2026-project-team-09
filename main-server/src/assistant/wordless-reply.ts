@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from './dto/answer.dto.js';
@@ -51,10 +52,9 @@ export function wordlessText({
 export const warnsOfNoText = ({ answer }: Presented, text: string): boolean =>
   text !== '' && answer?.opened === undefined;
 
-// The model's words as the reply says them: the steps' own in their place when the server planned a step the model had
-// worded into another plan (P05 ticket 74), without the walk sentences beside a plan drawn, and beside a refusal.
-export const saidText = (text: string, presented: Presented): string =>
-  textBeside(
-    withoutWalkSentences(presented.retold ?? text, (presented.answer?.plans.length ?? 0) > 0),
-    presented.refusal,
-  );
+// The model's words as the reply says them: without the walk sentences beside a plan drawn, followed by a sentence for
+// each step the server planned into another plan than the one the model worded (P05 ticket 74), and beside a refusal.
+export const saidText = (text: string, { answer, addedWords, refusal }: Presented): string => {
+  const words = withoutWalkSentences(text, (answer?.plans.length ?? 0) > 0);
+  return textBeside([words.trim(), addedWords ?? ''].filter((part) => part !== '').join(' '), refusal);
+};
