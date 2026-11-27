@@ -182,7 +182,13 @@ function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
     <>
       {over.length > 0 ? null : <MealWords said={said} shown={shown} />}
       {shown.menuFor === null ? <AnswerHints offers={answer.offers ?? []} /> : null}
-      <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
+      <MealSheet
+        answer={answer}
+        bubbleId={props.bubbleId}
+        busy={props.busy || settled(invitation)}
+        library={props.library}
+        shown={shown}
+      />
     </>
   );
 }
@@ -192,14 +198,18 @@ function MealSheet({
   shown,
   answer,
   busy,
+  library,
+  bubbleId,
 }: {
   shown: ShownAnswer;
   answer: AnswerReply;
   busy: boolean;
+  library?: LibraryCardActions;
+  bubbleId?: number;
 }): ReactElement | null {
   const { plan, menuFor } = shown;
   if (plan !== null && menuFor === plan.id) {
-    return <MealMenu answer={answer} plan={plan} shown={shown} />;
+    return <MealMenu answer={answer} bubbleId={bubbleId} library={library} plan={plan} shown={shown} />;
   }
   return <MealList answer={answer} busy={busy} shown={shown} />;
 }
