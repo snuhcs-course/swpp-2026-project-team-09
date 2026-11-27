@@ -204,8 +204,8 @@ describe('멤버', () => {
     expect(section('멤버').getByRole('button', { name: '김민준 · 위치 공유 중' })).toBeVisible();
     // One the User does not see takes no press.
     expect(section('멤버').getByText('위치 꺼짐')).toBeVisible();
-    expect(section('멤버').queryByRole('button', { name: /^서지우/u })).toBeNull();
-    expect(section('멤버').getByRole('button', { name: '이서연 · 응답 대기' })).toBeVisible();
+    expect(section('멤버').queryByRole('button', { name: '서지우 · 위치 꺼짐' })).toBeNull();
+    expect(section('멤버').getByText('응답 대기')).toBeVisible();
     // The User's own row too.
     expect(section('멤버').getAllByText('위치 공유 중')).toHaveLength(2);
   });
