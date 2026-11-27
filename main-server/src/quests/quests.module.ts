@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -29,6 +30,7 @@ import { LeaderService } from './leader.service.js';
 import { QuestsController } from './quests.controller.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
+import { TimesToLeave } from './step-told.js';
 import { SubQuestsService } from './sub-quests.service.js';
 
 @Module({
@@ -50,8 +52,9 @@ import { SubQuestsService } from './sub-quests.service.js';
     LeaderService,
     JoinRequestsService,
     InvitationsService,
+    TimesToLeave,
     { provide: CLOCK, useValue: systemClock },
   ],
-  exports: [QuestsService, RecruitingService, InvitationsService, CLOCK, LeaderService],
+  exports: [QuestsService, RecruitingService, InvitationsService, CLOCK, LeaderService, TimesToLeave],
 })
 export class QuestsModule {}

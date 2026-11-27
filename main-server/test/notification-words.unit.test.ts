@@ -107,19 +107,39 @@ describe('The day of a time in a Notification', () => {
   ])('says the date %s', (_case, startsAt, line) => {
     expect(wordsOf({ ...news, startsAt: new Date(startsAt) }, AT).line).toBe(line);
   });
+});
 
-  it('says the date of a changed step', () => {
-    const changed = {
-      kind: 'step-changed',
-      questId: QUEST_ID,
-      byId: FRIEND_ID,
-      byName: '민수',
-      stepTitle: '정문 앞에서 만나기',
-      startsAt: new Date('2026-11-18T05:10:00Z'),
-      cancelled: false,
-    } as const;
+describe('The words of a changed step', () => {
+  const changed = {
+    kind: 'step-changed',
+    questId: QUEST_ID,
+    questTitle: '저녁 같이',
+    byId: FRIEND_ID,
+    byName: '민수',
+    stepTitle: '정문 앞에서 만나기',
+    startsAt: new Date('2026-11-18T05:10:00Z'),
+    cancelled: false,
+  } as const;
 
-    expect(wordsOf(changed, AT).line).toBe('11/18(수) 14:10 정문 앞에서 만나기');
+  it('name the 파티 and who changed it, and the date, the time and the step it became; it rings', () => {
+    expect(wordsOf(changed, AT)).toEqual({
+      title: '저녁 같이 · 민수가 일정을 바꿨어요',
+      ahead: null,
+      line: '11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요',
+      card: { kind: 'party', id: QUEST_ID },
+      about: FRIEND_ID,
+      rings: true,
+      body: '11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요.',
+    });
+  });
+
+  it.each([
+    ['a step without a start', { startsAt: null }, '정문 앞에서 만나기로 바뀌었어요'],
+    ['a step whose title ends in a consonant', { stepTitle: '점심' }, '11/18(수) 14:10 점심으로 바뀌었어요'],
+    ['a step whose title ends in ㄹ', { stepTitle: '산책길' }, '11/18(수) 14:10 산책길로 바뀌었어요'],
+    ['a cancelled step, as before', { cancelled: true }, "'정문 앞에서 만나기' 취소"],
+  ])('word %s', (_case, change, line) => {
+    expect(wordsOf({ ...changed, ...change }, AT).line).toBe(line);
   });
 });
 

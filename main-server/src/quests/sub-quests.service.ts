@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -17,7 +18,7 @@ import { type SubQuestContentDto } from './dto/quest-requests.dto.js';
 import { SUB_QUEST_INCLUDE, SubQuestDto, toSubQuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
 import { conflict, notFound } from './refusals.js';
-import { tellStepChanged } from './step-told.js';
+import { tellStepChanged, TimesToLeave } from './step-told.js';
 import { columnsOf } from './sub-quest-columns.js';
 
 const subQuestNotFound = (): Error => notFound('SUB_QUEST_NOT_FOUND', 'This Quest has no such Sub Quest.');
@@ -38,6 +39,7 @@ export class SubQuestsService {
     private readonly quests: QuestsService,
     private readonly signals: SignalsService,
     private readonly notifications: NotificationsService,
+    private readonly timesToLeave: TimesToLeave,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -102,15 +104,16 @@ export class SubQuestsService {
     const { result, holderIds } = await this.quests.inQuest(userId, questId, async (tx) => {
       const changed = await change(tx);
       const { name } = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
-      return { ...changed, byName: name };
+      const { title } = await tx.quest.findUniqueOrThrow({ where: { id: questId }, select: { title: true } });
+      return { ...changed, byName: name, questTitle: title };
     });
     this.signals.send(holderIds, 'quests-changed');
-    const { step, cancelled, byName } = result;
+    const { step, cancelled, byName, questTitle } = result;
     if (!step.ended) {
       const startsAt = step.startsAt === null ? null : new Date(step.startsAt);
-      const changed = { questId, byId: userId, byName, stepTitle: step.title, startsAt, cancelled };
-      const { notifications, logger } = this;
-      await tellStepChanged({ notifications, logger }, holderIds, changed, this.clock.now());
+      const changed = { questId, questTitle, byId: userId, byName, stepTitle: step.title, startsAt, cancelled };
+      const { notifications, logger, timesToLeave } = this;
+      await tellStepChanged({ notifications, logger, timesToLeave }, holderIds, changed, { now: this.clock.now() });
     }
     return result.result;
   }

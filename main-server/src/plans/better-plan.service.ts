@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
@@ -29,7 +30,7 @@ import { LeaderService } from '../quests/leader.service.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { inOrder } from '../quests/sub-quest-order.js';
 import { conflict } from '../quests/refusals.js';
-import { tellStepChanged } from '../quests/step-told.js';
+import { tellStepChanged, TimesToLeave } from '../quests/step-told.js';
 import { gatheringFrom, PARTY_CAPACITY } from '../quests/taken-alone.js';
 import { type BetterPlanDto } from './dto/better-plan.dto.js';
 import { type PlanQuestBody } from './dto/plan-quest.dto.js';
@@ -93,6 +94,7 @@ export class BetterPlanService {
     private readonly signals: SignalsService,
     private readonly ways: OwnWayReader,
     private readonly notifications: NotificationsService,
+    private readonly timesToLeave: TimesToLeave,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -208,7 +210,8 @@ export class BetterPlanService {
     }
   }
 
-  // As the room's 일정 수정 tells it: the Holders are told and their times to leave forgotten, the Leader's kept again.
+  // As the room's 일정 수정 tells it: the Holders are told and their times to leave kept again for the new plan, each
+  // other's by their Timetable and the Leader's by the plan (keepTimeToLeave).
   private async tellMoved(
     questId: string,
     by: { userId: string; name: string },
@@ -216,10 +219,19 @@ export class BetterPlanService {
     plan: Plan,
   ): Promise<void> {
     const [first] = subQuestsOf(plan);
-    const changed = { questId, byId: by.userId, byName: by.name, stepTitle: first?.title ?? plan.title };
-    const { notifications, logger } = this;
-    const told = { ...changed, startsAt: first?.startsAt ?? null, cancelled: false };
-    await tellStepChanged({ notifications, logger }, holderIds, told, this.clock.now());
+    const changed = { questId, questTitle: plan.title, byId: by.userId, byName: by.name };
+    const { notifications, logger, timesToLeave } = this;
+    const told = {
+      ...changed,
+      stepTitle: first?.title ?? plan.title,
+      startsAt: first?.startsAt ?? null,
+      cancelled: false,
+    };
+    const keptAgain = holderIds.filter((id) => id !== by.userId);
+    await tellStepChanged({ notifications, logger, timesToLeave }, holderIds, told, {
+      now: this.clock.now(),
+      keptAgain,
+    });
   }
 
   // A Quest taken alone gathers others from now on (`gatheringFrom`), and every Quest holds the plan's people.

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
@@ -17,8 +18,8 @@ import { dropQuest, editSubQuest, getQuest } from './quests.js';
 import { withAccessToken } from './sign-in.js';
 
 // An invited User's own time to leave, kept in GET /notifications when they accept a party made at POST /plans from
-// the design's worked example (a Tuesday at 11:50), and gone when they leave the Quest, it ends, or its step is changed
-// for a time it no longer holds for. Each test stands on
+// the design's worked example (a Tuesday at 11:50), gone when they leave the Quest or it ends, and kept again by the
+// same rule when its step is changed (P06 ticket 25). Each test stands on
 // a Tuesday of July or August 2088, which no other file posts menus for.
 
 const stage = new MealPlanStage();
@@ -190,29 +191,35 @@ describe('Ending a party an invited User accepted', () => {
   });
 });
 
+const stepsSchema = z.object({
+  subQuests: z.array(z.object({ id: z.string(), place: z.object({ placeId: z.string() }).nullable() })),
+});
+const keptSchema = z.array(z.object({ kind: z.string(), at: z.string(), line: z.string() }));
+
 describe('A step the Leader changes in the room', () => {
-  it('forgets every Holder’s time to leave, kept for the old time, and tells the invited User of the change', async () => {
+  it('keeps 민수’s time to leave again for the new time by his Timetable, and tells him of the change', async () => {
     const date = '2088-08-24';
     const { questId, friend } = await minsuAccepted(date);
-    const quest = z
-      .object({ subQuests: z.array(z.object({ id: z.string() })) })
-      .parse((await getQuest(stage.app, stage.asker, questId)).body);
-    const subQuestId = quest.subQuests[0]?.id ?? '';
+    const [step] = stepsSchema.parse((await getQuest(stage.app, stage.asker, questId)).body).subQuests;
+    const placeId = step?.place?.placeId ?? '';
 
+    // Half an hour later at the same Restaurant: 민수 still comes from his Class in 302동, which ends at 12:15.
     const edited = await editSubQuest(
       stage.app,
       stage.asker,
-      { questId, subQuestId },
-      { title: '학생회관식당에서 점심', startsAt: `${date}T13:00:00+09:00` },
+      { questId, subQuestId: step?.id ?? '' },
+      { title: '학생회관식당에서 식사', startsAt: `${date}T13:00:00+09:00`, place: { placeId } },
     );
 
     expect(edited.status).toBe(200);
     await vi.waitFor(async () => {
-      expect(z.array(z.object({ kind: z.string() })).parse((await getNotifications(friend)).body)).toEqual([
-        { kind: 'step-changed' },
-      ]);
+      const kept = keptSchema.parse((await getNotifications(friend)).body);
+      expect(kept.map(({ kind }) => kind).toSorted()).toEqual(['leave-by', 'step-changed']);
+      const leaveBy = kept.find(({ kind }) => kind === 'leave-by');
+      // One time to leave, once his Class has ended at 12:15 and before the new start.
+      expect(leaveBy?.at.localeCompare(`${date}T12:15:00+09:00`)).toBeGreaterThanOrEqual(0);
+      expect(leaveBy?.at.localeCompare(`${date}T13:00:00+09:00`)).toBe(-1);
+      expect(leaveBy?.line).toMatch(/^학생회관식당까지 /u);
     });
-    const askers = z.array(z.object({ kind: z.string() })).parse((await getNotifications(stage.asker)).body);
-    expect(askers.map(({ kind }) => kind)).not.toContain('leave-by');
   });
 });

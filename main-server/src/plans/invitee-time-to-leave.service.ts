@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
@@ -11,11 +12,13 @@ import { type Told } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { QUEST_INCLUDE } from '../quests/dto/quest.dto.js';
 import { InvitationsService } from '../quests/invitations.service.js';
+import { TimesToLeave } from '../quests/step-told.js';
 import { placeLabel } from './own-way.js';
 import { OwnWayReader } from './own-way-reader.service.js';
 
-// An invited User's own time to leave for a Quest they accept, kept as the Leader's is when a Plan becomes a party.
-// Registered with InvitationsService, which cannot import this module.
+// A Holder's own time to leave by their Timetable: an invited User's for a Quest they accept, kept as the Leader's is
+// when a Plan becomes a party, and every Holder's again once its steps change (P06 ticket 25). Registered with
+// InvitationsService and TimesToLeave, which cannot import this module.
 @Injectable()
 export class InviteeTimeToLeave implements OnModuleInit {
   private readonly logger = new Logger(InviteeTimeToLeave.name);
@@ -25,12 +28,14 @@ export class InviteeTimeToLeave implements OnModuleInit {
     private readonly invitations: InvitationsService,
     private readonly reader: OwnWayReader,
     private readonly notifications: NotificationsService,
+    private readonly timesToLeave: TimesToLeave,
   ) {}
 
   onModuleInit(): void {
     this.invitations.onAccepted((userId, questId) => {
       void this.keep(userId, questId);
     });
+    this.timesToLeave.register((userId, questId) => this.keep(userId, questId));
   }
 
   // Never fails: the accept does not wait for it.
