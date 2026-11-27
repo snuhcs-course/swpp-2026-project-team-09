@@ -7,7 +7,7 @@
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import type { RoomRequest, RoomRequestCompanion } from '@/api/room-requests';
 import type { StudyGroup } from '@/api/study-plan-types';
-import type { PartyCard } from '../library/room-party';
+import { MORE_FRIENDS, type PartyCard } from '../library/room-party';
 
 // The study answer together's room request (P10 ticket 12), today's run behind its card: what it is made from, and what
 // the card says while it is out.
@@ -56,7 +56,8 @@ export function consentWords(request: RoomRequest): string {
     return `${of} · 다 받으면 알려 드려요. 닫아도 돼요.`;
   }
   const waiting = still.filter(({ state }) => state === 'asked').map(({ name }) => name);
-  return `${of} · ${waiting.join(', ')} 님을 기다려요`;
+  // Everyone still in has consented and only the room's minimum is short, as the room card says it.
+  return waiting.length === 0 ? `${of} · ${MORE_FRIENDS}` : `${of} · ${waiting.join(', ')} 님을 기다려요`;
 }
 
 const PEOPLE = ['', '한 명', '두 명', '세 명', '네 명'];

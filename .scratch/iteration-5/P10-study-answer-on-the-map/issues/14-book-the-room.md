@@ -56,6 +56,11 @@ Only the card's face is new.
   - `readyLineOf` gives the line, and `waitWords` the booking window's sentence.
 - **The main button** (`study-group-act.ts`): 예약하기, "로그인하고 예약" (the login, then the booking), "예약 창이 열리면 알려 드려요" dimmed, and "… 다시 묻기". The last takes the request back, then asks the answer again from that start once the answer is let go.
 - **The ticket:** `RoomTicket.kindHeld` keeps the kind and opens only the room once everyone has consented.
+- **From #657's review:**
+  - a booking that failed says so with the room card's note (the library's refusal, a companion not recognised, the session ended), and the kind's rooms are read again;
+  - a request booked from this phone (`bookedHere`, from the bookings the phone keeps) shows "예약했어요" dimmed, though the server may still say ready, so no second room is booked;
+  - "로그인하고 예약" books once the login closes and the kind's rooms are read again.
+- **Left for a follow-up (#657's review, non-blocking):** the room chosen on the ticket once everyone has consented, and the room sent kept across a card shown again; the booking window's wait once the window has opened (`inRoomWindow`, as `isWaitingCard`); and a note with a retry when the kind's rooms could not be read.
 - **The booked room's number on another phone** comes with ticket 13, which rebuilds the answer from the request.
 
 ## Acceptance criteria
@@ -71,3 +76,8 @@ Only the card's face is new.
 - [x] Whole lint, format and types.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 16 minutes in the p04-58 session, from 23:04 to 23:20 UTC on 11-26, an estimate. Restacking it on ticket 11's later fixes is counted under ticket 11. No subagents.
+- Tokens: input 60 uncached, with cache reads 23,441,544 and cache writes 60,555; output 45,709.

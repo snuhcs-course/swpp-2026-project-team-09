@@ -11,10 +11,13 @@ import { color, font, text } from '@/design-system';
 import type { Slot } from '@/library/cards/payloads';
 import type { LibraryRoomTimes } from '@/library/replies';
 import { TicketLine } from '../library/booked-ticket';
+import { FailureNote } from '../library/library-parts';
 import { RoomKindChooser } from '../library/room-kind-chooser';
 import { useRoomKindCounts } from '../library/room-kind-counts';
 import { RoomNumberChooser } from '../library/room-number-chooser';
+import { SEND_FAILED } from '../library/room-party';
 import { UseChooser } from '../library/use-chooser';
+import type { CardFailure } from '../library/use-library-call';
 import { useRooms } from '../library/use-room-counts';
 
 // The parts under the study answer together's room ticket (P10 tickets 11 and 12): the use line, the choosers, and the
@@ -22,18 +25,30 @@ import { useRooms } from '../library/use-room-counts';
 
 export type Open = 'kind' | 'room' | 'use' | null;
 
-export function UseLine({ use, onPress }: { use: string | null; onPress: () => void }): ReactElement {
+// The use of the room, and under it the room card's words when the requests could not be sent.
+export function UseLine({
+  use,
+  failed,
+  onPress,
+}: {
+  use: string | null;
+  failed: boolean;
+  onPress: () => void;
+}): ReactElement {
   return (
-    <Pressable
-      accessibilityLabel={`사용 용도: ${use ?? '고르기'}`}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={styles.useLine}
-      testID="room-use-line"
-    >
-      <Text style={styles.hint}>사용 용도</Text>
-      <Text style={styles.link}>{`${use ?? '고르기'} ›`}</Text>
-    </Pressable>
+    <>
+      <Pressable
+        accessibilityLabel={`사용 용도: ${use ?? '고르기'}`}
+        accessibilityRole="button"
+        onPress={onPress}
+        style={styles.useLine}
+        testID="room-use-line"
+      >
+        <Text style={styles.hint}>사용 용도</Text>
+        <Text style={styles.link}>{`${use ?? '고르기'} ›`}</Text>
+      </Pressable>
+      {failed ? <FailureNote failure={null} message={SEND_FAILED} onLogIn={null} /> : null}
+    </>
   );
 }
 
@@ -75,6 +90,19 @@ export function RequestLine({ words, onCancel }: { words: string; onCancel: (() 
     <View testID="study-group-line">
       <TicketLine link={onCancel === null ? null : { words: '요청 취소', onPress: onCancel }} words={words} />
     </View>
+  );
+}
+
+// What the booking came to when it failed, as a room card says it, with its 로그인 when the session ended.
+export function BookingFailure({
+  failure,
+  onLogIn,
+}: {
+  failure: CardFailure | null;
+  onLogIn: () => void;
+}): ReactElement | null {
+  return failure === null ? null : (
+    <FailureNote failure={failure.failure} message={failure.message} onLogIn={onLogIn} />
   );
 }
 

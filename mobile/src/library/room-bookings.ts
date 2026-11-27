@@ -44,6 +44,11 @@ async function readMap(): Promise<Record<string, string>> {
   }
 }
 
+// Whether this phone booked a room for the request: the server may not know yet (P10 ticket 14, #657's review).
+export async function bookedHere(requestId: string): Promise<boolean> {
+  return Object.values(await readMap()).includes(requestId);
+}
+
 export async function keepRoomBooking(bseqno: number, requestId: string): Promise<void> {
   const map = await readMap();
   await AsyncStorage.setItem(KEY, JSON.stringify({ ...map, [String(bseqno)]: requestId }));

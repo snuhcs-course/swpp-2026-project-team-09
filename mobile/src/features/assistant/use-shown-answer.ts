@@ -187,7 +187,8 @@ type Ask = (
 // Asks for a recalculation of the answer on screen when it is called, unless one of that epoch is on its way: a
 // control may call a `change` of an earlier render. Its answer, or its failure, counts only while the epoch it was
 // asked in is still the one on screen. A band let go where no recalculation is asked goes back.
-// The answer held as it is (P10 ticket 12): while locked, picking does not open and no change asks again.
+// The answer held as it is (P10 ticket 12): while locked, picking does not open and no change asks again; a band let go
+// goes back, as where no recalculation is asked.
 function useLock(
   setAdding: (open: boolean) => void,
   ask: Ask,
@@ -202,9 +203,7 @@ function useLock(
       }
     },
     change: (alter, by) => {
-      if (!locked) {
-        ask(alter, by, null);
-      }
+      ask(locked ? (input: PlanInput): PlanInput => input : alter, by, null);
     },
   };
 }

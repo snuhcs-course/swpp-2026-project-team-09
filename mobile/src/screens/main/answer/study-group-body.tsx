@@ -24,7 +24,7 @@ import { keepUse, keptUse } from '../library/use-chooser';
 import type { LibraryCardActions } from '../library/use-library-call';
 import { usePartyRequest } from '../library/room-party';
 import { mainOf, useGroupAct } from './study-group-act';
-import { Choosers, type Open, RequestLine, UseLine } from './study-group-parts';
+import { BookingFailure, Choosers, type Open, RequestLine, UseLine } from './study-group-parts';
 import { useGroupBooking } from './use-group-booking';
 import { consentWords, groupOfRequest, isOut, outWords, partyCardOf } from './study-group-request';
 import { ChatMarkdown } from '../chat-markdown';
@@ -157,8 +157,12 @@ function useGroupRequest(
   const [asking, setAsking] = useState(false);
   const held = out !== null;
   const { lock } = shown;
+  // Let go when the card goes, as when the User asks anything else after sending (#656's review).
   useEffect(() => {
     lock(held);
+    return (): void => {
+      lock(false);
+    };
   }, [lock, held]);
   return { party, out, asking, setAsking, sent };
 }
@@ -232,10 +236,11 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
       <LogInNote shown={mainOf(onScreen, loggedIn, party).main === 'logIn' && open !== 'kind' && open !== 'room'} />
       {held && !ready ? null : chooser(open === 'use' ? null : open)}
       {out === null ? (
-        <UseLine onPress={toggle('use')} use={use} />
+        <UseLine failed={party.failed} onPress={toggle('use')} use={use} />
       ) : (
         <RequestLine onCancel={party.cancel} words={booking.line ?? consentWords(out)} />
       )}
+      <BookingFailure failure={booking.failure} onLogIn={booking.logIn} />
       {out !== null && asking ? (
         <OneMorePicker
           onAsked={party.update}

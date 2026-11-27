@@ -4,13 +4,17 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { act } from '@testing-library/react-native';
+import { clearLibraryLoggedIn } from '@/library/flag';
+import { keepRoomBooking } from '@/library/room-bookings';
 import { forgetPartyRequests } from '@/screens/main/library/room-party';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { pass } from './support/app';
+import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { expectNoWrite, inDock, inFrame, startLibraryChat } from './support/library-chat';
+import { navigate } from './support/library-session';
 import { ASKED_AT, FIRST_FREE, FRIENDS, REQUEST_ID, requestOf, sendTogether } from './support/study-group';
 
 // Booking the room of the study answer together once everyone has consented (P10 ticket 14; design group-study-design
@@ -81,5 +85,58 @@ describe('The room of studying together once everyone has consented', () => {
       { ok: true },
     ]);
     expect(inFrame().getByText(`${FIRST_FREE} 예약되었어요!`)).toBeVisible();
+  });
+});
+
+type User = Awaited<ReturnType<typeof sendTogether>>;
+
+// The requests sent, and every Friend's consent read.
+async function readyToBook(): Promise<User> {
+  const user = await sendTogether({ server, library });
+  server.on(`GET /library/room-requests/${REQUEST_ID}`, {
+    status: 200,
+    body: requestOf(['consented', 'consented', 'consented'], 0, 'ready'),
+  });
+  await pass(3500);
+  return user;
+}
+
+const MAIN = 'https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main';
+
+// Partitions, from #657's review: pressed again before the server knows it is booked, the library refusing, and the
+// login before the booking. Expected values: today's room card.
+describe('Booking the room of studying together', () => {
+  it('offers 예약하기 no more for a request this phone booked, though the server still says ready', async () => {
+    await keepRoomBooking(4321, REQUEST_ID);
+
+    await readyToBook();
+
+    expect(inFrame().getByText('모두 동의했어요')).toBeVisible();
+    expect(screen.queryByRole('button', { name: '예약하기' })).toBeNull();
+    expect(inDock().getByRole('button', { name: '예약했어요' })).toBeDisabled();
+  });
+
+  it("says the library's refusal and reads the rooms again", async () => {
+    const user = await readyToBook();
+    library.refuseBookings('예약 가능 시간이 아닙니다.');
+    const reads = library.requestsTo('getRoomList').length;
+
+    await user.press(inDock().getByRole('button', { name: '예약하기' }));
+    await pass(500);
+
+    expect(inFrame().getByText('예약하지 못했어요: 예약 가능 시간이 아닙니다.')).toBeVisible();
+    expect(library.requestsTo('getRoomList').length).toBeGreaterThan(reads);
+  });
+
+  it('books once the login of "로그인하고 예약" closes, the rooms read', async () => {
+    const user = await readyToBook();
+    await act(() => clearLibraryLoggedIn());
+    await pass(500);
+
+    await user.press(inDock().getByRole('button', { name: '로그인하고 예약' }));
+    await navigate(MAIN);
+    await pass(1000);
+
+    expect(library.writes()).toHaveLength(1);
   });
 });
