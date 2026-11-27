@@ -35,3 +35,8 @@ No per-card workaround is left on Main: the group card's own one is on the group
 - [ ] Pictures at 1.0 and 1.3: the seat card and the meal while picking, lowered; the no-Plan meal's buttons. (Waiting on the emulator.)
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 60 min (an estimate: about 28 min of active turns and about 30 min of test runs waited on under load). Pictures not yet taken.
+- Tokens: input 240 uncached, with 154,600 cache writes and 76,400,000 cache reads; output 88,300. No subagents.
