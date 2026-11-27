@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { signInUser, TestUser } from './friends.js';
 import { expectStatus, getPositions, setMasterSwitch, uploadPosition } from './location-sharing.js';
-import { getMyParty, partyOf, partyOfHolders } from './parties.js';
+import { getMyParty, partyOf, partyOfHolders, removeMember } from './parties.js';
 import { endQuest, removeHolder } from './quest-recruiting.js';
 import { connectToDatabase, dropQuest, joinQuest, ownQuest } from './quests.js';
 import { refused, SignalWatcher } from './signals.js';
@@ -70,6 +70,15 @@ describe('The Leader removing a Holder who is in the Quest’s Party', () => {
       );
       expect(signalsTo(other, 'party-changed')).not.toEqual([]);
     });
+  });
+
+  it('leaves the app before this change no refusal when it then takes them out of the Party itself', async () => {
+    const { leader, member, questId } = await activated();
+    expect((await removeHolder(app, leader, questId, member.id)).status).toBe(204);
+
+    expect((await removeMember(app, leader, member.id)).status).toBe(204);
+
+    expect((await getMyParty(app, leader)).body).toMatchObject({ members: [{ id: leader.id }, {}] });
   });
 
   it('who is in no Party leaves the Party as it was', async () => {
