@@ -42,6 +42,7 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 33. **A full 파티's 모집글.** "참여하기 대신 '정원 초과' 등의 문구로 … 비활성화 느낌의 버튼."
 34. **파티 만들기.** Added by the user on 2026-11-26, from their notes on the 파티 form (wireframe item 8). Settled over four rounds on 2026-11-27 (`references/34-1-form-wireframe.webp`): the form as a preview of its 모집글, title and text typed in place, the settings changed in place, a building search with a badge for what the place matched, and no photo or tags ("태그가 어차피 지금 서버로 안간다고 했잖아 … 일단은 빼고").
 35. **Sheets that close.** Added by the user on 2026-11-27, with no wireframe: every sheet slides down instead of vanishing, and closes by a tap on its handle, a tap above it, or a swipe down from anywhere on it, "대신 … 스크롤이 최상단이 아니면 내려가면 안돼".
+37. **Two ways to set a place.** From fyoon46's review of PR 712 on 2026-11-28: the room's 일정 form still sets a place with the old typed field and map button, without the kind tag. The user asked for a ticket the same day.
 
 Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 20 to 33 against 331adc64 on 2026-11-27: none was fixed then.
 
@@ -85,6 +86,7 @@ One ticket per item, numbered as the items:
 33. [33: A full 파티's 모집글 says so on its button](issues/33-full-post-button.md)
 34. [34: 파티 만들기 as a preview of its 모집글: title and text typed in place, time, place and event in one box, the settings changed in place, a building search for the place, and no photo or tags](issues/34-form-as-post-preview.md)
 35. [35: Every sheet slides down when it closes, and closes by a tap or a drag on its handle, or a tap above it](issues/35-sheets-slide-down.md)
+37. [37: The room's 일정 form sets its place with the 파티 form's place sheet and shows the same kind tag](issues/37-room-step-place-sheet.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -114,6 +116,7 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 
 - Added on 2026-11-27 and built at once: 34. It changes the 파티 form (`screens/party/form/`), `features/party/making.ts`, the stand-in photos and tags (`api/quest-parts/`), 찾기's search and order and 추천 이유 (`features/party/finding.ts`, `screens/party/post-reasons.tsx`), and the room's tag chips after 19. Tickets 28 and 31 also touch `use-send.ts` and `making.ts`; whichever lands second merges `5.0/Main` first.
 - Added on 2026-11-27 and built at once: 35. After the phone checks of 2026-11-28 it changes only `BottomSheet` (`design-system/bottom-sheet.tsx`, `sheet-pull.ts`) and where the time wheel is mounted, so sheets added on `BottomSheet` later need nothing from it.
+- Added on 2026-11-28 and built once 34 merged (PR 712): 37. It changes the room's `PlanForm` (`screens/room/plan-form.tsx`) and may move the place sheet and kind tag out of `screens/party/form/` to a place both screens import.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -219,6 +222,7 @@ Decided on 2026-11-27 (20 to 33):
 - 31: inviting is refused only into a 파티 full at that moment; 31 adds one database migration, the exception to the rule below. 20 to 26, 31 and 32 need a main server Release.
 - 34 (2026-11-27): 파티 만들기 is a preview of its 모집글. The title and text are typed in place with no confirm button; the time, the place and the event share one label-less box whose rows open sheets; the place sheet searches buildings and the row's badge says 건물, 지도 or 직접 입력; 인원, 공개 범위, 참여 방식 and 게시판 change in place and 친구 초대 opens a sheet; the button stays pressable and marks empty required fields; picking an event leaves the title empty. Photos and tags go with everything that ran on their stand-ins (the room's chips, 찾기's tag search and order, 추천 이유's 관심사), and the pull request records why and what bringing them back needs.
 - 35 (2026-11-27): every `BottomSheet` slides down with its last content when it closes, and closes by a tap on its handle, a tap on the scrim, Android's back, or a swipe down from anywhere on it that follows the finger and closes past a threshold or on a flick. A swipe that starts inside a vertical scroll area closes only if that area was at its top when the finger went down; otherwise it only scrolls, even after reaching the top. The centre `Dialog`, the full-screen `Modal`s and the Assistant's answer sheet are left as they are. Changed after the phone checks (2026-11-28): the user dropped the swipe from the body and its list rule. The sheet closes by a tap or a drag on its handle bar, the drag let go by the way the finger moves, by a tap on the scrim, or by Android's back, and its lists scroll natively.
+- 37 (2026-11-28): the room's 일정 form sets 어디서 with the 파티 form's place sheet: a row with the place's words, its grey kind tag and a chevron opens the same sheet, and what is sent is unchanged. `WhereField` goes.
 
 For all tickets:
 
@@ -276,6 +280,7 @@ Every item received and where it went:
 | 20–33 파티·행사에서 사용자가 알 수 없는 것 (code audit, 2026-11-27) | Tickets 20 to 33, those the user took up; the rest held (Out of Scope) |
 | 8 파티 만들기 (added 2026-11-26) | Ticket 34, settled over four rounds on 2026-11-27 (the preview, typing in place, settings in place, the building search and its badge, no photo or tags) |
 | 팝업창이 부드럽게 내려가고, 바·빈 공간·스와이프로 닫히기 (added 2026-11-27) | Ticket 35 |
+| 파티 상세 일정의 장소도 같은 장소 시트로 (PR 712 review, 2026-11-28) | Ticket 37 |
 
 Notes for the tickets:
 
