@@ -275,6 +275,9 @@ export interface Quest {
   // The room request a booking party was made for, for the map's Quest tag (P10 ticket 13); null for every other Quest,
   // and absent from a main server before it.
   roomRequest?: QuestRoomRequest | null;
+  // The room the library booked for the Quest's booked room request ("G412"), for its Holders (P05 ticket 68); null for
+  // every other Quest, and absent from a main server before it.
+  bookedRoom?: string | null;
 }
 
 // A booking party's room request: of the companions still in, how many consented and how many were asked.

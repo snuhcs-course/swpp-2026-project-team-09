@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent, within } from '@testing-library/react-native';
@@ -174,6 +175,8 @@ describe('the card while it is read', () => {
     await show({ card: null, failed: true, onRetry });
 
     expect(screen.getByText('초대를 불러오지 못했어요')).toBeVisible();
+    // In red, as every failure line is (P01 ticket 19).
+    expect(screen.getByText('초대를 불러오지 못했어요')).toHaveStyle({ color: color.danger });
     await userEvent.press(screen.getByRole('button', { name: '다시 시도' }));
 
     expect(onRetry).toHaveBeenCalledTimes(1);

@@ -14,6 +14,7 @@
 import type { MyParty, Party, Quest } from '@/api/types';
 import { koreaClock, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 import { heldAlone, shownSubQuest, waitWords } from '@/features/quests/adapter';
+import { placeWithRoom } from '@/features/quests/booked-room';
 import { requestFlagOf, requestLine } from '@/features/quests/room-request-flag';
 import { boardName } from './boards';
 import { whenOf } from './posts';
@@ -200,7 +201,7 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
           ? '시간 미정'
           : whenWords(start, now)
         : requestLine(request, group !== '오늘' && group !== '내일'),
-    place: placeOf(next?.place?.label ?? ''),
+    place: placeOf(placeWithRoom(next?.place?.label ?? '', quest.bookedRoom)),
     event: quest.globalEvent?.title ?? null,
     ...(request === null ? {} : { reopens: true }),
     live,

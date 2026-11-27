@@ -3,11 +3,12 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Chip, color, font, radius, space, text } from '@/design-system';
+import { Chip, color, radius, space, text } from '@/design-system';
 import { CheckBox } from '../../check-box';
 
 // The room book card's choices: the room, the 사용 용도 and the nearest free starts as chips, and a media room's
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
   choiceTitle: { ...text.caption, color: color.inkMuted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   pledge: { gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.surface },
-  pledgeWords: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: color.inkMuted },
+  pledgeWords: { ...text.caption, color: color.inkMuted },
   agree: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 36 },
   agreeLabel: { ...text.label, color: color.ink },
 });

@@ -152,13 +152,23 @@ function useBooking(
   };
 }
 
+// Booked, the room is the one this phone booked, else the one the request says the library booked (P10 ticket 25),
+// else the one sent: never one chosen or read afresh (#657, booked card).
+function roomShown(
+  mine: string | null,
+  request: RoomRequest | null,
+  sent: string | null,
+  kept: string | null,
+): string | null {
+  return mine ?? (isBooked(request) ? (request?.bookedRoom ?? sent ?? kept) : kept);
+}
+
 export function useGroupBooking(of: GroupBookingOf): GroupBooking {
   const { group, slot, loggedIn, shown, party, out } = of;
   const { all, reload } = useRoomTimes(group, slot, loggedIn);
   const free = all === null ? null : freeRooms(all, group.room.space.seatNos, slot);
   const ready = out?.status === 'ready';
   const placed = roomOnReady(of.sent, free ?? []);
-  // Booked, the room is the one booked, or the one sent: never one chosen or read afresh (#657, booked card).
   const done = isBooked(party.request);
   const kept = ready || done ? placed.room : (of.chosen ?? free?.[0]?.NAME ?? null);
   const noRoom = ready && free !== null && free.length === 0 ? noRoomOf(group, all ?? [], slot) : null;
@@ -168,7 +178,7 @@ export function useGroupBooking(of: GroupBookingOf): GroupBooking {
   const toBook =
     loggedIn && times !== null && useDesc !== null && out !== null ? { room: times, useDesc, request: out } : null;
   const { write, booked, bookedRoom, onLoggedIn } = useBooking(of, toBook, reload);
-  const room = bookedRoom ?? (done ? (of.sent ?? kept) : kept);
+  const room = roomShown(bookedRoom, party.request, of.sent, kept);
   const [againAt, setAgainAt] = useState<string | null>(null);
   const { change, locked } = shown;
   useEffect(() => {

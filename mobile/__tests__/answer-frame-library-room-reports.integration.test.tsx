@@ -50,6 +50,8 @@ afterEach(() => {
 });
 
 const RESULT = `POST /library/room-requests/${REQUEST_ID}/result`;
+// The report, kept and sent again, names the room the library booked, which the party sees (P05 ticket 68).
+const BOOKED = { ok: true, room: 'G412' };
 
 describe('the report of a room booked', () => {
   it('shows the booking done when the report fails, books once, and sends the report again when the requests are asked again', async () => {
@@ -71,7 +73,7 @@ describe('the report of a room booked', () => {
     });
     await pass(100);
 
-    expect(server.received(RESULT).map(({ body }) => body)).toEqual([{ ok: true }, { ok: true }]);
+    expect(server.received(RESULT).map(({ body }) => body)).toEqual([BOOKED, BOOKED]);
     await socketServer((socket) => {
       socket.send('room-requests-changed');
     });

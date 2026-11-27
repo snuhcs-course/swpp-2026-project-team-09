@@ -40,8 +40,14 @@ export function isQuest(value: unknown): value is Quest {
     ['boolean', 'undefined'].includes(typeof field(value, 'takenAlone')) &&
     isNumber(field(value, 'waitingJoinRequests')) &&
     (field(value, 'members') === undefined || listOf(isQuestMember)(field(value, 'members'))) &&
-    isRoomRequestOrNone(field(value, 'roomRequest'))
+    isRoomRequestOrNone(field(value, 'roomRequest')) &&
+    isRoomOrNone(field(value, 'bookedRoom'))
   );
+}
+
+// Absent from a main server before it; else null, or the room's name as the library gives it.
+function isRoomOrNone(value: unknown): value is string | null | undefined {
+  return value === undefined || value === null || (isText(value) && value !== '');
 }
 
 // Absent from a main server before it. Its status is any text, so that one a later main server adds keeps the Quest.

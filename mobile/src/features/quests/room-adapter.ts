@@ -6,12 +6,15 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { LatLng, MyParty, Party, SubQuest } from '@/api/types';
 import { koreaClock, koreaDay } from '@/korea-time';
+import { shownSubQuest } from './adapter';
+import { placeWithRoom } from './booked-room';
 import { standingsOf } from './plan-steps';
 import { editsSubQuests } from './rules';
 
@@ -93,7 +96,8 @@ export interface RoomView {
   text: string;
   // "#AI커리어"
   tags: string[];
-  // The time and place box: the orange step's, "내일 10:00" and its place, else "시간 미정" and "장소 미정".
+  // The time and place box: the orange step's, "내일 10:00" and its place as the step shows it, else "시간 미정" and
+  // "장소 미정".
   time: string;
   place: string;
   destination: RoomDestination | null;
@@ -155,15 +159,20 @@ function timeOf({ startsAt, endsAt }: SubQuest): string {
   return endsAt === null ? koreaClock(startsAt) : `${koreaClock(startsAt)}–${koreaClock(endsAt)}`;
 }
 
-// By their start, those without one last, grey and orange by `plan-steps`.
+// By their start, those without one last, grey and orange by `plan-steps`. The room booked is on the shown step's
+// place, as the lists show it.
 function planOf(quest: ShownQuest, now: Date): PlanStepView[] {
-  return standingsOf(quest.subQuests, now).map(({ subQuest, stand }) => ({
-    subQuest,
-    time: timeOf(subQuest),
-    place: subQuest.place?.label ?? '',
-    next: stand === 'now',
-    over: stand === 'past',
-  }));
+  const shown = shownSubQuest(quest);
+  return standingsOf(quest.subQuests, now).map(({ subQuest, stand }) => {
+    const label = subQuest.place?.label ?? '';
+    return {
+      subQuest,
+      time: timeOf(subQuest),
+      place: subQuest === shown ? placeWithRoom(label, quest.bookedRoom) : label,
+      next: stand === 'now',
+      over: stand === 'past',
+    };
+  });
 }
 
 // The User has no line while not joined: the activation card says why.
@@ -233,8 +242,8 @@ export function toRoom(sources: RoomSources): RoomView {
   const inParty = activation.state === 'in';
   const closed = quest.joinPolicy === 'closed';
   const plan = planOf(quest, now);
-  const shown = plan.find(({ next }) => next)?.subQuest ?? null;
-  const start = shown?.startsAt ?? null;
+  const orange = plan.find(({ next }) => next);
+  const start = orange?.subQuest.startsAt ?? null;
   return {
     quest,
     leads: quest.leader?.id === meId,
@@ -243,7 +252,7 @@ export function toRoom(sources: RoomSources): RoomView {
     text: quest.description,
     tags: quest.tags.map((tag) => `#${tag}`),
     time: start === null ? '시간 미정' : `${koreaDay(start, now)} ${koreaClock(start)}`,
-    place: shown?.place?.label ?? '장소 미정',
+    place: orange === undefined || orange.place === '' ? '장소 미정' : orange.place,
     destination: destinationOf(plan),
     editsPlan: editsSubQuests(quest, meId),
     activation,
