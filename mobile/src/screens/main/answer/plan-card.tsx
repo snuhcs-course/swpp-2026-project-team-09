@@ -214,7 +214,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
       {meal ? <MealBody {...props} busy={busy} /> : null}
       {/* A meal with no Plan keeps its conditions, each with its ✕ (P01 ticket 31). */}
       {shown.plan === null && answer.input.kind === 'meal' ? (
-        <KindChips answer={answer} change={shown.change} disabled={busy} onChoose={shown.chooseKind} />
+        <KindChips answer={answer} change={shown.change} disabled={busy} onChoose={shown.chooseKind} study={null} />
       ) : null}
       {shown.plan !== null && group !== undefined ? (
         <StudyGroupBody
