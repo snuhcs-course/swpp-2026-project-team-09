@@ -126,8 +126,12 @@ describe("toCards of the User's Quests without a Party", () => {
   });
 });
 
+// A 파티's size is its Holders over the Quest's capacity, as the room shows it, not the Party's members over the
+// Party's own capacity (P06 ticket 30).
+const YU_NA = { id: 'f3', name: '최유나', department: '디자인학부' };
+
 describe("toCards of the User's Quests with a Party", () => {
-  it("an Open Quest whose Party others run → that Party's fill, its start, and joining in the room", () => {
+  it("an Open Quest whose Party others run → the 파티's Holders over its capacity, the Party's start, and joining in the room", () => {
     const party: Party = {
       id: 'p1',
       title: 'AI 커리어 설명회 같이 가요',
@@ -138,20 +142,21 @@ describe("toCards of the User's Quests with a Party", () => {
       holdsQuest: true,
       friends: [],
     };
-    const quests = [quest('q1', { joinPolicy: 'open', holders: [ME, MIN_JUN] })];
+    const quests = [quest('q1', { joinPolicy: 'open', holders: [ME, MIN_JUN, YU_NA], capacity: 6 })];
     const [card] = toCards(sources({ quests, parties: [party] }));
     expect(card).toMatchObject({
       kind: 'party',
       marker: { name: '파티 · AI 커리어 설명회 같이 가요', short: 'AI 커리어', count: 2 },
-      subLabel: '파티 · 2/4명',
+      subLabel: '파티 · 3/6명',
       lines: [{ icon: 'clock', text: '17:40 301동 앞에서 출발' }],
       primary: { label: '참여하기', action: 'room', questId: 'q1' },
     });
   });
 
-  it('an Open Quest whose Party the User is in → 파티 열기', () => {
+  it('an Open Quest whose Party the User is in → the 파티's size, not the Party's, and 파티 열기', () => {
     const mine = myParty('q1', [{ ...ME, leader: true, visible: true }]);
-    const [card] = toCards(sources({ quests: [quest('q1', { joinPolicy: 'open' })], myParty: mine }));
-    expect(card).toMatchObject({ subLabel: '파티 · 1/4명', primary: { label: '파티 열기', action: 'room' } });
+    const open = quest('q1', { joinPolicy: 'open', holders: [ME, MIN_JUN], capacity: 6 });
+    const [card] = toCards(sources({ quests: [open], myParty: mine }));
+    expect(card).toMatchObject({ subLabel: '파티 · 2/6명', primary: { label: '파티 열기', action: 'room' } });
   });
 });

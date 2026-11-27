@@ -213,9 +213,10 @@ export interface MapSources {
   forInterestMarks?: boolean;
 }
 
-// A Party that others may join: its members and how to join, in the Quest's room.
+// A Party that others may join: its members and how to join, in the Quest's room. Its size is the 파티's, Holders over
+// the Quest's capacity, as the room shows it (P06 ticket 30).
 function openPartyCard(
-  questId: string,
+  quest: Pick<Quest, 'id' | 'holders' | 'capacity'>,
   party: QuestParty,
   start: string | null,
   label: string,
@@ -229,10 +230,10 @@ function openPartyCard(
       count: party.memberCount,
       minutesOld: null,
     },
-    subLabel: `파티 · ${party.memberCount}/${party.capacity}명`,
+    subLabel: `파티 · ${String(quest.holders.length)}/${String(quest.capacity)}명`,
     title: party.title,
     lines: [line('clock', start === null ? label : `${koreaClock(start)} ${label}에서 출발`)],
-    primary: { label: party.mine ? '파티 열기' : '참여하기', action: 'room', questId },
+    primary: { label: party.mine ? '파티 열기' : '참여하기', action: 'room', questId: quest.id },
     secondary: null,
   };
 }
@@ -250,7 +251,7 @@ function partyCard(
   const start = subQuest?.startsAt ?? null;
   const label = subQuest?.place?.label ?? '';
   if (party !== null && quest.joinPolicy !== 'closed') {
-    return openPartyCard(quest.id, party, start, label);
+    return openPartyCard(quest, party, start, label);
   }
   const alone = party === null && others === '';
   // Worded as the Quest list words the same Quest, by its own Join Policy: "공개 파티 · 4명", or "비공개 파티" with
