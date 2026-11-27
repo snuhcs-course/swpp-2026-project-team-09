@@ -65,7 +65,7 @@ function noneOf(
   const relax = answer.noPlan?.relax ?? [];
   const next = relax.length === 0 ? mealAfter(input, now) : null;
   if (next !== null) {
-    withdrawAnswer(presented);
+    withdrawAnswer(presented, input);
     presented.offers = [nextMealOffer(next, friendNames(answer))];
     return { result: 'none', meal: input.meal, reason: overToday(next.words) };
   }
@@ -257,7 +257,7 @@ async function plannedFor(
   const asked = await plans.asked(userId, chained);
   takeMap(presented);
   if ('invited' in asked) {
-    withdrawAnswer(presented);
+    withdrawAnswer(presented, planInput);
     return invitedWords(asked.invited, planInput.meal);
   }
   const { answer, served, busy = [], posted = true } = await plans.planned(userId, asked.input, at);
