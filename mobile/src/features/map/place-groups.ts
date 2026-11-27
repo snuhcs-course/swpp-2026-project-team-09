@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -36,8 +37,11 @@ interface Member {
 }
 
 // A thing that stands still at a place: a person and a shuttle's vehicle move, and are never grouped.
+// A booking party flagged for its room request stands apart, as the flag of a Quest made from a Plan does.
 function memberOf(card: CardView): Member | null {
-  return card.mark.type === 'place' && card.glideMs === undefined ? { card, kind: card.mark.place } : null;
+  return card.mark.type === 'place' && card.glideMs === undefined && card.request === undefined
+    ? { card, kind: card.mark.place }
+    : null;
 }
 
 // Where a thing says it is: its line with a pin, or a stop's own name.

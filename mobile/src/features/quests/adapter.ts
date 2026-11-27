@@ -12,10 +12,12 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
 import { koreaClock, koreaDate, koreaDay, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
+import { requestFlagOf, requestLine, requestShortLine } from './room-request-flag';
 
 // What a row of the Quest list is drawn as, which gives its colour, by the Quest's own Join Policy: a class; `open`, a
 // 공개 파티, an Open or an Approval Quest; `closed`, a 비공개 파티, a Closed Quest. Whether its Party is switched on
@@ -40,8 +42,12 @@ export interface QuestRowView {
   label: string;
   // "자료구조"
   title: string;
-  // "14:00 · 301동 118호"
+  // "14:00 · 301동 118호", or for a booking party whose room request is out "오늘 15:00 · 동의 1/3 · 기다리는 중".
   meta: string;
+  // A booking party's request with no day word, for the Quest list screen, whose rows sit under day headings.
+  requestLine?: string;
+  // A booking party whose room request of studying together is out: a press opens that answer again (P10 ticket 13).
+  reopens?: true;
   // "301동 118호", or "" for a Quest without a place.
   place: string;
   // "14:00", the start of the Sub Quest it shows, or "" without one.
@@ -215,6 +221,10 @@ function meta(subQuest: SubQuest | null, now: Date): string {
   return [start === null ? '' : `${day}${koreaClock(start)}`, label].filter((part) => part !== '').join(' · ');
 }
 
+function today(start: string | null, now: Date): boolean {
+  return start !== null && koreaDaysAfter(now, new Date(start)) === 0;
+}
+
 // The frames' words for a kind on the whole screen: a class, a Party that others may join, and anything else, with
 // whom the User holds it.
 function kindLabel(tone: QuestRowTone, quest: Quest, meId: string): string {
@@ -261,7 +271,8 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
     const subQuest = timedSubQuest(quest);
     const tone = toneOf(quest);
     const start = subQuest?.startsAt ?? null;
-    return {
+    const request = requestFlagOf(quest, start, now);
+    const row: QuestRowView = {
       id: quest.id,
       kind: kindOf(quest),
       tone,
@@ -271,13 +282,19 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
         : sharedKicker(quest, partyOf(quest, myParty, parties) !== null, meId),
       label: kindLabel(tone, quest, meId),
       title: quest.title,
-      meta: meta(subQuest, now),
+      // The map's list says no day for today, as `meta` does, and only the request's fact: its row is narrow.
+      meta: request === null ? meta(subQuest, now) : requestShortLine(request, !today(start, now)),
       place: subQuest?.place?.label ?? '',
       time: start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),
       ended: subQuest === null && quest.subQuests.length > 0,
       position: positionOf(subQuest),
     };
+    if (request !== null) {
+      row.reopens = true;
+      row.requestLine = requestLine(request, false);
+    }
+    return row;
   });
 }
 

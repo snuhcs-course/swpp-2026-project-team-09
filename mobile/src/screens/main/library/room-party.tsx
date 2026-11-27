@@ -70,8 +70,11 @@ export interface PartyRequest {
 }
 
 // What a request is made from: a book card's key and its Friends or Quest; a study answer together gives the same, with
-// the study input it was made from (P10 ticket 12).
-export type PartyCard = Pick<LibraryCardData, 'key' | 'questId' | 'companions'> & { input?: StudyInput };
+// the study input it was made from (P10 ticket 12), and the request it was sent with when shown again (ticket 13).
+export type PartyCard = Pick<LibraryCardData, 'key' | 'questId' | 'companions'> & {
+  input?: StudyInput;
+  requestId?: string;
+};
 
 function makingOf(card: PartyCard, useDesc: string | null): Parameters<typeof roomRequests.make>[0] {
   const extra = {
@@ -111,6 +114,11 @@ function useCancel(request: RoomRequest | null, forget: () => void): (() => void
   };
 }
 
+// The request a card shows when it comes: its place's, the one it was shown again with, or its key's.
+function firstRequest(card: PartyCard, place: string): string | null {
+  return requestOfCard.get(place) ?? card.requestId ?? requestOfKey.get(card.key) ?? null;
+}
+
 // The request as last read, read again while it gathers or is ready.
 function usePolled(id: string | null): RoomRequest | null {
   const asked = useQuery({
@@ -131,7 +139,7 @@ export function usePartyRequest(
   useDesc: string | null,
   onMade?: (made: RoomRequest) => void,
 ): PartyRequest {
-  const [id, setId] = useState<string | null>(requestOfCard.get(place) ?? requestOfKey.get(card.key) ?? null);
+  const [id, setId] = useState(() => firstRequest(card, place));
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
   // Kept for a send tried again, and new for each request: one taken back or ended is not the next.

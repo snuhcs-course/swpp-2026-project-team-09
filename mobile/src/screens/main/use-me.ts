@@ -5,15 +5,27 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
-import { CAMPUS_BOUNDS, isInside, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
+import {
+  CAMPUS_BOUNDS,
+  inView,
+  isInside,
+  type MapAvatar,
+  type MapCamera,
+  type MapMarker,
+  type MarkerLook,
+  type Size,
+  useMarkerImages,
+} from '@/map';
 import { openLocationSettings, type PositionPermission, usePosition } from '@/position';
 import { useLocationExplanation } from './use-location-explanation';
 import type { MainMap } from './use-main-map';
+import { FLAG_ORDER } from './use-things';
 
 // The identifier of the User's own Avatar on the map. On the everyday map it takes a press (`pressableMe`); elsewhere
 // it takes none, as in the frame: a press on it reaches a Friend's marker that it stands over.
@@ -21,11 +33,44 @@ export const ME_AVATAR_ID = 'me';
 
 // Under every other Avatar, whose order is 0 or more.
 const UNDER_FACES = -1;
+const OVER_FLAGS = FLAG_ORDER + 1;
+
+interface Box {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+function boxOf({ position, image }: MapMarker, camera: MapCamera, size: Size): Box {
+  const { x, y } = inView(position, camera, size);
+  const left = x - image.anchor.x * image.width;
+  const top = y - image.anchor.y * image.height;
+  return { left, top, right: left + image.width, bottom: top + image.height };
+}
+
+function overlap(one: Box, other: Box): boolean {
+  return one.left < other.right && other.left < one.right && one.top < other.bottom && other.top < one.bottom;
+}
 
 // The User's own Avatar as the everyday map draws it, as row 6's boards draw it: it takes a press, which opens the
-// User's own card, and lies under the faces, so that a face over it keeps its press.
-export function pressableMe(avatars: readonly MapAvatar[]): MapAvatar[] {
-  return avatars.map((avatar) => ({ ...avatar, passive: false, order: UNDER_FACES }));
+// User's own card, and lies under the faces, so that a face over it keeps its press. A flag among `others` is above
+// every face (P10 ticket 13), so where a flag's picture covers the User's own, the User's own is raised above it, and
+// a press there opens the User's own card. Until the map is laid out and its camera known, no flag is known to cover
+// it.
+export function pressableMe(
+  avatars: readonly MapAvatar[],
+  others: readonly MapAvatar[],
+  camera: MapCamera | null,
+  size: Size | null,
+): MapAvatar[] {
+  const flags = others.filter(({ order }) => order === FLAG_ORDER);
+  const covers = (one: MapMarker, other: MapMarker): boolean =>
+    camera !== null && size !== null && overlap(boxOf(one, camera, size), boxOf(other, camera, size));
+  return avatars.map((avatar) => {
+    const covered = flags.some((flag) => covers(avatar, flag));
+    return { ...avatar, passive: false, order: covered ? OVER_FLAGS : UNDER_FACES };
+  });
 }
 
 export const OFF_CAMPUS = '캠퍼스 밖에 있어요';
