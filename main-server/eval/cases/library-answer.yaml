@@ -131,8 +131,8 @@
     tools:
       forbidden: [proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn]
     text:
-      mentions: [[8층, 8A]]
-      absent: [잘못, 죄송, 착오, 실수, 정정]
+      mentions: [8층]
+      absent: [잘못, 죄송, 착오, 실수, 정정, QUIET, 1 구역]
 
 # Whether a return went through is answered with the User's bookings, each with its state, and one sentence that says
 # so, names no card and never says whether the return went through (P05 ticket 59). On the user's phone (2026-11-27),
@@ -208,3 +208,115 @@
     text:
       mentions: [예약 취소]
       absent: [취소하기, 취소했어요, 취소되었어요]
+
+# A question about the seat card on screen gets one short sentence of only what was asked (P05 ticket 66). On the
+# user's phone (2026-11-27), "거기 몇 층이야?" over the card of 8층 정숙 열람실 was answered "관정도서관 8층이에요. 지금
+# 카드에 있는 8A 열람실 1 구역(QUIET ZONE)은 … 먼저 로그인해 주세요.": the sector's name, the card named, and the press
+# and sign-in words of a card just shown. The card comes back as the User left it, 10:30–13:30. Written, not run: no
+# model key on the machine they were written on.
+- id: library-answer-card-floor
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 공부할 자리
+    - assistant:
+        text: 7층 열람실 10:30–13:30 자리를 골라 뒀어요, 예약하기를 눌러야 예약돼요.
+        cards:
+          - { kind: library, seed: 'book:8F-8A-zone1-quiet:2026-11-04:1030:180' }
+    - user: 거기 몇 층이야?
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+    text:
+      mentions: [8층]
+      absent: [8A, QUIET, 1 구역, 카드, 예약하기, 로그인]
+      maxChars: 20
+
+- id: library-answer-card-time
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 공부할 자리
+    - assistant:
+        text: 8층 정숙 열람실 10:30–13:30 자리를 골라 뒀어요, 예약하기를 눌러야 예약돼요.
+        cards:
+          - { kind: library, seed: 'book:8F-8A-zone1-quiet:2026-11-04:1030:180' }
+    - user: 몇 시까지야?
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+    text:
+      mentions: ['13:30']
+      absent: [카드, 예약하기, 로그인]
+      maxChars: 25
+
+- id: library-answer-card-where
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 공부할 자리
+    - assistant:
+        text: 8층 정숙 열람실 10:30–13:30 자리를 골라 뒀어요, 예약하기를 눌러야 예약돼요.
+        cards:
+          - { kind: library, seed: 'book:8F-8A-zone1-quiet:2026-11-04:1030:180' }
+    - user: 거기 어디야?
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: '*'
+    text:
+      mentions: [8층]
+      absent: [8A, QUIET, 카드, 예약하기, 로그인]
+      maxChars: 30
+
+# Its hours are in findLibrarySpace's answer alone.
+- id: library-answer-card-hours
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 공부할 자리
+    - assistant:
+        text: 8층 정숙 열람실 10:30–13:30 자리를 골라 뒀어요, 예약하기를 눌러야 예약돼요.
+        cards:
+          - { kind: library, seed: 'book:8F-8A-zone1-quiet:2026-11-04:1030:180' }
+    - user: 거기 몇 시에 닫아?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace]
+      forbidden: [proposeLibraryBooking, showLibrarySeats]
+    text:
+      mentions: ['23:00']
+      absent: [카드, 예약하기, 로그인]
+      maxChars: 30
+
+# The catalogue says nothing of food: the reply says it is not known, and invents no rule.
+- id: library-answer-card-food
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 공부할 자리
+    - assistant:
+        text: 8층 정숙 열람실 10:30–13:30 자리를 골라 뒀어요, 예약하기를 눌러야 예약돼요.
+        cards:
+          - { kind: library, seed: 'book:8F-8A-zone1-quiet:2026-11-04:1030:180' }
+    - user: 거기서 밥 먹어도 돼?
+  expect:
+    actions: [CHAT]
+    tools:
+      forbidden: [proposeLibraryBooking, showLibrarySeats, planMeal]
+    text:
+      absent: [카드, 예약하기, 로그인, 먹어도 돼요, 먹을 수 있어요]
+      maxChars: 40

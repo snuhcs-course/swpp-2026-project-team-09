@@ -67,6 +67,12 @@ export function withStart(input: PlanInput, time: string): PlanInput {
   return isWindowed(input) ? { ...input, window: { from: time, until: null } } : input;
 }
 
+// A study answer's conditions with the kind of group study room the User chose on the room ticket (P10 ticket 10);
+// other conditions are unchanged.
+export function withChosenRoom(input: PlanInput, roomSpaceId: string): PlanInput {
+  return input.kind === 'study' ? { ...input, chosen: { ...input.chosen, roomSpaceId } } : input;
+}
+
 export function withOrigin(input: PlanInput, placeId: string): PlanInput {
   // A new party's people carry no constraints: the main server refuses them.
   if (!hasPeople(input) || input.kind === 'new-quest') {

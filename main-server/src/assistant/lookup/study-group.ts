@@ -94,7 +94,7 @@ export interface GroupPick {
 export type GroupTime =
   { kind: 'pick'; pick: GroupPick } | { kind: 'none'; noPlan: NonNullable<AnswerReply['noPlan']> };
 
-const noPlanOf = (reason: 'no-fit' | 'no-shared-time', texts: readonly string[]): GroupTime => ({
+export const noPlanOf = (reason: 'no-fit' | 'no-shared-time', texts: readonly string[]): GroupTime => ({
   kind: 'none',
   noPlan: { reason, lines: texts.map((text) => [{ text, strong: false }]) },
 });
@@ -175,7 +175,7 @@ function constraintItems(date: string, constraints: PlanPerson['constraints']): 
   });
 }
 
-function factsOf(
+export function factsOf(
   args: GroupTimeArgs,
   room: GroupRoom,
   hours: StudyFacts['hours'],

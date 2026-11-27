@@ -16,6 +16,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -46,6 +47,7 @@ import {
   subQuestContentsOf,
   toQuestDto,
 } from './dto/quest.dto.js';
+import { roomRequestsOf } from './quest-room-requests.js';
 import { notFound, questNotFound } from './refusals.js';
 import { columnsOf } from './sub-quest-columns.js';
 import { forgetLeaveBy, gatheringFrom } from './taken-alone.js';
@@ -140,8 +142,9 @@ export class QuestsService {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     const now = this.clock.now();
+    const rooms = await roomRequestsOf(this.prisma, quests);
     return [
-      ...quests.map((quest) => toQuestDto(quest, userId, now)),
+      ...quests.map((quest) => toQuestDto(quest, userId, now, rooms.get(quest.id) ?? null)),
       ...(await this.classQuests.todayFor(userId, now)),
     ].filter(({ subQuests }) => subQuests.some(({ ended }) => !ended));
   }
@@ -169,7 +172,8 @@ export class QuestsService {
       }
       return classQuest;
     }
-    return toQuestDto(quest, userId, now);
+    const rooms = await roomRequestsOf(this.prisma, [quest]);
+    return toQuestDto(quest, userId, now, rooms.get(quest.id) ?? null);
   }
 
   async drop(userId: string, questId: string): Promise<void> {

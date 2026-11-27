@@ -7,6 +7,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Action, type Expect, expectSchema, type Mention } from './expect.ts';
@@ -25,7 +26,7 @@ import {
 } from './normalise.ts';
 import type { CaseRun } from './runner.ts';
 import { type Observed, observedActionOf } from './observed.ts';
-import { type CheckName, stepsChecks } from './checks.ts';
+import { type CheckName, lengthFailures, stepsChecks } from './checks.ts';
 import { type FailureKind, showsSomething, type TurnTrace } from './trace.ts';
 
 // The scorer (spec P19, "Scoring (rules only)"): fixed rules that read a turn's trace and reply against its case's
@@ -277,6 +278,9 @@ function outcomeChecks(trace: TurnTrace, expect: Expect, names: Names): Check[] 
   }
   if (expect.text?.none === true) {
     checks.push(check('text.none', reply.text.trim() === '' ? [] : [`says ${JSON.stringify(reply.text)}`]));
+  }
+  if (expect.text?.maxChars !== undefined) {
+    checks.push(check('text.maxChars', lengthFailures(reply.text, expect.text.maxChars)));
   }
   return checks;
 }
