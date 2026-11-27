@@ -1,7 +1,7 @@
 # 28: Joining another 파티 of an event says the User's own goes, and + 파티 모집 opens the one held alone
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built)
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useRef } from 'react';
@@ -11,7 +12,7 @@ import type { GripPlace, TimeCardGrip } from './time-card-grip';
 // back, puts it back where it stood before "＋ 같이", folded if it was folded and open if it was open. Tucked away, it
 // comes back shown, so that the band just changed stays in sight (the user's phone, 2026-11-25).
 export function placeAfterPicking(before: GripPlace): GripPlace {
-  return before === 'tucked' ? 'shown' : before;
+  return before === 'tucked' || before === 'behind' ? 'shown' : before;
 }
 
 // Started with picking already on, as when the card comes back after the keyboard hid it, the place to go back to is

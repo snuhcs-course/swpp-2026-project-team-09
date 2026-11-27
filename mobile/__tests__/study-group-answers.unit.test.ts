@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { RequestContext } from '@/api/assistant-types';
 import { ANSWER_CAPABILITIES } from '@/api/capabilities';
 import { mockAssistantReply, mockRecalculation } from '@/api/mock/assistant';
 import { STUDY_GROUP_MORE_NEEDED, STUDY_GROUP_TO_SEND, studyGroupReplyTo } from '@/api/mock/data/study-group-answers';
+import { STUDY_PLAN_REPLY } from '@/api/mock/data/study-plan-answer';
 import { isAnswerReply } from '@/api/server/plan-answers';
 import {
   hasPeople,
@@ -162,15 +164,13 @@ describe('Studying together asked without a main server', () => {
     expect(studyGroupReplyTo('공부할 자리 있어?')).toBeNull();
   });
 
-  it('answers "같이 공부할 자리 있어?" with the answer together, and "공부할 자리 있어?" with the seat card alone', () => {
+  // With `study-plan` said too (P10 ticket 23), "공부할 자리 있어?" is the places to study alone (`mock-study-plan.unit`).
+  it('answers "같이 공부할 자리 있어?" with the answer together, and "공부할 자리 있어?" with the places to study alone', () => {
     const together = mockAssistantReply([{ role: 'user', text: '같이 공부할 자리 있어?' }], CONTEXT);
-    const seatAlone = mockAssistantReply([{ role: 'user', text: '공부할 자리 있어?' }], CONTEXT);
+    const studyAlone = mockAssistantReply([{ role: 'user', text: '공부할 자리 있어?' }], CONTEXT);
 
     expect(together.answer).toBe(STUDY_GROUP_MORE_NEEDED);
     expect(together.cards).toEqual([]);
-    expect(seatAlone.answer ?? null).toBeNull();
-    expect(seatAlone.cards.map((card) => (card.kind === 'library' ? card.library.space?.unit : null))).toEqual([
-      'seat',
-    ]);
+    expect(studyAlone).toBe(STUDY_PLAN_REPLY);
   });
 });

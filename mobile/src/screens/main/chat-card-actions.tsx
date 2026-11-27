@@ -84,17 +84,15 @@ export interface CardLeaving {
 type LeavingBooking = CardLeaving['booking'];
 
 // What a seat card learns of the booking on the map: how it tells what it offers, whether its band is on the bar, and
-// the walk there (P04 ticket 07; P01 tickets 03 and 06). It shows all it holds at every step of the sheet, laid out
-// once (P04 ticket 61).
+// the walk there (P04 ticket 07; P01 tickets 03 and 06), which a booking made as one of several requests has too, for
+// its ticket's 가는 길 (P10 ticket 29). It shows all it holds at every step of the sheet, laid out once (P04 ticket 61).
 function bookingActionsOf(booking: LeavingBooking): Pick<LibraryCardActions, 'onMap' | 'bandOnBar' | 'bookingWalk'> {
   const alone = (card: string): boolean => booking !== undefined && booking.place === card && !booking.steps;
   return {
     onMap: (card: string) => (booking !== undefined && booking.place === card ? booking.tell : null),
     bandOnBar: alone,
     bookingWalk: () =>
-      booking === undefined || booking.point === null || booking.steps
-        ? null
-        : { minutes: booking.walk, to: booking.point },
+      booking === undefined || booking.point === null ? null : { minutes: booking.walk, to: booking.point },
   };
 }
 
