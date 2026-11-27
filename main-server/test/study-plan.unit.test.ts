@@ -17,6 +17,7 @@ import { type Calendar, openAt, type Schedule } from '../src/study-spaces/study-
 import { STUDY_SPACES_FILE, studySpacesSchema } from '../src/study-spaces/study-spaces-file.js';
 import { ENGINEERING_AREA, MOUNTAIN_AREA, studyBuildingsFor } from './study-area-example.js';
 import { classAt, id, ME, numbered, position, readCampus, TUESDAY, wayArgs } from './way-example.js';
+import { withoutBand } from './no-plan.js';
 
 // "공부할 자리 있어?" ranked over the seed's buildings and hours (P10 ticket 03), on Tuesday 2026-11-17, a term
 // weekday, by the seed's calendar. The User is at 301동 unless given otherwise.
@@ -158,7 +159,7 @@ describe('Study places at 23:30', () => {
     const { plans, noPlan } = asked({ clock: '07:30', area: socialSciencesArea() });
 
     expect(plans).toEqual([]);
-    expect(noPlan).toEqual({
+    expect(withoutBand(noPlan)).toEqual({
       reason: 'no-fit',
       lines: [
         [{ text: '지금 연 공부할 곳이 없어요', strong: false }],
@@ -186,6 +187,38 @@ describe('Study places in the area the User sees', () => {
     expect(asked({ clock: '10:00', area: ENGINEERING_AREA }).noPlan?.lines[0]).toEqual([
       { text: '쓸 수 있는 공부할 곳이 없어요', strong: false },
     ]);
+  });
+});
+
+// An answer without a plan keeps its time card (P05 ticket 67), as a meal's does (ticket 65): the User's lane from when
+// they are ready to the end they set, else their next item, else three hours on.
+const at = (clock: string): string => `${TUESDAY}T${clock}:00+09:00`;
+
+describe('A study answer without a plan', () => {
+  it('with nothing open, keeps the time card over the three hours from now', () => {
+    const { noPlan } = asked({ clock: '07:30', area: socialSciencesArea() });
+
+    expect(noPlan?.band).toEqual({
+      range: { startAt: at('07:30'), endAt: at('10:30') },
+      now: at('07:30'),
+      lanes: [{ userId: ME, name: '나', busy: [] }],
+      startAt: at('07:30'),
+      endAt: at('10:30'),
+      text: '07:30–10:30',
+    });
+  });
+
+  it('with no time before the next Class, ends at it and reaches over it', () => {
+    const items = [classAt(TUESDAY, '12:00', '13:00', '제1공학관')];
+    const { plans, noPlan } = asked({ clock: '11:56', items });
+
+    expect(plans).toEqual([]);
+    expect(noPlan?.band).toMatchObject({
+      range: { startAt: at('11:30'), endAt: at('13:00') },
+      lanes: [{ userId: ME, name: '나', busy: [{ startAt: at('12:00'), endAt: at('13:00') }] }],
+      startAt: at('11:56'),
+      endAt: at('12:00'),
+    });
   });
 });
 

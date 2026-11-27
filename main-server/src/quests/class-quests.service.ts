@@ -76,6 +76,7 @@ function toClassQuestDto(
     waitingJoinRequests: 0,
     members: [],
     roomRequest: null,
+    bookedRoom: null,
   };
 }
 
