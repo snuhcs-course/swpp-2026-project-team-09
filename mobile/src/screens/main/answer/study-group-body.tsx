@@ -231,6 +231,9 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
   useGroupAct({ ...props, group: onScreen, loggedIn, party, onAsk });
   const room = choices.chosen ?? rooms?.[0]?.NAME ?? null;
   const { open, use, toggle } = choices;
+  const chooser = (at: Open): ReactElement => (
+    <Choosers {...choices} group={group} open={at} room={room} rooms={rooms} slot={slot} />
+  );
   const held = out !== null;
   return (
     <View style={styles.body} testID="study-group-body">
@@ -249,9 +252,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
         <FailureNote failure="noSession" onLogIn={null} />
       )}
       {/* A cell's chooser opens right under the ticket, the use's under its line (design group-study-design ④ ⑤). */}
-      {held ? null : (
-        <Choosers {...choices} group={group} open={open === 'use' ? null : open} room={room} rooms={rooms} slot={slot} />
-      )}
+      {held ? null : chooser(open === 'use' ? null : open)}
       {out === null ? (
         <UseLine onPress={toggle('use')} use={use} />
       ) : (
@@ -266,9 +267,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
           request={out}
         />
       ) : null}
-      {!held && open === 'use' ? (
-        <Choosers {...choices} group={group} open="use" room={room} rooms={rooms} slot={slot} />
-      ) : null}
+      {!held && open === 'use' ? chooser('use') : null}
     </View>
   );
 }
