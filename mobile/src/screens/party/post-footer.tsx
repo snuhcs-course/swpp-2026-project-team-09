@@ -67,6 +67,14 @@ function OwnButtons({ questId, onEnd }: { questId: string; onEnd: () => void }):
   );
 }
 
+// The join button's words: a full 파티 takes no one, whichever way it is entered.
+function joinWords(post: PostView): string {
+  if (!hasRoom(post)) {
+    return '정원이 다 찼어요';
+  }
+  return post.joinPolicy === 'approval' ? '참여 신청' : '참여하기';
+}
+
 // What the reader can do: join or ask, or hide another's post with `관심 없음`; wait on a request; end or edit the
 // post; or nothing. A full 파티 shows `정원이 다 찼어요`, disabled, in place of joining; a Holder or a waiting request
 // shows its own state first.
@@ -101,15 +109,9 @@ function Footer({ post, onJoin, onHide, onWithdraw, onEnd }: FooterProps): React
           관심 없음
         </Button>
         <View style={styles.button}>
-          {hasRoom(post) ? (
-            <Button full onPress={onJoin} size="lg">
-              {role.kind === 'approval' ? '참여 신청' : '참여하기'}
-            </Button>
-          ) : (
-            <Button disabled full onPress={onJoin} size="lg">
-              정원이 다 찼어요
-            </Button>
-          )}
+          <Button disabled={!hasRoom(post)} full onPress={onJoin} size="lg">
+            {joinWords(post)}
+          </Button>
         </View>
       </View>
       {role.kind === 'approval' && role.removed ? <Text style={styles.caption}>{REMOVED_CAPTION}</Text> : null}
