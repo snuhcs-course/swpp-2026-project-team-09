@@ -11,6 +11,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -151,7 +152,8 @@ function showSharing(queryClient: QueryClient, on: boolean): void {
 }
 
 // Opens the Quest's Party, or enters the one another Holder opened at the same moment. It sends no push: the other
-// Holders see it in their 알림 list.
+// Holders see it in their 알림 list. The Party takes the Quest's capacity, so that its size reads as the 파티's (P06
+// ticket 30).
 function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: Tools): RoomActions['openParty'] {
   return async (quest, leaveFirst) => {
     let ended: string | null = null;
@@ -159,7 +161,12 @@ function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: To
       ended = await leaveIf(queryClient, leaveFirst);
       enter(
         queryClient,
-        await apiClient.openParty({ title: quest.title, capacity: 8, joinPolicy: 'closed', questId: quest.id }),
+        await apiClient.openParty({
+          title: quest.title,
+          capacity: quest.capacity,
+          joinPolicy: 'closed',
+          questId: quest.id,
+        }),
       );
       showToast('파티를 활성화했어요');
     } catch (error) {
