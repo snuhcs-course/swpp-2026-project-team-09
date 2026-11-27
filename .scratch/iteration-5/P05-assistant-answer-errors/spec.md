@@ -120,6 +120,7 @@ Every error of the usage test's list of answer errors, and where it went:
 | Found later (feedback 2026-11-22): questions back come as words; the Board first, a Place and a time later | Tickets 23 and 24 |
 | Found later (feedback 2026-11-22): "<name> · 자리 모름" for two different things | Ticket 25 |
 | Found later (feedback 2026-11-22): a 파티 only with named Friends answered as a card, a Friend's Class unsaid | Ticket 26 |
+| Found later (the user's phone, 2026-11-27): after a seat answer, "1시 수업 휴강이야" answered that a Class can be left out "식사 추천에서만" | Ticket 70 (the app's side: P01 ticket 40) |
 | A first sentence that sounds like a failure ("…파티는 찾지 못했어요", "…열려 있는 게 없어서") | P02 ticket 01 (pull request 384) |
 | A part of the request dropped without a word (관정, 16시 and the booking) | P03 tickets 01 and 02 (pull requests 385 and 386) |
 

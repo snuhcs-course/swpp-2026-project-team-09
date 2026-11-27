@@ -13,8 +13,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { z } from 'zod';
 import { defineTool, type Tool, type ToolContext } from '../feature.js';
-import { koreaDate } from '../korea-time.js';
-import { shownMinutes } from '../../travel/travel.js';
+import { skipParameters } from '../free-time/left-out-classes.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
 import { placeLabelOf } from '../gathering/place-naming.js';
 import { noteNotDone, refusedBookingStep } from '../steps/plan-steps.js';
@@ -28,7 +27,7 @@ import {
   saysSameDayOnly,
 } from './booking-rules.js';
 import { spokenNameOf } from './app-names.js';
-import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
+import { type LibrarySpace } from './catalogue.js';
 import { closedToday } from './closed-today.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
@@ -41,15 +40,8 @@ import {
   SIGN_IN_FIRST,
   spaceIdInput,
 } from './library-parts.js';
-import {
-  cardArrival,
-  fillSeat,
-  filledWords,
-  leaveByOf,
-  type SeatFacts,
-  type SeatFill,
-  seatedAt,
-} from './seat-arrival.js';
+import { cardArrival, filledWords, leaveByOf, type SeatFill, seatedAt } from './seat-arrival.js';
+import { filledSeat, type Filling } from './seat-fill.js';
 
 const words = (max: number): z.ZodString => z.string().trim().min(1).max(max);
 
@@ -82,6 +74,8 @@ const answeringInput = input.extend({
     .describe(
       'true when the User asks you to make the booking yourself, such as "그냥 예약해 줘" or "예약까지 해 줘": you cannot, and the card says that the User presses 예약하기.',
     ),
+  // A seat for today without a start is filled from the day as the User left it (P05 ticket 70).
+  ...skipParameters,
 });
 
 // The card's first note when the User asked the Assistant to book.
@@ -158,28 +152,6 @@ export interface BookingOptions {
   refusesClosedToday?: boolean;
 }
 
-// What a seat's arrival is read from.
-async function seatFacts(
-  { days, places, travel }: LibraryServices['arrival'],
-  context: ToolContext,
-): Promise<SeatFacts> {
-  const date = koreaDate(context.now);
-  const { location } = context.context;
-  return {
-    date,
-    now: context.now,
-    items: await days.itemsOn(context.userId, date),
-    locationPlaceId: location === null ? null : (places.at(location)?.place.id ?? null),
-    kwanjeongPlaceId: places.numbered(KWANJEONG_PLACE_NUMBER)?.id ?? null,
-    walkingMinutes: (from, to) => shownMinutes(travel.walkingSeconds(from, to)),
-  };
-}
-
-interface Filling {
-  facts: SeatFacts;
-  fill: SeatFill;
-}
-
 // An arrival before the opening is given as the opening, so that no answer sends the User out at night.
 function arrivalAnswer(fill: SeatFill, { arrival: { places } }: LibraryServices): object {
   const { fromPlaceId, walkMinutes } = fill.arrival;
@@ -190,32 +162,19 @@ function arrivalAnswer(fill: SeatFill, { arrival: { places } }: LibraryServices)
   };
 }
 
-// A seat for today without a start is filled; anything else is checked as asked.
-async function fillingOf(
-  services: LibraryServices,
-  context: ToolContext,
-  space: LibrarySpace,
-  asked: z.output<typeof input>,
-): Promise<Filling | null> {
-  const { hours } = space;
-  if (space.unit !== 'seat' || hours === null || asked.start !== undefined || asked.date !== koreaDate(context.now)) {
-    return null;
-  }
-  const facts = await seatFacts(services.arrival, context);
-  return { facts, fill: fillSeat(facts, { ...space, hours }, asked) };
-}
-
 interface Checked {
   space: LibrarySpace;
   booking: CheckedBooking;
   party: Party;
   filling: Filling | null;
+  // The Classes the seat's time leaves out, as the model says them (P05 ticket 70).
+  said: { skipped?: string[] };
   askedToBook: boolean | undefined;
 }
 
 // Shows the book card of a booking that passed, and answers its summary, with the arrival of a filled seat.
 function shownBooking(services: LibraryServices, context: ToolContext, checked: Checked): object {
-  const { space, booking, party, filling, askedToBook } = checked;
+  const { space, booking, party, filling, askedToBook, said } = checked;
   const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
   const leaveBy = filling === null ? null : leaveByOf(filling.facts, filling.fill.arrival.at, end);
   const { places } = services.arrival;
@@ -247,6 +206,7 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
     summary: summaryOf(space, booking, party, context.now, { filled, askedToBook }),
     arrival: arrivalAnswer(filling.fill, services),
     leaveBy,
+    ...said,
   };
 }
 
@@ -267,7 +227,11 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
     }
     const party = await partyOf(services, asked, context);
     const people = 'refusal' in party ? undefined : party.people;
-    const filling = fillsSeatTime ? await fillingOf(services, context, space, asked) : null;
+    const seat = await filledSeat(services, context, space, asked, fillsSeatTime);
+    if ('result' in seat) {
+      return seat;
+    }
+    const { filling, said } = seat;
     const request =
       filling === null
         ? asked
@@ -290,7 +254,7 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
       return sameDay ? { ...refused(refusals), sameDayOnly: { opens: space.hours?.open ?? null } } : refused(refusals);
     }
     const { booking } = result;
-    return shownBooking(services, context, { space, booking, party, filling, askedToBook: asked.askedToBook });
+    return shownBooking(services, context, { space, booking, party, filling, said, askedToBook: asked.askedToBook });
   };
   // The text chat's input stays as it was; only an app that draws answers is told of askedToBook.
   return options?.notesOwnPress === true

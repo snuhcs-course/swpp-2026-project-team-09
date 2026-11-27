@@ -21,7 +21,8 @@ import {
 import { clockOf } from '../free-time/free-time.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
-import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
+import { skippedBand } from '../free-time/left-out-classes.js';
+import { busyIn, busyLabel, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import { durationWords } from './day-lookup.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
@@ -274,6 +275,7 @@ function bandOf({ stay, end, building }: Ranked, { now, way, input, others }: Pl
     now: koreaTime(now),
     lanes: [{ userId: way.me.userId, name: '나', busy: busyIn(way.me.items, from, until, label) }],
     ...studyOthers(others, plan, { from, until, label }),
+    ...skippedBand(way.me.skipped, (item) => busyLabel(item, label)),
     startAt: koreaTime(stay.arrival),
     endAt: koreaTime(end),
     text: `${clockOf(stay.arrival)}–${clockOf(end)} · ${lengthWords(Math.round((end.getTime() - stay.arrival.getTime()) / MINUTE_MS))}`,
