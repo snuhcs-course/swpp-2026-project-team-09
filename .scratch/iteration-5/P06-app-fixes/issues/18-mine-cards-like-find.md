@@ -1,7 +1,7 @@
 # 18: 내 파티's cards like 찾기's: a board or 비공개 tag, a crown for the 파티 the User leads, the time, the place and the event on their own lines, and tighter groups
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -83,12 +83,32 @@ Positions are as of `origin/5.0/Main` 6edb1b61, under `mobile/src/`.
 
 ## Acceptance criteria
 
-- [ ] A card has no kind column. A 공개 파티 shows its board tag and a 비공개 파티 a "비공개" tag. (App integration test, which fails before the change.)
-- [ ] A Quest the User leads shows a crown before its count, named "방장" to a screen reader; other Quests show none. (App integration test, which fails before the change.)
-- [ ] The title takes up to two lines, and the time, the place and the event stand on their own lines with their icons. The event line shows only for a Quest with a Global Event. (App integration test, which fails before the change.)
-- [ ] The strip, the live outline, the waiting circle and the presses behave as before. (App integration tests.)
-- [ ] The gap from a group's last card to the next header's words is 20. (Test, which fails before the change.)
+- [x] A card has no kind column. A 공개 파티 shows its board tag and a 비공개 파티 a "비공개" tag. (App integration test, which fails before the change.)
+- [x] A Quest the User leads shows a crown before its count, named "방장" to a screen reader; other Quests show none. (App integration test, which fails before the change.)
+- [x] The title takes up to two lines, and the time, the place and the event stand on their own lines with their icons. The event line shows only for a Quest with a Global Event. (App integration test, which fails before the change.)
+- [x] The strip, the live outline, the waiting circle and the presses behave as before. (App integration tests.)
+- [x] The gap from a group's last card to the next header's words is 20. (Test, which fails before the change.)
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- "방장" for a screen reader: the crown is its own image labelled "방장", as the room's 파티장 crown and this card's waiting circle are. The card's spoken name stays its title, so screen readers and tests find the cards as before.
+- The crown is the room's 파티장 gold, `#E8A400`, 14, 4 before the users icon.
+- A past Quest the User led keeps its crown and its tag. A Quest without a Leader shows no crown.
+- `PostTop`'s tag is now `PostTag({ words })` in `post-content.tsx`, shared by `PostTop` and `MineCard`. `PostTop` draws it as before.
+- The card is `cardStyles.card` with 찾기's gap 8 and top padding 12. The strip lost its own 4 above it: the card's gap of 8 spaces it from the lines (it was 2 + 4).
+- A place whose label is empty still reads "장소 미정", as `lineOf` did.
+- The card tests are in a new `party-mine-cards.integration.test.tsx`. In `party-mine` they would have gone over the 300-line lint limit. `party-mine`, `party-mine-mock` and `features/mine-card-line` now check the time and the place apart.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+Estimates. Agent time is this session's wall clock from start to this entry, about 20 minutes. About 12 minutes of that were Jest runs, mostly in the background. No subagents. Tokens are counted up to this entry, so the commit and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 18 (tests first, `MineCardView`, `MineCard`, the groups' gap, checks) | about 20 minutes | 12,960,848 | 12,784,540 | 176,160 | 148 | 50,144 |
+
+Without cache reads, the input is 176,308.
