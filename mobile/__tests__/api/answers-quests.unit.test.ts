@@ -3,6 +3,7 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions, for each check of an answer about Quests: the documented shape, each checked field left out, null and of
@@ -196,6 +197,27 @@ describe('isQuest with its members', () => {
       ['members not a list', { ...QUEST, members: MEMBER }],
       ...wrongFields(MEMBER, { user: [{ id: 'u1' }], state: ['maybe'], lateMinutes: ['5'] }, ['lateMinutes']).map(
         ([label, member]): Variant => [`a member with ${label}`, { ...QUEST, members: [MEMBER, member] }],
+      ),
+    ],
+  );
+});
+
+// A booking party's room request (P10 ticket 13), for the map's Quest tag: main-server's README (Quests), ticket 08.
+const ROOM_REQUEST = { id: 'r1', status: 'gathering', consented: 1, asked: 3 };
+
+describe('isQuest with its room request', () => {
+  checks(
+    isQuest,
+    [
+      ['none, from a main server before it', QUEST],
+      ['none, null for every Quest but a booking party', { ...QUEST, roomRequest: null }],
+      ["a booking party's request gathering", { ...QUEST, roomRequest: ROOM_REQUEST }],
+      ['one booked', { ...QUEST, roomRequest: { ...ROOM_REQUEST, status: 'booked', consented: 3 } }],
+    ],
+    [
+      ['a request not an object', { ...QUEST, roomRequest: 'r1' }],
+      ...wrongFields(ROOM_REQUEST, { id: [1], status: ['waiting'], consented: ['1'], asked: ['3'] }).map(
+        ([label, request]): Variant => [`a request with ${label}`, { ...QUEST, roomRequest: request }],
       ),
     ],
   );

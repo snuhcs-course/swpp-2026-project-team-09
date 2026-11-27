@@ -15,6 +15,7 @@ import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaClock } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
 import { useLibrarySession } from '@/library/library-session';
+import { keepRequestAnswer } from '@/library/room-bookings';
 import type { TellAct } from '../library/act-stage';
 import { FailureNote } from '../library/library-parts';
 import { OneMorePicker } from '../library/room-ask-more';
@@ -141,9 +142,17 @@ function useGroupRequest(
 } {
   const { shown, answer, plan, group, bubbleId } = props;
   const [sent, setSent] = useState<string | null>(null);
-  const party = usePartyRequest(partyCardOf(answer, plan, group), `study-group:${String(bubbleId ?? 0)}`, use, () => {
-    setSent(room.current);
-  });
+  const party = usePartyRequest(
+    partyCardOf(answer, plan, group),
+    `study-group:${String(bubbleId ?? 0)}`,
+    use,
+    (made) => {
+      setSent(room.current);
+      if (made.madeForBooking) {
+        void keepRequestAnswer(made.questId, { requestId: made.id, answer });
+      }
+    },
+  );
   const out = isOut(party.request) ? party.request : null;
   const [asking, setAsking] = useState(false);
   const held = out !== null;

@@ -14,7 +14,10 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
+
+import type { RoomRequestStatus } from './room-requests';
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
 // app's own" is defined nowhere else yet, and a mock answers it. All times are ISO 8601 instants and all positions a
@@ -257,6 +260,17 @@ export interface Quest {
   // The Holders in the order they entered, then the invited, then the declined; none for a Class Quest. A main server
   // before members sends none.
   members?: QuestMember[];
+  // The room request a booking party was made for, for the map's Quest tag (P10 ticket 13); null for every other Quest,
+  // and absent from a main server before it.
+  roomRequest?: QuestRoomRequest | null;
+}
+
+// A booking party's room request: of the companions still in, how many consented and how many were asked.
+export interface QuestRoomRequest {
+  id: string;
+  status: RoomRequestStatus;
+  consented: number;
+  asked: number;
 }
 
 export type MemberState = 'invited' | 'accepted' | 'late' | 'declined';

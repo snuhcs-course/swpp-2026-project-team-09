@@ -5,14 +5,16 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { LibraryCardData } from '@/api/assistant-types';
+import type { AnswerReply, LibraryCardData } from '@/api/assistant-types';
 import { ApiError } from '@/api/errors';
 import { roomRequests } from '@/api/room-requests';
 import { field, isText } from '@/api/server/answers';
 import { isLibraryCardData } from '@/api/server/library-card-answers';
+import { isAnswerReply } from '@/api/server/plan-answers';
 import { leavingOnPurpose } from '@/features/quests/leaving';
 
 // The phone's map from a room booking's BSEQNO to the room request it was booked for. It stays on the phone: the
@@ -170,7 +172,45 @@ export async function forgetWaitingRoom(questId: string): Promise<void> {
   await AsyncStorage.setItem(WAITING, JSON.stringify(rest));
 }
 
+// The study answers together the requests were sent from, by their booking party (P10 ticket 13): the sending phone
+// shows one again from here when the main server cannot rebuild it (GET …/:id/answer is newer). The last few only.
+const ANSWERS = 'snunow.request-answers';
+const ANSWERS_KEPT = 8;
+
+export interface RequestAnswer {
+  requestId: string;
+  answer: AnswerReply;
+}
+
+function isRequestAnswer(value: unknown): value is RequestAnswer {
+  return isText(field(value, 'requestId')) && isAnswerReply(field(value, 'answer'));
+}
+
+async function readAnswers(): Promise<[string, RequestAnswer][]> {
+  try {
+    const value = await AsyncStorage.getItem(ANSWERS);
+    const parsed: unknown = value === null ? [] : JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (entry: unknown): entry is [string, RequestAnswer] =>
+            Array.isArray(entry) && isText(entry[0]) && isRequestAnswer(entry[1]),
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function keepRequestAnswer(questId: string, kept: RequestAnswer): Promise<void> {
+  const others = (await readAnswers()).filter(([id]) => id !== questId);
+  await AsyncStorage.setItem(ANSWERS, JSON.stringify([...others, [questId, kept]].slice(-ANSWERS_KEPT)));
+}
+
+export async function requestAnswerOf(questId: string): Promise<RequestAnswer | null> {
+  return (await readAnswers()).find(([id]) => id === questId)?.[1] ?? null;
+}
+
 // For the end of the library session: nothing of this person's room bookings stays on the phone.
 export async function forgetRoomBookings(): Promise<void> {
-  await AsyncStorage.multiRemove([KEY, RESULTS, WAITING]);
+  await AsyncStorage.multiRemove([KEY, RESULTS, WAITING, ANSWERS]);
 }

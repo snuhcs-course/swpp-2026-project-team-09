@@ -6,6 +6,7 @@
 
 import { STUDY_GROUP_TO_SEND, type StudyAnswer } from '@/api/mock/data/study-group-answers';
 import type { RoomRequest } from '@/api/room-requests';
+import type { Quest, QuestRoomRequest } from '@/api/types';
 import type { StudyGroup } from '@/api/study-plan-types';
 import { markLibraryLoggedIn } from '@/library/flag';
 import type { FakeServer } from './fake-server';
@@ -13,6 +14,7 @@ import type { FakeLibrary } from './kwanjeong/fake-library';
 import { pass, screen } from './app';
 import { inDock, inFrame, type LibraryChat, sendFromBar } from './library-chat';
 import { openMain } from './main';
+import { DINNER } from './server';
 
 // The study answer together (P10 tickets 11 to 14) on the answer screen, against the fake main server and the fake
 // library: the server's fixtures, asked on Wednesday 2026-11-04 at 19:10 for the next day from 15:00 to 17:00.
@@ -154,4 +156,32 @@ export async function sendTogether(given: { server: FakeServer; library: FakeLib
   await user.press(inDock().getByRole('button', { name: '동의 요청 보내기' }));
   await pass(500);
   return user;
+}
+
+// The booking party the request made, as GET /quests gives it with its request (P10 ticket 13): the User leads it, the
+// Friends invited, at 관정관 for the request's time.
+export function bookingParty(roomRequest: QuestRoomRequest | null): Quest {
+  const [me] = DINNER.holders;
+  const [step] = DINNER.subQuests;
+  if (me === undefined || step === undefined) {
+    throw new Error('The dinner has no Holder or step');
+  }
+  return {
+    ...DINNER,
+    id: QUEST_ID,
+    title: '관정 그룹스터디룸 6인실 예약',
+    capacity: 4,
+    holders: [me],
+    subQuests: [
+      {
+        ...step,
+        id: 'eeeeeeee-0000-4000-8000-000000000002',
+        title: '관정 그룹스터디룸 6인실 예약',
+        startsAt: '2026-11-05T06:00:00.000Z',
+        endsAt: '2026-11-05T08:00:00.000Z',
+        place: { placeId: '62-1', label: '관정도서관', latitude: 37.45962, longitude: 126.95168 },
+      },
+    ],
+    roomRequest,
+  };
 }
