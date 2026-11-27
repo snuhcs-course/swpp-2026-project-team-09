@@ -4,6 +4,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -120,7 +121,10 @@ describe("the merged marker's card", () => {
     await press(user, '같이 갈 사람 찾기');
     await pass(500);
 
-    expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
+    // The chosen event's own 파티 gathering for it, over the map (P06-29): the talk beside it has none.
+    expect(screen.getByRole('header', { name: '모집 중인 파티 2' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^이서연 2\/4명/u })).toBeVisible();
+    expect(shownAddress()).toBe('/main');
   });
 });
 
