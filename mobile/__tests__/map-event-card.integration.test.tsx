@@ -78,7 +78,9 @@ describe("the map's event card", () => {
 
     expect(shownAddress()).toBe(`/post/${SEO_YEON_GOING.id}`);
   });
+});
 
+describe("the map's event card with no 파티 to enter", () => {
   it('opens 파티 만들기 with the event when nothing gathers for it', async () => {
     answerEvents(server, { events: [{ ...CAREER, favorite: true }], recruiting: [] });
     const user = await openMain();

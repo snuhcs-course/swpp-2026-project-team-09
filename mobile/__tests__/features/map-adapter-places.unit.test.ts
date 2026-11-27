@@ -153,7 +153,7 @@ describe("toCards of the User's Quests with a Party", () => {
     });
   });
 
-  it('an Open Quest whose Party the User is in → the 파티's size, not the Party's, and 파티 열기', () => {
+  it('an Open Quest whose Party the User is in → the 파티’s size, not the Party’s, and 파티 열기', () => {
     const mine = myParty('q1', [{ ...ME, leader: true, visible: true }]);
     const open = quest('q1', { joinPolicy: 'open', holders: [ME, MIN_JUN], capacity: 6 });
     const [card] = toCards(sources({ quests: [open], myParty: mine }));
