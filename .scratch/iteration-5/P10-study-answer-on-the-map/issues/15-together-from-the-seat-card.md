@@ -49,3 +49,10 @@ The 관정 seat answer alone stays today's seat ticket, since the app does not s
 | Events, Quests | not applicable | nobody is asked for: their answers name times and parties already set |
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 70 minutes (an estimate), in one session:
+  - about 40 minutes from 21:20 KST to the pull request, including a sweep of the tests a grep found, stopped partway when local integration runs were limited;
+  - about 30 minutes on the emulator pictures, from 22:20 KST, most of it on the temporary fake library, which did not yet answer the reading room's seat calls.
+- Tokens: input 380 uncached, with cache reads 81,419,293 and cache writes 335,018; output 104,876. No subagents.
