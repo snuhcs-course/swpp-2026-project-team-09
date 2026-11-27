@@ -161,7 +161,7 @@ function useAnswerOnScreen(
   bubbles: readonly ChatBubble[],
   { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
-  leftOut: Chat['leftOut'],
+  { leftOut, putBack }: Pick<Chat, 'leftOut' | 'putBack'>,
 ): Pick<ChatSheetControl, 'answer' | 'invitation'> {
   const showToast = useToast();
   const recalculation = {
@@ -170,8 +170,9 @@ function useAnswerOnScreen(
     onFailed: (): void => {
       showToast(NOT_RECALCULATED);
     },
-    // The conversation's Classes left out, read when the recalculation is sent (P01 ticket 40).
+    // The conversation's Classes left out, read when the recalculation is sent, and one put back (P01 ticket 40).
     skipped: leftOut,
+    putBack,
   };
   const shown = useShownAnswer(bubbles, recalculation);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
@@ -213,7 +214,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const libraryAct = useActStage();
   const card = useCardRaise(kept.framed);
   const booking = useBookingLeaving(onMap, bookingStage);
-  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow, chat.leftOut);
+  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow, chat);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const pick = usePicking(chat);
   return {

@@ -47,18 +47,22 @@ function rangeOf(limits: SpanLimits, span: Span, date: string, shownAt: Date): S
 }
 
 // `shownAt`, the moment the answer came, sets the range, which stays while the card is open; `at`, now, sets the line
-// of now and the earliest start.
+// of now and the earliest start. The Classes the conversation leaves out (`skipped`, their ids, P01 ticket 40) are
+// free: off the lane and out of the card's words, drawn apart as every answer's band draws them.
 export function bookingBandOf(
   slot: Slot,
   space: LibrarySpace,
   quests: readonly Quest[],
   at: Date,
   shownAt: Date = at,
+  skipped: readonly string[] = [],
 ): TimeBand {
   const { date } = slot;
   const limits = limitsOf(space, date, at);
   const span = spanOf(slot);
-  const fixed = fixedOnDay(quests, date, span);
+  const day = fixedOnDay(quests, date, span);
+  const leftOut = day.filter(({ id, isClass }) => isClass && skipped.includes(id));
+  const fixed = day.filter((thing) => !leftOut.includes(thing));
   const range = rangeOf(limits, span, date, shownAt);
   return {
     range: { startAt: onDay(date, range.start), endAt: onDay(date, range.end) },
@@ -74,6 +78,16 @@ export function bookingBandOf(
         })),
       },
     ],
+    ...(leftOut.length === 0
+      ? {}
+      : {
+          skipped: leftOut.map(({ id, start, end, words }) => ({
+            id,
+            startAt: onDay(date, start),
+            endAt: onDay(date, end),
+            label: words,
+          })),
+        }),
     startAt: onDay(date, span.start),
     endAt: onDay(date, span.end),
     text: wordsOn(span, fixed).words,
@@ -106,6 +120,8 @@ export interface BookingBand {
   onDrop: (bound: BandBound, clock: string) => void;
   onMove: (at: Stretch, letGo: boolean) => void;
   moving: Stretch | null;
+  // A Class left out put back by its ✕: back on the lane, with the card's own clash words, the slot kept (P01 ticket 40).
+  onPutBack?: (classId: string) => void;
 }
 
 // The band's props for the time card: a handle let go or stepped, and the band let go after a whole move, keep the new
@@ -115,13 +131,15 @@ export function useBookingBand(
   space: LibrarySpace,
   quests: readonly Quest[],
   keep: (slot: Slot) => void,
+  // The conversation's Classes left out on the slot's date, by id, and how a ✕ puts one back (P01 ticket 40).
+  skipped?: { ids: readonly string[]; putBack?: (classId: string) => void },
 ): BookingBand {
   const [moving, setMoving] = useState<Stretch | null>(null);
   // The moment the answer came, whose range the card keeps (P01 ticket 17).
   const [shownAt] = useState(now);
   const span = spanOf(slot);
   return {
-    band: bookingBandOf(slot, space, quests, now(), shownAt),
+    band: bookingBandOf(slot, space, quests, now(), shownAt, skipped?.ids),
     fixed: { from: clockOf(span.start), until: clockOf(span.end) },
     focus: null,
     disabled: false,
@@ -135,5 +153,6 @@ export function useBookingBand(
       }
     },
     moving,
+    ...(skipped?.putBack === undefined ? {} : { onPutBack: skipped.putBack }),
   };
 }

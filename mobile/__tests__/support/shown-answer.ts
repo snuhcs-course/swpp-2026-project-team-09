@@ -38,10 +38,20 @@ export interface Held {
   onFailed: jest.Mock<void, []>;
 }
 
-// `skipped`, when given, is the conversation's Classes left out, read when a recalculation is sent (P01 ticket 40).
-export async function hold(bubbles: readonly ChatBubble[], skipped?: () => readonly LeftOutClass[]): Promise<Held> {
+// `skipped`, when given, is the conversation's Classes left out, read when a recalculation is sent, and `putBack` how a
+// ✕ takes one out of it (P01 ticket 40).
+export async function hold(
+  bubbles: readonly ChatBubble[],
+  skipped?: () => readonly LeftOutClass[],
+  putBack?: (classId: string) => void,
+): Promise<Held> {
   const onFailed = jest.fn<void, []>();
-  const recalculation = { location: HERE, onFailed, ...(skipped === undefined ? {} : { skipped }) };
+  const recalculation = {
+    location: HERE,
+    onFailed,
+    ...(skipped === undefined ? {} : { skipped }),
+    ...(putBack === undefined ? {} : { putBack }),
+  };
   const { result, rerender } = await renderHook(
     (given: readonly ChatBubble[]) => useShownAnswer(given, recalculation),
     { initialProps: bubbles },

@@ -18,6 +18,7 @@
  ******************************************************************************/
 
 import type { TimeBand } from './time-band-types';
+import type { LeftOutClass } from './left-out-types';
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
 import type { MealPrice, MeetInput } from './meet-plan-types';
@@ -199,12 +200,6 @@ export interface RequestContext extends WithLocationMissing {
   planIds?: string[];
   // The User's Classes the conversation leaves out, as the latest reply gave them (P01 ticket 40). Left out for none.
   skipped?: LeftOutClass[];
-}
-
-// A Class of the User the conversation leaves out: the id of its time on that day (P01 ticket 40).
-export interface LeftOutClass {
-  date: string;
-  classId: string;
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
@@ -431,3 +426,4 @@ export interface AssistantReply extends WithRefusal {
 export type { AskOffer, ReplyOffer } from './reply-offer-types';
 
 export type { BandRules, TimeBand } from './time-band-types';
+export type { LeftOutClass } from './left-out-types';

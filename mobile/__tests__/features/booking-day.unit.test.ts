@@ -2,10 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Quest, SubQuest } from '@/api/types';
+import { READING_ROOM } from '@/api/mock/data/library';
 import { dayAround, fixedOnDay, stretchesOn, wordsOn } from '@/features/assistant/booking-day';
+import { bookingBandOf } from '@/screens/main/answer/booking-band';
 
 // The study-seat bar's day (P01 ticket after 03): the User's Classes and Quests of the booking's date on its track,
 // the nearest one before and after the band named, and a clause when the band runs into one. Expected values: a
@@ -62,13 +65,16 @@ const QUESTS: Quest[] = [
 ];
 
 const BAND = { start: 14 * 60, end: 17 * 60 };
+// The Classes' Sub Quest ids, the ids of their times, by which the conversation leaves one out (P01 ticket 40).
+const CLASS_301 = `s-301동 118호-${at('09:00')}`;
+const CLASS_302 = `s-302동 208호-${at('15:30')}`;
 
 describe('fixedOnDay', () => {
   it("keeps the date's Classes and Quests with a start and an end, and leaves out the booking itself", () => {
     expect(fixedOnDay(QUESTS, DATE, BAND)).toEqual([
-      { start: 9 * 60, end: 10 * 60 + 45, words: '301동 수업', isClass: true },
-      { start: 15 * 60 + 30, end: 17 * 60 + 15, words: '302동 수업', isClass: true },
-      { start: 18 * 60, end: 19 * 60, words: '저녁 약속', isClass: false },
+      { id: CLASS_301, start: 9 * 60, end: 10 * 60 + 45, words: '301동 수업', isClass: true },
+      { id: CLASS_302, start: 15 * 60 + 30, end: 17 * 60 + 15, words: '302동 수업', isClass: true },
+      { id: `s-학생회관-${at('18:00')}`, start: 18 * 60, end: 19 * 60, words: '저녁 약속', isClass: false },
     ]);
   });
 });
@@ -119,5 +125,31 @@ describe('stretchesOn', () => {
       { start: 15 * 60 + 30, end: 17 * 60 + 15 },
       { start: 18 * 60, end: 18 * 60 + 30 },
     ]);
+  });
+});
+
+// The seat's band with a Class the conversation leaves out (P01 ticket 40): free, off the lane and out of the card's
+// words, and drawn apart as every answer's band draws it. Partitions: none left out; the 15:30 Class left out.
+// Expected values: the booking 14:00–17:00, which runs into the 15:30 Class at 302동.
+describe("A seat's band, a Class left out", () => {
+  const slot = { date: DATE, start: '14:00', minutes: 180 };
+  const now = new Date(at('13:00'));
+  const busy = (band: ReturnType<typeof bookingBandOf>): string[] =>
+    (band.lanes[0]?.busy ?? []).map(({ label }) => label);
+
+  it('keeps the Class on the lane and the clash in the words with none left out', () => {
+    const band = bookingBandOf(slot, READING_ROOM, QUESTS, now);
+
+    expect(busy(band)).toContain('302동 수업');
+    expect(band.text).toContain('수업과 겹쳐요');
+    expect(band).not.toHaveProperty('skipped');
+  });
+
+  it('draws it apart, off the lane and out of the words, when it is left out', () => {
+    const band = bookingBandOf(slot, READING_ROOM, QUESTS, now, now, [CLASS_302]);
+
+    expect(busy(band)).not.toContain('302동 수업');
+    expect(band.text).not.toContain('겹쳐요');
+    expect(band.skipped).toEqual([{ id: CLASS_302, startAt: at('15:30'), endAt: at('17:15'), label: '302동 수업' }]);
   });
 });

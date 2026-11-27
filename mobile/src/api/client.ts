@@ -229,13 +229,12 @@ export interface ApiClient {
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
   // asked.
   askAssistant: (messages: ChatMessage[], context: RequestContext) => Promise<AssistantReply>;
-  // An answer drawn on the map, recalculated from its changed input and where the User is now or why that is not
-  // known, without the model.
+  // An answer drawn on the map, recalculated from its changed input, the conversation's Classes left out (P01 ticket
+  // 40), and where the User is now or why that is not known, without the model.
   recalculateAnswer: (
     input: PlanInput,
     location: LatLng | null,
     missing?: LocationMissing,
-    // The conversation's Classes left out (P01 ticket 40).
     skipped?: readonly LeftOutClass[],
   ) => Promise<AnswerReply>;
   // The card of a building or a Friend's face pressed on the everyday map, without the model and without counting the
@@ -381,8 +380,7 @@ export const apiClient: ShownClient = {
   listCompanionSeekers: () => chosen().listCompanionSeekers(),
   askCompanionSeeker: (seekerId) => chosen().askCompanionSeeker(seekerId),
   askAssistant: (messages, context) => chosen().askAssistant(messages, context),
-  recalculateAnswer: (input, location, missing, skipped) =>
-    chosen().recalculateAnswer(input, location, missing, skipped),
+  recalculateAnswer: (...asked) => chosen().recalculateAnswer(...asked),
   answerTap: (tapped, location) => chosen().answerTap(tapped, location),
   // Whatever screen made the Quest, the question about the Friends the reply names is asked by its own host.
   makePlanQuest: async (making, key) => {

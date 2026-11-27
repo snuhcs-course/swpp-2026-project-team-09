@@ -28,7 +28,7 @@ import { type Frame, frameOf } from './answer-frame';
 import { showing, withKind } from './meal-kinds';
 import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
-import { withPerson } from './plan-input';
+import { withoutSkipped, withPerson } from './plan-input';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
 
@@ -74,6 +74,9 @@ export interface ShownAnswer {
   // replaces the one on screen. Without an answer on screen, or when `alter` gives the same conditions back, it does
   // nothing.
   change: (alter: (input: PlanInput) => PlanInput, by?: ChangeBy) => void;
+  // A Class left out put back by a time card's ✕, of any kind of answer (P01 ticket 40): out of the conversation's list,
+  // and the answer recalculated without it.
+  putBack: (classId: string) => void;
   // Asks for the answer to the same conditions from where the User is now, as `change` does (P04 ticket 86).
   again: () => void;
   // Adds a Friend to the conditions as `change` does, chosen in the list or on the map, and holds them as the pending
@@ -106,6 +109,8 @@ export interface Recalculation {
   onFailed: () => void;
   // The conversation's Classes left out when the recalculation is sent (P01 ticket 40); none when left out.
   skipped?: () => readonly LeftOutClass[];
+  // Takes one out of the conversation's list, before the recalculation that a ✕ asks reads it.
+  putBack?: (classId: string) => void;
 }
 
 function sayNothing(): void {
@@ -255,6 +260,28 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
   };
 }
 
+// The changes the card asks of the conditions: the same again, a Friend added, and a Class left out put back, which
+// leaves the conversation's list first (P01 ticket 40).
+function changesOf(
+  ask: Ask,
+  held: Pick<ShownAnswer, 'change'>,
+  recalculation: Recalculation,
+): Pick<ShownAnswer, 'again' | 'add' | 'putBack'> {
+  return {
+    again: () => {
+      // A copy, which `ask` takes for a change.
+      ask((input) => ({ ...input }), undefined, null);
+    },
+    add: (userId) => {
+      ask((input) => withPerson(input, userId), undefined, userId);
+    },
+    putBack: (classId) => {
+      recalculation.putBack?.(classId);
+      held.change((input) => withoutSkipped(input, classId));
+    },
+  };
+}
+
 // The answer on screen and the Plan on screen, which the map and the card read. The conversation's last reply gives
 // the source: a new one, told by its bubble since a reply may bring the same object again, shows its first Plan with
 // the basis closed and drops anything a recalculation brought. A recalculation's answer replaces the one on screen,
@@ -289,14 +316,7 @@ export function useShownAnswer(
     basisOpen: current.basisOpen,
     adding: current.adding,
     recalculating: current.recalculating,
-
-    again: () => {
-      // A copy, which `ask` takes for a change.
-      ask((input) => ({ ...input }), undefined, null);
-    },
-    add: (userId) => {
-      ask((input) => withPerson(input, userId), undefined, userId);
-    },
+    ...changesOf(ask, held, recalculation),
     picked: current.picked,
     pickOrder: current.pickOrder,
     asked: current.asked,

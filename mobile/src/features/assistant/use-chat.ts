@@ -44,7 +44,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
 import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
-import { leftOutOf, withPutBack } from './left-out';
+import { useLeftOut } from './left-out-hook';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
 import { shownText } from './shown-text';
@@ -371,32 +371,9 @@ export function useChat(readContext: () => RequestContext): Chat {
     ask();
   }, [ask, said, show]);
 
-  const own = useAddOwn(add, takeBack);
+  const own = { ...useAddOwn(add, takeBack), ...useLeftOut(said, show) };
   const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  // The conversation's Classes left out, read when a request is sent, and one put back by a time card's ✕ at once, so
-  // that the recalculation it asks sends the list without it (P01 ticket 40).
-  const leftOut = useCallback((): readonly LeftOutClass[] => leftOutOf(said.current), [said]);
-  const putBack = useCallback(
-    (classId: string): void => {
-      show(withPutBack(said.current, classId));
-    },
-    [said, show],
-  );
-
-  return {
-    bubbles,
-    waiting,
-    send,
-    retry,
-    ...conversations,
-    stop,
-    ...own,
-    askApp,
-    ...cardsKept,
-    proposalMade,
-    leftOut,
-    putBack,
-  };
+  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, askApp, ...cardsKept, proposalMade };
 }

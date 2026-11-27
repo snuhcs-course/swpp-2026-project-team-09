@@ -81,6 +81,25 @@ describe('a recalculation', () => {
     expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null, [{ date: '2026-11-17', classId: 'class-15' }]);
   });
 
+  it('puts a Class back from the conversation’s list before it asks, of an answer of any kind (P01 ticket 40)', async () => {
+    heldBack(recalculate);
+    let list = [{ date: '2026-11-17', classId: 'class-13' }];
+    const held = await hold(
+      ANSWERED,
+      () => list,
+      (classId) => {
+        list = list.filter((one) => one.classId !== classId);
+      },
+    );
+
+    await act(() => {
+      held.shown().putBack('class-13');
+    });
+
+    expect(recalculate).toHaveBeenCalledWith(MEAL_ANSWER.input, HERE, null, []);
+    expect(recalculate.mock.calls[0]?.[0]).not.toBe(MEAL_ANSWER.input);
+  });
+
   it('sends the input, the location, and no reason for a missing one, and is recalculating until its answer comes', async () => {
     const reply = heldBack(recalculate);
     const held = await hold(ANSWERED);

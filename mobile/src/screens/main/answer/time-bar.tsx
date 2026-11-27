@@ -21,7 +21,7 @@ import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import type { Lookup } from '@/api/lookup-types';
 import { color, radius, shadow, space } from '@/design-system';
-import { windowOf, withoutSkipped } from '@/features/assistant/plan-input';
+import { windowOf } from '@/features/assistant/plan-input';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -216,7 +216,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         onPutBack: settled
           ? undefined
           : (classId) => {
-              shown.change((input) => withoutSkipped(input, classId));
+              shown.putBack(classId);
             },
       }}
       add={
@@ -264,10 +264,12 @@ export function BookingBar({
   onHeight,
 }: {
   booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes'>;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'leftOut' | 'putBack'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
   const { kept, keep, live } = bookingKept(booking, chat);
+  // The conversation's Classes left out on the booking's day, which its ✕ puts back (P01 ticket 40).
+  const skipped = { ids: chat.leftOut().flatMap(({ date, classId }) => (date === live?.date ? [classId] : [])) };
   const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
   // The User's Classes and Quests of the slot's date, which the band shows and names (P01 ticket 05).
   const quests = useQuery(questsQuery).data ?? NO_QUESTS;
@@ -280,6 +282,7 @@ export function BookingBar({
       }}
       onHeight={onHeight}
       quests={quests}
+      skipped={{ ...skipped, putBack: chat.putBack }}
       slot={live}
       space={kept.space}
     />
@@ -291,9 +294,10 @@ function BookingCard(p: {
   space: LibrarySpace;
   quests: readonly Quest[];
   keep: (slot: Slot) => void;
+  skipped: { ids: readonly string[]; putBack: (classId: string) => void };
   onHeight: (height: number) => void;
 }): ReactElement {
-  const band = useBookingBand(p.slot, p.space, p.quests, p.keep);
+  const band = useBookingBand(p.slot, p.space, p.quests, p.keep, p.skipped);
   return <Bar band={band} onHeight={p.onHeight} />;
 }
 
