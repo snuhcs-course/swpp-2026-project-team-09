@@ -1,7 +1,7 @@
 # 19: 파티 상세 as one page: the 모집글 inside, no badges, the event in the time-and-place box, an activation card with a red light and no 거절, 전체 위치 공유 asked first, 일정 without ✓, and leaner rows
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update and a main server Release (part 2's members of a running Party).
@@ -191,16 +191,46 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
 
 ## Acceptance criteria
 
-- [ ] No 모집글 보기 and no badges. The Leader's row (no 모집자), the text for every Quest (no quote box), the tags and the time-and-place box stand under the title. (App integration test, which fails before the change.)
-- [ ] The event is a blue line with › in the box, and a press opens the event sheet. An event no longer listed has no › and no press. There is no separate event card. (App integration test, which fails before the change.)
-- [ ] Not running: 파티 활성화 with a ?, which opens the help with this ticket's words. (App integration test, which fails before the change.)
-- [ ] Running: a white card with the red light and the names of those in. Not in: 나도 참여 and no 거절. In: the outline and 활성화 끄기 / 활성화에서 나가기. There is no 내 위치 공유 switch. (App integration test, which fails before the change.)
-- [ ] With the Master Switch off, 파티 활성화 and 나도 참여 ask to turn it on, then open or join with no second question. A member whose Master Switch or Party switch is off sees the not-in card with 위치 공유 켜고 참여. (App integration test, which fails before the change.)
-- [ ] `GET /parties` names the members of a held Quest's Party, and others' Parties as before. (Main server test, which fails before the change.)
-- [ ] `openAsk` and the toast say what part 2 says. (App integration test, which fails before the change.)
+- [x] No 모집글 보기 and no badges. The Leader's row (no 모집자), the text for every Quest (no quote box), the tags and the time-and-place box stand under the title. (App integration test, which fails before the change.)
+- [x] The event is a blue line with › in the box, and a press opens the event sheet. An event no longer listed has no › and no press. There is no separate event card. (App integration test, which fails before the change.)
+- [x] Not running: 파티 활성화 with a ?, which opens the help with this ticket's words. (App integration test, which fails before the change.)
+- [x] Running: a white card with the red light and the names of those in. Not in: 나도 참여 and no 거절. In: the outline and 활성화 끄기 / 활성화에서 나가기. There is no 내 위치 공유 switch. (App integration test, which fails before the change.)
+- [x] With the Master Switch off, 파티 활성화 and 나도 참여 ask to turn it on, then open or join with no second question. A member whose Master Switch or Party switch is off sees the not-in card with 위치 공유 켜고 참여. (App integration test, which fails before the change.)
+- [x] `GET /parties` names the members of a held Quest's Party, and others' Parties as before. (Main server test, which fails before the change.)
+- [x] `openAsk` and the toast say what part 2 says. (App integration test, which fails before the change.)
 - [ ] 일정 has clock icons, no ✓ and the ? help. Grey and orange follow the rule. 내 파티's time and place and the edited step follow it too. (App unit and integration tests, which fail before the change.)
-- [ ] 신청 rows have no line. 멤버 has the orange count, no lock line, no toast and the crown alone. 초대 중 has no 응답 대기. Last rows have no line. The titles have their icons. (App integration test, which fails before the change.)
+  - Met except 내 파티's time and place, which never read `done` and are left as they are (see Decided while building).
+- [x] 신청 rows have no line. 멤버 has the orange count, no lock line, no toast and the crown alone. 초대 중 has no 응답 대기. Last rows have no line. The titles have their icons. (App integration test, which fails before the change.)
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes and no migration; lint, format and types pass on the changed files.
+- [x] No native file changes and no migration; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- **내 파티's time and place are left as they are.** The 내 파티 card reads `shownSubQuest` of `features/quests/adapter.ts`, not the one in `features/party/making.ts`. That function never read `done`: it takes the attended step first, else the first step not cancelled or ended. So removing ✓ changes nothing there. Making it follow the grey rule would change that shared function, which the map's rows and pins, 찾기 and the 행사 tab also use, and which PR 662 also edits. `making.ts`'s `shownSubQuest` and `editedSubQuest` (the 파티 form) do follow the rule. The 일정 criterion stays unticked for this part.
+- **The rule** is `standingsOf` and `stepsAhead` in `features/quests/plan-steps.ts`:
+  - A cancelled later step never starts, so it greys nothing before it.
+  - An end counts as passed by the server's `ended` or by the phone's clock, whichever comes first.
+- **The not-in card** has the ticket's one line, '전체 위치 공유가 꺼져 있어서 참여하지 않은 상태예요', also when only the Party switch is off.
+- **`members` in `GET /parties`** is left out, not empty, for a Party whose Quest the reader does not hold. Invitations and join requests share `toVisiblePartyDto`, so their `party` gets `members` too when the reader holds its Quest. The app accepts a list without it (an older main server): those in are then the Leader alone.
+- **The Master Switch sheet's confirm** waits for the main server to take the switch before it opens or joins. If the switch is refused, its own toast shows and nothing opens. Without the location permission, the explanation and the prompt come first (`useSharingSwitch().change(true, then)`). The switch's `turn` now returns whether it was taken.
+- **`openAsk`** keeps '수락한 멤버끼리만 서로 위치를 볼 수 있어요.' as the ticket writes it. The wireframe's sheet says '참여한 멤버끼리만'. `openAsk` no longer takes the Master Switch, and `openParty` no longer takes the count of others.
+- **Removed as no longer used:** the room's `toggleDone`, plus `ActivationView`'s count of those sharing and its Leader's name. The API client's mark and unmark of done stay, unused, as does the server's endpoint.
+- **The faces** use a new `xs` (26) size of the design system's `Avatar`.
+- **The help bubbles** open over the screen in the app's `Overlay`, with the arrow under the ?. A press anywhere closes them.
+- **The 모집글's Leader row and grey box** are now `PostHost` and `InfoBox` in `screens/party/post-content.tsx`, shared by the 모집글 (with "모집자") and the room (without).
+- **The library's booked room** (PR 684, merged during the build) stays on the step `shownSubQuest` shows, as the lists show it. The head's box takes the orange step's place line as 일정 draws it, so it carries the room whenever the orange step is that step.
+- **Tests:**
+  - `answerRoom` now answers the Lobby with the Master Switch on, as the room's flows need. The Master-Switch-off flows are in `room-activation-master`.
+  - `master-off-line` no longer covers the room, which has no 내 위치 공유 switch now.
+  - The room adapter's 활성화 cases moved to `room-adapter-activation`, with its fixtures in `support/room-sources.ts`, to stay under the 300-line limit.
+  - 멤버 of a Closed Quest is in `room-member-row`, for the same reason.
+  - With the Master Switch on, the phone sends its position, so `room-people`'s list of requests leaves out `POST /positions`. A member the User does not see is now read as words, not as a button.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 1 h 5 min (an estimate). One session, in this worktree, 20:41 to 21:46 KST. About half of it was spent waiting on the room's integration tests, which take about 30 s per test on this machine. No subagents.
+- Tokens:
+  - Input: about 93.4M in all. That is 0.0005M uncached, 92.9M cache reads and 0.49M cache writes.
+  - Output: about 0.20M.
