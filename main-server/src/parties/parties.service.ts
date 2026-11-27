@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { SignalsService } from '../common/signals.service.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { JoinPolicy, Party, Prisma } from '../generated/prisma/client.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
+import { QuestParty } from '../quests/quest-party.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { questNotFound, takenAloneRefused } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
@@ -40,6 +42,7 @@ export class PartiesService {
     private readonly friends: FriendsService,
     private readonly signals: SignalsService,
     private readonly visibility: VisibilityService,
+    private readonly questParty: QuestParty,
   ) {}
 
   async open(userId: string, { title, capacity, joinPolicy, questId }: OpenPartyDto): Promise<PartyDto> {
@@ -144,27 +147,17 @@ export class PartiesService {
     return this.audienceOf(party, tx);
   }
 
-  // Takes the User out of the Party. When the Leader goes, the member who entered earliest becomes Leader, and the
-  // Party ends with its last member. Every way out ends here, after the User and then the Party were locked; wrap the
-  // transaction in VisibilityService.announceRemovals for the User. Answers the Users to send `party-changed` to once
-  // the transaction commits, the User included.
-  async removeMember(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<string[]> {
-    const audience = await this.audienceOf(party, tx);
-    await tx.partyMember.delete({ where: { userId } });
-    const [earliest] = await this.memberIds(party, tx);
-    if (earliest === undefined) {
-      await tx.party.delete({ where: { id: party.id } });
-    } else if (party.leaderId === userId) {
-      await tx.party.update({ where: { id: party.id }, data: { leaderId: earliest } });
-    }
-    return audience;
+  // Takes the User out of the Party, by QuestParty's rule, which a Quest's removal of a Holder follows too. Every way
+  // out ends there, after the User and then the Party were locked; wrap the transaction in
+  // VisibilityService.announceRemovals for the User. Answers the Users to send `party-changed` to once the transaction
+  // commits, the User included.
+  removeMember(party: Party, userId: string, tx: Prisma.TransactionClient): Promise<string[]> {
+    return this.questParty.removeMember(party, userId, tx);
   }
 
   // Who is told of a change to the Party: its members, the Holders of its Quest and the Friends of its members.
-  async audienceOf(party: Pick<Party, 'id' | 'questId'>, tx: Prisma.TransactionClient): Promise<string[]> {
-    const memberIds = await this.memberIds(party, tx);
-    const holderIds = party.questId === null ? [] : await this.quests.holderIds(party.questId, tx);
-    return [...new Set([...memberIds, ...holderIds, ...(await this.friends.friendsOfAny(memberIds, tx))])];
+  audienceOf(party: Pick<Party, 'id' | 'questId'>, tx: Prisma.TransactionClient): Promise<string[]> {
+    return this.questParty.audienceOf(party, tx);
   }
 
   // Locks the Party's row until the transaction ends and reads it.
@@ -178,13 +171,8 @@ export class PartiesService {
   }
 
   // In the order they entered.
-  async memberIds(party: Pick<Party, 'id'>, tx: Prisma.TransactionClient): Promise<string[]> {
-    const members = await tx.partyMember.findMany({
-      where: { partyId: party.id },
-      select: { userId: true },
-      orderBy: PARTY_INCLUDE.members.orderBy,
-    });
-    return members.map((member) => member.userId);
+  memberIds(party: Pick<Party, 'id'>, tx: Prisma.TransactionClient): Promise<string[]> {
+    return this.questParty.memberIds(party, tx);
   }
 
   // A User who enters any Party has no request to enter and no invitation waiting any more.

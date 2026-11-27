@@ -9,11 +9,13 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
 import { FriendsModule } from '../friends/friends.module.js';
 import { RoomRequestSyncModule } from '../library/room-request-sync.module.js';
+import { LocationSharingModule } from '../location-sharing/location-sharing.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { PushModule } from '../push/push.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
@@ -26,6 +28,7 @@ import { InvitationsService } from './invitations.service.js';
 import { JoinRequestsController } from './join-requests.controller.js';
 import { JoinRequestsService } from './join-requests.service.js';
 import { LeaderService } from './leader.service.js';
+import { QuestParty } from './quest-party.js';
 import { QuestsController } from './quests.controller.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
@@ -40,6 +43,7 @@ import { SubQuestsService } from './sub-quests.service.js';
     PushModule,
     NotificationsModule,
     UsageModule,
+    LocationSharingModule,
   ],
   controllers: [QuestsController, JoinRequestsController, InvitationsController],
   providers: [
@@ -50,8 +54,9 @@ import { SubQuestsService } from './sub-quests.service.js';
     LeaderService,
     JoinRequestsService,
     InvitationsService,
+    QuestParty,
     { provide: CLOCK, useValue: systemClock },
   ],
-  exports: [QuestsService, RecruitingService, InvitationsService, CLOCK, LeaderService],
+  exports: [QuestsService, RecruitingService, InvitationsService, CLOCK, LeaderService, QuestParty],
 })
 export class QuestsModule {}

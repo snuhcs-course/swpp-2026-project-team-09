@@ -1085,7 +1085,9 @@ waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신
 the muted grey round, as a declined request is, with the same order of words: ended (`party-ended`, a group), the User removed (`party-removed`, a
 person), a request that waited on it (`join-cancelled`, a group) and an invitation that waited on it
 (`invitation-cancelled`, a calendar). Their address, `/main?card=party-gone:<questId>`, is on no map, and pressing it
-says "이미 없는 파티예요", with the alert icon. A kind
+says "이미 없는 파티예요", with the alert icon. The member who becomes a 파티's Leader (`became-leader`, a person on the
+navy round) is told "파티장이 됐어요", with the 파티 and who left it or handed it over in the line; it opens the party's
+card. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
@@ -1149,7 +1151,9 @@ mark the Quest while they run, are not told; what happened before the app starte
 - `신청 {n}` and `초대 중 {n}` for the Leader, and `멤버 {n}` with what the User sees of each Holder while in the
   Party, and a press that shows a seen member on the map. Another member's row has icons of 40 in a line: 친구 추가
   (`usersPlus`; dimmed once a request is sent, the words "수락" when the member sent one, none for a Friend) and,
-  for the Leader, 파티장 넘기기 (`crown`) and 내보내기 (`userMinus`, red). Each asks first in a dialog with "취소";
+  for the Leader, 파티장 넘기기 (`crown`) and 내보내기 (`userMinus`, red). Each asks first in a dialog with "취소".
+  내보내기 is `DELETE /quests/:questId/holders/:userId` alone: the main server takes the Holder out of the Quest's
+  activation in the same change;
 - the footer's "나가기" (`DELETE /quests/:questId`, after leaving the Party when it is the Quest's) or, for the Leader,
   "파티 없애기" (`POST /quests/:questId/end`, after ending or leaving the Party).
 

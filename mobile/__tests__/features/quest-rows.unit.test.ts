@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { JoinPolicy, MyParty, Party, Person, Quest } from '@/api/types';
@@ -179,6 +180,6 @@ describe("a Quest's meta on another day", () => {
       quest('스터디', { startsAt: '2026-10-09T12:21:00+09:00' }),
     ]);
 
-    expect(rows.map(({ meta }) => meta.split(' · ')[0])).toEqual(['17:40', '내일 18:00', '10월 9일 (금) 12:21']);
+    expect(rows.map(({ meta }) => meta.split(' · ')[0])).toEqual(['17:40', '내일 18:00', '10/9(금) 12:21']);
   });
 });
