@@ -123,11 +123,11 @@ describe('A study input changed on the card', () => {
   });
 });
 
-// Partitions: the capabilities sent today. Expected values: P10 ticket 16 turns study-group on, last.
+// Partitions: the capabilities sent today. Expected values: P10 ticket 16 turns study-group on, last; ticket 23 turned
+// study-plan on (`mock-study-plan.unit`).
 describe('The capabilities the app sends', () => {
-  it('say neither study-group nor study-plan yet', () => {
+  it('say no study-group yet', () => {
     expect(ANSWER_CAPABILITIES).not.toContain('study-group');
-    expect(ANSWER_CAPABILITIES).not.toContain('study-plan');
   });
 });
 
