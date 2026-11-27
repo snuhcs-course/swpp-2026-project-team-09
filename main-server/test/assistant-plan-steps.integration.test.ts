@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -43,11 +44,11 @@ const replySchema = z.object({
 
 type Reply = z.infer<typeof replySchema>;
 
-async function asked(steps: Step[], text = WORDS, clock = '09:00'): Promise<Reply> {
+async function asked(steps: Step[], text = WORDS, clock = '09:00', more: object = {}): Promise<Reply> {
   await stage.asking(DATE, clock);
   await stage.menusOn(DATE, RESTAURANTS);
   await stage.classAt(stage.asker, '09:30', '10:45', '301');
-  const response = await stage.send(steps, {}, text);
+  const response = await stage.send(steps, more, text);
   expect(response.status).toBe(200);
   return replySchema.parse(response.body);
 }
@@ -87,6 +88,31 @@ describe('A seat and then lunch in one message', () => {
     expect(Date.parse(reply.answer?.plans[0]?.startAt ?? '')).toBeGreaterThanOrEqual(
       Date.parse(`${DATE}T13:00:00+09:00`),
     );
+  });
+});
+
+// 관정 named as the place to study, with no space and no booking, from an app that says `study-plan` (P10 ticket 28):
+// a seat for the library tools, so that "관정 … + 밥" keeps its steps, as before the app said it. With `study-plan`
+// only a place to study with no 관정 named is planStudy's.
+describe('관정 named as the place to study, and then lunch, from an app that says study-plan', () => {
+  const STUDY_APP = { clientCapabilities: ['library', 'answer', 'study-plan'] };
+  const words = '11시에 관정에서 공부하다가 13시쯤 점심 먹을래';
+
+  it('is told to the model as a seat for the library tools, not planStudy', async () => {
+    await asked([find(['7F-7A-zone2']), seat(), lunch(), said], words, '09:00', STUDY_APP);
+
+    expect(stage.model.system()).toContain('관정 named as the place to study');
+    expect(stage.model.system()).toContain('관정에서 공부할래');
+  });
+
+  it('keeps the seat and the lunch as the steps of one message', async () => {
+    const reply = await asked([find(['7F-7A-zone2']), seat(), lunch(), said], words, '09:00', STUDY_APP);
+
+    expect(reply.steps?.map(({ kind, status }) => ({ kind, status }))).toEqual([
+      { kind: 'seat', status: 'shown' },
+      { kind: 'meal', status: 'shown' },
+    ]);
+    expect(reply.steps?.[1]?.from).toMatchObject({ placeId: kwanjeong.id });
   });
 });
 

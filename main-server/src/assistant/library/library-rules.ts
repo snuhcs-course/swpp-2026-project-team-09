@@ -47,11 +47,12 @@ export const LIBRARY_RULES = rulesWith(
 );
 
 // Which words mean the first 7층 seat. With `study-plan` (P10 ticket 04), "공부할 자리" asked without a booking is a
-// study answer's, planStudy's.
+// study answer's, planStudy's; 관정 named as the place to study stays a seat (P10 ticket 28), so that a message that
+// also asks for a meal keeps its steps.
 const NO_SPACE_WORDS =
   'Words that name no space, such as "공부할 자리", "자리 잡아 줘" or "아무 자리", mean 7F-7A-zone2.';
 const NO_SPACE_STUDY_WORDS =
-  'Words that name no space in a booking, such as "자리 잡아 줘", "아무 자리" or "공부할 자리 예약해 줘", mean 7F-7A-zone2; "공부할 자리 있어?" asked without a booking is planStudy\'s, never a library tool\'s.';
+  'Words that name no space in a booking, such as "자리 잡아 줘", "아무 자리" or "공부할 자리 예약해 줘", mean 7F-7A-zone2. So does 관정 named as the place to study, with no space named and with or without a booking, such as "관정에서 공부할래", "관정 자리 있어?" or "16시에 관정 갔다가 저녁 먹을래": it is a seat for the library tools. "공부할 자리 있어?" asked with no 관정 named and no booking is planStudy\'s, never a library tool\'s.';
 
 // A study with Friends picked by proposeStudyRoom, or, for an app that says `study-group` (P10 ticket 07), studying
 // together left to planStudyGroup.
