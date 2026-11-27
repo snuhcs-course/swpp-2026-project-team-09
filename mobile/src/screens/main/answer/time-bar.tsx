@@ -37,8 +37,9 @@ import { leftOutIdsOn, useBookingBand } from './booking-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { mealDayOf } from './meal-day';
 import { type Picking, PersonRows } from './person-rows';
-import { usePickingBar } from './pick-head';
+import { answerPickSource, usePickingBar } from './pick-head';
 import { usePickingPlace } from './picking-place';
+import { useSeatTogether } from './seat-picking';
 import { PickHint } from './sheet-hint';
 import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
@@ -187,6 +188,8 @@ interface PlanBarProps {
   onClose: () => void;
   onHeight: (height: number) => void;
   offset?: number;
+  // The way back to the card the answer was asked from, or null (P10 ticket 15).
+  toCard?: (() => void) | null;
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
@@ -194,7 +197,7 @@ interface PlanBarProps {
 // for in words (P04 ticket 82). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
 // the Plan can take more people (P04 ticket 14), so that the dock is the input's row alone.
 export function PlanBar(props: PlanBarProps): ReactElement {
-  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
+  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset, toCard = null } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
   const addName = settled ? null : addNameOf(answer.input.kind);
@@ -202,7 +205,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const busy = shown.recalculating || shown.locked || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
-  const pickingBar = usePickingBar(shown, plan, { busy, onClose });
+  const pickingBar = usePickingBar(answerPickSource(shown, onClose, toCard), plan, { busy });
   return (
     <Bar
       picking={pickingBar.picking}
@@ -259,14 +262,15 @@ export function LookupBar({
 
 // A booking's bar (P04 ticket 07): the time card a meal's answer draws, with the seat card's band, whose handles change
 // the start and the end the chat keeps for the card within the room's hours, steps, and lengths (P01 ticket 14). Its
-// "＋ 같이" slot is empty. While a booking is on its way the bar is hidden, so that the time stays as it was booked.
+// "＋ 같이" is the answers' own, chip and picker (P10 ticket 15). While a booking is on its way the bar is hidden, so
+// that the time stays as it was booked.
 export function BookingBar({
   booking,
   chat,
   onHeight,
 }: {
   booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'bubbles' | 'putBack'>;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'bubbles' | 'putBack' | 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
   const bar = bookingBarOf(booking, chat);
@@ -282,6 +286,7 @@ export function BookingBar({
     <BookingCard
       // A new answer's card sets its range anew (P01 ticket 17).
       key={booking.place}
+      chat={chat}
       keep={(slot) => {
         keep({ slot });
       }}
@@ -300,10 +305,14 @@ function BookingCard(p: {
   quests: readonly Quest[];
   keep: (slot: Slot) => void;
   skipped: { ids: readonly string[]; putBack: (classId: string) => void };
+  chat: Pick<Chat, 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement {
   const band = useBookingBand(p.slot, p.space, p.quests, p.keep, p.skipped);
-  return <Bar band={band} onHeight={p.onHeight} />;
+  const together = useSeatTogether(p.space, band.band, p.chat);
+  return (
+    <Bar add={together.add} band={{ ...band, band: together.band }} onHeight={p.onHeight} picking={together.picking} />
+  );
 }
 
 const styles = StyleSheet.create({

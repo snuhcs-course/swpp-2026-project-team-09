@@ -45,6 +45,9 @@ export interface RequestContext {
   // The asker's Classes the conversation leaves out, as the last reply gave them (`AssistantReplyDto.skipped`, P05
   // ticket 70). Left out by an app before it, and by any app until a reply gives them.
   skipped?: LeftOutClass[];
+  // The conditions of every answer on screen, in the order of their steps, when a reply drew several (P05 ticket 73);
+  // `conditions` is the one the User has open. Left out by an app that does not say `answers`.
+  answers?: PlanInput[];
 }
 
 // One of the asker's Classes left out on one day: the id of its time in the Timetable, which repeats every week.
@@ -60,6 +63,9 @@ export interface Mention {
 }
 
 export interface AnswerReply extends WithMissing {
+  // The request it answers, the server's own words for it, given in the reply's `answers` only (P05 ticket 73). Opaque to
+  // the app, which compares it and never builds it.
+  key?: string;
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -350,6 +356,8 @@ const tappedSchema = z.discriminatedUnion('kind', [
 const MENTIONS_MAX = 20;
 const NAME_MAX = 100;
 const mentionSchema = z.strictObject({ userId: z.uuid(), name: z.string().trim().min(1).max(NAME_MAX) });
+// More answers on screen than one message asks for is a wrong request.
+const ANSWERS_MAX = 8;
 // More than a conversation leaves out over its days is a wrong request.
 const LEFT_OUT_MAX = 24;
 
@@ -371,6 +379,7 @@ export const requestContextSchema = z.strictObject({
   planIds: z.array(z.string().min(1).max(PLAN_ID_MAX)).max(PLANS_MAX).optional(),
   mentions: z.array(mentionSchema).max(MENTIONS_MAX).optional(),
   skipped: leftOutSchema.optional(),
+  answers: z.array(planInputSchema).max(ANSWERS_MAX).optional(),
 }) satisfies z.ZodType<RequestContext>;
 
 // The body of a recalculation: the changed input, and where the asker is now or why that is not sent.

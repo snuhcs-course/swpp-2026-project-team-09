@@ -8,6 +8,8 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ChatCard } from '@/api/assistant-types';
@@ -20,8 +22,6 @@ import { now } from '@/clock';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
 import { facesOfQuest, facesOfSummary } from './faces';
-import { invitationPlaceOf } from './invitation-places';
-import { invitationStartOf } from './invitation-times';
 import { pastQuestsOf } from './past-quests';
 import { hidePost, listHiddenPosts } from './hidden-posts';
 import { joinOfficialRecruiting, listOfficialRecruiting } from './official';
@@ -134,13 +134,12 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
     listQuestInvitations: async () => {
       const invitations = await client.listQuestInvitations();
       const entered = await readQuestEntries();
-      const at = now();
-      return invitations.map(({ id, quest, sentAt }) => ({
+      return invitations.map(({ id, quest, sentAt, nextSubQuest, invitedBy }) => ({
         id,
         quest: summaryWithParts(quest, entered, build),
         sentAt,
-        startsAt: invitationStartOf(quest, build, at),
-        place: invitationPlaceOf(quest, build),
+        nextSubQuest,
+        invitedBy,
       }));
     },
     listMyTags: async () => myTagsOf(await client.getProfile(), build),
