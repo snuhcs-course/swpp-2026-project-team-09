@@ -219,11 +219,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const group = shown.plan?.study?.group;
   return (
     <View style={styles.plan}>
-      <Said
-        lines={linesOf(shown, answer, over)}
-        refusal={over.length}
-        said={meal || group !== undefined ? '' : said}
-      />
+      <Said lines={linesOf(shown, answer, over)} refusal={over.length} said={meal || group !== undefined ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} /> : null}
       {shown.plan !== null && group !== undefined ? (
         <StudyGroupBody

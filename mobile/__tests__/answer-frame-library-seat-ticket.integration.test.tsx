@@ -165,7 +165,8 @@ describe('the room list that could not be read', () => {
     await askTicket(world);
 
     await pressIn(seatCard(), ROOM);
-    await pass(500);
+    // The list is asked once more, a second later, before it says it failed.
+    await pass(1500);
 
     expect(seatCard().getByText('열람실 목록을 불러오지 못했어요')).toHaveStyle({ color: color.danger });
   });
