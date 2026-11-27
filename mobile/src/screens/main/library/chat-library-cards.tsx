@@ -68,7 +68,7 @@ export function shownParts(turn: readonly ChatBubble[]): ChatBubble[] {
 function Finished({ card, outcome }: { card: LibraryCard; outcome: CardOutcome }): ReactElement {
   return (
     <CardBox testID={`library-${card.library.action}-${card.library.key}`}>
-      <Said>{outcome.words}</Said>
+      <Said byButton>{outcome.words}</Said>
       {outcome.ticket === undefined ? null : <BookedTicket ticket={outcome.ticket} />}
     </CardBox>
   );

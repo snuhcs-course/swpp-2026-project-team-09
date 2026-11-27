@@ -11,6 +11,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -177,7 +178,7 @@ export function useMapView(
     return { ...way, around };
   }
   const avatars = unasked ? withoutPeople(things.avatars, cards) : things.avatars;
-  const mine = pressableMe(me.avatars);
+  const mine = pressableMe(me.avatars, avatars, map.camera, room.stage);
   const markers = [...things.markers, ...pressed.markers, ...pin.markers];
   return {
     contents: { markers, avatars: [...avatars, ...mine], lines },
