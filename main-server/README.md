@@ -1375,8 +1375,10 @@ as an invitation is. The routes:
   `{ "id", "user": { "id", "name", "department" }, "sentAt", "removedBefore" }`. `POST /quests/:questId/join-requests/:id/accept` makes
   the User a Holder and `.../decline` ends the request; both answer 204.
 - `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
-  `GET /quest-invitations` answers the User's invitations, `POST /quest-invitations/:id/accept` makes the User a Holder
-  and answers 201 with the Quest, and `.../decline` ends the invitation and answers 204.
+  `GET /quest-invitations` answers the User's invitations, each with its Quest's next Sub Quest as the recruiting list
+  carries it (`"nextSubQuest": { "id", "attending", "title", "startsAt", "endsAt", "place" }`), so that the card says
+  when and where the 파티 meets. `POST /quest-invitations/:id/accept` makes the User a Holder and answers 201 with the
+  Quest, and `.../decline` ends the invitation and answers 204.
 - `GET /quests/:questId/invitations` answers the Leader the Quest's waiting invitations with who was invited,
   `{ "id", "user": { "id", "name", "department" }, "sentAt" }`, as the list of requests reads.
   `DELETE /quests/:questId/invitations/:id` cancels a waiting invitation and answers 204. An invitation that is not

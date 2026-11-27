@@ -8,9 +8,10 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { Board, JoinPolicy, Person, UserSummary } from './types';
+import type { Board, JoinPolicy, Person, SubQuest, UserSummary } from './types';
 
 // The main server's lists of what waits for the User, which 알림 and the badge on 파티 are composed from.
 
@@ -42,7 +43,14 @@ export interface QuestInvitation {
   id: string;
   quest: QuestSummary;
   sentAt: string;
+  // When and where its Quest next meets: the first Sub Quest ahead, as the recruiting list carries it. Null for a Quest
+  // with none ahead, which the main server leaves out of the list.
+  nextSubQuest: NextSubQuest | null;
 }
+
+// The first Sub Quest ahead of a Quest, in the Quest's order, which tells one who does not hold it when and where it
+// meets: in an invitation and in the recruiting list.
+export type NextSubQuest = Pick<SubQuest, 'id' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
 
 // GET /quest-join-requests, the newest first: the User's waiting requests to join an Approval Quest.
 export interface MyJoinRequest {

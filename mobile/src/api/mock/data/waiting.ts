@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 import type { KeptNotification, QuestInvitation } from '@/api/waiting-types';
+import { koreaInstant } from '@/korea-time';
 import { frameTime } from './frame';
 
 // What waits for the User in the `Profile` frame's 알림 besides the Friend Requests, which `../friendships.ts` keeps:
@@ -15,7 +16,7 @@ import { frameTime } from './frame';
 
 const TAE_O = { id: 'f8', name: '윤태오', department: '물리천문학부' };
 
-export const QUEST_INVITATIONS: QuestInvitation[] = [
+export const QUEST_INVITATIONS: Omit<QuestInvitation, 'nextSubQuest'>[] = [
   {
     id: 'qi-1',
     quest: {
@@ -33,6 +34,23 @@ export const QUEST_INVITATIONS: QuestInvitation[] = [
     sentAt: frameTime('10:15'),
   },
 ];
+
+// The invitations as the main server lists them, with the `PartyInvites` frame's plan: 토 14:00 at the library, two days
+// after the frame's Thursday, counted from `now`.
+export function questInvitationsAt(now: Date): QuestInvitation[] {
+  return QUEST_INVITATIONS.map(({ id, quest, sentAt }) => ({
+    id,
+    quest,
+    sentAt,
+    nextSubQuest: {
+      id: `sq-${quest.id}`,
+      title: quest.title,
+      startsAt: koreaInstant(now, 2, 14, 0).toISOString(),
+      endsAt: null,
+      place: { placeId: null, label: '중앙도서관 (62동)', latitude: null, longitude: null },
+    },
+  }));
+}
 
 // The Notifications the main server keeps for the User: 김민준's answers to the User's requests to join, one accepted
 // into the AI 커리어 설명회 party the User holds and one declined from the board's 알고리즘 코테 스터디; and a 파티 its
