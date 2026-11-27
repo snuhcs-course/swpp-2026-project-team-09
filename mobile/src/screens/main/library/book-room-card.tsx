@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -197,7 +198,7 @@ function RoomOffer(props: FormProps): ReactElement {
       />
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
       {open ? <RoomChoices {...props} /> : null}
-      {write.busy ? <Said>예약하는 중이에요</Said> : null}
+      {write.busy ? <Said byButton>예약하는 중이에요</Said> : null}
     </>
   );
 }

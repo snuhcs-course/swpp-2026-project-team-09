@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -142,9 +143,13 @@ export function PartyStatus({ party }: { party: PartyRequest }): ReactElement {
     const view = companionsView(request);
     return (
       <>
-        <Said tone={ended ? 'danger' : 'plain'}>{statusWords(request, view)}</Said>
+        <Said byButton tone={ended ? 'danger' : 'plain'}>
+          {statusWords(request, view)}
+        </Said>
         {view?.lines.map((line) => (
-          <Said key={line}>{line}</Said>
+          <Said byButton key={line}>
+            {line}
+          </Said>
         ))}
         {view?.canAskOneMore === true ? <AskOneMore onAsked={party.update} request={request} /> : null}
       </>
@@ -153,7 +158,7 @@ export function PartyStatus({ party }: { party: PartyRequest }): ReactElement {
   return (
     <>
       {failed ? <Said tone="danger">동의 요청을 보내지 못했어요. 다시 해 주세요.</Said> : null}
-      {sending ? <Said>동의 요청을 보내는 중이에요</Said> : null}
+      {sending ? <Said byButton>동의 요청을 보내는 중이에요</Said> : null}
       <Pills>
         <Pill disabled={send === null} label={SEND_ASK} onPress={send ?? (() => null)} primary />
       </Pills>

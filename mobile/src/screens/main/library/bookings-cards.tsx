@@ -210,7 +210,7 @@ function MyBookingAct({
   if (outcome === 'done') {
     return (
       <>
-        <Said>{ACT_WORDS[act].done}</Said>
+        <Said byButton>{ACT_WORDS[act].done}</Said>
         <BookedTicket ticket={ticketOfBooking(booking, now(), ENDED_WORDS[act])} />
       </>
     );
