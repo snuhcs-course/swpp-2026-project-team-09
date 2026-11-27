@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput } from '@/api/assistant-types';
@@ -50,10 +51,12 @@ describe('the conditions with a Class put back', () => {
     expect(withoutSkipped(one, ONE_PM.id)).not.toHaveProperty('skipped');
   });
 
-  it('are the same for a Class not left out, and for conditions of another kind', () => {
+  it('are new conditions of the same value for a Class not in them, and for conditions of another kind, so that the recalculation sends the conversation’s list without it (P01 ticket 40)', () => {
     const events: PlanInput = { kind: 'events', date: '2026-11-17', eventIds: null };
 
-    expect(withoutSkipped(TWO.input, 'another')).toBe(TWO.input);
-    expect(withoutSkipped(events, ONE_PM.id)).toBe(events);
+    expect(withoutSkipped(TWO.input, 'another')).toEqual(TWO.input);
+    expect(withoutSkipped(TWO.input, 'another')).not.toBe(TWO.input);
+    expect(withoutSkipped(events, ONE_PM.id)).toEqual(events);
+    expect(withoutSkipped(events, ONE_PM.id)).not.toBe(events);
   });
 });

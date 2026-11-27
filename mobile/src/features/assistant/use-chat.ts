@@ -21,6 +21,7 @@ import {
   type AnswerReply,
   CHAT_HISTORY_MAX,
   type ChatMessage,
+  type LeftOutClass,
   lengthOf,
   type LibrarySpace,
   type MapLayer,
@@ -43,6 +44,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAppTurn } from './app-turn';
 import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
+import { useLeftOut } from './left-out-hook';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
 import { shownText } from './shown-text';
@@ -87,6 +89,8 @@ export interface ChatBubble {
   clears?: true;
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.
   area?: RequestContext['viewport'];
+  // The conversation's Classes left out as this reply gave them (P01 ticket 40), which later requests send.
+  skipped?: readonly LeftOutClass[];
   // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a
   // reply on screen, and never sent to the Assistant.
   recalculated?: boolean;
@@ -189,6 +193,10 @@ export interface Chat {
   showRoom: (card: string, room: CardRoom | null) => void;
   // The Proposal of that bubble was made into that Quest: it goes back with the Quest's id (P04 ticket 19).
   proposalMade: (bubbleId: number, questId: string) => void;
+  // The conversation's Classes left out, as the next request sends them, and one put back by a time card's ✕ (P01
+  // ticket 40).
+  leftOut: () => readonly LeftOutClass[];
+  putBack: (classId: string) => void;
 }
 
 function textLength(messages: readonly ChatMessage[]): number {
@@ -373,7 +381,7 @@ export function useChat(readContext: () => RequestContext): Chat {
     ask();
   }, [ask, said, show]);
 
-  const own = useAddOwn(add, takeBack);
+  const own = { ...useAddOwn(add, takeBack), ...useLeftOut(said, show) };
   const appTurn = useAppTurn({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 

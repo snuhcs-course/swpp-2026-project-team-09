@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AnswerReply, Cuisine, Plan, PlanInput } from '@/api/assistant-types';
+import type { AnswerReply, Cuisine, LeftOutClass, Plan, PlanInput } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
@@ -28,7 +28,7 @@ import { type Frame, frameOf } from './answer-frame';
 import { showing, withKind } from './meal-kinds';
 import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
-import { withPerson } from './plan-input';
+import { withoutSkipped, withPerson } from './plan-input';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
 
@@ -74,6 +74,9 @@ export interface ShownAnswer {
   // replaces the one on screen. Without an answer on screen, or when `alter` gives the same conditions back, it does
   // nothing.
   change: (alter: (input: PlanInput) => PlanInput, by?: ChangeBy) => void;
+  // A Class left out put back by a time card's ✕, of any kind of answer (P01 ticket 40): out of the conversation's list,
+  // and the answer recalculated without it.
+  putBack: (classId: string) => void;
   // Asks for the answer to the same conditions from where the User is now, as `change` does (P04 ticket 86).
   again: () => void;
   // Adds a Friend to the conditions as `change` does, chosen in the list or on the map, and holds them as the pending
@@ -104,6 +107,10 @@ export interface Recalculation {
   // Left out as null.
   locationMissing?: LocationMissing;
   onFailed: () => void;
+  // The conversation's Classes left out when the recalculation is sent (P01 ticket 40); none when left out.
+  skipped?: () => readonly LeftOutClass[];
+  // Takes one out of the conversation's list, before the recalculation that a ✕ asks reads it.
+  putBack?: (classId: string) => void;
 }
 
 function sayNothing(): void {
@@ -221,7 +228,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
   return (alter, by, adds, asked) => {
     const {
       current: { answer, epoch },
-      recalculation: { location, locationMissing = null, onFailed },
+      recalculation: { location, locationMissing = null, onFailed, skipped },
     } = live.current;
     const input = answer === null ? null : alter(answer.input);
     if (input === null || input === answer?.input || flight.current === epoch) {
@@ -240,7 +247,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
       setStored((last) => (late || last.epoch !== epoch ? last : update(last)));
       return !late;
     };
-    apiClient.recalculateAnswer(input, location, locationMissing).then(
+    apiClient.recalculateAnswer(input, location, locationMissing, skipped?.() ?? []).then(
       (next) => {
         settle((last) => replaced(last, next, by));
       },
@@ -250,6 +257,28 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
         }
       },
     );
+  };
+}
+
+// The changes the card asks of the conditions: the same again, a Friend added, and a Class left out put back, which
+// leaves the conversation's list first (P01 ticket 40).
+function changesOf(
+  ask: Ask,
+  held: Pick<ShownAnswer, 'change'>,
+  recalculation: Recalculation,
+): Pick<ShownAnswer, 'again' | 'add' | 'putBack'> {
+  return {
+    again: () => {
+      // A copy, which `ask` takes for a change.
+      ask((input) => ({ ...input }), undefined, null);
+    },
+    add: (userId) => {
+      ask((input) => withPerson(input, userId), undefined, userId);
+    },
+    putBack: (classId) => {
+      recalculation.putBack?.(classId);
+      held.change((input) => withoutSkipped(input, classId));
+    },
   };
 }
 
@@ -287,14 +316,7 @@ export function useShownAnswer(
     basisOpen: current.basisOpen,
     adding: current.adding,
     recalculating: current.recalculating,
-
-    again: () => {
-      // A copy, which `ask` takes for a change.
-      ask((input) => ({ ...input }), undefined, null);
-    },
-    add: (userId) => {
-      ask((input) => withPerson(input, userId), undefined, userId);
-    },
+    ...changesOf(ask, held, recalculation),
     picked: current.picked,
     pickOrder: current.pickOrder,
     asked: current.asked,

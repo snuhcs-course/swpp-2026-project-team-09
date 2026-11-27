@@ -8,6 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
@@ -20,7 +21,7 @@ import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import type { Lookup } from '@/api/lookup-types';
 import { radius, space } from '@/design-system';
-import { windowOf, withoutSkipped } from '@/features/assistant/plan-input';
+import { windowOf } from '@/features/assistant/plan-input';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -28,9 +29,10 @@ import { koreaDayWord } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
 import { ANSWER_TOP, listsTop } from '../layout';
 import type { ShownBooking } from '@/features/assistant/booking-scene';
+import { leftOutOf } from '@/features/assistant/left-out';
 import type { Chat } from '@/features/assistant/use-chat';
-import { bookingKept } from '../library/booking-kept';
-import { useBookingBand } from './booking-band';
+import { bookingBarOf } from '../library/booking-kept';
+import { leftOutIdsOn, useBookingBand } from './booking-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { mealDayOf } from './meal-day';
 import { type Picking, PersonRows } from './person-rows';
@@ -227,7 +229,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         onPutBack: settled
           ? undefined
           : (classId) => {
-              shown.change((input) => withoutSkipped(input, classId));
+              shown.putBack(classId);
             },
       }}
       add={
@@ -276,14 +278,19 @@ export function BookingBar({
   onHeight,
 }: {
   booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'askApp' | 'waiting'>;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'bubbles' | 'putBack' | 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
-  const { kept, keep, live } = bookingKept(booking, chat);
-  const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
+  const bar = bookingBarOf(booking, chat);
   // The User's Classes and Quests of the slot's date, which the band shows and names (P01 ticket 05).
   const quests = useQuery(questsQuery).data ?? NO_QUESTS;
-  return live === null || pending || booking.booked ? null : (
+  if (bar === null) {
+    return null;
+  }
+  const { kept, keep, live } = bar;
+  // The conversation's Classes left out on the booking's day, which its ✕ puts back (P01 ticket 40).
+  const skipped = { ids: leftOutIdsOn(leftOutOf(chat.bubbles), live.date), putBack: chat.putBack };
+  return (
     <BookingCard
       // A new answer's card sets its range anew (P01 ticket 17).
       key={booking.place}
@@ -293,6 +300,7 @@ export function BookingBar({
       }}
       onHeight={onHeight}
       quests={quests}
+      skipped={skipped}
       slot={live}
       space={kept.space}
     />
@@ -304,10 +312,11 @@ function BookingCard(p: {
   space: LibrarySpace;
   quests: readonly Quest[];
   keep: (slot: Slot) => void;
+  skipped: { ids: readonly string[]; putBack: (classId: string) => void };
   chat: Pick<Chat, 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement {
-  const band = useBookingBand(p.slot, p.space, p.quests, p.keep);
+  const band = useBookingBand(p.slot, p.space, p.quests, p.keep, p.skipped);
   const together = useSeatTogether(p.space, band.band, p.chat);
   return (
     <Bar add={together.add} band={{ ...band, band: together.band }} onHeight={p.onHeight} picking={together.picking} />

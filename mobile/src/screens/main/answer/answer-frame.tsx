@@ -51,6 +51,7 @@ import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, TopBar, Words } from './reply-words';
 import { SheetLinkContext, useSheetLink } from './sheet-link';
+import { useTimeCardSkips } from './time-card-skips';
 import { type BandFocus, useBandFocus } from './use-corrections';
 
 interface AnswerCardProps {
@@ -78,7 +79,7 @@ interface AnswerCardProps {
 // card is raised (board 6).
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, stepsTop, list } = props;
-  const skippedLine = (control.answer.plan?.band.skipped?.length ?? 0) > 0;
+  const skippedLine = useTimeCardSkips(control);
   const card = { barRoom, onHeight, raising, stageHeight, stepsTop, skippedLine };
   const typing = keyboardUp && raising.level === 'low';
   const top = useCardTop(control, raising, list, { onClose });

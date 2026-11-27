@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatMessage, RequestContext } from '@/api/assistant-types';
@@ -31,7 +32,20 @@ export async function answerTo(messages: ChatMessage[], context: RequestContext)
     const drawn = { answer, lookup, refusal, area: context.viewport, ...chosen, ...cleared };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
     const stepped = steps === undefined || steps.length < 2 ? {} : { steps };
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered, ...stepped };
+    // The conversation's Classes left out, which later requests send (P01 ticket 40).
+    const kept = reply.skipped === undefined ? {} : { skipped: reply.skipped };
+    return {
+      role: 'assistant',
+      text,
+      cards,
+      mapButtons,
+      proposal,
+      failure: null,
+      ...drawn,
+      ...offered,
+      ...stepped,
+      ...kept,
+    };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
