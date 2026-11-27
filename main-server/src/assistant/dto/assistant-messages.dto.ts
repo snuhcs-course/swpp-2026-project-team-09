@@ -101,6 +101,9 @@ export interface AssistantReplyDto {
   cards: Card[];
   proposal: QuestProposal | null;
   answer: AnswerReply | null;
+  // Every answer of the message, one per request in the order first drawn, for an app that says `answers` (P05 ticket
+  // 73), and left out for any other. `answer` is still the one an app without it draws.
+  answers?: AnswerReply[];
   lookup: Lookup | null;
   refusal: Refusal | null;
   // Buttons under the text of a reply that draws nothing; left out when there are none.
@@ -108,8 +111,9 @@ export interface AssistantReplyDto {
   // Each request of a message that asked for two or more, in time order; left out otherwise (P03).
   steps?: ReplyStep[];
   // The plan of the meal answer on screen the User chose in words, which the app shows, keeping the answer and its
-  // numbers (P05 ticket 51); left out otherwise, and by a reply that draws an answer of its own.
-  select?: { planId: string };
+  // numbers (P05 ticket 51); left out otherwise, and by a reply that draws an answer of its own. `index`: for an app
+  // that says `answers`, the one of `answers` that holds the plan, when one does.
+  select?: { planId: string; index?: number };
   // The answer on screen leaves the map with its time card and button: the User asked for another plan, or something
   // else, and nothing could be drawn for it (P05 ticket 55). Left out otherwise, and by a reply that draws its own.
   clears?: true;

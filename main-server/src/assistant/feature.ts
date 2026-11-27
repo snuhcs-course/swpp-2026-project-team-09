@@ -107,6 +107,9 @@ export const CLIENT_CAPABILITIES = [
   // Draws the study answer together, a 관정 group study room at everyone's free time, with 동의 요청 보내기 (P10 ticket
   // 07). Without it the group study path is proposeStudyRoom's card.
   'study-group',
+  // Draws every answer of a message that asked for several (`answers`), each step choosing its own (P05 ticket 73).
+  // Without it a reply draws `answer` alone, as before.
+  'answers',
 ] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
@@ -126,8 +129,11 @@ export interface Presented {
   // At most one Proposal: the last that passed proposeQuest.
   proposal: QuestProposal | null;
   // At most one answer drawn on the map: the last a tool put there. A tool that puts a Plan there clears the Lookup, and
-  // one that puts a Lookup there clears the answer.
+  // one that puts a Lookup there clears the answer. Only `presented.ts` writes it.
   answer: AnswerReply | null;
+  // One answer per request of the message, in the order first presented (P05 ticket 73); a Lookup leaves them. Absent
+  // until a tool presents one.
+  answers?: AnswerReply[];
   lookup: Lookup | null;
   // What refuse wrote; the reply keeps it only without an answer or a Lookup.
   refusal: Refusal | null;
