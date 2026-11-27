@@ -2473,6 +2473,9 @@ Anthropic API as the AI's key says
     - Together (`together`, or Friends in `people`), the one plan is 관정관's, and `study.group` holds:
       - the 관정 group study room kind, and every kind, 2층 first, with whether it fits the head count ("6명부터",
         "6명까지");
+      - for the room kind and each listed kind, `space`: its library space as the library cards carry it (`roomNo`,
+        `sectorNo`, the kind's room numbers in `seatNos`, its hours and durations), which the phone reads the kind's free
+        rooms from (a sector may hold several kinds);
       - how many more people are needed, 3 for the asker alone;
       - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`, null while more are needed;
       - 사용 용도, when the window opens, and the sent request's state.
@@ -3493,6 +3496,12 @@ Each command fails when it finds a problem. Run all four before opening a pull r
 `pnpm test` needs Docker running. It starts its own PostgreSQL and Redis containers and removes them afterwards. The
 test files run in parallel, except `test/redis-idempotency-store.integration.test.ts`: it waits for Redis to expire
 records in real time, so it runs alone after the others, against a Redis container of its own.
+
+The integration test files share one database. The global setup also keeps a copy of it, as migrated and seeded, as a
+template. A file whose rows must reach no other file starts on a database of its own, which `ownDatabase()` in
+`test/containers.ts` clones from that template in about a second and drops afterwards. Every file that makes room
+requests does: a read of a room request expires and closes every request in its database by that file's own clock.
+`RoomStage` always does, and `MealPlanStage` and `StudyStage` do when started with `ownDatabase: true`.
 
 Each test file is named by its level (ADR 0007): `*.unit.test.ts` or `*.integration.test.ts`. `pnpm test:unit` runs
 the unit tests alone and needs no Docker. `pnpm test:integration` runs the integration tests, which start the

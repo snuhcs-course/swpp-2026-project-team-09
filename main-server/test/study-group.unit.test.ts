@@ -118,6 +118,10 @@ describe('Four people free tomorrow afternoon', () => {
     ]);
     expect('space' in room ? room.space.id : null).toBe('4F-group-6');
     expect(group).toMatchObject({ room: { spaceId: '4F-group-6', floor: 4, name: '6인실' }, people: 4, moreNeeded: 0 });
+    // The phone reads free rooms by the kind's library space; 4층's sector 14103 is told apart by its seatNos.
+    expect(group.room.space).toMatchObject({ id: '4F-group-6', unit: 'room', roomNo: 141, sectorNo: 14103 });
+    expect(group.room.space.seatNos).toHaveLength(24);
+    expect(group.rooms.every(({ spaceId, space }) => space.id === spaceId && space.seatNos.length > 0)).toBe(true);
     expect(group.key).toBe(`book:4F-group-6:${TOMORROW}:1300:180`);
     expect(isLibraryKey(group.key ?? '')).toBe(true);
     const space = catalogue.byId.get('4F-group-6');

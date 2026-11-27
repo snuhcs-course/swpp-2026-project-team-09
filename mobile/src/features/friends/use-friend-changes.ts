@@ -4,12 +4,14 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type QueryKey, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { FRIEND_REQUESTS_KEY, FRIENDS_KEY, POSITIONS_KEY } from '@/api/queries';
 import type { AskedMoment, FriendLevel, InviteLink, SentFriendRequest, UserSummary } from '@/api/types';
+import { type FriendshipHow, trackAction } from '@/telemetry';
 
 export interface FriendChanges {
   setLevel: (userId: string, level: FriendLevel) => Promise<void>;
@@ -29,6 +31,14 @@ export interface FriendChanges {
 }
 
 const FRIENDS_SEEN = [FRIENDS_KEY, POSITIONS_KEY] as const;
+
+// Two Users becoming Friends, for the usage data.
+function befriending<Args extends unknown[], Answer>(
+  how: FriendshipHow,
+  accept: (...args: Args) => Promise<Answer>,
+): (...args: Args) => Promise<Answer> {
+  return (...args) => trackAction({ action: 'friendship_creation', how }, () => accept(...args));
+}
 
 // What a User changes of their friendships. Each change asks the main server and then, whether it was done or
 // refused, fetches again what it may have changed: the Friends and the positions they make seen, or the Friend
@@ -55,10 +65,16 @@ export function useFriendChanges(): FriendChanges {
     findFriendId: apiClient.findFriendId,
     sendFriendRequest: changing(apiClient.sendFriendRequest, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),
     sendFriendRequestToUser: changing(apiClient.sendFriendRequestToUser, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),
-    acceptFriendRequest: changing(apiClient.acceptFriendRequest, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),
+    acceptFriendRequest: changing(befriending('request_accepted', apiClient.acceptFriendRequest), [
+      ...FRIENDS_SEEN,
+      FRIEND_REQUESTS_KEY,
+    ]),
     declineFriendRequest: changing(apiClient.declineFriendRequest, [FRIEND_REQUESTS_KEY]),
     cancelFriendRequest: changing(apiClient.cancelFriendRequest, [FRIEND_REQUESTS_KEY]),
     createInviteLink: apiClient.createInviteLink,
-    acceptInviteLink: changing(apiClient.acceptInviteLink, [...FRIENDS_SEEN, FRIEND_REQUESTS_KEY]),
+    acceptInviteLink: changing(befriending('invite_link_accepted', apiClient.acceptInviteLink), [
+      ...FRIENDS_SEEN,
+      FRIEND_REQUESTS_KEY,
+    ]),
   };
 }

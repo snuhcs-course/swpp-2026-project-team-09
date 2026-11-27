@@ -83,9 +83,12 @@ function Sheets({ opened, onOpen, sheets, quests }: SheetsProps): ReactElement {
         onClose={() => {
           onOpen(null);
         }}
-        onParty={(event) => {
-          onOpen(null);
-          sheets.setRecruitEvent(event);
+        action={{
+          kind: 'party',
+          onPress: (event) => {
+            onOpen(null);
+            sheets.setRecruitEvent(event);
+          },
         }}
       />
       <EventSheets quests={quests} sheets={sheets} />

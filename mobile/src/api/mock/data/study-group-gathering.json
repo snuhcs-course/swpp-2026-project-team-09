@@ -1,0 +1,428 @@
+{
+  "input": {
+    "kind": "study",
+    "date": "2026-11-05",
+    "what": "any",
+    "people": [
+      {
+        "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "constraints": []
+      },
+      {
+        "userId": "a3f1c2d4-0000-4000-8000-0000000000a1",
+        "constraints": []
+      },
+      {
+        "userId": "a3f1c2d4-0000-4000-8000-0000000000a2",
+        "constraints": []
+      },
+      {
+        "userId": "a3f1c2d4-0000-4000-8000-0000000000a3",
+        "constraints": []
+      }
+    ],
+    "together": true,
+    "window": {
+      "from": null,
+      "until": null
+    },
+    "area": null,
+    "minutes": 120,
+    "chosen": {
+      "seatSpaceId": null,
+      "roomSpaceId": null
+    }
+  },
+  "chips": [
+    {
+      "kind": "person",
+      "text": "박민수",
+      "userId": "a3f1c2d4-0000-4000-8000-0000000000a1"
+    },
+    {
+      "kind": "person",
+      "text": "이서연",
+      "userId": "a3f1c2d4-0000-4000-8000-0000000000a2"
+    },
+    {
+      "kind": "person",
+      "text": "김지은",
+      "userId": "a3f1c2d4-0000-4000-8000-0000000000a3"
+    }
+  ],
+  "plans": [
+    {
+      "id": "관정관",
+      "title": "관정관에서 같이 공부",
+      "place": {
+        "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+        "label": "관정관",
+        "latitude": 37.4594,
+        "longitude": 126.9502
+      },
+      "startAt": "2026-11-05T15:00:00+09:00",
+      "endAt": "2026-11-05T17:00:00+09:00",
+      "togetherMinutes": 120,
+      "meeting": null,
+      "parts": [
+        {
+          "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "name": "나",
+          "me": true,
+          "origin": {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-05T14:46:00+09:00",
+          "walkMinutes": 14,
+          "arriveAt": "2026-11-05T15:00:00+09:00",
+          "leaveBy": null,
+          "next": null
+        },
+        {
+          "userId": "a3f1c2d4-0000-4000-8000-0000000000a1",
+          "name": "박민수",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000024",
+              "label": "24동",
+              "latitude": 37.4566,
+              "longitude": 126.9493
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-05T14:48:00+09:00",
+          "walkMinutes": 12,
+          "arriveAt": "2026-11-05T15:00:00+09:00",
+          "leaveBy": null,
+          "next": null
+        },
+        {
+          "userId": "a3f1c2d4-0000-4000-8000-0000000000a2",
+          "name": "이서연",
+          "me": false,
+          "origin": {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000083",
+              "label": "83동",
+              "latitude": 37.4646,
+              "longitude": 126.9539
+            },
+            "basis": "timetable"
+          },
+          "leaveAt": "2026-11-05T14:45:00+09:00",
+          "walkMinutes": 15,
+          "arriveAt": "2026-11-05T15:00:00+09:00",
+          "leaveBy": null,
+          "next": null
+        },
+        {
+          "userId": "a3f1c2d4-0000-4000-8000-0000000000a3",
+          "name": "김지은",
+          "me": false,
+          "origin": null,
+          "leaveAt": null,
+          "walkMinutes": null,
+          "arriveAt": "2026-11-05T15:00:00+09:00",
+          "leaveBy": null,
+          "next": null
+        }
+      ],
+      "subQuests": [],
+      "lines": [
+        [
+          {
+            "text": "그룹스터디룸 4층 6인실",
+            "strong": true
+          },
+          {
+            "text": " · 4명",
+            "strong": false
+          }
+        ]
+      ],
+      "basis": [
+        "모두가 비는 때: 내일 15:00–17:00",
+        "그룹스터디룸은 4명부터 예약할 수 있어요",
+        "나 14:59 도착",
+        "박민수 14:57 도착",
+        "이서연 15:00 도착",
+        "김지은 15:00부터"
+      ],
+      "scene": {
+        "people": [
+          {
+            "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+            "name": "나",
+            "me": true,
+            "at": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "source": "timetable",
+            "tag": "나 · 14분"
+          },
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a1",
+            "name": "박민수",
+            "me": false,
+            "at": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000024",
+              "label": "24동",
+              "latitude": 37.4566,
+              "longitude": 126.9493
+            },
+            "source": "timetable",
+            "tag": "박민수 · 12분"
+          },
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a2",
+            "name": "이서연",
+            "me": false,
+            "at": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000083",
+              "label": "83동",
+              "latitude": 37.4646,
+              "longitude": 126.9539
+            },
+            "source": "timetable",
+            "tag": "이서연 · 15분"
+          }
+        ],
+        "places": [
+          {
+            "place": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+              "label": "관정관",
+              "latitude": 37.4594,
+              "longitude": 126.9502
+            },
+            "role": "pick",
+            "tag": "4층 그룹스터디룸 · 4명"
+          }
+        ],
+        "routes": [
+          {
+            "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+            "role": "me",
+            "from": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000301",
+              "label": "301동",
+              "latitude": 37.4501,
+              "longitude": 126.9524
+            },
+            "to": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+              "label": "관정관",
+              "latitude": 37.4594,
+              "longitude": 126.9502
+            },
+            "minutes": 14
+          },
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a1",
+            "role": "friend",
+            "from": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000024",
+              "label": "24동",
+              "latitude": 37.4566,
+              "longitude": 126.9493
+            },
+            "to": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+              "label": "관정관",
+              "latitude": 37.4594,
+              "longitude": 126.9502
+            },
+            "minutes": 12
+          },
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a2",
+            "role": "friend",
+            "from": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000083",
+              "label": "83동",
+              "latitude": 37.4646,
+              "longitude": 126.9539
+            },
+            "to": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+              "label": "관정관",
+              "latitude": 37.4594,
+              "longitude": 126.9502
+            },
+            "minutes": 15
+          }
+        ],
+        "flags": [
+          {
+            "at": {
+              "placeId": "6f1b2c3d-0000-4000-8000-000000000621",
+              "label": "관정관",
+              "latitude": 37.4594,
+              "longitude": 126.9502
+            },
+            "text": "15:00 공부",
+            "role": "place"
+          }
+        ]
+      },
+      "band": {
+        "range": {
+          "startAt": "2026-11-05T14:00:00+09:00",
+          "endAt": "2026-11-05T17:30:00+09:00"
+        },
+        "now": "2026-11-04T19:10:00+09:00",
+        "lanes": [
+          {
+            "userId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+            "name": "나",
+            "busy": [
+              {
+                "startAt": "2026-11-05T14:00:00+09:00",
+                "endAt": "2026-11-05T14:45:00+09:00",
+                "label": "301동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a1",
+            "name": "박민수",
+            "busy": [
+              {
+                "startAt": "2026-11-05T14:00:00+09:00",
+                "endAt": "2026-11-05T14:45:00+09:00",
+                "label": "24동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a2",
+            "name": "이서연",
+            "busy": [
+              {
+                "startAt": "2026-11-05T14:00:00+09:00",
+                "endAt": "2026-11-05T14:45:00+09:00",
+                "label": "83동 수업"
+              }
+            ]
+          },
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a3",
+            "name": "김지은",
+            "busy": []
+          }
+        ],
+        "others": [
+          {
+            "userId": "a3f1c2d4-0000-4000-8000-0000000000a4",
+            "name": "최준호",
+            "busy": [],
+            "walkMinutes": 9
+          }
+        ],
+        "startAt": "2026-11-05T15:00:00+09:00",
+        "endAt": "2026-11-05T17:00:00+09:00",
+        "text": "15:00–17:00 · 2시간"
+      },
+      "study": {
+        "spaces": [],
+        "book": null,
+        "liveSeats": "kwanjeong",
+        "group": {
+          "room": {
+            "spaceId": "4F-group-6",
+            "floor": 4,
+            "name": "6인실",
+            "capacity": {
+              "min": 4,
+              "max": 6
+            }
+          },
+          "rooms": [
+            {
+              "spaceId": "2F-group-6",
+              "floor": 2,
+              "name": "6인실",
+              "capacity": {
+                "min": 4,
+                "max": 6
+              },
+              "fits": true,
+              "reason": null
+            },
+            {
+              "spaceId": "2F-group-10",
+              "floor": 2,
+              "name": "10인실",
+              "capacity": {
+                "min": 7,
+                "max": 10
+              },
+              "fits": false,
+              "reason": "7명부터"
+            },
+            {
+              "spaceId": "4F-group-6",
+              "floor": 4,
+              "name": "6인실",
+              "capacity": {
+                "min": 4,
+                "max": 6
+              },
+              "fits": true,
+              "reason": null
+            },
+            {
+              "spaceId": "4F-group-8",
+              "floor": 4,
+              "name": "8인실",
+              "capacity": {
+                "min": 6,
+                "max": 8
+              },
+              "fits": false,
+              "reason": "6명부터"
+            },
+            {
+              "spaceId": "4F-group-10",
+              "floor": 4,
+              "name": "10인실",
+              "capacity": {
+                "min": 7,
+                "max": 10
+              },
+              "fits": false,
+              "reason": "7명부터"
+            }
+          ],
+          "people": 4,
+          "moreNeeded": 0,
+          "key": "book:4F-group-6:2026-11-05:1500:120",
+          "useDescOptions": ["강의", "과제", "동아리활동", "연구", "취업", "기타"],
+          "opens": null,
+          "request": {
+            "id": "c0ffee00-0000-4000-8000-000000000001",
+            "status": "gathering",
+            "consented": 1,
+            "asked": 3,
+            "waiting": ["박민수", "이서연"],
+            "moreNeeded": 0
+          }
+        }
+      }
+    }
+  ],
+  "dropped": [],
+  "closed": [],
+  "noPlan": null,
+  "choosable": true
+}

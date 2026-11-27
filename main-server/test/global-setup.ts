@@ -21,11 +21,20 @@
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
 import { Settings } from '../src/common/settings.js';
-import { mainDatabaseUrl, migrate, redisSettings, seed, startPostgres, startRedis } from './containers.js';
+import {
+  keepTemplate,
+  mainDatabaseUrl,
+  migrate,
+  redisSettings,
+  seed,
+  startPostgres,
+  startRedis,
+} from './containers.js';
 import { es256KeyPair } from './keys.js';
 
 type SettingValues = Record<keyof Settings, string>;
@@ -89,8 +98,8 @@ const FIXED_SETTINGS = {
   POSTHOG_PROJECT_TOKEN: '',
 } satisfies Partial<SettingValues>;
 
-// Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema and
-// loads the seed into it.
+// Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema, loads
+// the seed into it and keeps a copy as the template that a file with a database of its own clones (ownDatabase).
 export default async function setup({ provide }: TestProject): Promise<() => Promise<void>> {
   const [postgres, redis] = await Promise.all([startPostgres(), startRedis()]);
   const accessTokenKeys = es256KeyPair();
@@ -103,6 +112,7 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
   };
   migrate(settings.DATABASE_URL);
   await seed(settings.DATABASE_URL);
+  await keepTemplate(settings.DATABASE_URL);
   provide('settings', settings);
 
   return async () => {

@@ -19,7 +19,7 @@ vi.setConfig({ testTimeout: 20_000, hookTimeout: 30_000 });
 
 const stage = new StudyStage();
 
-beforeAll(() => stage.start(inject('settings')));
+beforeAll(() => stage.start(inject('settings'), { ownDatabase: true }));
 
 afterAll(() => stage.stop());
 

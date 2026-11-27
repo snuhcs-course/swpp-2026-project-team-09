@@ -69,16 +69,44 @@ function Details({ event }: { event: EventView }): ReactElement {
   );
 }
 
-interface ActionsProps {
-  event: EventView;
-  onParty?: (event: EventView) => void;
+// The foot's button beside "원문 보기": the 행사 tab's party button, or 파티 만들기's "이 행사 추가", a grey "선택됨" that
+// takes no press for the event chosen already.
+export type SheetAction =
+  | { kind: 'party'; onPress: (event: EventView) => void }
+  | { kind: 'add'; chosen: boolean; onPress: (event: EventView) => void };
+
+function ActionButton({ event, action }: { event: EventView; action: SheetAction }): ReactElement {
+  const press = (): void => {
+    action.onPress(event);
+  };
+  if (action.kind === 'party') {
+    return (
+      <Button full icon="users" onPress={press} size="lg">
+        {detailPartyWords(event.recruiting)}
+      </Button>
+    );
+  }
+  return action.chosen ? (
+    <Button disabled full icon="check" size="lg">
+      선택됨
+    </Button>
+  ) : (
+    <Button full icon="plus" onPress={press} size="lg">
+      이 행사 추가
+    </Button>
+  );
 }
 
-// "원문 보기", which opens the event's page in the browser and is left out without one, and the party button, left
-// out where the sheet is given no `onParty`. A button alone spans the sheet; without either the sheet has no foot.
-function Actions({ event, onParty }: ActionsProps): ReactElement | null {
+interface ActionsProps {
+  event: EventView;
+  action?: SheetAction;
+}
+
+// "원문 보기", which opens the event's page in the browser and is left out without one, and the sheet's action, left
+// out where it is given none. A button alone spans the sheet; without either the sheet has no foot.
+function Actions({ event, action }: ActionsProps): ReactElement | null {
   const { sourceUrl } = event;
-  const alone = onParty === undefined;
+  const alone = action === undefined;
   if (sourceUrl === null && alone) {
     return null;
   }
@@ -101,16 +129,7 @@ function Actions({ event, onParty }: ActionsProps): ReactElement | null {
       {alone ? <View style={styles.grow}>{page}</View> : page}
       {alone ? null : (
         <View style={styles.grow}>
-          <Button
-            full
-            icon="users"
-            onPress={() => {
-              onParty(event);
-            }}
-            size="lg"
-          >
-            {detailPartyWords(event.recruiting)}
-          </Button>
+          <ActionButton action={action} event={event} />
         </View>
       )}
     </View>
@@ -120,19 +139,19 @@ function Actions({ event, onParty }: ActionsProps): ReactElement | null {
 interface EventDetailSheetProps {
   event: EventView | null;
   onClose: () => void;
-  // Left out in a Quest's room, whose User is in a 파티 for the event already: the sheet then has no party button.
-  onParty?: (event: EventView) => void;
+  // Left out in a Quest's room, whose User is in a 파티 for the event already: the sheet then has only "원문 보기".
+  action?: SheetAction;
 }
 
-// The `EventsDetail` frame: an event in a sheet, with its time and place, its description, "원문 보기" and the 파티 for
-// it. The top part scrolls when the description is long, the buttons staying under it.
-export function EventDetailSheet({ event, onClose, onParty }: EventDetailSheetProps): ReactElement {
+// The `EventsDetail` frame: an event in a sheet, with its time and place, its description, "원문 보기" and the button
+// of the screen that opened it. The top part scrolls when the description is long, the buttons staying under it.
+export function EventDetailSheet({ event, onClose, action }: EventDetailSheetProps): ReactElement {
   return (
     <BottomSheet label={event?.title ?? '행사'} onClose={onClose} open={event !== null}>
       {event === null ? null : (
         <View style={styles.body}>
           <Details event={event} />
-          <Actions event={event} onParty={onParty} />
+          <Actions action={action} event={event} />
         </View>
       )}
     </BottomSheet>

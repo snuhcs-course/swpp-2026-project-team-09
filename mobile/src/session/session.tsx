@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -37,8 +38,8 @@ interface Session extends Omit<Opened, 'status' | 'next'> {
   status: SessionStatus;
   // The loading screen is over: the app goes where the User belongs.
   open: (opened: Opened) => void;
-  // A sign-in succeeded. `consented` is whether the User agreed to the legal documents on this phone before.
-  enter: (onboarding: Onboarding, consented: boolean) => void;
+  // A sign-in succeeded. `asks` is whether the consent screen asks first (`consentScreenAsks`).
+  enter: (onboarding: Onboarding, asks: boolean) => void;
   // The User agreed to the legal documents.
   agree: () => void;
   // Onboarding was saved.
@@ -63,9 +64,10 @@ export function openedBy(onboarding: Onboarding): Opened {
     : { status: 'onboarding', suggestion: onboarding.suggestion };
 }
 
-// A signed-in User who has not agreed to the legal documents is asked first, and goes on from there.
-export function behindConsent(opened: Opened, consented: boolean): Opened {
-  return consented || opened.status === 'signed-out' ? opened : { status: 'consent', suggestion: null, next: opened };
+// A signed-in User whose account has not agreed to the current version of the legal documents is asked first, and goes
+// on from there (`consentScreenAsks`).
+export function behindConsent(opened: Opened, asks: boolean): Opened {
+  return !asks || opened.status === 'signed-out' ? opened : { status: 'consent', suggestion: null, next: opened };
 }
 
 // Where an event of the Session takes the User from where they are. The loading screen is left alone: its own work
@@ -136,8 +138,8 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactEle
     setOpened((now) => followed(now, event));
   }, []);
   const [replaced, closeReplaced] = useSessionEvents(follow);
-  const enter = useCallback((onboarding: Onboarding, consented: boolean) => {
-    setOpened(behindConsent(openedBy(onboarding), consented));
+  const enter = useCallback((onboarding: Onboarding, asks: boolean) => {
+    setOpened(behindConsent(openedBy(onboarding), asks));
   }, []);
   const agree = useCallback(() => {
     setOpened((now) => now?.next ?? now);

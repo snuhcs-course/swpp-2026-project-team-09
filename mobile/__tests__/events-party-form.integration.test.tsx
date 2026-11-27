@@ -10,13 +10,12 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import { font } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import { answerEvents, CAREER, MAJOR, MY_CAREER } from './support/events';
+import { answerEvents, CAREER, MAJOR, MY_CAREER, pickEvent } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { openAt } from './support/party';
@@ -72,52 +71,59 @@ describe('the event picker', () => {
     expect(screen.getByLabelText('행사 검색')).toHaveProp('placeholder', '제목·장소·내용 검색');
   });
 
-  it('marks the chosen event when it opens again', async () => {
+  it("opens a row's sheet over the picker, without choosing it: 원문 보기 and 이 행사 추가, no party button", async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+
     await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+
+    expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
+    const sheet = within(screen.getByTestId('event-detail'));
+    expect(sheet.getByRole('header', { name: CAREER.title })).toBeVisible();
+    expect(screen.getByRole('button', { name: '원문 보기' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '이 행사 추가' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /파티/u })).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: `${CAREER.title} 닫기` }));
+    await pass(500);
+    expect(screen.queryByTestId('event-detail')).toBeNull();
+    expect(screen.getByRole('button', { name: `행사 · ${CAREER.title}` })).not.toBeSelected();
+  });
+
+  it('marks the chosen event when it opens again, and its sheet says 선택됨, which takes no press, in place of 이 행사 추가', async () => {
+    const user = await openAt('/party-form');
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await pickEvent(user, CAREER);
 
     await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
 
     expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
     expect(screen.getByRole('button', { name: `행사 · ${CAREER.title}` })).toBeSelected();
     expect(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` })).not.toBeSelected();
-  });
-
-  // The 행사 tab's sizes, its day included (P06 ticket 15); the picker's own layout waits for its own item.
-  it("sets its rows in the 행사 tab's type, with the source and one line each for the title and the time and place", async () => {
-    const user = await openAt('/party-form');
-
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-
-    const row = within(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
-    expect(row.getByText('6')).toHaveStyle({ fontFamily: font.bold, fontSize: 22, lineHeight: 28 });
-    expect(row.getByText('10월 · 오늘')).toHaveStyle({ fontSize: 12, lineHeight: 16 });
-    expect(row.getByText('컴퓨터공학부 공지')).toBeVisible();
-    expect(row.getByText(CAREER.title)).toHaveStyle({ fontFamily: font.bold, fontSize: 16, lineHeight: 23 });
-    expect(row.getByText(CAREER.title)).toHaveProp('numberOfLines', 1);
-    expect(row.getByText('18:00–20:00 · 301동 대강당')).toHaveStyle({ fontSize: 13, lineHeight: 18 });
-    expect(row.getByText('18:00–20:00 · 301동 대강당')).toHaveProp('numberOfLines', 1);
+    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+    expect(screen.getByRole('button', { name: '선택됨' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '이 행사 추가' })).toBeNull();
+    await user.press(screen.getByRole('button', { name: '선택됨' }));
+    expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
   });
 });
 
 describe('관련 행사', () => {
-  it('chooses an event in the picker, which fills the form with its title, time, place and tags, and 행사 빼기 leaves the title', async () => {
+  it('chooses an event with its sheet’s 이 행사 추가, which fills the form with its title, time and place and adds no tags, and 행사 빼기 leaves the title', async () => {
     const user = await openAt('/party-form');
 
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
     expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
-    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+    await pickEvent(user, CAREER);
 
-    expect(screen.getByTestId('chosen-event')).toHaveTextContent(`${CAREER.title}오늘 18:00–20:00 · 301동 대강당`, {
-      exact: false,
-    });
+    expect(screen.queryByRole('header', { name: '관련 행사 고르기' })).toBeNull();
+    expect(screen.getByTestId('chosen-event')).toHaveTextContent(`${CAREER.title}오늘 18:00–20:00 · 301동 대강당`);
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('AI 커리어 설명회 같이 가요');
     expect(screen.getByLabelText('제목')).toBeEnabled();
     expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
     expect(screen.getByRole('button', { name: '언제 오늘 18:00' })).toBeVisible();
     for (const tag of ['#진로', '#AI', '#커리어']) {
-      expect(screen.getByRole('button', { name: tag })).toBeSelected();
+      expect(screen.queryByRole('button', { name: tag, selected: true })).toBeNull();
     }
 
     await user.press(screen.getByRole('button', { name: '행사 빼기' }));
@@ -128,10 +134,10 @@ describe('관련 행사', () => {
   it('replaces the title an event gave when another is chosen', async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+    await pickEvent(user, CAREER);
 
     await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
-    await user.press(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
+    await pickEvent(user, MAJOR);
 
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(`${MAJOR.title} 같이 가요`);
   });
@@ -139,7 +145,7 @@ describe('관련 행사', () => {
   it('keeps a title of the User’s when another event is chosen', async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+    await pickEvent(user, CAREER);
 
     await user.clear(screen.getByLabelText('제목'));
     await user.type(screen.getByLabelText('제목'), '설명회 같이 가요');
@@ -147,7 +153,7 @@ describe('관련 행사', () => {
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('설명회 같이 가요');
 
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await user.press(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
+    await pickEvent(user, MAJOR);
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('설명회 같이 가요');
   });
 });
