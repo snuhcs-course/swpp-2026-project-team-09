@@ -48,14 +48,19 @@ describe("A booking party's card on the map", () => {
   it('is a flag of the room and its time over the consents while gathering', () => {
     const card = cardOf(bookingParty(GATHERING));
 
-    expect(card.request).toEqual({ title: '관정 그룹스터디룸', time: '내일 15:00', line: '동의 1/3 · 기다리는 중' });
+    expect(card.request).toEqual({
+      title: '관정 그룹스터디룸',
+      time: '15:00',
+      day: '내일',
+      state: '동의 1/3 · 기다리는 중',
+    });
     expect(card.marker.name).toBe('관정 그룹스터디룸 내일 15:00 · 동의 1/3 · 기다리는 중');
   });
 
   it('says 모두 동의 · 예약하기 once every Friend has consented', () => {
     const card = cardOf(bookingParty({ ...GATHERING, status: 'ready', consented: 3 }));
 
-    expect(card.request?.line).toBe('모두 동의 · 예약하기');
+    expect(card.request?.state).toBe('모두 동의 · 예약하기');
   });
 
   it.each(['booked', 'cancelled', 'expired'] as const)('is an ordinary Quest mark once %s', (status) => {
@@ -63,6 +68,13 @@ describe("A booking party's card on the map", () => {
 
     expect(card.request).toBeUndefined();
     expect(card.marker).toEqual(cardOf(bookingParty(null)).marker);
+  });
+
+  it('says 오늘 for a request of today', () => {
+    const card = cardOf(bookingParty(GATHERING, '2026-10-06T15:00:00+09:00'));
+
+    expect(card.request?.day).toBe('오늘');
+    expect(card.marker.name).toBe('관정 그룹스터디룸 오늘 15:00 · 동의 1/3 · 기다리는 중');
   });
 
   it('is an ordinary Quest mark without a request', () => {
@@ -78,16 +90,17 @@ describe("A booking party's card on the map", () => {
 });
 
 describe("A request's look on the map", () => {
-  it('is the flag of a Quest made from a Plan: two lines over a dot, its time in the time colour', () => {
-    expect(requestLook({ title: '관정 그룹스터디룸', time: '내일 15:00', line: '동의 1/3 · 기다리는 중' })).toEqual({
+  it('is the flag of a Quest made from a Plan: its room and time in the time colour over its day and state', () => {
+    const flag = { title: '관정 그룹스터디룸', time: '15:00', day: '내일', state: '모두 동의 · 예약하기' };
+    expect(requestLook(flag)).toEqual({
       kind: 'answer',
       symbol: { type: 'dot', role: 'pick', number: null },
       label: {
         side: 'above',
         tone: 'pick',
         title: '관정 그룹스터디룸',
-        note: '내일 15:00',
-        line: '동의 1/3 · 기다리는 중',
+        note: '15:00',
+        line: '내일 · 모두 동의 · 예약하기',
         study: true,
         number: null,
       },

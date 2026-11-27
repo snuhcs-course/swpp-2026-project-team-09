@@ -284,7 +284,7 @@ function questCards({ quests, myParty, parties, meId, now }: MapSources): CardVi
     const card = partyCard(quest, partyOf(quest, myParty, parties), otherHolders(quest, meId), now);
     const request = requestFlagOf(quest, shownSubQuest(quest)?.startsAt ?? null, now);
     if (request !== null) {
-      const marker = { ...card.marker, name: `${requestWords(request)} · ${request.line}` };
+      const marker = { ...card.marker, name: `${requestWords(request)} · ${request.state}` };
       return [{ id: cardId.quest(quest.id), ...card, marker, request, position }];
     }
     return [{ id: cardId.quest(quest.id), ...card, position }];
