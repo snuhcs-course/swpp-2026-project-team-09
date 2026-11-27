@@ -6,12 +6,14 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Cuisine, Plan } from '@/api/assistant-types';
 import { color, space, text } from '@/design-system';
+import { answerTone } from '@/features/assistant/answer-tone';
 import { addedWalk, fadedPlan, travelWords } from '@/features/assistant/answer-walks';
 import { kindShown, serves } from '@/features/assistant/meal-kinds';
 import { studyAlone } from '@/features/assistant/meal-marks';
@@ -213,7 +215,7 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
         shown.openMenu(one.planId);
       }}
       row={one}
-      study={study}
+      tone={answerTone(answer.input.kind)}
     />
   );
   return (

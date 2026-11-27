@@ -11,6 +11,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
@@ -29,6 +30,7 @@ import {
   DRAW_ORDER,
   FLAG_TONES,
   type Group,
+  inKind,
   keptDrafts,
   OWN,
   stopDraft,
@@ -38,6 +40,7 @@ import {
   withOpenMarks,
 } from './answer-groups';
 import { type LabelView, type MarkPoint, placeLabels, UPRIGHT_REACH } from './answer-labels';
+import { answerTone } from './answer-tone';
 import { type Placed, thingsInOrder } from './answer-things';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickDraft, sideRank } from './answer-candidates';
@@ -106,8 +109,10 @@ export interface SceneSetting {
   // The paths its walks were found along and its legs by the shuttle, which a meal Plan's legs are drawn on; left
   // out, none.
   ways?: Ways;
-  // A meal answer's, menus or none: its pick and candidates in coral, as its list (P04 ticket 90). Left out, not.
-  coral?: boolean;
+  // A meal answer's, menus or none: its pick and candidates numbered as its list (P04 ticket 90). Left out, not.
+  listed?: boolean;
+  // The kind whose colour its places take, its answer's (`kindTone`); left out, as their marks say.
+  toneKind?: Draft['toneKind'];
   // A 관정 booking's: its start, which makes its pick the study one and its way carry its minutes (P01 ticket 10).
   // Left out, not.
   study?: string;
@@ -122,7 +127,7 @@ export interface SceneSetting {
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans, day, kind = null, meal = false, coral = false, over, study, studyPick }: SceneSetting,
+  { number: pickNumber, plans, day, kind = null, meal = false, listed = false, over, study, studyPick }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -133,14 +138,14 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
-    const pick = { title, position, number: pickNumber, plan, day, kind, meal, coral, study: study ?? null };
+    const pick = { title, position, number: pickNumber, plan, day, kind, meal, listed, study: study ?? null };
     return pickDraft(pick, studyPick?.line ?? flag?.text ?? null);
   }
   if (role === 'candidate') {
     const planId = plans.find((one) => one.place.placeId === place.placeId && one.place.label === place.label)?.id;
     return planId !== undefined && over?.has(planId) === true
       ? null
-      : candidateDraft(plans, item, { kind, meal, coral });
+      : candidateDraft(plans, item, { kind, meal, listed });
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
@@ -260,6 +265,7 @@ export function drawingOfScene(
   // A study answer together is placed as a meal answer is: its labels and its camera (P10 ticket 11).
   const asMeal = meal !== undefined || setting.studyPick !== undefined;
   const hidden = hiddenRoutes(meal, scene);
+  const places = scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []);
   // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
   const drafts = withOpenMarks(
     meal === undefined ? (setting.opens ?? false) : false,
@@ -268,7 +274,7 @@ export function drawingOfScene(
       scene,
       [
         ...personDrafts(scene, setting.standings),
-        ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
+        ...places.map((draft) => inKind(draft, setting.toneKind)),
         ...flagDrafts(scene),
         ...keptDrafts(setting.kept),
         ...(setting.drafts ?? []),
@@ -331,7 +337,8 @@ export function drawingOf(
     kind: kindShown(answer),
     kept: answer.planSet,
     meal: drawsMeal(answer),
-    coral: answer.input.kind === 'meal',
+    listed: answer.input.kind === 'meal',
+    toneKind: answerTone(answer.input.kind),
     over: overPriceIds(answer),
     ...(ways === undefined ? {} : { ways }),
   });

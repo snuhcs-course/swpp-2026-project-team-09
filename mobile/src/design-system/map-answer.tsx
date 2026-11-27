@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -15,10 +16,19 @@ import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
 import { Icon } from './icon';
 import { MapPin } from './map-pin';
-import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, MEAL_NUMBER, RING } from './map-answer-box';
+import {
+  ANSWER_SYMBOL_BOX,
+  CANDIDATE_ROUND,
+  CAPSULE,
+  CAPSULE_EDGE,
+  GAP,
+  markTone,
+  MEAL_NUMBER,
+  RING,
+} from './map-answer-box';
 import { MapAnswerLabel } from './map-answer-label';
 import { RoundNumber } from './round-number';
-import { color, mapText, radius, shadow, space, text } from './tokens';
+import { color, kindTone, mapText, radius, shadow, space, text, type ToneKind } from './tokens';
 
 export { ANSWER_SYMBOL_BOX, answerLabelBox, CAPSULE, MEAL_NUMBER } from './map-answer-box';
 
@@ -28,15 +38,17 @@ export type AnswerSymbol =
   // measured at the exact level. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's upper right; the
   // caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
-  // `faded`: drawn pale. `meal`: a meal answer's Restaurant, in coral (P04 ticket 85): the pick solid with a white
-  // number, a candidate soft with a coral rim and number; left out, the pick gold and a candidate navy, as every other
-  // answer's. `meal` with `study`: a study answer's place, the same in the study colour (P10 ticket 17).
+  // `faded`: drawn pale. `meal`: a listed answer's place (P04 ticket 85): the pick solid with a white number, a
+  // candidate soft with a rim and number in its kind's colour; left out, a candidate a small dot. `kind`: the kind
+  // whose colour the pick and a candidate take (`kindTone`); left out, a study answer's with `study`, a meal's with
+  // `meal`, else the app's navy.
   | {
       type: 'dot';
       role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept';
       number: number | null;
       faded?: boolean;
       meal?: boolean;
+      kind?: ToneKind;
       // A 관정 booking's pick (P01 ticket 10): the round in the study colour with the study layer's book inside. With
       // `meal`, a study answer's place: the meal's round in the study colour, its number in place of the book.
       study?: boolean;
@@ -77,6 +89,8 @@ export interface AnswerLabel {
   // A 관정 booking's pick (P01 ticket 10): its edge in the study colour. With `meal`, a study answer's place (P10 ticket
   // 17): the meal's make-up in the study colour, the 공부공간 book before a pick's name. Left out, its tone's own colours.
   study?: boolean;
+  // The kind whose colour a pick's or a candidate's edge and badge take (`kindTone`); left out, as a dot's `kind`.
+  kind?: ToneKind;
   // A meal candidate's capsule says a clock time ("17:00"), drawn in gold as every clock time; left out, the walking
   // minutes in ink (P04 ticket 88).
   clock?: boolean;
@@ -100,21 +114,23 @@ function partOf(testID: string | undefined, part: string): string | undefined {
 
 type DotSymbol = Extract<AnswerSymbol, { type: 'dot' }>;
 
-// A meal answer's other candidate (P04 ticket 85): a soft coral ground in a coral rim, and a coral number. The rim is
-// its outside edge, with no white ring or shadow around it: the round and its number take that room (P04 ticket 91).
+// A listed answer's other candidate (P04 ticket 85): a soft ground in a rim, and a number, in its kind's colour. The
+// rim is its outside edge, with no white ring or shadow around it: the round and its number take that room (P04 ticket
+// 91).
 function MealCandidate({
   number,
-  study,
+  kind,
   testID,
 }: {
   number: number | null;
-  study: boolean;
+  kind: ToneKind;
   testID?: string;
 }): ReactElement {
+  const { ink, soft } = kindTone[kind];
   return (
-    <View style={[styles.mealCandidate, study && styles.studyCandidate]} testID={testID}>
+    <View style={[styles.mealCandidate, { borderColor: ink, backgroundColor: soft }]} testID={testID}>
       {number === null ? null : (
-        <RoundNumber inside={MEAL_INSIDE} number={number} style={[styles.mealNumber, study && styles.studyNumber]} />
+        <RoundNumber inside={MEAL_INSIDE} number={number} style={[styles.mealNumber, { color: ink }]} />
       )}
     </View>
   );
@@ -135,17 +151,17 @@ function bookOf(testID: string | undefined): string | undefined {
   return testID?.replace(/:dot$/u, ':book');
 }
 
-function Dot({ role, number, meal = false, study = false, testID }: DotSymbol & { testID?: string }): ReactElement {
+function Dot(symbol: DotSymbol & { testID?: string }): ReactElement {
+  const { role, number, meal = false, study = false, testID } = symbol;
+  const kind = markTone(symbol);
   if (meal && role === 'candidate') {
-    return <MealCandidate number={number} study={study} testID={testID} />;
+    return <MealCandidate kind={kind} number={number} testID={testID} />;
   }
   const inside = (DOT_SIZES[role] ?? CANDIDATE_ROUND) - 2 * RING;
   const studyPick = study && role === 'pick';
+  const ground = role === 'pick' || role === 'candidate' ? { backgroundColor: kindTone[kind].ink } : null;
   return (
-    <View
-      style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick, studyPick && styles.studyPick]}
-      testID={testID}
-    >
+    <View style={[styles.dot, styles[role], ground]} testID={testID}>
       {studyPick && !meal ? (
         <View testID={bookOf(testID)}>
           <Icon color={color.onPrimary} name="bookOpen" size={STUDY_BOOK} />
@@ -190,10 +206,10 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 // own, at a spot another mark holds, carries its round inside, beside the spot, or the round alone when its minutes
 // give way (no `title`).
 function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { number, side, title, faded = false, clock = false, study = false } = label;
+  const { number, side, title, faded = false, clock = false, study, kind } = label;
   const round =
     number === null ? null : (
-      <Dot meal number={number} role="candidate" study={study} testID={partOf(testID, 'dot')} type="dot" />
+      <MealCandidate kind={markTone({ kind, meal: true, study })} number={number} testID={partOf(testID, 'dot')} />
     );
   if (round !== null && title === '') {
     return <View testID={testID}>{round}</View>;
@@ -283,9 +299,9 @@ const styles = StyleSheet.create({
     borderColor: color.surface,
     boxShadow: shadow.dot,
   },
-  pick: { width: PICK_DOT, height: PICK_DOT, backgroundColor: color.quest },
-  candidate: { width: CANDIDATE_DOT, height: CANDIDATE_DOT, backgroundColor: color.snuBlue },
-  dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.border },
+  pick: { width: PICK_DOT, height: PICK_DOT },
+  candidate: { width: CANDIDATE_DOT, height: CANDIDATE_DOT },
+  dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: kindTone.dropped.soft },
   next: { width: NEXT_SQUARE, height: NEXT_SQUARE, borderRadius: radius.sm, backgroundColor: color.snuBlue },
   stop: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.svcShuttle },
   kept: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.inkMuted },
@@ -313,8 +329,6 @@ const styles = StyleSheet.create({
   waiting: { backgroundColor: color.inkMuted },
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
-  mealPick: { backgroundColor: color.meal },
-  studyPick: { backgroundColor: color.svcStudy },
   mealCandidate: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -322,13 +336,8 @@ const styles = StyleSheet.create({
     height: CANDIDATE_ROUND,
     borderRadius: radius.full,
     borderWidth: MEAL_RIM,
-    borderColor: color.meal,
-    backgroundColor: color.mealSoft,
   },
-  mealNumber: { fontFamily: mapText.smallTitle.fontFamily, fontSize: MEAL_NUMBER, color: color.meal },
-  // A study answer's place (P10 ticket 17): the meal's round in the study colours.
-  studyCandidate: { borderColor: color.svcStudy, backgroundColor: color.svcStudySoft },
-  studyNumber: { color: color.svcStudy },
+  mealNumber: { fontFamily: mapText.smallTitle.fontFamily, fontSize: MEAL_NUMBER },
   capsule: {
     alignSelf: 'flex-start',
     alignItems: 'center',

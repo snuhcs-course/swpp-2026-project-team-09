@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -182,7 +183,7 @@ export function TimeRow({ start, end, endWrong, onStart, onEnd }: TimeRowProps):
 export function CrossingWarning({ lines }: { lines: readonly string[] }): ReactElement {
   return (
     <View accessibilityRole="summary" style={styles.warning}>
-      <Icon color={color.quest} name="alert" size={18} />
+      <Icon color={color.warning} name="alert" size={18} />
       <View style={styles.warningWords}>
         {lines.map((line) => (
           <Text key={line} style={styles.warningLine}>
@@ -269,11 +270,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: WARNING_LINE,
-    backgroundColor: color.questSoft,
+    backgroundColor: color.warningSoft,
   },
   warningWords: { flex: 1, gap: 2 },
   warningLine: { ...text.label, color: WARNING_INK },
-  warningHint: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.quest },
+  warningHint: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.warning },
   place: {
     flexDirection: 'row',
     alignItems: 'center',
