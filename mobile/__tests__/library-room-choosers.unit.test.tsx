@@ -84,6 +84,24 @@ describe('The room kind chooser before its counts', () => {
     expect(screen.queryByText(/빈 방 \d/u)).toBeNull();
     expect(cell(/^4층 6인실 4명부터/u)).toBeDisabled();
   });
+
+  // A kind that fits, whose count is the one to wait for (PR 653's review): 2층 6인실 for four people.
+  it.each([
+    ['not read at all', null],
+    ['on its way', new Map([['2F-group-6', 'pending' as const]])],
+  ])('leaves the count of a kind that fits empty while it is %s, and the kind to choose', async (_, counts) => {
+    await render(
+      <RoomKindChooser
+        counts={counts}
+        group={groupOf(STUDY_GROUP_TO_SEND)}
+        onChoose={jest.fn<void, [string]>()}
+        slot={SLOT}
+      />,
+    );
+
+    expect(cell(/^2층 6인실$/u)).toBeEnabled();
+    expect(within(cell(/^2층 6인실$/u)).queryByText(/빈 방|—/u)).toBeNull();
+  });
 });
 
 const ROOMS = freeRooms(roomList.BookingTimeList, [], { date: '2026-11-02', start: '15:00', minutes: 60 });
