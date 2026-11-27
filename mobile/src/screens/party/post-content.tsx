@@ -5,7 +5,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { now } from '@/clock';
 import { Avatar, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
@@ -44,7 +44,7 @@ interface InfoLineProps {
   children: string;
   // The lines it may take before "…"; left out, as many as it needs.
   lines?: number;
-  // The event of a 파티 for one, in blue. It opens nothing yet.
+  // The event of a 파티 for one, in blue. In the room it opens the event's sheet.
   event?: boolean;
   // A card's smaller, muted words, or the 모집글's.
   small?: boolean;
@@ -65,6 +65,25 @@ export function InfoLine({ icon, children, lines, event = false, small = false }
   );
 }
 
+// The Leader's row: the face, the name with `role` after it, and the department with when the post went up. The room
+// draws it without a role.
+export function PostHost({ name, role, line }: { name: string; role?: string; line: string }): ReactElement {
+  return (
+    <View style={styles.host}>
+      <Avatar name={name} />
+      <View style={styles.hostWords}>
+        <Text style={styles.hostName}>{role === undefined ? name : `${name} · ${role}`}</Text>
+        <Text style={styles.hostLine}>{line}</Text>
+      </View>
+    </View>
+  );
+}
+
+// The grey box of the time, the place and the rest, each an `InfoLine`.
+export function InfoBox({ children }: { children: ReactNode }): ReactElement {
+  return <View style={styles.box}>{children}</View>;
+}
+
 // The 모집글: the board and the fill, the title, the Leader, a grey box with the time, the place, the members and the
 // event, the description and 추천 이유.
 export function PostContent({ post, reasons }: PostDetailView): ReactElement {
@@ -76,14 +95,12 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
           {post.title}
         </Text>
       </View>
-      <View style={styles.host}>
-        <Avatar name={post.leader.name} />
-        <View style={styles.hostWords}>
-          <Text style={styles.hostName}>{`${post.leader.name} · 모집자`}</Text>
-          <Text style={styles.hostLine}>{`${post.leader.department} · ${agoWords(post.createdAt, now())}`}</Text>
-        </View>
-      </View>
-      <View style={styles.box}>
+      <PostHost
+        line={`${post.leader.department} · ${agoWords(post.createdAt, now())}`}
+        name={post.leader.name}
+        role="모집자"
+      />
+      <InfoBox>
         <InfoLine icon="clock">{post.time}</InfoLine>
         <InfoLine icon="pin">{post.place}</InfoLine>
         <InfoLine icon="users">{post.members}</InfoLine>
@@ -92,7 +109,7 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
             {post.event}
           </InfoLine>
         )}
-      </View>
+      </InfoBox>
       {post.description === '' ? null : <Text style={styles.description}>{post.description}</Text>}
       {reasons === null ? null : <PostReasons reasons={reasons} />}
     </View>

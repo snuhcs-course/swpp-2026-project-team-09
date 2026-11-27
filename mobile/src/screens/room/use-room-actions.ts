@@ -10,6 +10,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -52,8 +53,8 @@ const ROOM_KEYS: readonly QueryKey[] = [
 export type LeaveFirst = boolean | 'end';
 
 export interface RoomActions {
-  // `others` are the other Holders, told of it; `leaveFirst` gets the User out of the other Party first.
-  openParty: (quest: Quest, others: number, leaveFirst: LeaveFirst) => Promise<void>;
+  // `leaveFirst` gets the User out of the other Party first.
+  openParty: (quest: Quest, leaveFirst: LeaveFirst) => Promise<void>;
   joinParty: (partyId: string, leaveFirst: LeaveFirst) => Promise<void>;
   declineParty: (partyId: string) => void;
   leaveParty: () => Promise<void>;
@@ -63,8 +64,6 @@ export interface RoomActions {
   addSubQuest: (questId: string, content: SubQuestContent, key: string) => Promise<boolean>;
   editSubQuest: (questId: string, subQuestId: string, content: SubQuestContent) => Promise<boolean>;
   cancelSubQuest: (questId: string, subQuest: SubQuest) => Promise<void>;
-  // Marks the Sub Quest done for the User, or unmarks one done.
-  toggleDone: (questId: string, subQuest: SubQuest) => Promise<void>;
   accept: (questId: string, request: JoinRequest) => Promise<void>;
   decline: (questId: string, request: JoinRequest) => Promise<void>;
   cancelInvitation: (questId: string, invitation: JoinRequest) => Promise<void>;
@@ -151,9 +150,10 @@ function showSharing(queryClient: QueryClient, on: boolean): void {
   queryClient.setQueryData<MyParty | null>(MY_PARTY_KEY, (party) => party && { ...party, sharing: on });
 }
 
-// Opens the Quest's Party, or enters the one another Holder opened at the same moment.
+// Opens the Quest's Party, or enters the one another Holder opened at the same moment. It sends no push: the other
+// Holders see it in their 알림 list.
 function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: Tools): RoomActions['openParty'] {
-  return async (quest, others, leaveFirst) => {
+  return async (quest, leaveFirst) => {
     let ended: string | null = null;
     try {
       ended = await leaveIf(queryClient, leaveFirst);
@@ -161,7 +161,7 @@ function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: To
         queryClient,
         await apiClient.openParty({ title: quest.title, capacity: 8, joinPolicy: 'closed', questId: quest.id }),
       );
-      showToast(others > 0 ? `파티를 활성화했어요 · 멤버 ${others}명에게 알림` : '파티를 활성화했어요');
+      showToast('파티를 활성화했어요');
     } catch (error) {
       const running = runningPartyOf(error);
       if (running === null) {
@@ -209,7 +209,7 @@ function partyActions(tools: Tools): PartyActions {
   };
 }
 
-type PlanActions = Pick<RoomActions, 'addSubQuest' | 'editSubQuest' | 'cancelSubQuest' | 'toggleDone'>;
+type PlanActions = Pick<RoomActions, 'addSubQuest' | 'editSubQuest' | 'cancelSubQuest'>;
 
 function planActions({ run }: Tools): PlanActions {
   return {
@@ -218,12 +218,6 @@ function planActions({ run }: Tools): PlanActions {
       run(() => apiClient.editSubQuest(questId, subQuestId, content), null),
     cancelSubQuest: async (questId, { id }) => {
       await run(() => apiClient.cancelSubQuest(questId, id), null);
-    },
-    toggleDone: async (questId, { id, done }) => {
-      await run(
-        () => (done ? apiClient.unmarkSubQuestDone(questId, id) : apiClient.markSubQuestDone(questId, id)),
-        null,
-      );
     },
   };
 }

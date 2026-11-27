@@ -4,9 +4,10 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useToast } from '@/design-system';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { type MasterSwitch, useMasterSwitch } from '@/features/sharing/use-master-switch';
@@ -18,7 +19,8 @@ const NEEDS_PERMISSION = '위치 권한을 허용해야 공유할 수 있어요'
 
 export interface SharingSwitch {
   on: boolean;
-  change: (on: boolean) => void;
+  // `then` runs once the switch is on, after the explanation and the prompt where they come first.
+  change: (on: boolean, then?: () => void) => void;
   // The explanation before the location prompt, as on the map, and its two answers. `blocked`: it leads to the phone's
   // settings instead.
   explaining: boolean;
@@ -47,7 +49,7 @@ function useOffQuestion({ turn, markOffAsked }: MasterSwitch): Pick<SharingSwitc
       setAskingOff(false);
       markOffAsked();
       if (answer === 'off') {
-        turn(false, '껐어요 · 친구에게 알림은 가지 않아요');
+        void turn(false, '껐어요 · 친구에게 알림은 가지 않아요');
       } else if (answer === 'building') {
         changes.lowerLevels('building').then(
           () => {
@@ -62,38 +64,36 @@ function useOffQuestion({ turn, markOffAsked }: MasterSwitch): Pick<SharingSwitc
   };
 }
 
-// The switch "위치 공유". It is turned on only with the location permission, which the map's explanation and
-// the system's prompt ask for first; without it the switch stays off. It is turned off at once once the app has asked.
-export function useSharingSwitch(): SharingSwitch {
-  const master = useMasterSwitch();
-  const { on, turn, offAsked } = master;
-  const { askOff, ...question } = useOffQuestion(master);
+type TurnOn = (then: (() => void) | null) => void;
+
+// The explanation before the location prompt, and the prompt, before the switch is turned on. What waits for the
+// switch runs once it is on, and is dropped with a refusal.
+function useExplanation(turnOn: TurnOn): Pick<SharingSwitch, 'explaining' | 'blocked' | 'allow' | 'later'> & {
+  explain: (then: (() => void) | null) => void;
+} {
   const { permission, ask } = usePosition();
   const showToast = useToast();
   const [explaining, setExplaining] = useState(false);
+  const after = useRef<(() => void) | null>(null);
   const blocked = permission === 'blocked';
   return {
-    on,
-    change: (next) => {
-      if (next && permission !== 'granted') {
-        setExplaining(true);
-      } else if (!next && !offAsked) {
-        askOff();
-      } else {
-        turn(next);
-      }
-    },
     explaining,
     blocked,
+    explain: (then) => {
+      after.current = then;
+      setExplaining(true);
+    },
     allow: () => {
       setExplaining(false);
+      const then = after.current;
+      after.current = null;
       if (blocked) {
         void openLocationSettings();
         return;
       }
       void ask().then((answer) => {
         if (answer === 'granted') {
-          turn(true);
+          turnOn(then);
         } else {
           showToast(NEEDS_PERMISSION);
         }
@@ -101,8 +101,41 @@ export function useSharingSwitch(): SharingSwitch {
     },
     later: () => {
       setExplaining(false);
+      after.current = null;
       showToast(NEEDS_PERMISSION);
     },
+  };
+}
+
+// The switch "위치 공유". It is turned on only with the location permission, which the map's explanation and
+// the system's prompt ask for first; without it the switch stays off. It is turned off at once once the app has asked.
+export function useSharingSwitch(): SharingSwitch {
+  const master = useMasterSwitch();
+  const { on, turn, offAsked } = master;
+  const { askOff, ...question } = useOffQuestion(master);
+  const granted = usePosition().permission === 'granted';
+  const turnOn: TurnOn = (then) => {
+    void turn(true).then((taken) => {
+      if (taken) {
+        then?.();
+      }
+    });
+  };
+  const { explain, ...explanation } = useExplanation(turnOn);
+  return {
+    on,
+    change: (next, then) => {
+      if (next && !granted) {
+        explain(then ?? null);
+      } else if (!next && !offAsked) {
+        askOff();
+      } else if (next) {
+        turnOn(then ?? null);
+      } else {
+        void turn(false);
+      }
+    },
+    ...explanation,
     ...question,
   };
 }

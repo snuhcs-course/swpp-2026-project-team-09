@@ -2,23 +2,26 @@
  * AI-generated with Claude
  *
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { act } from '@testing-library/react-native';
-import { router } from 'expo-router';
+import { within } from '@testing-library/react-native';
 import type { Quest } from '@/api/types';
+import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { pass, screen } from './support/app';
+import { screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
+import { openAt } from './support/party';
 import { answerRoom, HIS_PICNIC, openRoom, PICNIC } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// Marking the room's Sub Quests done and undoing the mark, and where the Quest is listed then, against the fake main
-// server.
+// 일정's grey and orange against the fake main server (P06 ticket 19): a step is grey once cancelled, past its end or
+// passed by a later step's start, and the first other one is orange. A Holder's mark of done is no part of it, the
+// room has no ✓, and the time and place box and the 파티 form follow the orange step.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -35,7 +38,12 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const [MEET] = PICNIC.subQuests;
-const STEPS = `/quests/${PICNIC.id}/sub-quests`;
+// 18:10 in Korea: 피크닉 started at 18:00, so the meeting before it, which has no end, is behind.
+const DURING_PICNIC = new Date('2026-10-06T09:10:00.000Z');
+const HELP = [
+  '일정을 추가·수정·삭제하면 다른 멤버에게 알림이 가요',
+  '행사를 골라 만든 일정은 행사를 따라가서 고칠 수 없어요',
+];
 
 let server: FakeServer;
 
@@ -53,66 +61,55 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('a Sub Quest done', () => {
-  it('shows a Sub Quest done faded, and unmarks it on a press', async () => {
-    let done = true;
-    const read = (): Quest => ({
+function steps(): ReturnType<typeof within>[] {
+  return screen.getAllByTestId('plan-step').map((step) => within(step));
+}
+
+describe("일정's grey and orange", () => {
+  it('keeps a step the User marked done orange, with no ✓, and its ? opens the help', async () => {
+    const marked: Quest = {
       ...HIS_PICNIC,
-      subQuests: HIS_PICNIC.subQuests.map((one) => (one.id === MEET?.id ? { ...one, done } : one)),
-    });
-    answerRoom(server, read());
-    server.on(`GET /quests/${PICNIC.id}`, () => ({ status: 200, body: read() }));
-    server.on(`DELETE ${STEPS}/${MEET?.id}/done`, () => {
-      done = false;
-      return { status: 204 };
-    });
-    const user = await openRoom(HIS_PICNIC);
-    const [first] = screen.getAllByTestId('plan-step');
+      subQuests: HIS_PICNIC.subQuests.map((one) => (one.id === MEET?.id ? { ...one, done: true } : one)),
+    };
+    answerRoom(server, marked);
+    const user = await openRoom(marked);
 
-    expect(first).toHaveStyle({ opacity: 0.45 });
-    expect(screen.getAllByRole('button', { name: '완료로 표시' })).toHaveLength(1);
-    await user.press(screen.getByRole('button', { name: '완료 취소' }));
-    await pass(500);
-
-    expect(server.received(`DELETE ${STEPS}/${MEET?.id}/done`)).toHaveLength(1);
+    const [first, second] = steps();
     expect(screen.getAllByTestId('plan-step')[0]).not.toHaveStyle({ opacity: 0.45 });
+    expect(first?.getByText('17:40')).toHaveStyle({ color: color.party });
+    expect(second?.getByText('18:00–20:00')).not.toHaveStyle({ color: color.party });
+    expect(screen.queryByRole('button', { name: '완료로 표시' })).toBeNull();
     expect(screen.queryByRole('button', { name: '완료 취소' })).toBeNull();
-    expect(screen.getAllByRole('button', { name: '완료로 표시' })).toHaveLength(2);
-  });
-});
 
-describe('every Sub Quest done', () => {
-  it("keeps the Quest in 내 파티 and the main screen's Quest list once every Sub Quest is done", async () => {
-    const done = new Set<string>();
-    const read = (): Quest => ({
-      ...PICNIC,
-      subQuests: PICNIC.subQuests.map((one) => ({ ...one, done: done.has(one.id) })),
-    });
-    server.on('GET /quests', () => ({ status: 200, body: [read()] }));
-    server.on(`GET /quests/${PICNIC.id}`, () => ({ status: 200, body: read() }));
-    for (const { id } of PICNIC.subQuests) {
-      server.on(`POST ${STEPS}/${id}/done`, () => {
-        done.add(id);
-        return { status: 204 };
-      });
+    await user.press(screen.getByRole('button', { name: '일정 도움말' }));
+    for (const line of HELP) {
+      expect(screen.getByText(line)).toBeVisible();
     }
-    const user = await openRoom();
+    // The lines the user took out on 2026-11-27.
+    expect(screen.queryByText(/도보 시간과 도착 알림에 쓰여요$/u)).toBeNull();
+    expect(screen.queryByText('내 파티 목록의 시간과 장소도 일정에서 가져와요')).toBeNull();
+  });
 
-    await user.press(screen.getAllByRole('button', { name: '완료로 표시' })[0]);
-    await pass(500);
-    await user.press(screen.getByRole('button', { name: '완료로 표시' }));
-    await pass(500);
-    expect(screen.getAllByRole('button', { name: '완료 취소' })).toHaveLength(2);
-    await act(() => {
-      router.navigate('/party?tab=mine');
-    });
-    await pass(500);
-    expect(screen.getByRole('button', { name: PICNIC.title })).toBeVisible();
-    await act(() => {
-      router.navigate('/quests');
-    });
-    await pass(500);
+  it('greys a step without an end once the next one starts, and the time and place box follows', async () => {
+    jest.setSystemTime(DURING_PICNIC);
+    answerRoom(server, HIS_PICNIC);
+    await openRoom(HIS_PICNIC);
 
-    expect(screen.getByRole('button', { name: new RegExp(PICNIC.title, 'u') })).toBeVisible();
+    const [first, second] = steps();
+    expect(screen.getAllByTestId('plan-step')[0]).toHaveStyle({ opacity: 0.45 });
+    expect(first?.getByText('17:40')).not.toHaveStyle({ color: color.party });
+    expect(second?.getByText('18:00–20:00')).toHaveStyle({ color: color.party });
+    expect(screen.getByText('오늘 18:00')).toBeVisible();
+    expect(screen.queryByText('오늘 17:40')).toBeNull();
+  });
+
+  it('has the 파티 form edit the orange step', async () => {
+    jest.setSystemTime(DURING_PICNIC);
+
+    await openAt(`/party-form?questId=${PICNIC.id}`);
+
+    expect(screen.getByRole('header', { name: '모집글 수정' })).toBeVisible();
+    expect(screen.getByText('오늘 18:00')).toBeVisible();
+    expect(screen.queryByText('오늘 17:40')).toBeNull();
   });
 });

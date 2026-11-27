@@ -5,6 +5,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { JoinPolicy, Prisma, User } from '../../generated/prisma/client.js';
@@ -50,6 +51,8 @@ export interface VisiblePartyDto {
   holdsQuest: boolean;
   // The reader's Friends among the members, in the order they entered.
   friends: { id: string; name: string; department: string }[];
+  // Every member, in the order they entered, only when the reader holds the Party's Quest.
+  members?: { id: string; name: string }[];
 }
 
 const PARTY_QUEST_INCLUDE = {
@@ -111,6 +114,7 @@ export function toPartyDto(party: StoredParty, userId: string, visible: Readonly
 
 // As the reader of visiblePartyInclude, a Friend of the Users `friendIds`, reads it.
 export function toVisiblePartyDto(party: VisibleParty, friendIds: ReadonlySet<string>): VisiblePartyDto {
+  const holdsQuest = (party.quest?.holders.length ?? 0) > 0;
   return {
     id: party.id,
     title: party.title,
@@ -119,8 +123,9 @@ export function toVisiblePartyDto(party: VisibleParty, friendIds: ReadonlySet<st
     joinPolicy: party.joinPolicy,
     quest: questOf(party),
     leader: { id: party.leader.id, name: party.leader.name },
-    holdsQuest: (party.quest?.holders.length ?? 0) > 0,
+    holdsQuest,
     friends: party.members.flatMap(({ user }) => (friendIds.has(user.id) ? [user] : [])),
+    ...(holdsQuest ? { members: party.members.map(({ user }) => ({ id: user.id, name: user.name })) } : {}),
   };
 }
 
