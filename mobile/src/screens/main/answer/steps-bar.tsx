@@ -164,6 +164,9 @@ export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarPro
 }
 
 const styles = StyleSheet.create({
+  // The stage under the status bar, which the top's cards are drawn within: gone up at stop 0, nothing of them shows
+  // behind the status bar but the strip below it (P01 ticket 22).
+  stage: { ...StyleSheet.absoluteFill, overflow: 'hidden', pointerEvents: 'box-none' },
   bar: {
     position: 'absolute',
     right: ANSWER_TOP.side,
@@ -210,7 +213,8 @@ interface StepsTopProps {
 // The bar of several requests, and under it, while the step shown is the reply's Plan, that Plan's bar with its
 // handles and its meal's tick, as on a reply to one request (PR 462's review). The height told is what stands at the top.
 // The top folds in stops (P01 ticket 22, `top-stops.tsx`): the Plan's bar folds behind the steps card to its grip
-// strip, then takes the steps card up with it to the stage's top; both stay mounted, moved on the UI thread. A step with
+// strip, then takes the steps card up with it to the stage's top, out of sight above it; both stay mounted, moved on
+// the UI thread. A step with
 // no Plan's bar (a seat or a room) has a strip of its own in that place (`steps-strip.tsx`), which folds the same way
 // and opens nothing downward.
 export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): ReactElement | null {
@@ -224,7 +228,7 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
     return null;
   }
   return (
-    <>
+    <View style={styles.stage} testID="steps-top">
       <StepsBar active={activeStep} onHeight={onSteps} onStep={setActiveStep} steps={steps.steps} stops={stops} />
       {withPlan ? (
         <PlanBar
@@ -240,7 +244,7 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
       ) : stops === undefined ? null : (
         <StepsStrip stops={stops} />
       )}
-    </>
+    </View>
   );
 }
 

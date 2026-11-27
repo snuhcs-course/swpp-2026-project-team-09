@@ -138,6 +138,13 @@ function highHeight(): number {
   return Number(styleOf(screen.getByTestId('answer-card-content')).height);
 }
 
+// The emulator, 2026-11-28: the stage starts under the status bar, and the steps card gone up above it at stop 0 showed
+// behind the status bar. The top's cards are drawn within the stage, which clips above its top.
+function expectWithinStage(): void {
+  expect(styleOf(screen.getByTestId('steps-top'))).toMatchObject({ top: 0, overflow: 'hidden' });
+  expect(stepsCard().parent?.props.testID).toBe('steps-top');
+}
+
 // Partitions: the fold by the grip's steps, by a press, by a drag; the stops in order and back; a long pull.
 describe('the top of several requests', () => {
   it('folds the time card wholly behind the steps card, its strip under the steps card and nothing above it', async () => {
@@ -168,6 +175,7 @@ describe('the top of several requests', () => {
     expect(shiftOf(stepsCard())).toBe(-stepsBottom());
     expect(shiftOf(frame())).toBe(-stepsBottom());
     expect(shiftOf(timeCard())).toBe(-BEHIND);
+    expectWithinStage();
 
     await pressGrip();
     expect(shiftOf(stepsCard())).toBe(0);
