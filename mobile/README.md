@@ -1080,7 +1080,10 @@ round, and a member late (`late`, a clock) in the colour of the requests to join
 starts with "N분 늦어요". The Leader's answer to the User's request to join is kept as an acceptance's: accepted
 (`join-accepted`, a group), which opens the party's card, and declined (`join-declined`, a person), whose address
 `/main?card=sent-requests:<questId>` ends at 보낸 신청 under 파티's 초대. The Leader's own Notification of the requests
-waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신청 {n}명" below. A kind
+waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신청 {n}명" below. A 파티 gone is kept on the navy round:
+ended (`party-ended`, a group), the User removed (`party-removed`, a person), and a request or an invitation that
+waited on it (`join-cancelled`, `invitation-cancelled`). Their address, `/main?card=party-gone:<questId>`, is on no
+map, and pressing it says "이미 없는 파티예요". A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
@@ -1114,9 +1117,11 @@ It reads the Quest (`GET /quests/:questId`), the User's Party and the listed Par
 feature, `room-adapter.ts`), and closes once the main server no longer answers the Quest, after a removal, a drop on
 another phone or the Leader's end. `GoneQuestsWatch` (`src/features/quests/gone-watch.tsx`), in the signed-in layout,
 tells it on whatever screen is shown: a Quest that was in `GET /quests` and is not when the list comes again, and that
-`GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), says "{title} 파티에서 빠졌어요" once. A Quest that only left the
+`GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), is told once: "{title} 파티에서
+내보내졌어요" when `GET /quest-removals` lists the Quest, "{title} 파티가 없어졌어요" when the Quest is not found
+otherwise, and "{title} 파티에서 빠졌어요" when the main server cannot say. A Quest that only left the
 list because all its Sub Quests ended, a Class Quest, and the User's own 나가기 or 파티 없애기 on this phone, which
-mark the Quest while they run, are not told; nor is what happened before the app started. From the top:
+mark the Quest while they run, are not told; what happened before the app started is told by its Notification in 알림. From the top:
 
 - in the app bar, "모집글 보기" for an Open or Approval Quest, which opens its post, and "수정" for the Leader, which
   opens 파티 만들기 in its edit mode;

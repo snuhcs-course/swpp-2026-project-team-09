@@ -14,7 +14,7 @@ import { withCopula, withSubject } from '../assistant/gathering/answer-words.js'
 import { koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
-import { type NotificationWords, type Told } from './notification.js';
+import { type GoneKind, type NotificationWords, type PartyGone, type Told } from './notification.js';
 
 const ANSWERS = { accepted: '수락했어요', declined: '못 온대요' } as const;
 
@@ -179,6 +179,34 @@ function joinWords(told: Of<'join-accepted'> | Of<'join-declined'> | Of<'join-as
   };
 }
 
+// A 파티 gone opens the card `party-gone`, which no map holds: the app says the 파티 is gone. A member's ring; a request
+// or an invitation that waited is only in 알림.
+const GONE_TITLES: Record<GoneKind, string> = {
+  'party-ended': '파티가 없어졌어요',
+  'party-removed': '파티에서 내보내졌어요',
+  'join-cancelled': '파티가 없어져 신청이 취소됐어요',
+  'invitation-cancelled': '파티가 없어져 초대가 취소됐어요',
+};
+
+function isGone(told: Told): told is PartyGone {
+  return Object.hasOwn(GONE_TITLES, told.kind);
+}
+
+function goneWords(told: PartyGone): NotificationWords {
+  const ended = told.kind === 'party-ended';
+  const rings = ended || told.kind === 'party-removed';
+  const line = ended ? `${told.leaderName}님이 파티를 없앴어요` : `${told.leaderName}님의 파티`;
+  return {
+    title: `${told.questTitle} ${GONE_TITLES[told.kind]}`,
+    ahead: null,
+    line,
+    card: { kind: 'party-gone', id: told.questId },
+    about: null,
+    rings,
+    body: rings ? (ended ? `${line}.` : `${told.leaderName}님이 파티에서 내보냈어요.`) : null,
+  };
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
@@ -189,6 +217,9 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
   }
   if (told.kind === 'join-accepted' || told.kind === 'join-declined' || told.kind === 'join-asked') {
     return joinWords(told);
+  }
+  if (isGone(told)) {
+    return goneWords(told);
   }
   if (told.kind === 'leave-by') {
     return {
