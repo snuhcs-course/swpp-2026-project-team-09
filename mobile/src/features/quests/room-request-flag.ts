@@ -51,9 +51,10 @@ export function requestWords({ title, day, time }: RequestFlag): string {
   return `${title} ${day} ${time}`;
 }
 
-// The lists' line under the Quest's title: "내일 15:00 · 동의 1/3 · 기다리는 중".
-export function requestLine({ day, time, state }: RequestFlag): string {
-  return `${day} ${time} · ${state}`;
+// The lists' line under the Quest's title: "내일 15:00 · 동의 1/3 · 기다리는 중", or "15:00 · 동의 1/3 · 기다리는 중" where
+// the list already says the day (#662's pictures).
+export function requestLine({ day, time, state }: RequestFlag, withDay = true): string {
+  return withDay ? `${day} ${time} · ${state}` : `${time} · ${state}`;
 }
 
 // "관정 그룹스터디룸 15:00" over "내일 · 동의 1/3 · 기다리는 중".

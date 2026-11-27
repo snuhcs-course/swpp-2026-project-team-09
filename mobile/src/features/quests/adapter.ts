@@ -44,6 +44,8 @@ export interface QuestRowView {
   title: string;
   // "14:00 · 301동 118호", or for a booking party whose room request is out "오늘 15:00 · 동의 1/3 · 기다리는 중".
   meta: string;
+  // A booking party's request with no day word, for the Quest list screen, whose rows sit under day headings.
+  requestLine?: string;
   // A booking party whose room request of studying together is out: a press opens that answer again (P10 ticket 13).
   reopens?: true;
   // "301동 118호", or "" for a Quest without a place.
@@ -219,6 +221,10 @@ function meta(subQuest: SubQuest | null, now: Date): string {
   return [start === null ? '' : `${day}${koreaClock(start)}`, label].filter((part) => part !== '').join(' · ');
 }
 
+function today(start: string | null, now: Date): boolean {
+  return start !== null && koreaDaysAfter(now, new Date(start)) === 0;
+}
+
 // The frames' words for a kind on the whole screen: a class, a Party that others may join, and anything else, with
 // whom the User holds it.
 function kindLabel(tone: QuestRowTone, quest: Quest, meId: string): string {
@@ -276,7 +282,8 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
         : sharedKicker(quest, partyOf(quest, myParty, parties) !== null, meId),
       label: kindLabel(tone, quest, meId),
       title: quest.title,
-      meta: request === null ? meta(subQuest, now) : requestLine(request),
+      // The map's list says no day for today, as `meta` does.
+      meta: request === null ? meta(subQuest, now) : requestLine(request, !today(start, now)),
       place: subQuest?.place?.label ?? '',
       time: start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),
@@ -285,6 +292,7 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
     };
     if (request !== null) {
       row.reopens = true;
+      row.requestLine = requestLine(request, false);
     }
     return row;
   });

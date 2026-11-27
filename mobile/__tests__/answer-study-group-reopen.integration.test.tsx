@@ -154,16 +154,16 @@ describe('The address of a booking party with its request out', () => {
 // The row's line, against the map's flag and ticket 13. Partitions: the Quest list on the whole screen; the 파티 tab's
 // card and the map's list are in room-request-flag.unit.test.ts.
 describe("A booking party's row with its request out on the Quest list screen", () => {
-  it('says the request in its line, its day and time within it, as the map does', async () => {
+  it('says the request in its line, its time within it and no day word under its day heading', async () => {
     answerGathering();
     const user = await openMain();
     await user.press(screen.getByRole('button', { name: FULL_SCREEN }));
     await pass(0);
 
     const row = screen.getByRole('button', {
-      name: /관정 그룹스터디룸 6인실 예약 · 내일 15:00 · 동의 1\/3 · 기다리는 중$/u,
+      name: /관정 그룹스터디룸 6인실 예약 · 15:00 · 동의 1\/3 · 기다리는 중$/u,
     });
-    expect(within(row).getByText('내일 15:00 · 동의 1/3 · 기다리는 중')).toBeVisible();
+    expect(within(row).getByText('15:00 · 동의 1/3 · 기다리는 중')).toBeVisible();
     expect(within(row).queryByText('15:00')).toBeNull();
   });
 });

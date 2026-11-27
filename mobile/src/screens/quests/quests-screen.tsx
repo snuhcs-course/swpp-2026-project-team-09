@@ -33,11 +33,11 @@ import { now } from '@/clock';
 
 type Filter = 'all' | 'class' | 'party';
 
-// A booking party whose room request is out says the request in its line instead of its place, its day and time
-// within it, as its row in the map's list does (P10 ticket 13).
+// A booking party whose room request is out says the request in its line instead of its place, its time within it
+// and no day word, since its row sits under its day's heading (P10 ticket 13, #662's pictures).
 function QuestRow({ row, onPress }: { row: QuestRowView; onPress: () => void }): ReactElement {
   const request = row.reopens === true;
-  const line = request ? row.meta : row.place;
+  const line = request ? (row.requestLine ?? row.meta) : row.place;
   const time = request ? '' : row.time;
   return (
     <ListRow

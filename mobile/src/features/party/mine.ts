@@ -185,6 +185,7 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
           declined,
         );
   const request = past ? null : requestFlagOf(quest, start, now);
+  const group = past ? PAST : groupOf(live, strip, start, now);
   return {
     questId: quest.id,
     title: quest.title,
@@ -192,13 +193,19 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
     tag: tagOf(quest),
     leads: quest.leader?.id === meId,
     count: countOf(quest, meId),
-    time: request === null ? (start === null ? '시간 미정' : whenWords(start, now)) : requestLine(request),
+    // Under a heading that says the day (오늘, 내일) the request's line says none (#662's pictures).
+    time:
+      request === null
+        ? start === null
+          ? '시간 미정'
+          : whenWords(start, now)
+        : requestLine(request, group !== '오늘' && group !== '내일'),
     place: placeOf(next?.place?.label ?? ''),
     event: quest.globalEvent?.title ?? null,
     ...(request === null ? {} : { reopens: true }),
     live,
     strip,
-    group: past ? PAST : groupOf(live, strip, start, now),
+    group,
     start: start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime(),
     waiting: past ? 0 : quest.waitingJoinRequests,
     past,

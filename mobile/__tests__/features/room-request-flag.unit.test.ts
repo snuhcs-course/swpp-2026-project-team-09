@@ -117,12 +117,29 @@ function mine(party: Quest): ReturnType<typeof toMineCards>[number] | undefined 
   return toMineCards({ quests: [party], myParty: null, parties: [], declined: [], past: [], meId: ME.id, now: NOW })[0];
 }
 
-describe("A booking party's row", () => {
-  it('says when and the consents in the 파티 tab, and opens the answer again', () => {
+// Partitions, from #662's emulator pictures: under a heading that says the day (오늘, 내일) or one that does not
+// (이번 주); a list that says no day. Expected values: no day word where the list already says the day.
+describe("A booking party's card on the 파티 tab", () => {
+  it("says the time and the consents under the 파티 tab's 내일 heading, with no day word, and opens the answer again", () => {
     const row = mine(bookingParty(GATHERING));
 
-    expect(row?.time).toBe('내일 15:00 · 동의 1/3 · 기다리는 중');
+    expect(row?.group).toBe('내일');
+    expect(row?.time).toBe('15:00 · 동의 1/3 · 기다리는 중');
     expect(row?.reopens).toBe(true);
+  });
+
+  it("says no day word under the 파티 tab's 오늘 heading either", () => {
+    const row = mine(bookingParty(GATHERING, '2026-10-06T15:00:00+09:00'));
+
+    expect(row?.group).toBe('오늘');
+    expect(row?.time).toBe('15:00 · 동의 1/3 · 기다리는 중');
+  });
+
+  it('keeps the day under a heading that does not say it', () => {
+    const row = mine(bookingParty(GATHERING, '2026-10-09T15:00:00+09:00'));
+
+    expect(row?.group).toBe('이번 주');
+    expect(row?.time).toBe('10월 9일 (금) 15:00 · 동의 1/3 · 기다리는 중');
   });
 
   it('says when and where once booked, and opens its room', () => {
@@ -131,17 +148,29 @@ describe("A booking party's row", () => {
     expect(row?.time).not.toContain('동의');
     expect(row?.reopens).toBeUndefined();
   });
+});
 
-  it("says the time and the consents in the map's Quest list today, and opens the answer again", () => {
-    const [row] = toQuestRows({
-      quests: [bookingParty(GATHERING, '2026-10-06T15:00:00+09:00')],
-      myParty: null,
-      parties: [],
-      meId: ME.id,
-      now: NOW,
-    });
+describe("A booking party's row in the Quest lists", () => {
+  it("says the time and the consents with no day word in the map's Quest list today, and opens the answer again", () => {
+    const [row] = rows(bookingParty(GATHERING, '2026-10-06T15:00:00+09:00'));
 
-    expect(row?.meta).toBe('오늘 15:00 · 동의 1/3 · 기다리는 중');
+    expect(row?.meta).toBe('15:00 · 동의 1/3 · 기다리는 중');
     expect(row?.reopens).toBe(true);
   });
+
+  it("says its day in the map's Quest list on another day, as the list's other rows do", () => {
+    const [row] = rows(bookingParty(GATHERING));
+
+    expect(row?.meta).toBe('내일 15:00 · 동의 1/3 · 기다리는 중');
+  });
+
+  it('gives the Quest list screen, whose rows sit under day headings, its line with no day word', () => {
+    const [row] = rows(bookingParty(GATHERING));
+
+    expect(row?.requestLine).toBe('15:00 · 동의 1/3 · 기다리는 중');
+  });
 });
+
+function rows(party: Quest): ReturnType<typeof toQuestRows> {
+  return toQuestRows({ quests: [party], myParty: null, parties: [], meId: ME.id, now: NOW });
+}
