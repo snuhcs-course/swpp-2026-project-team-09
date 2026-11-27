@@ -30,3 +30,8 @@ Native files: none. Releases: an app OTA update, only after the Production serve
 - **The step's button:** `stepActionOf` takes, for a Plan step whose Plan is a group study room, the act its card tells (`libraryActOf`), as the answer alone does; `planActionOf` leaves that Plan to its card.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 20 minutes (an estimate), in one session, from 22:01 to 22:20 KST, right after ticket 15's pull request. That includes three runs of the new integration test: the steps dropped, then the button missing, then passing.
+- Tokens: input 118 uncached, with cache reads 13,703,518 and cache writes 69,206; output 33,768. No subagents.
