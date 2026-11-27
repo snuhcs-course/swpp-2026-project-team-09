@@ -6,6 +6,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useLocalSearchParams } from 'expo-router';
@@ -114,10 +115,15 @@ function QuestRow({ row, first, last }: QuestRowProps): ReactElement {
 }
 
 // What a press on a row does. A class's row brings the map to its place at the "names" level, closes an open card
-// as the frame does, and says the class and the place. Any other row opens the Quest's room.
+// as the frame does, and says the class and the place. A booking party's row whose room request is out opens that
+// answer again by the party's address (P10 ticket 13). Any other row opens the Quest's room.
 function usePress({ map, selection }: Pick<QuestListProps, 'map' | 'selection'>): (row: QuestRowView) => void {
   const showToast = useToast();
   return (row) => {
+    if (row.reopens === true) {
+      router.setParams({ card: `party:${row.id}` });
+      return;
+    }
     if (row.kind !== 'class') {
       router.push(`/room/${row.id}`);
       return;

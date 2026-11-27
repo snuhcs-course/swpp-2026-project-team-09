@@ -20,6 +20,7 @@ Native files: none. Releases: an app OTA update, only after the Production serve
 - [ ] `ANSWER_CAPABILITIES` has `study-group` and not `study-plan`. (Unit test.)
 - [ ] "같이 공부할 자리 있어?" gets the group answer from the mock server. "공부할 자리 있어?" alone still gets today's seat ticket. (Integration test.)
 - [ ] The Production server's capability list includes `study-group` before the OTA (checked at the release).
+- [ ] A group answer shown as one step of several requests has its main button: `stepActionOf` asks the group card's act as `libraryActOf` does (a point from #655's review). (Integration test.)
 - [ ] Whole lint, format and types.
 
 ## Comments

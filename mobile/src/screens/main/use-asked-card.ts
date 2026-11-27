@@ -12,10 +12,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { questInvitationsQuery, questsQuery } from '@/api/queries';
 import { now } from '@/clock';
+import { shownSubQuest } from '@/features/quests/adapter';
+import { outRequestOf, requestFlagOf, requestWords } from '@/features/quests/room-request-flag';
 import { useToast } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
 import { fallbackFor, readCard } from '@/push/card-address';
-import { outRequestOf, requestAnswer, requestTitle } from './answer/study-group-reopen';
+import { requestAnswer } from './answer/study-group-reopen';
 import type { ChatSheetControl } from './chat-sheet';
 import { showWaitingRoom } from './library/waiting-room';
 import { useAskedPerson } from './use-asked-person';
@@ -32,12 +34,13 @@ function usePartyAddress(chat: ChatSheetControl): (questId: string) => boolean {
   return useEffectEvent((questId: string): boolean => {
     const quest = quests?.find(({ id }) => id === questId);
     const request = quest === undefined ? null : outRequestOf(quest);
-    if (quest === undefined || request === null) {
+    const flag = quest === undefined ? null : requestFlagOf(quest, shownSubQuest(quest)?.startsAt ?? null, now());
+    if (quest === undefined || request === null || flag === null) {
       void showWaitingRoom(questId, chat);
       return false;
     }
     void chat.chat
-      .askApp(requestTitle(quest, now()), () => requestAnswer(quest.id, request.id))
+      .askApp(requestWords(flag), () => requestAnswer(quest.id, request.id))
       .then((ended) => {
         if (ended === 'failed') {
           showToast(NOT_ANSWERED);

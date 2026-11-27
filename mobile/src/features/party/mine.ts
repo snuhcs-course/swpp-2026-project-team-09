@@ -7,11 +7,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MyParty, Party, Quest } from '@/api/types';
 import { koreaClock, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 import { heldAlone, shownSubQuest, waitWords } from '@/features/quests/adapter';
+import { requestFlagOf, requestLine } from '@/features/quests/room-request-flag';
 import { whenOf } from './posts';
 
 // 내 파티, the frame's `PartyMine`: the User's Quests but the Class Quests, and the past ones, as cards in groups.
@@ -45,6 +47,9 @@ export interface MineCardView {
   waiting: number;
   // A past Quest, which has no room to open.
   past: boolean;
+  // A booking party whose room request of studying together is out: a press opens that answer again, not the room
+  // (P10 ticket 13), and the line says the consents in place of the place.
+  reopens?: true;
 }
 
 export interface MineGroup {
@@ -165,12 +170,14 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
           parties.find((party) => party.quest?.id === quest.id),
           declined,
         );
+  const request = past ? null : requestFlagOf(quest, start, now);
   return {
     questId: quest.id,
     title: quest.title,
     private: quest.joinPolicy === 'closed',
     count: countOf(quest, meId),
-    line: lineOf(start, next?.place?.label ?? '', now),
+    line: request === null ? lineOf(start, next?.place?.label ?? '', now) : requestLine(request),
+    ...(request === null ? {} : { reopens: true }),
     live,
     strip,
     group: past ? PAST : groupOf(live, strip, start, now),

@@ -16,6 +16,7 @@ import { mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { inDock, inFrame, startLibraryChat } from './support/library-chat';
+import { pressMarker } from './support/made-quest';
 import { openMain } from './support/main';
 import { DINNER } from './support/server';
 import {
@@ -122,6 +123,18 @@ describe('The address of a booking party with its request out', () => {
     expect(mapThings()).toContain(ROOM_MARK);
     expect(screen.queryByTestId('room-ticket-kind-chevron')).toBeNull();
     expect(inFrame().getByText('동의 0/3 · 다 받으면 알려 드려요. 닫아도 돼요.')).toBeVisible();
+  });
+
+  it('opens from a press on its flag on the map', async () => {
+    answerGathering();
+    const user = await openMain();
+    await pass(500);
+
+    await pressMarker(user, '관정 그룹스터디룸 내일 15:00 · 동의 1/3 · 기다리는 중');
+    await pass(500);
+
+    expect(server.received(`GET /library/room-requests/${GATHERING_ID}/answer`)).toHaveLength(1);
+    expect(inFrame().getByText('동의 1/3 · 박민수, 이서연 님을 기다려요')).toBeVisible();
   });
 
   it('opens the party as before once its room is booked', async () => {

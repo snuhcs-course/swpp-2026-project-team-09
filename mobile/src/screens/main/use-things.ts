@@ -12,11 +12,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardView } from '@/features/map/adapter';
 import { withClusterMarks } from '@/features/map/event-merges';
 import { type InterestMark, markedLook } from '@/features/map/interest-marks';
+import { requestLook } from '@/features/quests/room-request-flag';
 import { type MapAvatar, type MapMarker, type MarkerLook, useMarkerImages, type ZoomDetail } from '@/map';
 import { POSITION_EVERY_MS } from '@/position';
 
@@ -42,8 +44,15 @@ const DETAILS: readonly ZoomDetail[] = ['overview', 'pins', 'names'];
 // and a place one of whose events is one, is a pin with the star at every level, so that the star is seen with the
 // whole campus in view. Events' pins merged at the overview level are an official pin with how many they are, and the
 // star when one is. A Quest made from a Plan is its flag at every level: the dot in the Quest colour with its two
-// lines above it, as an answer draws its pick.
-function lookOf({ kind, mark, marker, muted, flag }: CardView, detail: ZoomDetail, selected: boolean): MarkerLook {
+// lines above it, as an answer draws its pick, and so is a booking party whose room request is out (P10 ticket 13).
+function lookOf(
+  { kind, mark, marker, muted, flag, request }: CardView,
+  detail: ZoomDetail,
+  selected: boolean,
+): MarkerLook {
+  if (request !== undefined) {
+    return requestLook(request);
+  }
   const far = detail === 'overview';
   const named = detail === 'names' ? { label: marker.short } : {};
   if (kind === 'made-quest') {

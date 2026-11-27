@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -120,7 +121,8 @@ function Waiting({ count }: { count: number }): ReactElement | null {
 }
 
 // A card of 내 파티, one line high: the kind, the title with its count, and "when · where" from the next step. Outlined
-// in navy while the User is in its Party. A past Quest's card opens nothing: its room is gone.
+// in navy while the User is in its Party. A past Quest's card opens nothing: its room is gone. A booking party's card
+// whose room request is out opens that answer again on the map (P10 ticket 13).
 export function MineCard({ card, onEnter, onDecline }: MineCardProps): ReactElement {
   return (
     <Pressable
@@ -128,7 +130,11 @@ export function MineCard({ card, onEnter, onDecline }: MineCardProps): ReactElem
       accessibilityRole={card.past ? undefined : 'button'}
       disabled={card.past}
       onPress={() => {
-        router.push(`/room/${card.questId}`);
+        if (card.reopens === true) {
+          router.navigate(`/main?card=party:${card.questId}`);
+        } else {
+          router.push(`/room/${card.questId}`);
+        }
       }}
       style={[styles.card, card.live && styles.live]}
     >

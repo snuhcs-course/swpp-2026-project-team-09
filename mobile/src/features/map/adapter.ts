@@ -16,6 +16,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -30,6 +31,7 @@ import {
   type QuestParty,
   shownSubQuest,
 } from '@/features/quests/adapter';
+import { type RequestFlag, requestFlagOf, requestWords } from '@/features/quests/room-request-flag';
 import { koreaClock, koreaDay } from '@/korea-time';
 import { eventCards } from './event-cards';
 import { placeGroupId } from './place-groups';
@@ -125,6 +127,9 @@ export interface CardView {
   within?: string;
   // For the flag of a Quest made from a Plan: its two lines, the start and the step over the day and the count.
   flag?: { title: string; line: string };
+  // For a booking party whose room request of studying together is out: its flag's words (P10 ticket 13). A press
+  // opens that answer again, and it stands apart from the place groups.
+  request?: RequestFlag;
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
   // `favorite` marks a Favorite Event's row with ★.
@@ -277,6 +282,11 @@ function questCards({ quests, myParty, parties, meId, now }: MapSources): CardVi
       return [];
     }
     const card = partyCard(quest, partyOf(quest, myParty, parties), otherHolders(quest, meId), now);
+    const request = requestFlagOf(quest, shownSubQuest(quest)?.startsAt ?? null, now);
+    if (request !== null) {
+      const marker = { ...card.marker, name: `${requestWords(request)} · ${request.line}` };
+      return [{ id: cardId.quest(quest.id), ...card, marker, request, position }];
+    }
     return [{ id: cardId.quest(quest.id), ...card, position }];
   });
 }
