@@ -9,6 +9,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -174,14 +175,14 @@ const LUNCH: MyParty = {
 };
 
 describe('the Parties from the main server', () => {
-  it("gives the User's Party, which 활성 파티's adapter counts without the User", async () => {
+  it("gives the User's Party, which 활성 파티's adapter counts with the User who shares in it", async () => {
     const server = await askMainServer({ signedIn: true });
     server.on('GET /parties/mine', { status: 200, body: LUNCH });
 
     const mine = await apiClient.getMyParty();
 
     expect(mine).toEqual(LUNCH);
-    expect(toActiveParty(mine, myUserId())).toEqual({ id: 'p1', title: '점심 같이', line: '1명 공유 중' });
+    expect(toActiveParty(mine, myUserId(), true)).toEqual({ id: 'p1', title: '점심 같이', line: '2명 공유 중' });
   });
 
   it('gives null for a User in no Party, which is no failure', async () => {
