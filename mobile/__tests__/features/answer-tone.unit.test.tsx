@@ -12,7 +12,7 @@ import { QUESTS_ANSWER } from '@/api/mock/data/quests-answer';
 import { STUDY_PLAN_ANSWER } from '@/api/mock/data/study-plan-answer';
 import { color, kindTone, MapAnswerMark, type ToneKind } from '@/design-system';
 import { drawingOf } from '@/features/assistant/answer-marks';
-import { answerTone } from '@/features/assistant/answer-tone';
+import { answerTone, stepTone } from '@/features/assistant/answer-tone';
 import { type Seen, seen } from '../support/answer-marks';
 
 // One colour means one thing, the same on every screen (the user's rule of 2026-11-28): a table of each kind's colour
@@ -48,6 +48,15 @@ describe('the colour table', () => {
   it('gives every kind of answer and of step a tone of the table', () => {
     expect(KINDS.map((kind) => kindTone[answerTone(kind)])).toHaveLength(KINDS.length);
     expect(KINDS.every((kind) => answerTone(kind) in kindTone)).toBe(true);
+    expect([answerTone('seat'), answerTone('room')]).toEqual(['study', 'study']);
+    expect(kindTone[answerTone('meet')].ink).toBe(color.snuBlue);
+  });
+
+  it('gives a step done its kind’s colour and a step not done the grey of what could not be done', () => {
+    expect(stepTone({ kind: 'seat', status: 'shown' })).toBe('study');
+    expect(stepTone({ kind: 'meal', status: 'shown' })).toBe('meal');
+    expect(KINDS.map((kind) => stepTone({ kind, status: 'not-done' }))).toEqual(KINDS.map(() => 'dropped'));
+    expect(kindTone.dropped).toMatchObject({ ink: color.inkSubtle, soft: color.border });
   });
 
   it('keeps gold for the time alone and the danger red for a warning alone', () => {

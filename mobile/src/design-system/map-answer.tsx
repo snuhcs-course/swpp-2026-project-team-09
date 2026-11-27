@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   },
   pick: { width: PICK_DOT, height: PICK_DOT },
   candidate: { width: CANDIDATE_DOT, height: CANDIDATE_DOT },
-  dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.border },
+  dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: kindTone.dropped.soft },
   next: { width: NEXT_SQUARE, height: NEXT_SQUARE, borderRadius: radius.sm, backgroundColor: color.snuBlue },
   stop: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.svcShuttle },
   kept: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.inkMuted },

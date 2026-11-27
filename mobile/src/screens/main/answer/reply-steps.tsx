@@ -10,7 +10,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ReplyStep } from '@/api/assistant-types';
 import { color, kindTone, radius, space, text } from '@/design-system';
-import { answerTone } from '@/features/assistant/answer-tone';
+import { stepTone } from '@/features/assistant/answer-tone';
 
 const BADGE = 20;
 
@@ -33,7 +33,7 @@ function noteOf(step: ReplyStep): string | null {
   return step.shows?.kind === 'card' ? '예약 카드는 아래에 있어요' : null;
 }
 
-// A step's number is in its kind's colour (`kindTone`) when it was done, as its answer on the map, and grey when not.
+// A step's number is in its colour (`stepTone`): its kind's when it was done, as its answer on the map, grey when not.
 function StepRow({ step, order }: { step: ReplyStep; order: number }): ReactElement {
   const time = stepTime(step);
   const done = step.status === 'shown';
@@ -41,7 +41,7 @@ function StepRow({ step, order }: { step: ReplyStep; order: number }): ReactElem
   const from = step.from === null ? '' : ` · ${step.from.label}에서`;
   return (
     <View style={styles.row} testID={`reply-step-${order}`}>
-      <View style={[styles.badge, done ? { backgroundColor: kindTone[answerTone(step.kind)].ink } : styles.badgeNot]}>
+      <View style={[styles.badge, { backgroundColor: kindTone[stepTone(step)].ink }]}>
         <Text style={styles.badgeText}>{order}</Text>
       </View>
       <View style={styles.words}>
@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 1,
   },
-  badgeNot: { backgroundColor: color.inkSubtle },
   badgeText: { ...text.caption, color: color.onPrimary },
   words: { flex: 1 },
   title: { ...text.label, color: color.ink },

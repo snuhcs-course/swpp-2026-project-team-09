@@ -40,12 +40,12 @@ describe("a meal answer's marks", () => {
 });
 
 describe("another answer's pick", () => {
-  it('takes its own kind: a meet answer’s picks carry no meal flag and are the party’s', () => {
+  it('takes its own kind: a meet answer’s picks carry no meal flag and are the meet’s', () => {
     const picks = rounds(MEET_ANSWER, 'pick');
 
     expect(picks.length).toBeGreaterThan(0);
     expect(picks.some((symbol) => 'meal' in symbol)).toBe(false);
-    expect(picks.every((symbol) => symbol.type === 'dot' && symbol.kind === 'party')).toBe(true);
+    expect(picks.every((symbol) => symbol.type === 'dot' && symbol.kind === 'meet')).toBe(true);
   });
 });
 

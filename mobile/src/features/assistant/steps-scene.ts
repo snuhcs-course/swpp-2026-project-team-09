@@ -13,7 +13,7 @@ import { seatWords } from '@/library/cards/bookings';
 import type { Slot } from '@/library/cards/payloads';
 import { clockOf, minutesOf } from '@/library/cards/times';
 import { type Draft, inKind } from './answer-groups';
-import { answerTone } from './answer-tone';
+import { stepTone } from './answer-tone';
 import { bookingTitle } from './booking-scene';
 import { meAndWalk } from './proposal-scene';
 import { turnOf } from './turn';
@@ -183,6 +183,6 @@ export function stepDrafts(
       number,
     };
     // A step done in its kind's colour, as its answer's pick; one not done grey.
-    return [inKind(draft, answerTone(step.kind))];
+    return [inKind(draft, stepTone(step))];
   });
 }
