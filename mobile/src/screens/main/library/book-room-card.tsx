@@ -215,7 +215,7 @@ function RoomOffer(props: FormProps): ReactElement {
       />
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
       {open ? <RoomChoices {...props} /> : null}
-      {write.busy ? <Said>예약하는 중이에요</Said> : null}
+      {write.busy ? <Said byButton>예약하는 중이에요</Said> : null}
     </>
   );
 }

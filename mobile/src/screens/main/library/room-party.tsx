@@ -213,9 +213,13 @@ export function PartyStatus({ party }: { party: PartyRequest }): ReactElement {
     const view = companionsView(request);
     return (
       <>
-        <Said tone={ended ? 'danger' : 'plain'}>{statusWords(request, view)}</Said>
+        <Said byButton tone={ended ? 'danger' : 'plain'}>
+          {statusWords(request, view)}
+        </Said>
         {view?.lines.map((line) => (
-          <Said key={line}>{line}</Said>
+          <Said byButton key={line}>
+            {line}
+          </Said>
         ))}
         {view?.canAskOneMore === true ? <AskOneMore onAsked={party.update} request={request} /> : null}
       </>
@@ -224,7 +228,7 @@ export function PartyStatus({ party }: { party: PartyRequest }): ReactElement {
   return (
     <>
       {failed ? <Said tone="danger">{SEND_FAILED}</Said> : null}
-      {sending ? <Said>동의 요청을 보내는 중이에요</Said> : null}
+      {sending ? <Said byButton>동의 요청을 보내는 중이에요</Said> : null}
       <Pills>
         <Pill disabled={send === null} label={SEND_ASK} onPress={send ?? (() => null)} primary />
       </Pills>

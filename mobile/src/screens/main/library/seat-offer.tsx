@@ -134,7 +134,7 @@ export function SeatOffer(props: OfferProps): ReactElement {
         </Pills>
       ) : null}
       {open && !onMap ? <OfferButtons {...props} onPick={onPick} /> : null}
-      {docked || !write.busy ? null : <Said>{BOOKING}</Said>}
+      {docked || !write.busy ? null : <Said byButton>{BOOKING}</Said>}
       {docked ? null : <Notes notes={card.notes.filter((note) => note === OWN_PRESS_NOTE)} />}
       <SeatPicker
         onClose={() => {
