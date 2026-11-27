@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -74,7 +75,7 @@ describe('a number in a round on the map', () => {
 // Partitions: the chosen row's badge and another row's. Expected values: the badge of 22 less its rim of 1.5.
 describe('a number in a meal list’s badge', () => {
   it('keeps its size and is centred, chosen or not', async () => {
-    const shown = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark, change: ignoreMark };
+    const shown = { index: 0, openMenu: ignoreMark, show: ignoreMark, chooseKind: ignoreMark, change: ignoreMark };
     await render(<MealList answer={MEAL_ANSWER_MENUS} busy={false} shown={shown} />);
 
     expectCentredIn(numberOf('1'), 19);

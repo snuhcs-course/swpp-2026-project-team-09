@@ -1,7 +1,7 @@
 # 10: The room ticket and its choosers
 
 Parent: [P10 spec](../spec.md) § With Friends; design `group-study-design` ③ to ⑤ and state 가, `group-study-resume` 2-2
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: 09
 
 Native files: none. Releases: with ticket 11.
@@ -27,15 +27,31 @@ The seat ticket of PR 625 (`mobile/src/screens/main/library/seat-ticket.tsx`) be
 - **The use line** "사용 용도 · 과제 ›" under the ticket opens the use chooser: the group's `useDescOptions` as equal cells. The use picked is kept on the phone and offered first next time.
 - Equal cells follow the app's choice grid (`design-system/choice-grid.tsx`): name left, count right, never uneven pills.
 
+## How it is built
+
+- **The ticket:** `seat-ticket.tsx`'s two cells and frame are shared as `MainCell`, `SideCell` and `TicketFrame`. `SeatTicket` draws through them as before, and `RoomTicket` (`room-ticket.tsx`) fills them for the room.
+- **Booked:** the booked room is P01 ticket 15's `BookedTicket`, given `bookedRoomOf(group, slot, room, now)`. Its room comes from whatever source the card gives it (ticket 14).
+- **Choosers:**
+  - `room-kind-chooser.tsx`, `room-number-chooser.tsx` and `use-chooser.tsx` (with `keepUse` and `keptUse`);
+  - the floors' equal cells are `floor-cells.tsx`, which the seat ticket's room list now draws through too.
+- **Counting:** the kinds' free rooms are `room-kind-counts.ts`, the seat card's `RoomCounting` given a `count` in place of its seats, with each kind's `space` (P10 ticket 20).
+- **Asking again:** choosing a kind asks again through `withChosenRoom` (`plan-input.ts`).
+- **Ticket 11** puts these on the card.
+
 ## Acceptance criteria
 
-- [ ] The seat answer's ticket is unchanged (its tests pass as they are).
-- [ ] The room ticket shows the kind, the count and the room. Opening a cell lights it and flips its chevron. A dimmed ticket shows the reason. The locked ticket has no chevrons. The booked ticket shows ✓ 예약됨 on the light sky ground. (Unit tests.)
-- [ ] The room chooser shows each floor's kinds as equal cells with their counts and greys a kind that does not fit with its reason. Choosing a kind asks the answer again with `chosen.roomSpaceId`. (Unit test.)
-- [ ] The kinds' free rooms are read when the chooser opens, not read again within a minute, and read again after it; a count not yet read leaves its place empty. (Unit test.)
-- [ ] Logged out, the right cell shows "방" alone, with no chevron, and does not open. (Unit test.)
-- [ ] The room number chooser shows only rooms free for the whole time, three to a row, the first chosen. (Unit test, with the library's room list.)
-- [ ] The use chooser shows the options as equal cells, and the use picked is offered first the next time. (Unit test.)
-- [ ] Whole lint, format and types.
+- [x] The seat answer's ticket is unchanged (its tests pass as they are).
+- [x] The room ticket shows the kind, the count and the room. Opening a cell lights it and flips its chevron. A dimmed ticket shows the reason. The locked ticket has no chevrons. The booked ticket shows ✓ 예약됨 on the light sky ground. (Unit tests.)
+- [x] The room chooser shows each floor's kinds as equal cells with their counts and greys a kind that does not fit with its reason. Choosing a kind gives its id, and `withChosenRoom` asks the answer again with `chosen.roomSpaceId`. (Unit tests.)
+- [x] The kinds' free rooms are read when the chooser opens, not read again within a minute, and read again after it; a count not yet read leaves its place empty. (Unit test.)
+- [x] Logged out, the right cell shows "방" alone, with no chevron, and does not open. (Unit test.)
+- [x] The room number chooser shows only rooms free for the whole time, three to a row, the first chosen. (Unit test, with the library's room list.)
+- [x] The use chooser shows the options as equal cells, and the use picked is offered first the next time. (Unit test.)
+- [x] Whole lint, format and types.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 70 minutes in the p04-58 session, between 19:18 and 22:19 UTC, an estimate. The rest of that span was waiting for the room kinds' library spaces (P10 ticket 20) and for the decision to stack on P01 ticket 15. About a quarter of the 70 minutes was test runs on a loaded machine. No emulator, no subagents.
+- Tokens, from 19:18 UTC to this entry: input 170 uncached, with cache reads 43,616,212 and cache writes 643,729; output 85,759.

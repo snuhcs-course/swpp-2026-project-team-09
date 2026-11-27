@@ -188,13 +188,15 @@ describe('the leave-by of a Plan taken alone, asked off the minute', () => {
   });
 });
 
-// Partitions: a meal walked to, a meal where the User is, a meet where the User is, and an event. Expected values: boards
-// s4 and s4b, and the design's 6.3 Alone 3.
+// Partitions: a meal walked to, a meal where the User is, a meet where the User is, a study place where the User is
+// (P10 ticket 24), and an event. Expected values: boards s4 and s4b, and the design's 6.3 Alone 3.
 describe('the first line of the card', () => {
-  it.each<[string, Plan, 'meal' | 'meet' | 'events', string]>([
+  it.each<[string, Plan, 'meal' | 'meet' | 'study' | 'events', string]>([
     ['a meal walked to', S2, 'meal', '학생회관식당으로 가요'],
     ['a meal where the User is', S1, 'meal', '301동식당에서 먹어요'],
     ['a meet where the User is', S1, 'meet', '301동식당에서 봐요'],
+    ['a study place where the User is', S1, 'study', '301동식당에서 공부해요'],
+    ['a study place walked to', S2, 'study', '학생회관식당으로 가요'],
     ['an event', plan(DURE, part({}), '채용박람회'), 'events', '채용박람회에 가요'],
   ])('reads for %s', (_, shown, kind, expected) => {
     expect(words(goingLine(shown, kind))).toBe(expected);

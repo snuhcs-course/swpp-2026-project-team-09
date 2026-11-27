@@ -6,9 +6,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { questInvitationsQuery } from '@/api/queries';
 import { type MadeQuestView, useMadeQuests } from '@/features/assistant/use-made-quests';
@@ -80,11 +82,15 @@ function useCards(
   return { cards, ready: data !== undefined && invitations.known };
 }
 
-// A press on the map: merged study or events' pins come into view, and anything else is selected.
+// A press on the map: merged study or events' pins come into view, a booking party's flag opens its answer again by the
+// party's address (P10 ticket 13), and anything else is selected.
 export function pressOnMap(cards: readonly CardView[], map: MainMap, selection: Selection): (id: string) => void {
   return (id) => {
-    const cluster = cards.find((card) => card.id === id)?.cluster;
-    if (cluster === undefined) {
+    const pressed = cards.find((card) => card.id === id);
+    const cluster = pressed?.cluster;
+    if (pressed?.request !== undefined) {
+      router.setParams({ card: id });
+    } else if (cluster === undefined) {
       selection.select(id);
     } else {
       map.fitTo(cluster, ROUTE_PADDING);

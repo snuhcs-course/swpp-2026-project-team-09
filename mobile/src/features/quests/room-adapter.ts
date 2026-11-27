@@ -6,12 +6,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { LatLng, MyParty, Party, SubQuest } from '@/api/types';
 import { koreaClock } from '@/korea-time';
-import { heldAlone } from './adapter';
+import { heldAlone, shownSubQuest } from './adapter';
+import { placeWithRoom } from './booked-room';
 import { editsSubQuests } from './rules';
 
 // What a Quest's room shows: the frame's `PartyDetail`. The room is the Quest's; its 활성화 is the domain Party opened
@@ -149,10 +151,13 @@ function startOf({ startsAt }: SubQuest): number {
 function planOf(quest: ShownQuest): PlanStepView[] {
   const steps = quest.subQuests.toSorted((one, other) => startOf(one) - startOf(other));
   const next = steps.find(({ done, ended, cancelled }) => !done && !ended && !cancelled);
+  // The room booked is the shown step's, as the lists show it.
+  const shown = shownSubQuest(quest);
   return steps.map((subQuest) => ({
     subQuest,
     time: timeOf(subQuest),
-    place: subQuest.place?.label ?? '',
+    place:
+      subQuest === shown ? placeWithRoom(subQuest.place?.label ?? '', quest.bookedRoom) : (subQuest.place?.label ?? ''),
     next: subQuest === next,
     over: subQuest.done || subQuest.ended || subQuest.cancelled,
   }));

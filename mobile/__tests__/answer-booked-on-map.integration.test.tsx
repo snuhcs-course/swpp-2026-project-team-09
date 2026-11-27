@@ -127,6 +127,28 @@ describe('a seat booked on the map', () => {
   });
 });
 
+describe('the step to cancel a booked seat (P01 ticket 21)', () => {
+  it('stands as ✕ and a red 예약 취소 beside the input, and ✕ steps back to 가는 길 and "예약 취소 ›" with nothing sent', async () => {
+    const { user } = await booked();
+
+    await user.press(screen.getByRole('button', { name: '예약 취소 ›' }));
+    await pass(500);
+
+    const row = within(screen.getByTestId('confirm-row'));
+    expect(row.getByRole('button', { name: '취소하지 않기' })).toBeEnabled();
+    expect(row.getByRole('button', { name: '예약 취소' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: '가는 길' })).toBeNull();
+
+    await user.press(row.getByRole('button', { name: '취소하지 않기' }));
+    await pass(500);
+
+    expect(library.requestsTo('setCancelBooking')).toEqual([]);
+    expect(screen.queryByTestId('confirm-row')).toBeNull();
+    expect(screen.getByRole('button', { name: '예약 취소 ›' })).toBeVisible();
+    expect(dock().getByRole('button', { name: '가는 길' })).toBeEnabled();
+  });
+});
+
 describe('a seat booked on the map, whose start the library moved', () => {
   it('takes the start the library holds for it when it is not the one sent, and says so (fault 4)', async () => {
     library.addBooking(

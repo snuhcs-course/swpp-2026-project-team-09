@@ -6,6 +6,7 @@
 
 import type { GroupRoomKind, PlanStudy, RoomRequestState, StudyGroup, StudySpot } from '@/api/study-plan-types';
 import { field, isNumber, isText, isTextOrNull, listOf } from './answers';
+import { isLibraryCardData, isSpace } from './library-card-answers';
 import { isOneOf } from './plan-inputs';
 
 // The app's check of a study Plan's part (P10), as main-server `assistant/dto/study-plan.dto.ts` fixes it.
@@ -17,7 +18,8 @@ function isRoomKind(value: unknown): value is GroupRoomKind {
     isNumber(field(value, 'floor')) &&
     isText(field(value, 'name')) &&
     isNumber(field(capacity, 'min')) &&
-    isNumber(field(capacity, 'max'))
+    isNumber(field(capacity, 'max')) &&
+    isSpace(field(value, 'space'))
   );
 }
 
@@ -73,7 +75,7 @@ export function isStudyOrAbsent(value: unknown): value is PlanStudy | undefined 
   const [book, group] = [field(value, 'book'), field(value, 'group')];
   return (
     listOf(isSpot)(field(value, 'spaces')) &&
-    (book === null || isText(field(book, 'spaceId'))) &&
+    (book === null || (isText(field(book, 'spaceId')) && isLibraryCardData(field(book, 'card')))) &&
     (field(value, 'liveSeats') === null || field(value, 'liveSeats') === 'kwanjeong') &&
     (group === undefined || isGroup(group))
   );

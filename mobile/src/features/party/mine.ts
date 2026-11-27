@@ -7,11 +7,16 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MyParty, Party, Quest } from '@/api/types';
 import { koreaClock, koreaDaysAfter, koreaWeekday } from '@/korea-time';
 import { heldAlone, shownSubQuest, waitWords } from '@/features/quests/adapter';
+import { placeWithRoom } from '@/features/quests/booked-room';
+import { requestFlagOf, requestLine } from '@/features/quests/room-request-flag';
+import { boardName } from './boards';
 import { whenOf } from './posts';
 
 // 내 파티, the frame's `PartyMine`: the User's Quests but the Class Quests, and the past ones, as cards in groups.
@@ -32,10 +37,17 @@ export interface MineCardView {
   questId: string;
   title: string;
   private: boolean;
+  // The top's tag: a 공개 파티's board, "취미 게시판", or "비공개"; null for a public Quest without a board.
+  tag: string | null;
+  // The User leads the Quest: a crown before the count.
+  leads: boolean;
   // "3/8명" on a Quest the User leads that recruits, "N명" otherwise.
   count: string;
-  // The next Sub Quest's time and place: "17:40 · 23분 후 · 학생회관", "내일 19:00 · 장소 미정".
-  line: string;
+  // The next Sub Quest's time, "17:40 · 23분 후", "내일 19:00" or "시간 미정", and its place, or "장소 미정".
+  time: string;
+  place: string;
+  // The Global Event the Quest is for, or null.
+  event: string | null;
   // The User is in the Quest's Party.
   live: boolean;
   strip: MineStripView | null;
@@ -45,6 +57,9 @@ export interface MineCardView {
   waiting: number;
   // A past Quest, which has no room to open.
   past: boolean;
+  // A booking party whose room request of studying together is out: a press opens that answer again, not the room
+  // (P10 ticket 13), and its time line says the request: "내일 15:00 · 동의 1/3 · 기다리는 중".
+  reopens?: true;
 }
 
 export interface MineGroup {
@@ -146,10 +161,15 @@ function groupOf(live: boolean, strip: MineStripView | null, start: string | nul
   return dayGroup(start, now);
 }
 
-// The next step's time and its place, "장소 미정" without one.
-function lineOf(start: string | null, place: string, now: Date): string {
-  const when = start === null ? '시간 미정' : whenWords(start, now);
-  return `${when} · ${place === '' ? '장소 미정' : place}`;
+function placeOf(label: string): string {
+  return label === '' ? '장소 미정' : label;
+}
+
+function tagOf({ joinPolicy, board }: Quest): string | null {
+  if (joinPolicy === 'closed') {
+    return '비공개';
+  }
+  return board === null ? null : boardName(board);
 }
 
 function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView {
@@ -165,15 +185,28 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
           parties.find((party) => party.quest?.id === quest.id),
           declined,
         );
+  const request = past ? null : requestFlagOf(quest, start, now);
+  const group = past ? PAST : groupOf(live, strip, start, now);
   return {
     questId: quest.id,
     title: quest.title,
     private: quest.joinPolicy === 'closed',
+    tag: tagOf(quest),
+    leads: quest.leader?.id === meId,
     count: countOf(quest, meId),
-    line: lineOf(start, next?.place?.label ?? '', now),
+    // Under a heading that says the day (오늘, 내일) the request's line says none (#662's pictures).
+    time:
+      request === null
+        ? start === null
+          ? '시간 미정'
+          : whenWords(start, now)
+        : requestLine(request, group !== '오늘' && group !== '내일'),
+    place: placeOf(placeWithRoom(next?.place?.label ?? '', quest.bookedRoom)),
+    event: quest.globalEvent?.title ?? null,
+    ...(request === null ? {} : { reopens: true }),
     live,
     strip,
-    group: past ? PAST : groupOf(live, strip, start, now),
+    group,
     start: start === null ? Number.POSITIVE_INFINITY : new Date(start).getTime(),
     waiting: past ? 0 : quest.waitingJoinRequests,
     past,

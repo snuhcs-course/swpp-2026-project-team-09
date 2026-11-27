@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -12,6 +13,7 @@ import { dateInput } from '../free-time/tool-parts.js';
 import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { clockOfMinutes, durationWords, earliestStartMinutes, windowRefusal } from './booking-rules.js';
+import { seatNameOf } from './app-names.js';
 import { type ClockRange, type LibrarySpace } from './catalogue.js';
 import { bookableSpace, dayWords, type LibraryServices, refused, spaceIdInput } from './library-parts.js';
 import { closedToday } from './closed-today.js';
@@ -91,7 +93,9 @@ export function findLibraryFreeSlots(services: LibraryServices): Tool {
       const slots = slotsOf(free, { space, hours: space.hours, date, now: context.now, minutes });
       if (slots.length === 0) {
         const day = dayWords(date, context.now);
-        return noneFound(`${day}은 ${space.name}을 예약할 수 있는 공강이 ${durationWords(minutes)} 이상 없어요.`);
+        return noneFound(
+          `${day}은 ${seatNameOf(space) ?? space.name}을 예약할 수 있는 공강이 ${durationWords(minutes)} 이상 없어요.`,
+        );
       }
       return { result: 'found', date, slots };
     },

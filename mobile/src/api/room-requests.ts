@@ -3,12 +3,16 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { AnswerReply } from './assistant-types';
+import type { StudyInput } from './study-plan-types';
 import { queryOptions } from '@tanstack/react-query';
 import { mockRoomRequests } from './mock/room-requests';
 import { field, hasTexts, isNothing, isNumber, isText, isTextOrNull, listOf } from './server/answers';
 import { call } from './server/http';
+import { isAnswerReply } from './server/plan-answers';
 import { asksMainServer } from './servers';
 
 // The room requests of a group study room booked with companions (main-server `src/library/`, P06 spec "Group study
@@ -49,6 +53,8 @@ export interface RoomRequest {
   companions?: RoomRequestCompanion[];
   // How many more people the room's minimum needs.
   moreNeeded?: number;
+  // The room the library booked, once booked and reported with it (P05 ticket 68); absent from a server before it.
+  bookedRoom?: string | null;
 }
 
 // A request that asks the User, for the consent dialog on the main screen.
@@ -81,12 +87,17 @@ export interface RoomCompanion {
   studentNumber: string | null;
 }
 
-// From a book card: its key, and the Friends or the Quest whose Holders come along.
-export type RoomRequestMaking = { key: string; useDesc?: string } & ({ friendIds: string[] } | { questId: string });
+// From a book card: its key, and the Friends or the Quest whose Holders come along; from a study answer together, also
+// the study input it was made from, which the server keeps to give the answer back (P10 ticket 12).
+export type RoomRequestMaking = { key: string; useDesc?: string; input?: StudyInput } & (
+  { friendIds: string[] } | { questId: string }
+);
 
 export interface RoomRequestsClient {
   make: (making: RoomRequestMaking, idempotencyKey: string) => Promise<RoomRequest>;
   get: (id: string) => Promise<RoomRequest>;
+  // The study answer the request was sent from, rebuilt by the main server at its room, time and people (P10 ticket 08).
+  answer: (id: string) => Promise<AnswerReply>;
   inbox: () => Promise<RoomInbox>;
   consent: (id: string) => Promise<RoomRequest>;
   decline: (id: string) => Promise<void>;
@@ -94,12 +105,17 @@ export interface RoomRequestsClient {
   // The booker asks one more Friend into a request made for booking.
   askOneMore: (id: string, friendId: string, idempotencyKey: string) => Promise<RoomRequest>;
   // What the booking came to, with no library data.
-  result: (id: string, result: { ok: boolean; failedUserId?: string }) => Promise<void>;
+  // `room`: the room the library booked, as the library names it ("G412"), with `ok` only (P05 ticket 68).
+  result: (id: string, result: { ok: boolean; failedUserId?: string; room?: string }) => Promise<void>;
   cancelled: (id: string) => Promise<void>;
   seen: (noticeId: string) => Promise<void>;
 }
 
 const STATUSES = new Set(['gathering', 'ready', 'booked', 'cancelled', 'dissolved', 'expired']);
+
+export function isRoomRequestStatus(value: unknown): value is RoomRequestStatus {
+  return STATUSES.has(String(value));
+}
 const COMPANION_STATES = new Set(['asked', 'consented', 'declined', 'unanswered']);
 
 function isPerson(value: unknown): value is RoomPerson {
@@ -140,8 +156,13 @@ export function isRoomRequest(value: unknown): value is RoomRequest {
       return isPerson(each) && isAnswer(field(each, 'consented'));
     })(field(value, 'consents')) &&
     (companions === undefined || isCompanionStates(companions)) &&
-    (moreNeeded === undefined || isNumber(moreNeeded))
+    (moreNeeded === undefined || isNumber(moreNeeded)) &&
+    isRoomOrNone(field(value, 'bookedRoom'))
   );
+}
+
+function isRoomOrNone(value: unknown): value is string | null | undefined {
+  return value === undefined || value === null || (typeof value === 'string' && value !== '');
 }
 
 function isAsk(value: unknown): value is RoomAsk {
@@ -183,6 +204,7 @@ export const serverRoomRequests: RoomRequestsClient = {
       headers: { 'Idempotency-Key': idempotencyKey },
     }),
   get: (id) => call('GET', path(id), isRoomRequest),
+  answer: (id) => call('GET', path(id, 'answer'), isAnswerReply),
   inbox: () => call('GET', '/library/room-requests', isInbox),
   consent: (id) => call('POST', path(id, 'consent'), isRoomRequest),
   decline: (id) => send(path(id, 'decline')),
@@ -205,6 +227,7 @@ function chosen(): RoomRequestsClient {
 export const roomRequests: RoomRequestsClient = {
   make: (making, key) => chosen().make(making, key),
   get: (id) => chosen().get(id),
+  answer: (id) => chosen().answer(id),
   inbox: () => chosen().inbox(),
   consent: (id) => chosen().consent(id),
   decline: (id) => chosen().decline(id),

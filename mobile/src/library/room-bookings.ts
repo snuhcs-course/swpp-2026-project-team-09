@@ -5,14 +5,16 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { LibraryCardData } from '@/api/assistant-types';
+import type { AnswerReply, LibraryCardData } from '@/api/assistant-types';
 import { ApiError } from '@/api/errors';
 import { roomRequests } from '@/api/room-requests';
 import { field, isText } from '@/api/server/answers';
 import { isLibraryCardData } from '@/api/server/library-card-answers';
+import { isAnswerReply } from '@/api/server/plan-answers';
 import { leavingOnPurpose } from '@/features/quests/leaving';
 
 // The phone's map from a room booking's BSEQNO to the room request it was booked for. It stays on the phone: the
@@ -40,6 +42,11 @@ async function readMap(): Promise<Record<string, string>> {
   } catch {
     return {};
   }
+}
+
+// Whether this phone booked a room for the request: the server may not know yet (P10 ticket 14, #657's review).
+export async function bookedHere(requestId: string): Promise<boolean> {
+  return Object.values(await readMap()).includes(requestId);
 }
 
 export async function keepRoomBooking(bseqno: number, requestId: string): Promise<void> {
@@ -73,18 +80,36 @@ export async function reportRoomCancelled(bseqno: number): Promise<void> {
   await AsyncStorage.setItem(KEY, JSON.stringify(rest));
 }
 
-async function readQueue(): Promise<string[]> {
+// A report kept to send again: the request and the room the library booked. A queue kept before the room was reported
+// holds the request's id alone.
+interface KeptReport {
+  requestId: string;
+  room?: string;
+}
+
+function keptOf(entry: unknown): KeptReport | null {
+  if (typeof entry === 'string') {
+    return { requestId: entry };
+  }
+  if (typeof entry !== 'object' || entry === null || !('requestId' in entry) || typeof entry.requestId !== 'string') {
+    return null;
+  }
+  const room = 'room' in entry && typeof entry.room === 'string' ? entry.room : undefined;
+  return room === undefined ? { requestId: entry.requestId } : { requestId: entry.requestId, room };
+}
+
+async function readQueue(): Promise<KeptReport[]> {
   try {
     const value = await AsyncStorage.getItem(RESULTS);
     const parsed: unknown = value === null ? [] : JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+    return Array.isArray(parsed) ? parsed.flatMap((entry) => keptOf(entry) ?? []) : [];
   } catch {
     return [];
   }
 }
 
-async function writeQueue(ids: readonly string[]): Promise<void> {
-  await AsyncStorage.setItem(RESULTS, JSON.stringify(ids));
+async function writeQueue(reports: readonly KeptReport[]): Promise<void> {
+  await AsyncStorage.setItem(RESULTS, JSON.stringify(reports));
 }
 
 // What reporting a booking made came to: told, kept to retry, or refused because the request had ended meanwhile
@@ -96,21 +121,23 @@ function ended(error: unknown): boolean {
   return error instanceof ApiError && (error.status === 409 || error.status === 404);
 }
 
-async function report(requestId: string): Promise<BookedReport> {
+async function report({ requestId, room }: KeptReport): Promise<BookedReport> {
   try {
-    await roomRequests.result(requestId, { ok: true });
+    await roomRequests.result(requestId, room === undefined ? { ok: true } : { ok: true, room });
     return 'reported';
   } catch (error) {
     return ended(error) ? 'ended' : 'queued';
   }
 }
 
-// Tells the server the booking of the request was made. A report that does not get through is kept and retried.
-export async function reportRoomBooked(requestId: string): Promise<BookedReport> {
-  const reported = await report(requestId);
+// Tells the server the booking of the request was made, and the room the library booked, which the party sees (P05
+// ticket 68). A report that does not get through is kept, with its room, and retried.
+export async function reportRoomBooked(requestId: string, room: string): Promise<BookedReport> {
+  const kept: KeptReport = { requestId, room };
+  const reported = await report(kept);
   if (reported === 'queued') {
     const queue = await readQueue();
-    await writeQueue([...queue.filter((id) => id !== requestId), requestId]);
+    await writeQueue([...queue.filter((each) => each.requestId !== requestId), kept]);
   }
   return reported;
 }
@@ -121,11 +148,11 @@ export async function retryRoomReports(): Promise<void> {
   if (queue.length === 0) {
     return;
   }
-  const left: string[] = [];
-  for (const requestId of queue) {
+  const left: KeptReport[] = [];
+  for (const kept of queue) {
     // oxlint-disable-next-line no-await-in-loop -- one report at a time
-    if ((await report(requestId)) === 'queued') {
-      left.push(requestId);
+    if ((await report(kept)) === 'queued') {
+      left.push(kept);
     }
   }
   await writeQueue(left);
@@ -170,7 +197,45 @@ export async function forgetWaitingRoom(questId: string): Promise<void> {
   await AsyncStorage.setItem(WAITING, JSON.stringify(rest));
 }
 
+// The study answers together the requests were sent from, by their booking party (P10 ticket 13): the sending phone
+// shows one again from here when the main server cannot rebuild it (GET …/:id/answer is newer). The last few only.
+const ANSWERS = 'snunow.request-answers';
+const ANSWERS_KEPT = 8;
+
+export interface RequestAnswer {
+  requestId: string;
+  answer: AnswerReply;
+}
+
+function isRequestAnswer(value: unknown): value is RequestAnswer {
+  return isText(field(value, 'requestId')) && isAnswerReply(field(value, 'answer'));
+}
+
+async function readAnswers(): Promise<[string, RequestAnswer][]> {
+  try {
+    const value = await AsyncStorage.getItem(ANSWERS);
+    const parsed: unknown = value === null ? [] : JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (entry: unknown): entry is [string, RequestAnswer] =>
+            Array.isArray(entry) && isText(entry[0]) && isRequestAnswer(entry[1]),
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function keepRequestAnswer(questId: string, kept: RequestAnswer): Promise<void> {
+  const others = (await readAnswers()).filter(([id]) => id !== questId);
+  await AsyncStorage.setItem(ANSWERS, JSON.stringify([...others, [questId, kept]].slice(-ANSWERS_KEPT)));
+}
+
+export async function requestAnswerOf(questId: string): Promise<RequestAnswer | null> {
+  return (await readAnswers()).find(([id]) => id === questId)?.[1] ?? null;
+}
+
 // For the end of the library session: nothing of this person's room bookings stays on the phone.
 export async function forgetRoomBookings(): Promise<void> {
-  await AsyncStorage.multiRemove([KEY, RESULTS, WAITING]);
+  await AsyncStorage.multiRemove([KEY, RESULTS, WAITING, ANSWERS]);
 }

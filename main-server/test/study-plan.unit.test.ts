@@ -4,10 +4,12 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { readFileSync } from 'node:fs';
 import { type AnswerReply, type StudyInput } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
 import { type StudyArea } from '../src/assistant/lookup/study-near.js';
 import { readyAt, studyPlanAnswer } from '../src/assistant/lookup/study-plan.js';
+import { CATALOGUE_FILE, type Catalogue, readCatalogue } from '../src/assistant/library/catalogue.js';
 import { type WayArgs } from '../src/assistant/lookup/way.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type StudyBuildingDto } from '../src/study-spaces/dto/study-spaces.dto.js';
@@ -15,16 +17,19 @@ import { type Calendar, openAt, type Schedule } from '../src/study-spaces/study-
 import { STUDY_SPACES_FILE, studySpacesSchema } from '../src/study-spaces/study-spaces-file.js';
 import { ENGINEERING_AREA, MOUNTAIN_AREA, studyBuildingsFor } from './study-area-example.js';
 import { classAt, id, ME, numbered, position, readCampus, TUESDAY, wayArgs } from './way-example.js';
+import { withoutBand } from './no-plan.js';
 
 // "공부할 자리 있어?" ranked over the seed's buildings and hours (P10 ticket 03), on Tuesday 2026-11-17, a term
 // weekday, by the seed's calendar. The User is at 301동 unless given otherwise.
 
 let schedules = new Map<string, Schedule>();
 let calendar: Calendar;
+let catalogue: Catalogue;
 const buildingsBy = new Map<string, StudyBuildingDto[]>();
 
 beforeAll(async () => {
   await readCampus();
+  catalogue = await readCatalogue(CATALOGUE_FILE);
   const file = await readSeedFile(SEED_DIRECTORY, STUDY_SPACES_FILE, studySpacesSchema);
   schedules = new Map(file.buildings.flatMap(({ spaces }) => spaces.map(({ key, schedule }) => [key, schedule])));
   calendar = file.calendar;
@@ -37,6 +42,7 @@ beforeAll(async () => {
 
 interface Asked {
   clock: string;
+  date?: string;
   department?: string;
   what?: StudyInput['what'];
   area?: StudyArea | null;
@@ -52,12 +58,13 @@ function asked({
   what = 'any',
   area = null,
   items = [],
+  date = TUESDAY,
   ...given
 }: Asked): AnswerReply {
-  const now = onDay(TUESDAY, clock);
+  const now = onDay(date, clock);
   const input: StudyInput = {
     kind: 'study',
-    date: TUESDAY,
+    date,
     what,
     people: [{ userId: ME, constraints: [] }],
     together: false,
@@ -81,6 +88,7 @@ function asked({
       }
       return { opening: openAt(schedule, calendar, when), confidence: schedule.confidence };
     },
+    catalogue,
   });
 }
 
@@ -151,7 +159,7 @@ describe('Study places at 23:30', () => {
     const { plans, noPlan } = asked({ clock: '07:30', area: socialSciencesArea() });
 
     expect(plans).toEqual([]);
-    expect(noPlan).toEqual({
+    expect(withoutBand(noPlan)).toEqual({
       reason: 'no-fit',
       lines: [
         [{ text: '지금 연 공부할 곳이 없어요', strong: false }],
@@ -182,6 +190,38 @@ describe('Study places in the area the User sees', () => {
   });
 });
 
+// An answer without a plan keeps its time card (P05 ticket 67), as a meal's does (ticket 65): the User's lane from when
+// they are ready to the end they set, else their next item, else three hours on.
+const at = (clock: string): string => `${TUESDAY}T${clock}:00+09:00`;
+
+describe('A study answer without a plan', () => {
+  it('with nothing open, keeps the time card over the three hours from now', () => {
+    const { noPlan } = asked({ clock: '07:30', area: socialSciencesArea() });
+
+    expect(noPlan?.band).toEqual({
+      range: { startAt: at('07:30'), endAt: at('10:30') },
+      now: at('07:30'),
+      lanes: [{ userId: ME, name: '나', busy: [] }],
+      startAt: at('07:30'),
+      endAt: at('10:30'),
+      text: '07:30–10:30',
+    });
+  });
+
+  it('with no time before the next Class, ends at it and reaches over it', () => {
+    const items = [classAt(TUESDAY, '12:00', '13:00', '제1공학관')];
+    const { plans, noPlan } = asked({ clock: '11:56', items });
+
+    expect(plans).toEqual([]);
+    expect(noPlan?.band).toMatchObject({
+      range: { startAt: at('11:30'), endAt: at('13:00') },
+      lanes: [{ userId: ME, name: '나', busy: [{ startAt: at('12:00'), endAt: at('13:00') }] }],
+      startAt: at('11:56'),
+      endAt: at('12:00'),
+    });
+  });
+});
+
 describe('A study plan before the next Class', () => {
   it('ends the stay by the walk on to it, and says so', () => {
     const items = [classAt(TUESDAY, '11:00', '11:50', '제1공학관'), classAt(TUESDAY, '13:00', '13:50', '자연과학관6')];
@@ -192,15 +232,34 @@ describe('A study plan before the next Class', () => {
     expect(sinyang?.lines[1]).toEqual([{ text: '13:00 수업 전 34분', strong: false }]);
     expect(sinyang?.parts[0]).toMatchObject({ walkMinutes: 8, leaveBy: '2026-11-17T12:52:00+09:00' });
   });
+
+  it('has its stay as its one step, as a meal’s Plan has, for the Quest it is saved as (P10 ticket 24)', () => {
+    const { plans } = asked({ clock: '12:10' });
+    const [first] = plans;
+
+    expect(first?.subQuests).toEqual([
+      { at: first?.startAt, placeId: first?.place.placeId, title: `${first?.id ?? ''}에서 공부` },
+    ]);
+  });
+
+  it('says the stay’s length on its time card, as the group room’s card does', () => {
+    const items = [classAt(TUESDAY, '11:00', '11:50', '제1공학관'), classAt(TUESDAY, '15:00', '15:50', '자연과학관6')];
+    const { plans } = asked({ clock: '12:10', items });
+    const sinyang = plans.find(({ id: planId }) => planId === '공대 신양학술정보관');
+
+    expect(sinyang?.band.text).toBe('12:18–14:52 · 2시간 34분');
+  });
 });
 
 describe('관정관’s plan', () => {
   it('books the first 7층 seat for a quiet place or any, and no other plan books', () => {
     for (const what of ['quiet', 'any'] as const) {
       const { plans } = asked({ clock: '10:00', what });
-      const booked = plans.flatMap(({ id: planId, study }) => (study?.book === null ? [] : [[planId, study?.book]]));
+      const booked = plans.flatMap(({ id: planId, study }) =>
+        study?.book === null || study?.book === undefined ? [] : [[planId, study.book.spaceId]],
+      );
 
-      expect(booked).toEqual([['관정관', { spaceId: '7F-7A-zone2' }]]);
+      expect(booked).toEqual([['관정관', '7F-7A-zone2']]);
       expect(plans.find(({ id: planId }) => planId === '관정관')?.study?.liveSeats).toBe('kwanjeong');
     }
   });
@@ -221,5 +280,33 @@ describe('When the User is ready', () => {
     expect(readyAt({ date: TUESDAY, window: { from: '15:00', until: null } }, now)).toEqual(onDay(TUESDAY, '15:00'));
     expect(readyAt({ date: '2026-11-18', window }, now)).toEqual(onDay('2026-11-18', '09:00'));
     expect(readyAt({ date: TUESDAY, window }, now)).toEqual(now);
+  });
+});
+
+// 관정관's plan carries the book card the app opens in it (P10 ticket 21), as proposeLibraryBooking shows it for the
+// plan's day, start and length on the space's steps. The fixture's copy, mobile/__tests__/fixtures/
+// study-kwanjeong-book.json, is what the app checks its card reading against.
+const kwanjeongOf = (answer: AnswerReply): AnswerReply['plans'][number] | undefined =>
+  answer.plans.find(({ id: planId }) => planId === '관정관');
+
+describe("관정관's plan's book card", () => {
+  it('is the fixture of the app: "공부할 자리 있어?" on Wednesday 2026-11-04 at 19:10 at 301동', () => {
+    const fixture: unknown = JSON.parse(
+      readFileSync(new URL('fixtures/study/kwanjeong-book.json', import.meta.url), 'utf8'),
+    );
+
+    expect(kwanjeongOf(asked({ clock: '19:10', date: '2026-11-04' }))?.study).toEqual(fixture);
+  });
+
+  it('moves with the time asked', () => {
+    const book = kwanjeongOf(asked({ clock: '20:40', date: '2026-11-04' }))?.study?.book;
+
+    expect(book?.card).toMatchObject({ action: 'book', date: '2026-11-04' });
+    expect(book?.card.start).not.toBe(
+      kwanjeongOf(asked({ clock: '19:10', date: '2026-11-04' }))?.study?.book?.card.start,
+    );
+    expect(book?.card.key).toBe(
+      `book:7F-7A-zone2:2026-11-04:${(book?.card.start ?? '').replace(':', '')}:${String(book?.card.minutes)}`,
+    );
   });
 });

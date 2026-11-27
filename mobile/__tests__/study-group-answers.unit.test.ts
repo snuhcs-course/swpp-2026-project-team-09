@@ -6,9 +6,17 @@
 
 import { ANSWER_CAPABILITIES } from '@/api/capabilities';
 import { mockRecalculation } from '@/api/mock/assistant';
-import { STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
+import { STUDY_GROUP_MORE_NEEDED, STUDY_GROUP_TO_SEND, studyGroupReplyTo } from '@/api/mock/data/study-group-answers';
 import { isAnswerReply } from '@/api/server/plan-answers';
-import { hasPeople, windowOf, withBound, withoutPerson, withPerson, withStart } from '@/features/assistant/plan-input';
+import {
+  hasPeople,
+  windowOf,
+  withBound,
+  withChosenRoom,
+  withoutPerson,
+  withPerson,
+  withStart,
+} from '@/features/assistant/plan-input';
 import { addNameOf } from '@/screens/main/answer/who-words';
 import alone from '@/api/mock/data/study-answer.json';
 import gathering from '@/api/mock/data/study-group-gathering.json';
@@ -43,9 +51,9 @@ describe('A study answer from the main server', () => {
     expect(isAnswerReply(copy)).toBe(true);
   });
 
-  it('keeps the group of the room to send: the kind, the people, the key, and no request yet', () => {
+  it('keeps the group of the room to send: the kind with its library space, the people, the key, and no request yet', () => {
     expect(firstGroupOf(toSend)).toMatchObject({
-      room: { spaceId: '4F-group-6', floor: 4, name: '6인실' },
+      room: { spaceId: '4F-group-6', floor: 4, name: '6인실', space: { unit: 'room', roomNo: 141, sectorNo: 14103 } },
       people: 4,
       moreNeeded: 0,
       key: 'book:4F-group-6:2026-11-05:1500:120',
@@ -69,6 +77,10 @@ describe('A study answer that breaks the contract', () => {
     ['a count that is not a number', withGroup({ moreNeeded: '1' })],
     ['an unknown request status', withGroup({ request: { ...ready.plans[0]?.study.group.request, status: 'held' } })],
     ['a room kind without its floor', withGroup({ room: { spaceId: '4F-group-6', name: '6인실' } })],
+    [
+      'a room kind without its library space',
+      withGroup({ room: { ...toSend.plans[0]?.study.group.room, space: undefined } }),
+    ],
     ['an input without together', { ...toSend, input: { ...toSend.input, together: undefined } }],
   ])('is refused: %s', (_case, copy) => {
     expect(isAnswerReply(copy)).toBe(false);
@@ -97,6 +109,14 @@ describe('A study input changed on the card', () => {
     expect(hasPeople(removed) ? removed.people : []).toHaveLength(3);
   });
 
+  it('asks again with the kind of room chosen, and leaves other conditions as they are', () => {
+    expect(withChosenRoom(STUDY, '2F-group-6')).toEqual({
+      ...STUDY,
+      chosen: { seatSpaceId: null, roomSpaceId: '2F-group-6' },
+    });
+    expect(withChosenRoom(mockRecalculation(STUDY).input, '2F-group-6').kind).toBe('study');
+  });
+
   it('fixes its window from the band', () => {
     expect(windowOf(withBound(STUDY, 'from', '15:30'))).toEqual({ from: '15:30', until: null });
     expect(windowOf(withStart(STUDY, '16:00'))).toEqual({ from: '16:00', until: null });
@@ -121,5 +141,15 @@ describe('A study input asked again without a main server', () => {
 
     const three = withoutPerson(STUDY, STUDY.people[1]?.userId ?? '');
     expect(mockRecalculation(three).plans[0]?.study?.group).toMatchObject({ people: 3, moreNeeded: 1 });
+  });
+});
+
+// Partitions: the words with the Friends named, without, and other words. Expected values: the mock's copies (P10 ticket
+// 11), which make the answer screen's pictures without a main server.
+describe('Studying together asked without a main server', () => {
+  it('answers the room to send with 민수 named, the one short of one without, and nothing to other words', () => {
+    expect(studyGroupReplyTo('민수, 서연, 지은이랑 같이 공부할 자리 있어?')?.answer).toBe(STUDY_GROUP_TO_SEND);
+    expect(studyGroupReplyTo('같이 공부할 자리 있어?')?.answer).toBe(STUDY_GROUP_MORE_NEEDED);
+    expect(studyGroupReplyTo('공부할 자리 있어?')).toBeNull();
   });
 });

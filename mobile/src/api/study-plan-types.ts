@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import type { PlanPerson } from './assistant-types';
+import type { LibraryCardData, LibrarySpace } from './library-card-types';
 import type { RoomRequestStatus } from './room-requests';
 
 // A study answer's conditions and its Plans' study part (P10), as main-server `assistant/dto/plan-input.dto.ts` and
@@ -36,6 +37,9 @@ export interface GroupRoomKind {
   // "6인실"
   name: string;
   capacity: { min: number; max: number };
+  // The kind's library space, as a library card carries it, for the phone to read the kind's free rooms: its sector
+  // and its own room numbers (P10 ticket 20).
+  space: LibrarySpace;
 }
 
 // The request sent from a group answer, as the answer rebuilt from it shows it.
@@ -80,7 +84,8 @@ export interface StudySpot {
 export interface PlanStudy {
   // Alone, the building's study spaces, best first; empty with Friends.
   spaces: StudySpot[];
-  book: { spaceId: string } | null;
+  // Alone, 관정관's seat space to book with the book card the app opens in its view (P10 ticket 21); null elsewhere.
+  book: { spaceId: string; card: LibraryCardData } | null;
   liveSeats: 'kwanjeong' | null;
   // Together or with Friends; absent alone.
   group?: StudyGroup;

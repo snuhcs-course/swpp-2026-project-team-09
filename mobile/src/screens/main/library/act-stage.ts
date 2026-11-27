@@ -11,11 +11,19 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 // The card that offers it tells it at each render, with its bubble, and the screen draws it only for the bubble on
 // screen.
 
+// The way back from an armed step without acting (P01 ticket 21): its words for a screen reader, and what it does.
+export interface StepBack {
+  label: string;
+  onPress: () => void;
+}
+
 export interface ActTold {
   words: string;
   onPress: () => void;
   disabled: boolean;
   danger: boolean;
+  // An armed step: the round ✕ beside the button, which un-arms it.
+  back?: StepBack;
 }
 
 export interface ActSeen {
@@ -23,6 +31,8 @@ export interface ActSeen {
   words: string;
   disabled: boolean;
   danger: boolean;
+  // The ✕'s label while the step is armed, else null.
+  back: string | null;
 }
 
 export interface ActStage {
@@ -30,6 +40,8 @@ export interface ActStage {
   // `teller` names the card that tells, so that one that is gone takes away only its own.
   tell: (teller: string, bubbleId: number, told: ActTold | null) => void;
   press: () => void;
+  // The ✕ of an armed step.
+  stepBack: () => void;
 }
 
 function same(one: ActSeen | null, other: ActSeen | null): boolean {
@@ -56,6 +68,7 @@ export function useActStage(): ActStage {
             words: first.told.words,
             disabled: first.told.disabled,
             danger: first.told.danger,
+            back: first.told.back?.label ?? null,
           };
     setSeen((last) => (same(last, next) ? last : next));
   }, []);
@@ -63,7 +76,11 @@ export function useActStage(): ActStage {
     const [first] = tellers.current.values();
     first?.told.onPress();
   }, []);
-  return { seen, tell, press };
+  const stepBack = useCallback(() => {
+    const [first] = tellers.current.values();
+    first?.told.back?.onPress();
+  }, []);
+  return { seen, tell, press, stepBack };
 }
 
 export type TellAct = ActStage['tell'];

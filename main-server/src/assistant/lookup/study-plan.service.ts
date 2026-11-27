@@ -4,7 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
 import { StudySpacesService } from '../../study-spaces/study-spaces.service.js';
@@ -13,6 +13,7 @@ import { type DayItem } from '../free-time/free-time.js';
 import { idsOn, skippedOut } from '../free-time/left-out-classes.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
+import { type Catalogue, LIBRARY_CATALOGUE } from '../library/catalogue.js';
 import { isTogether } from './study-group.js';
 import { StudyGroupService } from './study-group.service.js';
 import { readyAt, studyPlanAnswer } from './study-plan.js';
@@ -29,6 +30,7 @@ export class StudyPlanService {
     private readonly places: PlaceLookup,
     private readonly groups: StudyGroupService,
     private readonly days: UserDayService,
+    @Inject(LIBRARY_CATALOGUE) private readonly catalogue: Catalogue,
   ) {}
 
   // The asker's Classes of the day, among which a tool names a Class to leave out (P05 ticket 70).
@@ -76,6 +78,7 @@ export class StudyPlanService {
       buildings,
       others,
       hoursOf: (key, when) => this.studySpaces.hoursOf(key, when),
+      catalogue: this.catalogue,
     });
   }
 }

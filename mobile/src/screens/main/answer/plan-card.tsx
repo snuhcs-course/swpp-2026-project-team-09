@@ -10,12 +10,13 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
-import { color, space, text } from '@/design-system';
+import { space } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -28,9 +29,14 @@ import { MealMenu } from './meal-menu';
 import { mealWordsOf } from './meal-words';
 import { OfferButtons } from './offer-buttons';
 import { PlanStepper } from './plan-stepper';
+import { KindChips } from './kind-chips';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
+import { StudyGroupBody } from './study-group-body';
+import type { TellAct } from '../library/act-stage';
+import type { LibraryCardActions } from '../library/use-library-call';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
+import { SENTENCE } from './line-types';
 
 interface CardProps {
   shown: ShownAnswer;
@@ -88,13 +94,22 @@ export function linesOf(
 
 // The line, which a press opens to the reply's whole words under it and closes again; without words to open, it
 // takes no press.
-function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): ReactElement | null {
+function Said({
+  lines,
+  refusal,
+  said,
+}: {
+  lines: readonly AnswerLine[];
+  // How many of the lines are a refusal's, which lead them.
+  refusal: number;
+  said: string;
+}): ReactElement | null {
   const [open, setOpen] = useState(false);
   if (lines.length === 0) {
     return null;
   }
   if (said === '') {
-    return <AnswerLines lines={lines} />;
+    return <AnswerLines lines={lines} refusal={refusal} />;
   }
   return (
     <Pressable
@@ -106,7 +121,7 @@ function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): 
       }}
       style={styles.said}
     >
-      <AnswerLines lines={lines} />
+      <AnswerLines lines={lines} refusal={refusal} />
       {open ? <ChatMarkdown style={styles.words} text={said} /> : null}
     </Pressable>
   );
@@ -139,6 +154,10 @@ interface PlanCardProps extends CardProps {
   said?: string;
   // One of several requests, whose candidates have no flag on the map (P04 ticket 09): the stepper switches them.
   steps?: boolean;
+  // Where a study answer's group study room tells its main button, and the bubble it tells it for (P10 ticket 11).
+  act?: TellAct;
+  bubbleId?: number;
+  library?: LibraryCardActions;
 }
 
 // The answer on screen in the answer frame's card, with no text of its own by default: "＋ 같이" while the Plan can
@@ -173,7 +192,13 @@ function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
     <>
       {over.length > 0 ? null : <MealWords said={said} shown={shown} />}
       {shown.menuFor === null ? <AnswerHints offers={answer.offers ?? []} /> : null}
-      <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
+      <MealSheet
+        answer={answer}
+        bubbleId={props.bubbleId}
+        busy={props.busy || settled(invitation)}
+        library={props.library}
+        shown={shown}
+      />
     </>
   );
 }
@@ -183,14 +208,18 @@ function MealSheet({
   shown,
   answer,
   busy,
+  library,
+  bubbleId,
 }: {
   shown: ShownAnswer;
   answer: AnswerReply;
   busy: boolean;
+  library?: LibraryCardActions;
+  bubbleId?: number;
 }): ReactElement | null {
   const { plan, menuFor } = shown;
   if (plan !== null && menuFor === plan.id) {
-    return <MealMenu answer={answer} plan={plan} shown={shown} />;
+    return <MealMenu answer={answer} bubbleId={bubbleId} library={library} plan={plan} shown={shown} />;
   }
   return <MealList answer={answer} busy={busy} shown={shown} />;
 }
@@ -200,10 +229,29 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const meal = shown.plan !== null && mealCard(answer);
+  const group = shown.plan?.study?.group;
   return (
     <View style={styles.plan}>
-      <Said lines={linesOf(shown, answer, over)} said={meal ? '' : said} />
+      <Said lines={linesOf(shown, answer, over)} refusal={over.length} said={meal || group !== undefined ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} /> : null}
+      {/* A meal with no Plan keeps its conditions, each with its ✕ (P01 ticket 31). */}
+      {shown.plan === null && answer.input.kind === 'meal' ? (
+        <KindChips answer={answer} change={shown.change} disabled={busy} onChoose={shown.chooseKind} study={null} />
+      ) : null}
+      {shown.plan !== null && group !== undefined ? (
+        <StudyGroupBody
+          act={props.act}
+          answer={answer}
+          bubbleId={props.bubbleId}
+          library={props.library}
+          busy={busy || settled(invitation)}
+          group={group}
+          onAdd={fix.toggleAdding}
+          plan={shown.plan}
+          said={said}
+          shown={shown}
+        />
+      ) : null}
       <Below
         answer={answer}
         busy={busy}
@@ -220,5 +268,6 @@ export function PlanCard(props: PlanCardProps): ReactElement {
 const styles = StyleSheet.create({
   plan: { gap: space[3] },
   said: { gap: space[2] },
-  words: { ...text.body, color: color.ink },
+  // The model's words over a meal's list, as every answer's sentence (P01 ticket 19).
+  words: SENTENCE,
 });

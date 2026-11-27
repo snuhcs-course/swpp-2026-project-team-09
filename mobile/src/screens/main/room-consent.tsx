@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ import type { Profile } from '@/api/types';
 import { retryRoomReports } from '@/library/room-bookings';
 import { ConsentedNotice, whenOf } from './room-consented';
 import { Button, color, font, radius, shadow, space, text, TextField, useToast } from '@/design-system';
+import { FAILURE } from './answer/line-types';
 
 // What the room requests ask of the User on the main screen: each companion's consent, every time, with the
 // registered name and 학번 that will be sent; and the one-time notices, such as "파티 구성원이 제안을 거절했습니다". The
@@ -36,6 +38,8 @@ interface AskProps {
   ask: RoomAsk;
   profile: Profile;
   onDone: () => void;
+  // Android's back: the dialog closes, unanswered, until the app opens anew; nothing is declined (P01 ticket 21).
+  onClose: () => void;
 }
 
 interface Answers {
@@ -131,7 +135,7 @@ function ConsentDialog(props: AskProps): ReactElement {
   const canConsent = !busy && name.trim() !== '' && (!missing || typedNumber !== null);
   const booker = ask.requester.name;
   return (
-    <Modal onRequestClose={answers.decline} statusBarTranslucent transparent visible>
+    <Modal onRequestClose={props.onClose} statusBarTranslucent transparent visible>
       <View style={styles.scrim}>
         <View accessibilityViewIsModal style={styles.card} testID="room-consent">
           <Text accessibilityRole="header" style={styles.title}>
@@ -176,6 +180,8 @@ export function RoomRequestInbox(): ReactElement | null {
   const profile = useQuery(lobbyQuery).data?.profile;
   const show = useToast();
   const [answered, setAnswered] = useState<ReadonlySet<string>>(new Set());
+  // The asks closed by back, unanswered: they come back when the app opens anew.
+  const [setAside, setSetAside] = useState<ReadonlySet<string>>(new Set());
   const notice = inbox?.notices[0];
   useEffect(() => {
     if (notice === undefined) {
@@ -186,7 +192,9 @@ export function RoomRequestInbox(): ReactElement | null {
       void queryClient.invalidateQueries({ queryKey: ROOM_INBOX_KEY });
     });
   }, [notice, show, queryClient]);
-  const ask = inbox?.asks.find((each) => each.consented !== true && !answered.has(keyOf(each)));
+  const ask = inbox?.asks.find(
+    (each) => each.consented !== true && !answered.has(keyOf(each)) && !setAside.has(keyOf(each)),
+  );
   const consented = inbox?.asks.find((each) => each.consented === true);
   if (profile === undefined) {
     return null;
@@ -198,6 +206,9 @@ export function RoomRequestInbox(): ReactElement | null {
     <ConsentDialog
       ask={ask}
       key={keyOf(ask)}
+      onClose={() => {
+        setSetAside(new Set([...setAside, keyOf(ask)]));
+      }}
       onDone={() => {
         setAnswered(new Set([...answered, keyOf(ask)]));
         void queryClient.invalidateQueries({ queryKey: ROOM_INBOX_KEY });
@@ -221,7 +232,7 @@ const styles = StyleSheet.create({
   title: { ...text.title, fontFamily: font.bold, color: color.ink },
   body: { ...text.body, color: color.inkMuted },
   detail: { ...text.body, fontFamily: font.semiBold, color: color.ink },
-  failed: { ...text.body, color: color.danger },
+  failed: FAILURE,
   actions: { flexDirection: 'row', gap: space[2], marginTop: space[2] },
   action: { flex: 1 },
 });

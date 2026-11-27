@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -11,6 +12,7 @@ import { now } from '@/clock';
 import { color, radius, space, text } from '@/design-system';
 import { leaveOnScreen, leaveWhen, leaveWordsOf } from '@/features/assistant/use-quest-leaving';
 import type { ChatSheetControl } from '../chat-sheet';
+import { FAILURE } from './line-types';
 
 // 취소하기 or 나가기 of the latest reply (P04 ticket 24): a row of the sheet's width under the words. At its left what it cancels, the Quest's title, cut in the middle when long, and
 // its start, never cut; at its right the label in the danger colour. One press does it: the question and the row that
@@ -27,7 +29,7 @@ export function LeaveRow({ control }: { control: ChatSheetControl }): ReactEleme
   const said = leaveWordsOf(offer, state);
   const outcome =
     said === null ? null : (
-      <Text style={styles.said} testID="leave-words">
+      <Text style={state === 'failed' ? styles.failed : styles.said} testID="leave-words">
         {said}
       </Text>
     );
@@ -67,6 +69,8 @@ export function LeaveRow({ control }: { control: ChatSheetControl }): ReactEleme
 const styles = StyleSheet.create({
   leave: { gap: space[2] },
   said: { ...text.body, color: color.ink },
+  // A press that failed says so as every failure line does, in red (P01 ticket 19).
+  failed: FAILURE,
   row: {
     alignSelf: 'stretch',
     flexDirection: 'row',

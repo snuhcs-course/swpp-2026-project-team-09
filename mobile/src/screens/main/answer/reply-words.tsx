@@ -7,11 +7,11 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
-import { color, text } from '@/design-system';
 import { modelWordsOf } from '@/features/assistant/model-words';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import { turnsOf } from '@/features/assistant/turn';
@@ -31,7 +31,10 @@ import { type RefusalAsk, RefusalReply } from './refusal-reply';
 import { StepsTop } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
+import type { TellAct } from '../library/act-stage';
+import type { LibraryCardActions } from '../library/use-library-call';
 import { offeredAnswer } from '@/features/assistant/meal-offered';
+import { SENTENCE } from './line-types';
 
 // Which card a reply's words are: the Plan's, or the made Quest's once its Plan was made into one, for the reply the
 // answer on screen came from, the Lookup on screen for its reply, or the reply's own.
@@ -45,7 +48,7 @@ interface OnScreen {
 
 // What deciding a reply's card reads of what is on screen.
 interface Seen {
-  shown: Pick<ShownAnswer, 'source' | 'answer' | 'plan'>;
+  shown: Pick<ShownAnswer, 'source' | 'answer' | 'plan' | 'frame'>;
   lookup: Pick<ShownLookup, 'lookup'>;
   invitation: Pick<PlanInvitation, 'made'>;
 }
@@ -81,7 +84,7 @@ export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
   const turn = turnsOf(sceneBubblesOf(bubbles)).findLast(({ after }) => after.length > 0);
   for (const bubble of turn?.after ?? []) {
     const kind = wordsKindOf(bubble, onScreen);
-    if (kind === 'plan' && onScreen.shown.plan !== null) {
+    if (kind === 'plan' && onScreen.shown.frame !== null) {
       return { kind };
     }
     const lookup = onScreen.lookup.lookup;
@@ -113,6 +116,9 @@ interface WordsProps extends OnScreen {
   onAsk: RefusalAsk;
   // A turn a Lookup's button asked of the recalculation.
   addRecalculated: Chat['addRecalculated'];
+  // Where a study answer's group study room tells its main button (P10 ticket 11), and what its booking adds to the chat
+  // (P10 ticket 14).
+  group?: { act: TellAct; library: LibraryCardActions };
 }
 
 // The card of the answer on screen a reply's words are, by `wordsKindOf`, with a refusal's lines over the Plan's when
@@ -126,7 +132,8 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
     const steps = (bubble.steps?.length ?? 0) > 1;
     // A choice's words are not the card's: the history list keeps them (P05 ticket 56).
     const said = bubble.select === undefined ? bubble.text : '';
-    return <PlanCard {...card} focus={focus} said={said} steps={steps} />;
+    const group = { act: props.group?.act, bubbleId: bubble.id, library: props.group?.library };
+    return <PlanCard {...card} {...group} focus={focus} said={said} steps={steps} />;
   }
   if (kind === 'made' && answer !== null && plan !== null && invitation.made !== null) {
     return <MadeCard {...{ answer, invitation, onClose, over, plan }} made={invitation.made} />;
@@ -206,19 +213,20 @@ export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): Reac
     return <LookupBar lookup={bar.lookup} onHeight={onHeight} />;
   }
   const leftAlone = invitation.left !== null && invitation.made === null && invitation.changed === null;
-  return shown.answer === null || shown.plan === null || leftAlone ? null : (
+  // An answer with no Plan keeps the time card it was asked in (P01 ticket 31).
+  return shown.answer === null || shown.frame === null || leftAlone ? null : (
     <PlanBar
       answer={shown.answer}
       focus={focus}
       invitation={invitation}
       onClose={onClose}
       onHeight={onHeight}
-      plan={shown.plan}
+      plan={shown.frame}
       shown={shown}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  words: { ...text.bodyLg, color: color.ink },
+  words: SENTENCE,
 });

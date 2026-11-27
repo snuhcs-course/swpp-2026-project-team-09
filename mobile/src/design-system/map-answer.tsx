@@ -30,14 +30,15 @@ export type AnswerSymbol =
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
   // `faded`: drawn pale. `meal`: a meal answer's Restaurant, in coral (P04 ticket 85): the pick solid with a white
   // number, a candidate soft with a coral rim and number; left out, the pick gold and a candidate navy, as every other
-  // answer's.
+  // answer's. `meal` with `study`: a study answer's place, the same in the study colour (P10 ticket 17).
   | {
       type: 'dot';
       role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept';
       number: number | null;
       faded?: boolean;
       meal?: boolean;
-      // A 관정 booking's pick (P01 ticket 10): the round in the study colour with the study layer's book inside.
+      // A 관정 booking's pick (P01 ticket 10): the round in the study colour with the study layer's book inside. With
+      // `meal`, a study answer's place: the meal's round in the study colour, its number in place of the book.
       study?: boolean;
     };
 
@@ -73,7 +74,8 @@ export interface AnswerLabel {
   // A meal answer's pick or candidate, menus or none: its edge and number badge in coral (P04 ticket 90). Left out, its
   // tone's own colours.
   meal?: boolean;
-  // A 관정 booking's pick (P01 ticket 10): its edge in the study colour. Left out, its tone's own colours.
+  // A 관정 booking's pick (P01 ticket 10): its edge in the study colour. With `meal`, a study answer's place (P10 ticket
+  // 17): the meal's make-up in the study colour, the 공부공간 book before a pick's name. Left out, its tone's own colours.
   study?: boolean;
   // A meal candidate's capsule says a clock time ("17:00"), drawn in gold as every clock time; left out, the walking
   // minutes in ink (P04 ticket 88).
@@ -100,10 +102,20 @@ type DotSymbol = Extract<AnswerSymbol, { type: 'dot' }>;
 
 // A meal answer's other candidate (P04 ticket 85): a soft coral ground in a coral rim, and a coral number. The rim is
 // its outside edge, with no white ring or shadow around it: the round and its number take that room (P04 ticket 91).
-function MealCandidate({ number, testID }: { number: number | null; testID?: string }): ReactElement {
+function MealCandidate({
+  number,
+  study,
+  testID,
+}: {
+  number: number | null;
+  study: boolean;
+  testID?: string;
+}): ReactElement {
   return (
-    <View style={styles.mealCandidate} testID={testID}>
-      {number === null ? null : <RoundNumber inside={MEAL_INSIDE} number={number} style={styles.mealNumber} />}
+    <View style={[styles.mealCandidate, study && styles.studyCandidate]} testID={testID}>
+      {number === null ? null : (
+        <RoundNumber inside={MEAL_INSIDE} number={number} style={[styles.mealNumber, study && styles.studyNumber]} />
+      )}
     </View>
   );
 }
@@ -125,7 +137,7 @@ function bookOf(testID: string | undefined): string | undefined {
 
 function Dot({ role, number, meal = false, study = false, testID }: DotSymbol & { testID?: string }): ReactElement {
   if (meal && role === 'candidate') {
-    return <MealCandidate number={number} testID={testID} />;
+    return <MealCandidate number={number} study={study} testID={testID} />;
   }
   const inside = (DOT_SIZES[role] ?? CANDIDATE_ROUND) - 2 * RING;
   const studyPick = study && role === 'pick';
@@ -134,7 +146,7 @@ function Dot({ role, number, meal = false, study = false, testID }: DotSymbol & 
       style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick, studyPick && styles.studyPick]}
       testID={testID}
     >
-      {studyPick ? (
+      {studyPick && !meal ? (
         <View testID={bookOf(testID)}>
           <Icon color={color.onPrimary} name="bookOpen" size={STUDY_BOOK} />
         </View>
@@ -178,9 +190,11 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 // own, at a spot another mark holds, carries its round inside, beside the spot, or the round alone when its minutes
 // give way (no `title`).
 function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { number, side, title, faded = false, clock = false } = label;
+  const { number, side, title, faded = false, clock = false, study = false } = label;
   const round =
-    number === null ? null : <Dot meal number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
+    number === null ? null : (
+      <Dot meal number={number} role="candidate" study={study} testID={partOf(testID, 'dot')} type="dot" />
+    );
   if (round !== null && title === '') {
     return <View testID={testID}>{round}</View>;
   }
@@ -312,6 +326,9 @@ const styles = StyleSheet.create({
     backgroundColor: color.mealSoft,
   },
   mealNumber: { fontFamily: mapText.smallTitle.fontFamily, fontSize: MEAL_NUMBER, color: color.meal },
+  // A study answer's place (P10 ticket 17): the meal's round in the study colours.
+  studyCandidate: { borderColor: color.svcStudy, backgroundColor: color.svcStudySoft },
+  studyNumber: { color: color.svcStudy },
   capsule: {
     alignSelf: 'flex-start',
     alignItems: 'center',

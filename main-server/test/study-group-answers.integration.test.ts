@@ -127,7 +127,10 @@ describe('Every Friend removed', () => {
     expect(answer.input).toMatchObject({ together: false, window, chosen: { seatSpaceId: '8F-8A-zone1-quiet' } });
     expect(answer.plans.length).toBeGreaterThan(1);
     expect(answer.plans.every(({ study }) => study?.group === undefined)).toBe(true);
-    expect(answer.plans.find(({ id }) => id === '관정관')?.study?.book).toEqual({ spaceId: '8F-8A-zone1-quiet' });
+    expect(answer.plans.find(({ id }) => id === '관정관')?.study?.book).toMatchObject({
+      spaceId: '8F-8A-zone1-quiet',
+      card: { action: 'book', space: { id: '8F-8A-zone1-quiet' } },
+    });
     expect(answer.plans.every(({ band }) => band.others?.map(({ userId }) => userId).join() === minsu?.id)).toBe(true);
   });
 

@@ -15,7 +15,7 @@ import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button } from '@/design-system';
 import { addingWordsOf } from '@/features/assistant/adding-words';
-import { peopleOf } from '@/features/assistant/plan-input';
+import { peopleOf, schedulesAlone } from '@/features/assistant/plan-input';
 import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
 import type { ChatSheetControl } from '../chat-sheet';
 import { CHANGE_WORDS, type ProposalMaking } from '../chat-proposal-card';
@@ -24,6 +24,8 @@ import { lookupMainOf, useLookupMain } from './lookup-card';
 import { RoomOfferButton, roomOfferOn } from './room-offer';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
 import { lookupDocks } from './words-rest';
+import type { StepBack } from '../library/act-stage';
+import { ConfirmRow } from './confirm-row';
 
 // The main button of the Plan on screen, beside the input: it says what it does.
 export interface PlanAction {
@@ -34,6 +36,8 @@ export interface PlanAction {
   secondary?: Choice;
   // Drawn in red: a booking's 예약 취소 (P01 ticket 15).
   danger?: boolean;
+  // An armed step: the round ✕ at the left that un-arms it without acting (P01 ticket 21).
+  back?: StepBack;
 }
 
 // "만들고 초대 보내기" for a Plan with a Friend, as "이대로 초대" made it into a Quest and invited them; "일정에 넣기" for a meal's Plan
@@ -45,7 +49,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   if (!framed || answer === null || plan === null || invitation.made !== null) {
     return null;
   }
-  if (!planShown(control.chat.bubbles, onScreenOf(control))) {
+  // A study answer's group study room tells its own main button, as a booking ticket does (P10 ticket 11).
+  if (!planShown(control.chat.bubbles, onScreenOf(control)) || plan.study?.group !== undefined) {
     return null;
   }
   const { kind } = answer.input;
@@ -79,7 +84,7 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
       disabled,
     };
   }
-  return kind === 'meal' && people === 1 ? { words: '일정에 넣기', onPress: invitation.invite, disabled } : null;
+  return schedulesAlone(answer.input, plan) ? { words: '일정에 넣기', onPress: invitation.invite, disabled } : null;
 }
 
 // Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place, or for a meeting changes that
@@ -109,6 +114,9 @@ function setQuestAction(set: SetQuest, { invitation, answer }: ChatSheetControl,
 }
 
 export function PlanActionButton({ action }: { action: PlanAction }): ReactElement {
+  if (action.back !== undefined) {
+    return <ConfirmRow action={action} back={action.back} />;
+  }
   if (action.secondary !== undefined) {
     return <ChoiceRow main={action} secondary={action.secondary} />;
   }
@@ -185,7 +193,8 @@ export function libraryActOf({ framed, chat, libraryAct }: ChatSheetControl): Pl
   if (!framed || seen === null || chat.bubbles.at(-1)?.id !== seen.bubbleId) {
     return null;
   }
-  return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting, danger: seen.danger };
+  const back = seen.back === null ? {} : { back: { label: seen.back, onPress: libraryAct.stepBack } };
+  return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting, danger: seen.danger, ...back };
 }
 
 // Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's.
