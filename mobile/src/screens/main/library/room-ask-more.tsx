@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -26,7 +27,8 @@ interface AskOneMoreProps {
   onAsked: (request: RoomRequest) => void;
 }
 
-function OneMorePicker({ request, onAsked, onClose }: AskOneMoreProps & { onClose: () => void }): ReactElement {
+// The picker alone, which the study answer together opens from its main button (P10 ticket 12).
+export function OneMorePicker({ request, onAsked, onClose }: AskOneMoreProps & { onClose: () => void }): ReactElement {
   const friends = askableFriends(useQuery(friendsQuery).data ?? [], request);
   const [chosen, setChosen] = useState<string[]>([]);
   // One key for each Friend chosen, so that a retry after no answer is the same ask.

@@ -8,6 +8,7 @@
 
 import { within } from '@testing-library/react-native';
 import { libraryCard } from '@/api/mock/data/library';
+import { color } from '@/design-system';
 import { screen } from './support/app';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -131,6 +132,8 @@ describe('the return card', () => {
     expect(shown.getByLabelText('사용 중 · 18:00까지, 7층 열람실, 좌석 7193번')).toBeVisible();
     expectNoWrite(library);
 
+    // 반납하기 ends the seat's use as 예약 취소 ends a booking: it is red as well (P01 ticket 21).
+    expect(dock().getByText('반납하기')).toHaveStyle({ color: color.danger });
     await pressIn(dock(), '반납하기');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
@@ -212,6 +215,41 @@ describe('내 예약', () => {
     ).toBeVisible();
     expect(inFrame().queryByText('카드에서 확인해 주세요.')).toBeNull();
   });
+});
+
+describe("내 예약's armed step (P01 ticket 21)", () => {
+  const MINE = card(libraryCard('myBookings:2026-10-26:2026-11-05', 'myBookings'));
+
+  // A booking held and one in use, so that the card offers "예약 취소 ›" and "반납 ›".
+  async function shownBookings(): Promise<ReturnType<typeof inCard>> {
+    library.addBooking(bookingRow());
+    library.addBooking(
+      bookingRow({ BSEQNO: 3000002, STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }),
+    );
+    await askForCards({ server, library }, [MINE], { words: '내 예약 보여줘' });
+    return inCard(`library-myBookings-${MINE.library.key}`);
+  }
+
+  it.each([
+    ['예약 취소 ›', '예약 취소', '취소하지 않기'],
+    ['반납 ›', '반납하기', '반납하지 않기'],
+  ] as const)(
+    'arms %s as %s in red with the ✕, which steps back to the link with nothing sent',
+    async (link, act, back) => {
+      const shown = await shownBookings();
+
+      await pressIn(shown, link);
+      const row = within(screen.getByTestId('confirm-row'));
+      expect(row.getByText(act)).toHaveStyle({ color: color.danger });
+      expect(dock().queryByRole('button', { name: '가는 길' })).toBeNull();
+
+      await pressIn(row, back);
+
+      expect(screen.queryByTestId('confirm-row')).toBeNull();
+      expect(shown.getByRole('button', { name: link })).toBeVisible();
+      expectNoWrite(library);
+    },
+  );
 });
 
 describe('내 예약 of a period', () => {

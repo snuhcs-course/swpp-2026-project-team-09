@@ -7,17 +7,11 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  type EventsInput,
-  type MealInput,
-  type MeetInput,
-  type NewQuestInput,
-  type Plan,
-  type PlanInput,
-} from '../assistant/dto/answer.dto.js';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { type MealInput, type NewQuestInput, type Plan, type PlanInput } from '../assistant/dto/answer.dto.js';
 import { outOfReach } from '../assistant/free-time/tool-parts.js';
 import { PlanAnswersService } from '../assistant/plan-answers.service.js';
 import { CAPACITY_MIN } from '../assistant/recruiting/new-quest-answer.js';
@@ -37,6 +31,7 @@ import { forgetLeaveBy } from '../quests/taken-alone.js';
 import { UsersService } from '../users/users.service.js';
 import { aloneLeaveBy, goingLine, nextWordOf } from './alone-plan.js';
 import { type PlanQuestBody, type PlanQuestDto } from './dto/plan-quest.dto.js';
+import { type AloneInput, aloneInputOf, mealOrMeetInputOf } from './plan-kinds.js';
 
 // A Quest made from a meal's Plan keeps its meal, so that a new Plan for the same meal and day sets it aside.
 const mealOf = (input: PlanInput): { meal?: MealInput['meal']; meet?: true } => {
@@ -70,32 +65,6 @@ const newQuestStepsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>
     longitude: null,
     placeLabel: null,
   }));
-
-// A meal's Plan, a meet's, and a new recruiting Quest's are made into a Quest; the Quests to join are joined from their
-// cards.
-export function mealOrMeetInputOf(input: PlanInput): MealInput | MeetInput {
-  if (input.kind !== 'meal' && input.kind !== 'meet') {
-    throw new BadRequestException({
-      statusCode: HttpStatus.BAD_REQUEST,
-      error: 'Bad Request',
-      code: 'PLAN_KIND',
-      message: "Only a meal's plan, a meet's, and a new recruiting Quest's are made into a Quest.",
-    });
-  }
-  return input;
-}
-
-// A Plan taken alone: an events Plan, or a meal's or a meet's whose people are the asker only. Null for a Plan with a
-// Friend and for any other kind.
-function aloneInputOf(input: PlanInput): MealInput | MeetInput | EventsInput | null {
-  if (input.kind === 'events') {
-    return input;
-  }
-  if (input.kind === 'meal' || input.kind === 'meet') {
-    return input.people.length < 2 ? input : null;
-  }
-  return null;
-}
 
 @Injectable()
 export class PlansService {
@@ -188,13 +157,10 @@ export class PlansService {
     return partyMade(this.usage, userId, await this.made(userId, questId, created));
   }
 
-  // Plans again, and makes the Plan named a Quest taken alone, which the asker holds alone: a meal's with its steps, an
-  // event's in place of the one they held alone for it. Keeps its leave-by, and answers the card's two lines.
-  private async makeAlone(
-    userId: string,
-    making: PlanQuestBody,
-    input: MealInput | MeetInput | EventsInput,
-  ): Promise<PlanQuestDto> {
+  // Plans again, and makes the Plan named a Quest taken alone, which the asker holds alone: a meal's, a meet's or a
+  // study's with its steps, an event's in place of the one they held alone for it. Keeps its leave-by, and answers the
+  // card's two lines.
+  private async makeAlone(userId: string, making: PlanQuestBody, input: AloneInput): Promise<PlanQuestDto> {
     const now = this.clock.now();
     if (outOfReach(input.date, now)) {
       throw new BadRequestException('A plan is for a day from today to a week ahead');

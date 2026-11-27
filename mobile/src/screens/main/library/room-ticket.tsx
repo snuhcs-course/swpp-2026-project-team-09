@@ -44,7 +44,8 @@ function kindValue(group: StudyGroup): string {
 export function RoomTicket({ group, room, open, locked, loggedIn, onKind, onRoom }: RoomTicketOf): ReactElement {
   const short = group.moreNeeded > 0;
   const people = `${String(group.people)}명`;
-  const value = kindValue(group);
+  // Once sent the kind is held: a Friend out dims the ticket but leaves the kind's name (group-study-resume 3 가).
+  const value = locked ? kindWords(group.room) : kindValue(group);
   const shown = loggedIn ? room : null;
   return (
     <TicketFrame dimmed={short} testID="room-ticket">

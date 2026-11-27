@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (17; 02, 03, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15 and 16 are done; 01, 04 and 05 are held, see Solution)
+Status: ready-for-agent (11a, 17 and 18; 02, 03, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15 and 16 are done; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -17,14 +17,16 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 9. **내 정보's cards.** Added by the user on 2026-11-25, on their phone: "관심사 아래 line, 탭 안내 다시 보기 밑에 line, 관정도서관 로그인 밑에 line 있잖아. 이거 해당 블록이 거기서 끝나는데 그 line들이 있을 이유가 없거든?" and "관정도서관 로그인 버튼, 지금 그 칸 기준으로 위에 붙어있잖아, 이거 중앙으로 맞추고 싶어." (`references/09-1-me-cards-mock-up.webp`, the screen as it is and as agreed)
 10. **Full 파티 and 파티 asked for, in 찾기.** Added by the user on 2026-11-26. From UAT 1, never fixed: "자리가 다 찬 파티도 보여줌. → 참여하기 버튼도 활성화가 되어 있고, 눌렀을 때 그제야 '자리가 다 찼어요'를 보여줌." And: "파티를 이미 신청했는데 해당 파티의 참여 신청 버튼이 아직 활성화 되어있음 (모집 중인 파티 탭에서) 이거 신청 취소 버튼으로 만들고 버튼 디자인은 '초대' - '신청 취소' 버튼과 동일하게." (`references/10-1-asked-card-now.jpg`, `references/10-2-asked-post-now.jpg`)
 11. **A class whose days have different hours.** Added by the user on 2026-11-26: such a class has to be made twice, as two classes of one name. The user changed 수업 추가 on the design canvas (board `Timetable`, its form) and asked for that change alone.
+11a. **Two sets of hours on one day.** Added by the user on 2026-11-27, after 11 was merged: a day one time slot holds is greyed out in the others, as the canvas drew it, so a class meeting 수 15:30–16:45 and 수 19:00–20:45 cannot be entered. The user asked for it to be possible.
 12. **찾기.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "맨 아래에 전체 게시판이랑 모집 중인 파티 옆 전체 게시판 중복 … 그냥 파티 찾기 탭 여기서 게시판 고를 수 있게 하면 되잖아 -전체/식사/진로/취미/공연 이렇게", the cards' time and place on their own lines, the purple square gone, and "파티 검색 저 버튼, 좀 뜬구름잡게 가운데 끼어든 느낌". Settled on wireframes the same day (`references/12-1-find-wireframe.webp`).
 13. **파티's event card.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사가 태그된 파티 안에 들어갔을 때 행사를 누르면 행사 탭으로 아예 넘어가버림, 팝업으로 아래서 위로 뜨게 하는 식으로 하는게 낫지 않나?" (`references/13-1-room-event-sheet.webp`)
 14. **행사's detail sheet.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사/특정행사 누름 올라오는 팝업에서도 제목을 좀더 작게, 언제/어디 글씨는 삭제(아이콘으로 인지 가능), 위에 '내 파티' 이거 뭐임? 삭제." Settled on 2026-11-27 (`references/14-1-event-sheet-wireframe.webp`, `references/14-2-description-spacing.webp`).
 15. **행사's list.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사 다가오는 행사 문구 삭제, 시간이랑 장소, 아이콘(눌렀을때 올라오는 팝업의 아이콘)을 두고 다른 줄로 나누기, 제목과 시간/장소 글씨 크기가 여전히 큼.." Settled on 2026-11-27 (`references/15-1-events-list-wireframe.webp`).
 16. **관련 행사 고르기.** Added by the user on 2026-11-26, from their notes on the 파티 form: "관련행사 고르기 했을때 UI 말도 안되게 못생김 … 일단 눌렀을때 바로 추가되는게 아니라 행사탭처럼 아래서 위로 팝업 하나띄워주고, 추가 버튼을 따로 두고 추가했으면 좋겠음. (진로/이벤트/축제 이건 누가 나누는거지?)" Settled on 2026-11-27 (`references/16-1-event-picker-wireframe.webp`).
 17. **The tabs' bars.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "파티, 행사, 내정보의 최상단 각 글씨 크기를 살짝 키우고, 글씨랑 바로 아래 선 사이 간격을 좀 줄이는건 어떤가?" Settled on 2026-11-27 with the friend panel's bar too (`references/17-1-tab-bar-wireframe.webp`).
+18. **내 파티's cards.** Added by the user on 2026-11-26, from their notes on the 파티 tab: "파티/내 파티 시간, 장소, 행사태그 이런거 한줄로 이어지게 적혀있는거 같은데, 나누는게 좋지 않을까? … 내가 방장인 파티는 간단하게라도 표시해서 식별되도록 하는건 어떤가." Settled on 2026-11-27 (`references/18-1-mine-wireframe.webp`, with the options in `18-2` and `18-3`).
 
-Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and item 17 against 6edb1b61 on 2026-11-27: none was fixed then.
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27: none was fixed then.
 
 ## Solution
 
@@ -41,12 +43,14 @@ One ticket per item, numbered as the items:
 9. [09: 내 정보's cards end without a line, and 관정도서관 로그인's button stands in the row's middle](issues/09-me-cards-end-clean.md)
 10. [10: 찾기 leaves out full 파티, and a card whose request waits offers 신청 취소](issues/10-full-and-asked-posts.md)
 11. [11: The class form takes a time slot per set of hours](issues/11-class-time-slots.md)
+11a. [11a: Two time slots may share a day](issues/11a-same-day-slots.md)
 12. [12: 찾기: board filters that stay put, search at their end, plain cards whose 모집글 slides up, and no 전체 게시판](issues/12-find-filter-and-post-sheet.md)
 13. [13: 파티's event card opens the event's detail as a sheet over the room](issues/13-room-event-sheet.md)
 14. [14: 행사's detail sheet: no 내 파티 or source line, no 언제 / 어디 words, smaller type, and the description spaced by its own lines](issues/14-event-sheet-cleaner.md)
 15. [15: 행사's list: no 다가오는 행사 heading, smaller type, time and place on their own lines, titles up to two lines, and no source line](issues/15-events-list-lighter.md)
 16. [16: 관련 행사 고르기: one list without 진로 / 이벤트 / 축제, rows like 행사's, and an event chosen only from its sheet](issues/16-event-picker-one-list.md)
 17. [17: The tab bars of 파티, 행사 and 내 정보, and the friend panel's: a larger title, closer to its line](issues/17-tab-bar-title.md)
+18. [18: 내 파티's cards like 찾기's: a board or 비공개 tag, a crown for the 파티 the User leads, the time, the place and the event on their own lines, and tighter groups](issues/18-mine-cards-like-find.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -64,6 +68,8 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-27 and built at once: 15. It changes `EventRow` (`screens/events/event-row.tsx`), the list's heading (`events-screen.tsx`), the shared `eventText` styles and the 관련 행사 picker's day size (`screens/party/form/event-field.tsx`). Ticket 14 (PR 636) touches `event-row.tsx` and other `eventText` keys too, so whichever lands second merges `5.0/Main` first.
 - Added on 2026-11-27 and built at once: 16. It changes the 관련 행사 picker and field (`screens/party/form/event-field.tsx`), `EventDetailSheet` (a foot button of its own), `withEvent` (`features/party/making.ts`), and deletes `features/party/event-kinds.ts`; no open ticket touches them.
 - Added on 2026-11-27 and built at once: 17. It changes `AppBar`'s tab form (`design-system/app-bar.tsx`) and 행사's search bar (`screens/events/events-bar.tsx`); no open ticket touches them.
+- Added on 2026-11-27 and built at once: 11a, a change to 11 (PR 594). It changes the class form's day buttons (`screens/timetable/class-fields.tsx`, `slot-card.tsx`) and `features/timetable/class-form.ts`; no open ticket touches them.
+- Added on 2026-11-27 and built at once: 18. It changes 내 파티's card and list (`screens/party/mine-card.tsx`, `mine-tab.tsx`) and its view (`features/party/mine.ts`), reusing 찾기's `PostTop` and `InfoLine`; no open ticket touches them.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -103,6 +109,8 @@ When the held tickets are taken up, tickets touching the same files never run at
 28. As a User scanning 행사, I want lighter rows with the time and the place on their own lines and titles I can read to the end, so that more events fit and each reads at a glance.
 29. As a User making a 파티 for an event, I want to see the event's detail before I add it, in one list I can search, without kinds the app guesses wrongly.
 30. As a User moving between the tabs, I want each tab's title a little larger and closer to the line under it, so that the top of the screen reads as one firm heading.
+31. As a User looking through 내 파티, I want its cards to read like 찾기's, with the 파티 I lead marked, so that I can tell at a glance what each is, when and where it is, and which ones I run.
+32. As a User whose class meets twice on one day, I want to give that day to two time slots, at hours that do not cross.
 
 ## Implementation Decisions
 
@@ -125,6 +133,7 @@ Decided on 2026-11-22:
 - 15 (2026-11-27): the list loses its 다가오는 행사 heading and its rows' source line. A row's day is 22 Bold over a 12 month line, the title 16 Bold on up to two lines, the time and the place on their own lines with `clock` / `pin` at 13 Medium, the party line 13, and the padding 12. The sizes live in the shared `eventText`, which the 관련 행사 picker also takes (its day override goes), its other changes waiting for its own item. The day words stay 오늘 / 내일 / weekday.
 - 16 (2026-11-27): the picker loses its 진로 / 이벤트 / 축제 tabs and lists every event by date with its search. Its rows follow the 행사 list's: two-line titles, time and place lines with icons, padding 12. A press opens `EventDetailSheet` with 원문 보기 and 이 행사 추가, or a disabled 선택됨 for the event already chosen. The kind rules (`event-kinds.ts`: regular expressions over an event's words, a stopgap) are deleted with their uses: the tabs, the chosen box's kind line and the tags added on picking. Nothing else reads them.
 - 17 (2026-11-27): `AppBar`'s tab form (파티, 행사, 내 정보 and the friend panel) has its title in 25 Bold (line height 32) and its row 50 high with 4 on top, so the title is 7 from its line (was 13). The sub-screen form and the shared `text.titleLg` and `size.appBar` stay. 행사's search bar follows the new height so the filters do not move. 파티's bar keeps ticket 12's centred `+ 만들기` and no magnifier; the ? help stays on hold.
+- 18 (2026-11-27): 내 파티's cards lose the kind column and follow 찾기's card: a board tag, or "비공개" in the same tag; the count at the right with a crown before it on a Quest the User leads (option C); the title on up to two lines; the time, the place and the event (blue, opening nothing) on their own lines. The strip, the live outline and the waiting circle stay. A group's last card is 20 from the next header (was 32). The map entry is option D, the room's place row, and waits with the event link; the card gets none.
 
 For all tickets:
 
@@ -175,6 +184,7 @@ Every item received and where it went:
 | 15 행사 목록의 다가오는 행사, 시간/장소 줄, 글씨 크기 (added 2026-11-26) | Ticket 15, with two-line titles (added 2026-11-27) |
 | 16 관련 행사 고르기의 UI, 누르면 팝업과 추가 버튼, 진로/이벤트/축제 (added 2026-11-26) | Ticket 16, with the kind rules deleted (added 2026-11-27) |
 | 17 파티·행사·내 정보 상단 제목 크기와 아래 선 간격 (added 2026-11-26) | Ticket 17, with the friend panel's bar (added 2026-11-27). The ? help beside the titles is on hold |
+| 18 내 파티 카드의 시간/장소/행사 줄, 방장 표시, 지도에서 위치 보기 (added 2026-11-26) | Ticket 18, with the board or 비공개 tag and tighter groups (added 2026-11-27). The map entry waits for the room, with the event link |
 
 Notes for the tickets:
 

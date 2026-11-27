@@ -33,6 +33,7 @@ import {
   type Act,
   type Acted,
   ACT_WORDS,
+  BACK_WORDS,
   ENDED_WORDS,
   type Ended,
   NOT_YET_USED,
@@ -56,8 +57,10 @@ interface CardProps {
 // 관정관, the building every 관정도서관 space is in.
 const LIBRARY_PLACE = '62-1';
 
-// The main button of an act on one booking, in red for a cancel; disabled until one is chosen.
-function actTold(act: Act, write: Write<Acted>, booking: LibraryBooking | undefined): ActTold {
+// The main button of an act on one booking, in red, a cancel as a return; disabled until one is chosen. An armed step
+// stands with the ✕ that steps back without acting (P01 ticket 21).
+function actTold(act: Act, write: Write<Acted>, booking: LibraryBooking | undefined, back?: () => void): ActTold {
+  const steps = back === undefined || write.busy ? {} : { back: { label: BACK_WORDS[act], onPress: back } };
   return {
     words: write.busy ? '처리하는 중' : ACT_WORDS[act].confirm,
     onPress: () => {
@@ -66,7 +69,8 @@ function actTold(act: Act, write: Write<Acted>, booking: LibraryBooking | undefi
       }
     },
     disabled: booking === undefined || write.busy,
-    danger: act === 'cancel',
+    danger: true,
+    ...steps,
   };
 }
 
@@ -198,15 +202,18 @@ function MyBookingAct({
   bubbleId,
   actions,
   reload,
+  onBack,
 }: {
   booking: LibraryBooking;
   act: Act;
   bubbleId: number;
   actions: LibraryCardActions;
   reload: () => void;
+  // The ✕ beside its main button: the row's link comes back, and nothing is sent.
+  onBack: () => void;
 }): ReactElement | null {
   const { outcome, write } = useConfirming(act, reload, { reloadAfter: true });
-  useTellAct(actions.act ?? null, bubbleId, outcome === 'idle' ? actTold(act, write, booking) : null);
+  useTellAct(actions.act ?? null, bubbleId, outcome === 'idle' ? actTold(act, write, booking, onBack) : null);
   if (outcome === 'done') {
     return (
       <>
@@ -273,6 +280,9 @@ export function MyBookingsCard({ card, bubbleId, actions }: CardProps): ReactEle
           booking={acting.booking}
           bubbleId={bubbleId}
           key={acting.booking.BSEQNO}
+          onBack={() => {
+            setActing(null);
+          }}
           reload={reload}
         />
       )}

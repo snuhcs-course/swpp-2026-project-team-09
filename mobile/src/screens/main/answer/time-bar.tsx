@@ -178,7 +178,8 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
 interface PlanBarProps {
   shown: ShownAnswer;
   answer: AnswerReply;
-  plan: Plan;
+  // The Plan on screen, or the frame an answer with no Plan keeps (P01 ticket 31).
+  plan: Pick<Plan, 'band' | 'parts'> & { place: Plan['place'] | null };
   invitation: PlanInvitation;
   focus: BandFocus;
   onClose: () => void;
@@ -195,7 +196,8 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
   const addName = settled ? null : addNameOf(answer.input.kind);
-  const busy = shown.recalculating || invitation.sending || invitation.changing;
+  // A held answer's band stays as it is too (P10 ticket 12): nothing it asks would be asked.
+  const busy = shown.recalculating || shown.locked || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   const pickingBar = usePickingBar(shown, plan, { busy, onClose });

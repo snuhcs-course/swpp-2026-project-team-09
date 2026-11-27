@@ -29,6 +29,7 @@ import { MealMenu } from './meal-menu';
 import { mealWordsOf } from './meal-words';
 import { OfferButtons } from './offer-buttons';
 import { PlanStepper } from './plan-stepper';
+import { KindChips } from './kind-chips';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { StudyGroupBody } from './study-group-body';
@@ -221,6 +222,10 @@ export function PlanCard(props: PlanCardProps): ReactElement {
     <View style={styles.plan}>
       <Said lines={linesOf(shown, answer, over)} refusal={over.length} said={meal || group !== undefined ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} /> : null}
+      {/* A meal with no Plan keeps its conditions, each with its ✕ (P01 ticket 31). */}
+      {shown.plan === null && answer.input.kind === 'meal' ? (
+        <KindChips answer={answer} change={shown.change} disabled={busy} onChoose={shown.chooseKind} study={null} />
+      ) : null}
       {shown.plan !== null && group !== undefined ? (
         <StudyGroupBody
           act={props.act}

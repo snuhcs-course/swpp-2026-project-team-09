@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { fireEvent } from '@testing-library/react-native';
 import { consentTitle } from '@/screens/main/room-consent';
 import { consentedWords, WITHDRAW } from '@/screens/main/room-consented';
 import type * as SecureStoreFake from './support/secure-store';
@@ -108,6 +110,32 @@ describe('the main screen', () => {
 
     expect(screen.getByText('파티 구성원이 제안을 거절했습니다')).toBeVisible();
     expect(server.received(`POST /library/room-notices/${notice.id}/seen`)).toHaveLength(1);
+  });
+});
+
+// The Modal the consent dialog stands in, whose onRequestClose is Android's back.
+function consentModal(): ReturnType<typeof screen.getByTestId> {
+  let modal = screen.getByTestId('room-consent').parent;
+  while (modal !== null && modal.props.onRequestClose === undefined) {
+    modal = modal.parent;
+  }
+  if (modal === null) {
+    throw new Error('The consent dialog stands in no Modal');
+  }
+  return modal;
+}
+
+describe("the consent dialog's back (P01 ticket 21)", () => {
+  it("closes the dialog on Android's back without declining", async () => {
+    server.on('GET /library/room-requests', { status: 200, body: { asks: [ASK], notices: [] } });
+    server.on(`POST /library/room-requests/${REQUEST_ID}/decline`, { status: 200, body: GATHERING });
+    await askForCards({ server, library }, [], { words: '안녕' });
+
+    await fireEvent(consentModal(), 'requestClose');
+    await pass(100);
+
+    expect(screen.queryByTestId('room-consent')).toBeNull();
+    expect(server.received(`POST /library/room-requests/${REQUEST_ID}/decline`)).toHaveLength(0);
   });
 });
 

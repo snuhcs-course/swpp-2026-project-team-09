@@ -3,8 +3,10 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { StudyInput } from './study-plan-types';
 import { queryOptions } from '@tanstack/react-query';
 import { mockRoomRequests } from './mock/room-requests';
 import { field, hasTexts, isNothing, isNumber, isText, isTextOrNull, listOf } from './server/answers';
@@ -81,8 +83,11 @@ export interface RoomCompanion {
   studentNumber: string | null;
 }
 
-// From a book card: its key, and the Friends or the Quest whose Holders come along.
-export type RoomRequestMaking = { key: string; useDesc?: string } & ({ friendIds: string[] } | { questId: string });
+// From a book card: its key, and the Friends or the Quest whose Holders come along; from a study answer together, also
+// the study input it was made from, which the server keeps to give the answer back (P10 ticket 12).
+export type RoomRequestMaking = { key: string; useDesc?: string; input?: StudyInput } & (
+  { friendIds: string[] } | { questId: string }
+);
 
 export interface RoomRequestsClient {
   make: (making: RoomRequestMaking, idempotencyKey: string) => Promise<RoomRequest>;

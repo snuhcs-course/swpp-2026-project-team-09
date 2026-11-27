@@ -38,6 +38,8 @@ interface AskProps {
   ask: RoomAsk;
   profile: Profile;
   onDone: () => void;
+  // Android's back: the dialog closes, unanswered, until the app opens anew; nothing is declined (P01 ticket 21).
+  onClose: () => void;
 }
 
 interface Answers {
@@ -133,7 +135,7 @@ function ConsentDialog(props: AskProps): ReactElement {
   const canConsent = !busy && name.trim() !== '' && (!missing || typedNumber !== null);
   const booker = ask.requester.name;
   return (
-    <Modal onRequestClose={answers.decline} statusBarTranslucent transparent visible>
+    <Modal onRequestClose={props.onClose} statusBarTranslucent transparent visible>
       <View style={styles.scrim}>
         <View accessibilityViewIsModal style={styles.card} testID="room-consent">
           <Text accessibilityRole="header" style={styles.title}>
@@ -178,6 +180,8 @@ export function RoomRequestInbox(): ReactElement | null {
   const profile = useQuery(lobbyQuery).data?.profile;
   const show = useToast();
   const [answered, setAnswered] = useState<ReadonlySet<string>>(new Set());
+  // The asks closed by back, unanswered: they come back when the app opens anew.
+  const [setAside, setSetAside] = useState<ReadonlySet<string>>(new Set());
   const notice = inbox?.notices[0];
   useEffect(() => {
     if (notice === undefined) {
@@ -188,7 +192,9 @@ export function RoomRequestInbox(): ReactElement | null {
       void queryClient.invalidateQueries({ queryKey: ROOM_INBOX_KEY });
     });
   }, [notice, show, queryClient]);
-  const ask = inbox?.asks.find((each) => each.consented !== true && !answered.has(keyOf(each)));
+  const ask = inbox?.asks.find(
+    (each) => each.consented !== true && !answered.has(keyOf(each)) && !setAside.has(keyOf(each)),
+  );
   const consented = inbox?.asks.find((each) => each.consented === true);
   if (profile === undefined) {
     return null;
@@ -200,6 +206,9 @@ export function RoomRequestInbox(): ReactElement | null {
     <ConsentDialog
       ask={ask}
       key={keyOf(ask)}
+      onClose={() => {
+        setSetAside(new Set([...setAside, keyOf(ask)]));
+      }}
       onDone={() => {
         setAnswered(new Set([...answered, keyOf(ask)]));
         void queryClient.invalidateQueries({ queryKey: ROOM_INBOX_KEY });

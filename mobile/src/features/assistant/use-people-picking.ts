@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback } from 'react';
@@ -19,10 +20,11 @@ export interface PickingState {
   recalculating: boolean;
 }
 
-// People are picked only in a Plan's time card, of a kind that takes people, and not while a new Plan is on its way:
-// its people are not yet those of the answer on screen.
+// People are picked only in a time card, of a kind that takes people, and not while a new Plan is on its way: its
+// people are not yet those of the answer on screen. An answer with no Plan keeps its time card (P01 ticket 31).
 function pickableOf({ answer, recalculating }: PickingState): AnswerReply | null {
-  return answer !== null && !recalculating && answer.plans.length > 0 && hasPeople(answer.input) ? answer : null;
+  const carded = answer !== null && (answer.plans.length > 0 || answer.noPlan !== null);
+  return answer !== null && carded && !recalculating && hasPeople(answer.input) ? answer : null;
 }
 
 interface Picking {

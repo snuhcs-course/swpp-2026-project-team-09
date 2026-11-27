@@ -25,7 +25,16 @@ Found on the emulator while taking P10 ticket 11's pictures. An app whose font s
 
 - [x] At font scale 1 the label is as wide as before; at 1.3 "관정 4층 그룹스터디룸 15:00" is whole; a long title stops at 200, 260 and 320 at 1, 1.3 and 2. (Unit tests of the box and of the drawn label.)
 - [x] The labels' placement tests pass, the meal answer at 1.3 included: no label covers another.
-- [ ] Pictures of a meal answer and a seat answer at font scale 1.3, the app started cold, before and after.
+- [x] Pictures of a meal answer and a seat answer at font scale 1.3, the app started cold, before and after.
 - [x] Whole lint, format and types.
 
 ## Comments
+
+### Follow-ups
+
+- A map marker's picture is kept by its look's name (`lookName`) alone. When the font scale changes while the app runs, labels of the old scale stay until a cold start. The name should carry the font scale.
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 18 minutes (an estimate) in one session from 02:41 UTC, a few minutes of it uploading #655's pictures; no subagents.
+- Tokens: input 164 uncached, cache reads 61,426,639, cache writes 89,479; output 51,783.

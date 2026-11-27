@@ -7,6 +7,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -144,7 +145,7 @@ describe('a failed recalculation', () => {
 
 // Partitions: an answer to a drag that has no Plan.
 describe('an answer without a Plan to a drag', () => {
-  it('shows its lines and "되돌리기" first in the relax row, and no mark on the map (P04 ticket 86)', async () => {
+  it('shows its lines, keeps the time card, and "되돌리기" first in the relax row, and no mark on the map (P04 ticket 86, P01 ticket 31)', async () => {
     // The stored fixed-start answer with these two fields changed for the boundary: no Plan, and a reason of the
     // contract's shape with lines and a relax button of its own.
     const noPlan: AnswerReply = {
@@ -162,7 +163,7 @@ describe('an answer without a Plan to a drag', () => {
     await step('from', 'increment');
 
     expect(card().getByText('같이 먹을 시간이 없어요')).toBeVisible();
-    expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
+    expect(screen.getByRole('adjustable', { name: '시작 시각' })).toBeOnTheScreen();
     expect(mapThings().filter((name) => FIRST_PLAN_MARKS.includes(name))).toEqual([]);
     const [first, second] = within(card().getByTestId('relax-buttons')).getAllByRole('button');
     expect(first).toHaveTextContent('되돌리기');

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -18,15 +19,20 @@ import { PostReasons } from './post-reasons';
 // What 찾기's cards, 찾기's 모집글 sheet and the 모집글 screen show of a post. The stand-in photo and tags stay off
 // them (P06 ticket 12).
 
+// A small grey tag: the board of a post, or 내 파티's "비공개".
+export function PostTag({ words }: { words: string }): ReactElement {
+  return (
+    <View style={styles.board}>
+      <Text style={styles.boardWords}>{words}</Text>
+    </View>
+  );
+}
+
 // The board, small, and the fill at the other end: the top of a card and of the 모집글.
 export function PostTop({ post }: { post: Pick<PostView, 'board' | 'fill'> }): ReactElement {
   return (
     <View style={styles.top}>
-      {post.board === null ? null : (
-        <View style={styles.board}>
-          <Text style={styles.boardWords}>{boardName(post.board)}</Text>
-        </View>
-      )}
+      {post.board === null ? null : <PostTag words={boardName(post.board)} />}
       <View style={styles.grow} />
       <Fill words={post.fill} />
     </View>
