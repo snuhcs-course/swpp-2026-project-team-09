@@ -3,9 +3,10 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, use, useEffect, useRef, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReplyStep } from '@/api/assistant-types';
@@ -17,6 +18,8 @@ import { ANSWER_TOP } from '../layout';
 import type { ChatSheetControl } from '../chat-sheet';
 import { barTop, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
+import { SheetLinkContext } from './sheet-link';
+import { FoldTab, pressedTo, pulledTo, TAB, type TopStop, type TopStops, TopTab } from './top-stops';
 
 const MINUTE = 60_000;
 // The bar's ends stand this far before the first step and after the last.
@@ -154,6 +157,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     backgroundColor: color.surface,
     boxShadow: shadow.float,
+    // Over the time card, which folds behind it (P01 ticket 22).
+    zIndex: 1,
   },
   // From the bar's left edge, "←" being under the bar (P04 ticket 52).
   words: {
@@ -186,20 +191,29 @@ interface StepsTopProps {
 }
 
 // The bar of several requests, and under it, while the step shown is the reply's Plan, that Plan's bar with its
-// handles and its meal's tick, as on a reply to one request (PR 462's review). The height told is both.
+// handles and its meal's tick, as on a reply to one request (PR 462's review). The height told is what stands at the top.
+// The top folds in stops (P01 ticket 22, `top-stops.tsx`): 2, both cards; 1, the steps card with a tab under it, the
+// Plan's bar behind it; 0, one tab at the top's centre. A step with no Plan's bar (a seat or a room) shows its steps
+// card with the tab, which folds to 0 and opens nothing downward. The sheet rising to high folds 2 to 1.
 export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): ReactElement | null {
   const [heights, setHeights] = useState({ steps: 0, plan: 0 });
+  const sheet = use(SheetLinkContext);
+  const stops = sheet.top;
+  const stop = stops?.stop ?? 2;
   const { steps, activeStep, setActiveStep, answer: shown, invitation } = control;
-  const step = steps?.steps[activeStep];
-  const planStep = step !== undefined && step.status === 'shown' && step.kind !== 'seat' && step.kind !== 'room';
   const { answer, plan } = shown;
-  const withPlan = planStep && answer !== null && plan !== null;
-  const told = heights.steps + (withPlan ? heights.plan + space[2] : 0);
+  const withPlan = planStepShown(control) && answer !== null && plan !== null;
+  const timeCard = stop === 2 && withPlan;
+  const told = toldOf(stop, heights, timeCard);
   useEffect(() => {
     onHeight(told);
   }, [told, onHeight]);
+  useFoldOnHigh(sheet.high, stops);
   if (steps === null) {
     return null;
+  }
+  if (stop === 0 && stops !== undefined) {
+    return <TopTab several stops={stops} />;
   }
   return (
     <>
@@ -207,11 +221,12 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
         active={activeStep}
         onHeight={(height) => {
           setHeights((last) => ({ ...last, steps: height }));
+          stops?.setStepsHeight(height);
         }}
         onStep={setActiveStep}
         steps={steps.steps}
       />
-      {withPlan ? (
+      {timeCard ? (
         <PlanBar
           answer={answer}
           focus={focus}
@@ -224,7 +239,65 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
           plan={plan}
           shown={shown}
         />
-      ) : null}
+      ) : (
+        <StepsTab opens={withPlan} stepsHeight={heights.steps} stops={stops} />
+      )}
     </>
   );
+}
+
+// The tab under the steps card's bottom centre: a press or a pull down brings the time card out, where the step has one;
+// a pull up folds the steps card too.
+function StepsTab({
+  stops,
+  opens,
+  stepsHeight,
+}: {
+  stops: TopStops | undefined;
+  opens: boolean;
+  stepsHeight: number;
+}): ReactElement {
+  const { top } = useSafeAreaInsets();
+  return (
+    <FoldTab
+      onPress={() => {
+        if (opens) {
+          stops?.setStop(pressedTo(1, true));
+        }
+      }}
+      onPull={(dy) => {
+        if (dy < 0 || opens) {
+          stops?.setStop(pulledTo(1, dy, true));
+        }
+      }}
+      testID="steps-tab"
+      top={barTop(top) + stepsHeight}
+    />
+  );
+}
+
+// Whether the step shown is the reply's Plan, which has a time card: a seat or a room has none.
+function planStepShown({ steps, activeStep }: ChatSheetControl): boolean {
+  const step = steps?.steps[activeStep];
+  return step !== undefined && step.status === 'shown' && step.kind !== 'seat' && step.kind !== 'room';
+}
+
+// What stands at the top, told: the tab at 0; the steps card with its tab, or with the Plan's bar under it.
+function toldOf(stop: TopStop, heights: { steps: number; plan: number }, timeCard: boolean): number {
+  if (stop === 0) {
+    return TAB.height;
+  }
+  return heights.steps + (timeCard ? heights.plan + space[2] : TAB.height);
+}
+
+// The sheet rising to high folds the time card behind the steps card (the approved page, section 2 ④); lowering it
+// leaves the fold, and a stop already folded further stays.
+function useFoldOnHigh(high: boolean, stops: TopStops | undefined): void {
+  const was = useRef(high);
+  useEffect(() => {
+    if (high && !was.current && stops?.stop === 2) {
+      stops.setStop(1);
+    }
+    was.current = high;
+  }, [high, stops]);
 }
