@@ -1,0 +1,112 @@
+{
+  "kind": "InsightVizNode",
+  "source": {
+    "kind": "TrendsQuery",
+    "series": [
+      {
+        "kind": "EventsNode",
+        "event": "assistant_reply_completed",
+        "name": "assistant_reply_completed",
+        "math": "total",
+        "properties": [
+          {
+            "key": "source",
+            "value": "server",
+            "operator": "exact",
+            "type": "event"
+          }
+        ],
+        "custom_name": "AI 답변"
+      },
+      {
+        "kind": "EventsNode",
+        "event": "party_creation_completed",
+        "name": "party_creation_completed",
+        "math": "total",
+        "properties": [
+          {
+            "key": "source",
+            "value": "server",
+            "operator": "exact",
+            "type": "event"
+          }
+        ],
+        "custom_name": "파티 만듦"
+      },
+      {
+        "kind": "EventsNode",
+        "event": "party_join_completed",
+        "name": "party_join_completed",
+        "math": "total",
+        "properties": [
+          {
+            "key": "source",
+            "value": "server",
+            "operator": "exact",
+            "type": "event"
+          }
+        ],
+        "custom_name": "파티 참여"
+      },
+      {
+        "kind": "EventsNode",
+        "event": "friendship_creation_completed",
+        "name": "friendship_creation_completed",
+        "math": "total",
+        "properties": [
+          {
+            "key": "source",
+            "value": "server",
+            "operator": "exact",
+            "type": "event"
+          }
+        ],
+        "custom_name": "친구 맺음 (두 명분)"
+      },
+      {
+        "kind": "EventsNode",
+        "event": "seat_booking_completed",
+        "name": "seat_booking_completed",
+        "math": "total",
+        "properties": [
+          {
+            "key": "source",
+            "value": "app",
+            "operator": "exact",
+            "type": "event"
+          }
+        ],
+        "custom_name": "관정 좌석 예약"
+      }
+    ],
+    "trendsFilter": {
+      "display": "ActionsLineGraph",
+      "formulaNodes": [
+        {
+          "formula": "A",
+          "custom_name": "AI 답변"
+        },
+        {
+          "formula": "B",
+          "custom_name": "파티 만들기"
+        },
+        {
+          "formula": "C",
+          "custom_name": "파티 참여"
+        },
+        {
+          "formula": "D / 2",
+          "custom_name": "친구 맺기"
+        },
+        {
+          "formula": "E",
+          "custom_name": "관정 좌석 예약"
+        }
+      ]
+    },
+    "interval": "day",
+    "dateRange": {
+      "date_from": "-14d"
+    }
+  }
+}

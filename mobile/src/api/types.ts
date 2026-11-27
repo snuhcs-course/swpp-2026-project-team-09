@@ -14,6 +14,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -44,6 +45,16 @@ export type SignInResult =
   | { outcome: 'not-snu-account' }
   // Any other refusal, or no answer.
   | { outcome: 'failed' };
+
+// --- Consent (PUT /users/me/consent, PUT /users/me/usage-consent) ---
+
+// The account's consent, as the sign-in's answer and the Lobby carry it: the version of the legal documents the User
+// agreed to, and the choice on usage data given with it or changed since in 내 정보. Both null for an account that agreed
+// to none, and for an answer without the field.
+export interface Consent {
+  version: number | null;
+  usage: boolean | null;
+}
 
 // --- Onboarding (POST /users/me/onboarding) ---
 
@@ -87,6 +98,8 @@ export interface Lobby {
   masterSwitch: boolean;
   // Whether the app has asked the User, before they turned the Master Switch off, whether to show the building instead.
   masterOffAsked: boolean;
+  // The account's consent, which the phone keeps a copy of (`src/consent/`). Left out by an older main server.
+  consent?: Consent;
 }
 
 // The fields of the profile that change; a field left out stays. `null` empties the admission year and the 소속, and an

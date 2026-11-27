@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ import {
 } from '@/features/party/making';
 import { refusalWords } from '@/features/quests/refusals';
 import { useAskForPush } from '@/push/push-ask-host';
+import { trackAction } from '@/telemetry';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
 
@@ -74,6 +76,11 @@ async function recruitFor(attended: Quest, form: PartyForm): Promise<void> {
   }
 }
 
+// A 파티 made, for the usage data: by attending a Global Event too, whether or not it made a new Quest.
+function making<Answer>(form: PartyForm, request: () => Promise<Answer>): Promise<Answer> {
+  return trackAction({ action: 'party_creation', visibility: form.visibility }, request);
+}
+
 // What sending did: `taken`, `refused` with the form kept, or `room` when a step after attending the event failed and
 // the Quest stays, which its room finishes.
 export type Sent = 'taken' | 'refused' | 'room';
@@ -103,9 +110,12 @@ export function useSendParty(
         await change(quest, form, plan);
         questId = quest.id;
       } else if (form.event === null) {
-        questId = (await apiClient.makeQuest({ ...makingOf(form), ...entries }, newIdempotencyKey())).id;
+        questId = (
+          await making(form, () => apiClient.makeQuest({ ...makingOf(form), ...entries }, newIdempotencyKey()))
+        ).id;
       } else {
-        attended = await apiClient.attendGlobalEvent(form.event.id, attendingTitleOf(form), entries);
+        const eventId = form.event.id;
+        attended = await making(form, () => apiClient.attendGlobalEvent(eventId, attendingTitleOf(form), entries));
         questId = attended.id;
       }
     } catch (error) {

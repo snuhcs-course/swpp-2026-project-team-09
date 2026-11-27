@@ -1,7 +1,7 @@
 # 11: The consent screen and 내 정보's switch keep the usage choice on the account, with the policy's part
 
 Parent: [P08 spec](../spec.md), [Usage data with PostHog](../spec.md#usage-data-with-posthog)
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: 10
 
 Native files: none. Releases: an app over-the-air update, after a main server Release with ticket 10, since the
@@ -28,19 +28,25 @@ screen and the switch call its routes. The Korean wording below is a draft: a pe
 - **The account's consent in the app.** The sign-in's answer and the Lobby are read with their `consent` (ticket 10);
   a missing field reads as null. The phone keeps a copy, `consent: { version, usage }` in `Kept`, written from the
   sign-in's answer, each Lobby, the consent's own answer and the switch's, and cleared at a sign-out and a Session's end. The old
-  `consented` is no longer read.
+  `consented` is read once, for the carry-over below only.
 - **`CONSENT_VERSION`**, 1, in the app, with a comment that it is raised together with the main server's.
 - **When the screen shows:** at a sign-in and at a start with a kept Session, when the kept copy's version is null or
-  lower than `CONSENT_VERSION`. So a User who agreed on the phone before is asked once again, and a new phone whose
-  account holds version 1 is not asked. The rest of the order (sign-in, consent, Onboarding, the Lobby) stays.
+  lower than `CONSENT_VERSION`, and nothing is carried over. A new phone whose account holds version 1 is not asked.
+  The rest of the order (sign-in, consent, Onboarding, the Lobby) stays.
+- **Existing Users are not asked again** (the owner's decision of 2026-11-26, after review): a phone that kept the old
+  `consented: true`, signed in to an account that holds no version, sends `PUT /users/me/consent` with
+  `{ version: CONSENT_VERSION, usage: false }` quietly at the next start (or sign-in) and shows no consent screen.
+  Usage data stays off until the User turns on "사용 기록 보내기". A failed send is tried again at the next start;
+  meanwhile the copy holds no version, which counts as off. Only an account that has never consented sees the screen.
 - **The screen** keeps its three documents and the error reports' sentence, and gains below them an optional item: a
-  checkbox, not ticked at first, its label, one sentence, and a link that opens the policy at the new part. When the
-  phone had kept the earlier `consented: true`, a line above the documents says why the User is asked again.
+  checkbox, not ticked at first, its label, one sentence, and a link that opens the policy at the new part, set apart
+  under a divider below the error reports' sentence. The checkbox is the one the app already draws (review).
 - **"동의하고 시작"** sends `PUT /users/me/consent` with `CONSENT_VERSION` and the checkbox, keeps the account's answer
   on the phone, and goes on. If it fails, the screen stays, says so as the app's other sends do, and the button tries
   again; nothing is kept. "로그아웃" stays as it is.
-- **The row "사용 기록 보내기" in 내 정보**, a card of its own right under "오류 보고 보내기", drawn as that row is: a
-  `SwitchRow` with a one-line caption and the link "개인정보 처리방침 보기", which opens the policy at `part: 'usage'`.
+- **The row "사용 기록 보내기" in 내 정보**, in one card with "오류 보고 보내기", under it and split by the cards'
+  divider (review), drawn as that row is: a `SwitchRow` with a one-line caption and the link "'사용 기록' 보기", which
+  opens the policy at `part: 'usage'`; the error reports' link becomes "'오류 보고' 보기".
   It shows the kept copy's `usage`. Turning it sends `PUT /users/me/usage-consent` (ticket 10) and keeps the answer
   on the phone; the version is not touched and no consent is asked again. While the request is on its way the switch
   shows the new position; if it fails, the switch goes back and the failure is said as the app's other sends do.
@@ -57,14 +63,14 @@ The consent screen's item:
 - Label: `사용 기록 보내기 (선택)`
 - Sentence: `앱에서 연 화면과 쓴 기능의 기록을 PostHog(미국)에 보내 SNU Now를 고치는 데 써요. 고르지 않아도 모든 기능을 쓸 수 있고, 내 정보에서 언제든 바꿀 수 있어요.`
 - Link: `개인정보 처리방침의 '사용 기록' 보기`
-- The line for a User asked again: `개인정보 처리방침에 '사용 기록'이 더해져 다시 동의를 받아요.`
+- ~~The line for a User asked again~~: dropped with the owner's decision of 2026-11-26 (no re-ask).
 - The failure: `동의를 저장하지 못했어요. 잠시 후 다시 눌러 주세요.`
 
 내 정보's row:
 
 - Label: `사용 기록 보내기`
 - Caption: `켜 두면 앱에서 연 화면과 쓴 기능의 기록을 PostHog(미국)에 보내요. 이름·위치·입력한 내용은 보내지 않아요.`
-- Link: `개인정보 처리방침 보기`
+- Link: `'사용 기록' 보기` (and "오류 보고 보내기"'s becomes `'오류 보고' 보기`, review)
 - The failure: `바꾸지 못했어요. 잠시 후 다시 해 주세요.`
 
 The privacy policy's part, heading `사용 기록`, paragraphs:
@@ -98,24 +104,116 @@ Points for the reviewer of the wording:
 
 ## Acceptance criteria
 
-- [ ] An account with no version is shown the screen after a sign-in; one with version 1 is not, on a phone that
+- [x] An account with no version is shown the screen after a sign-in; one with version 1 is not, on a phone that
       kept nothing. (Integration test over the fake main server.)
-- [ ] A start with a kept Session shows the screen when the phone kept the old `consented: true` and no account copy,
-      with the line saying why; and not when the copy holds version 1. (Integration test.)
-- [ ] The checkbox is not ticked at first; "동의하고 시작" sends version 1 with the checkbox's state, and the next
+- [x] A start with a kept Session on a phone that kept the old `consented: true`, whose account holds no version,
+      reaches the main screen without the consent screen, and the main server received version 1 with
+      `usage: false`; a failed send is sent again at the next start; a copy holding version 1 is not asked.
+      (Integration test.)
+- [x] The checkbox is not ticked at first; "동의하고 시작" sends version 1 with the checkbox's state, and the next
       start does not ask again. (Integration test.)
-- [ ] A failed send keeps the User on the screen with the failure's words, and a second press sends again.
+- [x] A failed send keeps the User on the screen with the failure's words, and a second press sends again.
       (Integration test.)
-- [ ] The privacy policy shows the part "사용 기록" with its seven paragraphs, and the item's link opens it.
+- [x] The privacy policy shows the part "사용 기록" with its seven paragraphs, and the item's link opens it.
       (Integration test.)
-- [ ] 내 정보's row shows the account's choice under "오류 보고 보내기"; turning it off and on sends
+- [x] 내 정보's row shows the account's choice under "오류 보고 보내기"; turning it off and on sends
       `PUT /users/me/usage-consent` each time with the new value, keeps it on the phone, and does not show the consent
       screen; a failed send puts the switch back with the failure's words; its link opens the part. (Integration
       tests.)
-- [ ] The mock build asks and keeps the consent and the switch's choice on the phone. (Integration test.)
+- [x] The mock build asks and keeps the consent and the switch's choice on the phone. (Integration test.)
 - [ ] The screen with the item, not ticked and ticked, 내 정보's row on and off, and the policy's part, on an emulator with the mock build; the
       screens go to the orchestrator before the pull request. (Emulator.)
 - [ ] A person has read the wording and written "reviewed" and the date under Comments.
-- [ ] Lint, format and types of the app pass. No native file changes.
+- [x] Lint, format and types of the app pass. No native file changes.
 
 ## Comments
+
+### Built (2026-11-26)
+
+What was built (app only). `Status: ready-for-human`: the wording review and the emulator screenshots are left.
+
+- `src/consent/kept-consent.ts`: `CONSENT_VERSION = 1` (comment: raised with the main server's), `NO_CONSENT`,
+  `consentAsked(consent)` (version null or lower), `keepConsent(consent, more)`, the one writer of the phone's copy,
+  which also tells its listeners, and `useKeptConsent()`. Ticket 12 hooks `allowUsage` into `keepConsent`.
+- `src/consent/choices.ts`: `agreeToDocuments(usage)` (`PUT /users/me/consent` with `CONSENT_VERSION`, then the copy,
+  and `consented: false`), `chooseUsage(usage)` (`PUT /users/me/usage-consent`, then the copy with the version as it
+  is) and `consentScreenAsks(consent, consented)`, the one rule for whether the screen shows, with the carry-over.
+  Nothing is kept when a send fails.
+- `Kept` gains `consent` and `mockAccountConsent`, both `{ version, usage }`, read as none when missing or of another
+  shape. `consented` stays a field, read once for the carry-over.
+- API: the `Consent` type, `Lobby.consent?`, `consentOf` (a missing field or a part of another shape reads as null),
+  and `agreeToConsent` / `setUsageConsent` on `ApiClient`, the server client and the mock. The sign-in's answer and
+  each Lobby write the copy; a sign-out and a Session's end empty it.
+- The start (`src/session/start.ts`) and the sign-in (`use-sign-in.ts`) decide by `consentScreenAsks`, before the
+  Lobby, so a start with no network and version 1 kept does not ask.
+- **Existing Users (the owner's decision of 2026-11-26, after review):** a phone with `consented: true` whose copy
+  holds no version sends `{ version: 1, usage: false }` quietly, at the start or the sign-in, awaited before the
+  Lobby so that a Lobby answered earlier cannot write an empty copy over it, and shows no screen. A failed send keeps
+  `consented: true` and the copy empty, and is sent again at the next start. Ticket 12 sees that as off: its rule
+  needs a copy holding `CONSENT_VERSION` with usage true, and an empty copy holds neither. The re-ask line is dropped.
+- The consent screen: the item under a divider below the error reports' sentence (checkbox, sentence, link to
+  `part: 'usage'`); "동의하고 시작" stays the only filled button and goes on only after the account took it,
+  otherwise a toast `CONSENT_NOT_SAVED` (above the foot, `useToastAbove`) and the button works again.
+- The checkbox (review 1): the box `room-parts.tsx` drew for "서약서 동의" moved to `src/screens/check-box.tsx`
+  (`CheckBox`, same look and size); the pledge and the consent item both use it, so no third box is drawn and the
+  design system is unchanged.
+- 내 정보 (review 3): `src/screens/me/sending-card.tsx`, one card with `ErrorReportsRow` and `UsageRow`
+  (`usage-row.tsx`) as two `SwitchRow`s split by a 1 px `color.border` line, the divider `sharing-card.tsx` uses.
+  Links: "'오류 보고' 보기" and "'사용 기록' 보기".
+- The privacy policy's part "사용 기록" (`USAGE_PART = 'usage'`) with the seven paragraphs, after "오류 보고".
+- The mock build: `mockAccountConsent` on the phone plays the account. `agreeToConsent` and `setUsageConsent` write it
+  (the latter refuses 409 `CONSENT_REQUIRED` without a version, as the server does), the mock's sign-in copies it
+  into the copy, and a sign-out leaves it, so the mock asks once on a phone. The mock's Lobby does not touch the copy.
+- Docs: the mobile README (the flow table, the consent screen and the carry-over, the legal documents, what the phone
+  keeps, the folder layout, the card in 내 정보), the spec's Consent section (no re-ask; `consented` read once), and
+  this ticket. Ticket 10 and the main server's README say nothing about re-asking and are unchanged.
+- Tests: `consent-account.integration.test.tsx` (fake main server: sign-in with no version, no field, version 1; a
+  start with nothing agreed, with version 1, with no network; the Lobby's copy; the box; both sends; a failure by
+  refusal and by no answer, then a second press; 로그아웃; the part's seven paragraphs and the item's link),
+  `consent-carried-over.integration.test.tsx` (the quiet path at a start and after a sign-in; a failed send and the
+  next start sending again), `me-usage-row.integration.test.tsx` (one card under "오류 보고 보내기", on and off, the
+  position while on its way, both failures, the link), `consent-usage-mock.integration.test.tsx` (mock build: the item,
+  the carry-over, the box kept, a failed mock send, the switch kept across a sign-out and a sign-in). Existing tests
+  that kept `consented: true` to skip the screen now keep `consent: { version: 1, usage: false }` (`openMain` also
+  keeps the mock's account consent; the server's sign-in answers and `LOBBY` carry it). The waits after "동의하고
+  시작" are 400 ms, since the mock now answers after its usual wait. `error-reports-switch` presses "'오류 보고' 보기".
+
+Decisions and things inferred:
+
+- The mock's account is a second `Kept` field, not the copy itself, so the copy can be emptied at a sign-out as the
+  ticket asks while the mock still asks once on a phone.
+- A Lobby without `consent` writes an empty copy (a missing field reads as null), so the next start would ask;
+  ticket 10's server always sends it.
+- The carry-over also runs after a sign-in, not only at a start, so a phone that signed out before updating is not
+  asked either. It applies only to a copy with no version; a later raise of `CONSENT_VERSION` asks as before.
+- While the carry-over has not gone through, turning on "사용 기록 보내기" is refused by the server (409
+  `CONSENT_REQUIRED`) and the switch goes back with its toast. This only lasts until the next start that reaches the
+  server.
+- The error reports' test pattern `/이름·이메일·학번이 아니에요/` now matches two paragraphs (the new part says the
+  same), so it was made longer to match only the error reports' one.
+
+### Screenshots (2026-11-26)
+
+Taken on an x86_64 emulator from a mock build of this branch, as a new account.
+
+- `../references/11-consent-unticked.png` and `11-consent-ticked.png`: the consent screen's optional item.
+- `../references/11-policy-usage.png`: the item's link opens the policy at "사용 기록" without a scroll by hand. The part
+  is the policy's last, so the screen stops at the document's end and the heading stands a little below the top.
+- `../references/11-me-card-on.png` and `11-me-card-off.png`: 내 정보's card with both switches; "사용 기록 보내기" was on
+  after the item was ticked, and off after a press.
+
+The failure toasts are covered by the integration tests and were not pictured.
+
+### After the review (2026-11-27)
+
+- **The carry-over is at a start with a kept Session only.** At a sign-in the phone's `consented` may be another
+  User's, kept across a sign-out by the earlier app, and the carry-over would record the consent to all three
+  documents on an account whose User never saw them. A sign-in into an account that holds no consent is now asked. A
+  team member who signed out of the earlier app and signs in again sees the screen once.
+- **The usage box takes no press while "동의하고 시작" is at work**, so what is sent is what the box shows.
+- **Rollback**: the app's bundle goes back before the main server, since this bundle calls #599's routes.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 2 hours 30 minutes (estimate), one session, most of it waiting on single-file Jest runs.
+- Tokens: 279,840 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.

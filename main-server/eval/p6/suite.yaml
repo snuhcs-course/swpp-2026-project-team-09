@@ -64,6 +64,19 @@ supersededAfterFreeze:
     reason: >-
       "반납했어?" and "반납 됐어?" now show the User's bookings (showMyLibraryBookings), each with its state, in place of
       ruling 6's CHAT that said the Assistant cannot see them: "반납 잘 됐니?" was refused on the user's phone.
+  - case: p6-bookings-cancel
+    heldBy: library-answer-cancel
+    date: '2026-11-27'
+    by: P05 tickets 62 and 63
+    reason: >-
+      The library cancel button is named 예약 취소, as on the phone, in the rules and in the cancel tool's answer to the
+      model (P05 ticket 62), so a reply no longer mentions 취소하기.
+  - case: p6-bookings-cancel-at-three
+    heldBy: library-answer-cancel-at-three
+    date: '2026-11-27'
+    by: P05 tickets 62 and 63
+    reason: >-
+      As p6-bookings-cancel: the cancel button is named 예약 취소, not 취소하기.
 
 score:
   # A case passes when all its assertions hold. The mean of the 3 runs.

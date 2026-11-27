@@ -28,6 +28,9 @@
     text:
       absent: [예약되었어요]
 
+# Superseded 2026-11-27 (P05 tickets 62 and 63): the cancel button is named 예약 취소, as on the phone, so a
+# reply no longer mentions 취소하기. The label stays as frozen; library-answer-cancel holds the new words
+# (suite.yaml, `supersededAfterFreeze`).
 - id: p6-bookings-cancel
   category: p6-bookings
   world: p6
@@ -66,6 +69,9 @@
       mentions: [반납하기]
       absent: [반납했어요, 반납되었어요]
 
+# Superseded 2026-11-27 (P05 tickets 62 and 63): the cancel button is named 예약 취소, as on the phone, so a
+# reply no longer mentions 취소하기. The label stays as frozen; library-answer-cancel-at-three holds the new words
+# (suite.yaml, `supersededAfterFreeze`).
 - id: p6-bookings-cancel-at-three
   category: p6-bookings
   world: p6

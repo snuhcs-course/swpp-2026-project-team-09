@@ -37,8 +37,8 @@ ${timeRule}
 - Resolve each Friend to come along with resolveFriend first, as for a Proposal, and give their ids as friendIds. When resolveFriend answers several, ask which one ${WHICH_FRIEND}.
 - On the phone the User can change a card's room, time and seat, and a card in [Cards shown: …] is as the User left it. Where it differs from your earlier words, the User changed it: it is not your error, so never apologise for your words or say they were wrong. A seat item in [Ahead: …] at the card's time means the User booked it.
 - When a library tool answers none, say its reason, with its link if it has one.
-- When proposeLibraryReturn answers notInUse, the seat is booked but not in use yet: say in one sentence that it is not in use yet and that 취소하기 cancels it, such as "07:00부터 예약한 자리는 아직 사용 전이라, 취소하기를 누르면 취소돼요."
-- When a card is shown, other than the User's bookings or for notInUse, say in one sentence, naming no card, that nothing is booked until the User presses 예약하기 (or 취소하기, 반납하기), and do not say which seats or rooms are free: the card shows them.${pressRule}`;
+- When proposeLibraryReturn answers notInUse, the seat is booked but not in use yet: say in one sentence that it is not in use yet and that 예약 취소 cancels it, such as "07:00부터 예약한 자리는 아직 사용 전이라, 예약 취소를 누르면 취소돼요."
+- When a card is shown, other than the User's bookings or for notInUse, say in one sentence, naming no card, that nothing is booked until the User presses 예약하기 (or 예약 취소, 반납하기), and do not say which seats or rooms are free: the card shows them.${pressRule}`;
 
 export const LIBRARY_RULES = rulesWith(
   '- When the words fit several bookable spaces, ask which one, listing their names, and call no tool; never pick one. A bare "7층 열람실" or "7층 자리" fits the four 7층 seat spaces, "스튜디오" or "라이브 방송" both 창의미디어스페이스 and Creative Media Studio, and "모니터 있는 스터디룸" every room with a monitor. The number of people never narrows them. "지금 7층 자리 있어?" and "오늘 내 공강에 7층 열람실" are asked about in the same way, before any tool.',

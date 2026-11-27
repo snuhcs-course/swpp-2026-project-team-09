@@ -1,0 +1,22 @@
+{
+  "kind": "InsightVizNode",
+  "source": {
+    "kind": "RetentionQuery",
+    "retentionFilter": {
+      "targetEntity": {
+        "id": "app_opened",
+        "type": "events"
+      },
+      "returningEntity": {
+        "id": "app_opened",
+        "type": "events"
+      },
+      "period": "Day",
+      "totalIntervals": 8,
+      "retentionType": "retention_first_time"
+    },
+    "dateRange": {
+      "date_from": "-14d"
+    }
+  }
+}

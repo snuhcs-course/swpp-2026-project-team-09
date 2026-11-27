@@ -4,19 +4,22 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { ApiError } from '@/api/errors';
+import { ApiError, type GivenUp } from '@/api/errors';
 import { mainServerUrl } from '@/api/servers';
 import type { Suggestion } from '@/api/types';
 import { type Guard, isTokens } from './answers';
 import { heldTokens, keepTokens } from '@/auth/tokens';
 import { endSession, requireOnboarding } from '@/session/session-events';
+import { requestFailed } from '@/telemetry';
 
 // The one way to the main server. A request with the User's access token that is refused with 401 renews the Session
 // once with the refresh token and is sent again. What a renewal cannot mend ends the Session: a refused renewal, a
 // second 401, and a 401 with SESSION_REPLACED, which no renewal can mend. A 403 with ONBOARDING_REQUIRED takes the
-// User to Onboarding with the suggestion it carries.
+// User to Onboarding with the suggestion it carries. A request that fails for good sends `api_request_failed` to the
+// usage data (README.md, "Usage data"); one its caller gave up, and a 401 a renewal mended, send nothing.
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -27,10 +30,11 @@ interface Request {
   headers?: Record<string, string>;
   // Whether the request carries the access token. Only the sign-in and the renewal go without one.
   signedIn?: boolean;
-  // After how many milliseconds the request is given up, as no answer (status 0); unset, it waits as long as the
-  // phone's own networking does.
+  // After how many milliseconds the request is given up, as no answer (status 0, `givenUp` `timeout`); unset, it waits
+  // as long as the phone's own networking does.
   timeoutMs?: number;
-  // Gives the request up, as no answer (status 0), when it aborts: a query that no screen shows any more.
+  // Gives the request up, as no answer (status 0, `givenUp` `caller`), when it aborts: a query that no screen shows any
+  // more.
   signal?: AbortSignal;
 }
 
@@ -68,7 +72,51 @@ async function readBody(response: Response): Promise<unknown> {
   }
 }
 
-// Sends the request once and gives the answer's body, or throws the refusal. Nothing answering is status 0.
+interface GivingUp {
+  signal: AbortSignal;
+  // Who gave the request up, if it was given up: its own timer or its caller, whichever came first.
+  givenUp: () => GivenUp | null;
+  // Stops the timer and the listening, once the request is over.
+  done: () => void;
+}
+
+// The request's own abort: by its timer after `timeoutMs`, or by its caller's `signal`.
+function givingUp(request: Request): GivingUp {
+  const abort = new AbortController();
+  let givenUp: GivenUp | null = null;
+  const giveUp = (by: GivenUp): void => {
+    if (!abort.signal.aborted) {
+      givenUp = by;
+      abort.abort();
+    }
+  };
+  const timer =
+    request.timeoutMs === undefined
+      ? null
+      : setTimeout(() => {
+          giveUp('timeout');
+        }, request.timeoutMs);
+  const stop = (): void => {
+    giveUp('caller');
+  };
+  request.signal?.addEventListener('abort', stop);
+  if (request.signal?.aborted === true) {
+    giveUp('caller');
+  }
+  return {
+    signal: abort.signal,
+    givenUp: () => givenUp,
+    done: (): void => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+      request.signal?.removeEventListener('abort', stop);
+    },
+  };
+}
+
+// Sends the request once and gives the answer's body, or throws the refusal. Nothing answering is status 0, with who
+// gave the request up when the app did.
 async function send(method: Method, path: string, request: Request, accessToken: string | null): Promise<unknown> {
   const headers: Record<string, string> = { Accept: 'application/json', ...request.headers };
   if (request.body !== undefined) {
@@ -77,20 +125,7 @@ async function send(method: Method, path: string, request: Request, accessToken:
   if (accessToken !== null) {
     headers.Authorization = `Bearer ${accessToken}`;
   }
-  const abort = new AbortController();
-  const timer =
-    request.timeoutMs === undefined
-      ? null
-      : setTimeout(() => {
-          abort.abort();
-        }, request.timeoutMs);
-  const stop = (): void => {
-    abort.abort();
-  };
-  request.signal?.addEventListener('abort', stop);
-  if (request.signal?.aborted === true) {
-    abort.abort();
-  }
+  const giving = givingUp(request);
   let response: Response;
   let body: unknown;
   try {
@@ -98,16 +133,13 @@ async function send(method: Method, path: string, request: Request, accessToken:
       method,
       headers,
       body: request.body === undefined ? undefined : JSON.stringify(request.body),
-      signal: abort.signal,
+      signal: giving.signal,
     });
     body = await readBody(response);
   } catch {
-    throw new ApiError(0);
+    throw new ApiError(0, null, null, giving.givenUp());
   } finally {
-    if (timer !== null) {
-      clearTimeout(timer);
-    }
-    request.signal?.removeEventListener('abort', stop);
+    giving.done();
   }
   if (!response.ok) {
     throw new ApiError(response.status, textOrNull(field(body, 'code')), body);
@@ -193,9 +225,14 @@ export async function call<Answer>(
   isAnswer: Guard<Answer>,
   request: Request = {},
 ): Promise<Answer> {
-  const body = await sendSignedIn(method, path, request);
-  if (!isAnswer(body)) {
-    throw new ApiError(0, 'UNEXPECTED_ANSWER', body);
+  try {
+    const body = await sendSignedIn(method, path, request);
+    if (!isAnswer(body)) {
+      throw new ApiError(0, 'UNEXPECTED_ANSWER', body);
+    }
+    return body;
+  } catch (error) {
+    requestFailed(method, path, error);
+    throw error;
   }
-  return body;
 }
