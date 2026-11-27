@@ -12,6 +12,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -33,7 +34,6 @@ import {
 import type { Lookup } from '@/api/lookup-types';
 import type { Mention } from '@/api/mention-types';
 import type { Refusal } from '@/api/refusal-types';
-import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { now } from '@/clock';
 import type { ShownChatCard } from '@/api/quest-parts-types';
@@ -44,6 +44,7 @@ import { type EarlierConversation, useConversations } from './conversations';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
 import { shownText } from './shown-text';
+import { askAssistant } from './tracked-requests';
 import { useProposalMade } from './proposal-made';
 
 type Tapped = NonNullable<RequestContext['tapped']>;
@@ -224,7 +225,7 @@ type NewBubble = Omit<ChatBubble, 'id'>;
 // The Assistant's bubble for the conversation: its reply, or the failure.
 async function answerTo(messages: ChatMessage[], context: RequestContext): Promise<NewBubble> {
   try {
-    const reply = await apiClient.askAssistant(messages, context);
+    const reply = await askAssistant(messages, context);
     const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers, steps } = reply;
     const drawn = { answer, lookup, refusal, area: context.viewport };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };

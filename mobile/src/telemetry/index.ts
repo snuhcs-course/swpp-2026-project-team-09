@@ -7,6 +7,15 @@
 
 // The app's crash reports (README.md, "Crash reports") and usage data ("Usage data"). This folder is the only one
 // that imports `@sentry/react-native` and `posthog-react-native`; app code calls what is exported here.
+export {
+  libraryFailure,
+  requestFailed,
+  type SeatBookingStages,
+  type ServerAction,
+  seatBooking,
+  serverFailure,
+  trackAction,
+} from './actions';
 export type * from './events';
 export { scrubbedRoute, serverCode } from './events';
 export { RouteBreadcrumb } from './route-breadcrumb';
