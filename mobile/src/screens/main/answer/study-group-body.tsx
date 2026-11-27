@@ -29,7 +29,7 @@ import { useRooms } from '../library/use-room-counts';
 import { keepUse, keptUse, UseChooser } from '../library/use-chooser';
 import { useLibraryLoad } from '../library/use-library-call';
 import { usePartyRequest } from '../library/room-party';
-import { useGroupAct } from './study-group-act';
+import { mainOf, useGroupAct } from './study-group-act';
 import { consentWords, groupOfRequest, isOut, outWords, partyCardOf } from './study-group-request';
 import { ChatMarkdown } from '../chat-markdown';
 
@@ -40,7 +40,6 @@ import { ChatMarkdown } from '../chat-markdown';
 // logged out of the library, and else "동의 요청 보내기" (`study-group-act.ts`). Once sent (ticket 12) the request runs as
 // a room card's does (`usePartyRequest`): the ticket is held, the consents are said with "요청 취소 ›" at the line's end,
 // and a Friend out is said, with one more Friend asked from the main button.
-
 
 const COUNTS = ['', '한 명만', '두 명', '세 명'];
 
@@ -217,6 +216,13 @@ function useGroupRequest(
   return { party, out, asking, setAsking };
 }
 
+// The seat answer's line under the ticket, said only where the main button is 로그인.
+function LogInNote({ shown }: { shown: boolean }): ReactElement | null {
+  return shown ? <FailureNote failure="noSession" onLogIn={null} /> : null;
+}
+
+// Under the ticket: the login line; a cell's chooser; the use line, and the use's chooser under it (design
+// group-study-design ④ ⑤).
 export function StudyGroupBody(props: GroupBodyProps): ReactElement {
   const { answer, plan, group, said } = props;
   const { loggedIn } = useLibrarySession();
@@ -247,11 +253,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
         open={!held && (open === 'kind' || open === 'room') ? open : null}
         room={room}
       />
-      {/* The seat answer's line under the ticket, said only where its main button is 로그인. */}
-      {mainOf(group, loggedIn).main !== 'logIn' || open === 'kind' || open === 'room' ? null : (
-        <FailureNote failure="noSession" onLogIn={null} />
-      )}
-      {/* A cell's chooser opens right under the ticket, the use's under its line (design group-study-design ④ ⑤). */}
+      <LogInNote shown={mainOf(onScreen, loggedIn, party).main === 'logIn' && open !== 'kind' && open !== 'room'} />
       {held ? null : chooser(open === 'use' ? null : open)}
       {out === null ? (
         <UseLine onPress={toggle('use')} use={use} />
