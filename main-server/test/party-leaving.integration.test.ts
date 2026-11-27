@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -161,7 +162,7 @@ describe('The Party and its Quest', () => {
     expect((await getMyParty(app, leader)).body).toMatchObject({ members: [{ id: leader.id }, { id: member.id }] });
   });
 
-  it('the last Holder dropping the Party’s Quest leaves the Party tied to no Quest', async () => {
+  it('the last Holder dropping the Party’s Quest closes the Party with it (P06 ticket 23)', async () => {
     const leader = await signInUser(app);
     const event = await storeEvent(prisma);
     const { questId } = await questFor(app, leader, event.id);
@@ -169,6 +170,7 @@ describe('The Party and its Quest', () => {
 
     await dropQuest(app, leader, questId);
 
-    expect((await getMyParty(app, leader)).body).toMatchObject({ id: partyId, quest: null });
+    expect((await getMyParty(app, leader)).body).toMatchObject(refused(404, 'NOT_IN_PARTY'));
+    expect(await prisma.party.count({ where: { id: partyId } })).toBe(0);
   });
 });

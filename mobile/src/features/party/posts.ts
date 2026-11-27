@@ -7,13 +7,15 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
 import type { Board, JoinPolicy, Person, SubQuest } from '@/api/types';
 import type { MyJoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
-import { koreaClock, koreaDay } from '@/korea-time';
+import { dayAndClock } from '@/korea-time';
+import { type PointOnMap, pointOnMap } from '@/features/places/point-on-map';
 import { shownSubQuest } from '@/features/quests/adapter';
 
 // A recruiting post, as 찾기's cards and 파티 모집글 show it: another's recruiting Quest, or one of the User's own
@@ -37,6 +39,8 @@ export interface PostView {
   description: string;
   leader: Person;
   event: string | null;
+  // The Global Event's id, which the join sheet asks about the User's own Quest of it.
+  eventId: string | null;
   board: Board | null;
   // How the User enters: Approval also for an Open Quest the Leader removed them from.
   joinPolicy: JoinPolicy;
@@ -50,6 +54,8 @@ export interface PostView {
   time: string;
   // "버들골 (100동) 입구", or "장소 미정".
   place: string;
+  // The point of a place picked on the map, which its words open on a map; null for any other place.
+  point: PointOnMap | null;
   // "최유나 외 2명 · 친구 1명 포함", "최유나 외 2명", or "최유나".
   members: string;
   createdAt: string;
@@ -64,9 +70,9 @@ export interface PostView {
 
 type Next = Pick<SubQuest, 'startsAt' | 'place'> | null;
 
-// "오늘 19:30", "내일 19:30", "10월 8일 (목) 19:00".
+// "오늘 19:30", "내일 19:30", "10/8(목) 19:00": a 파티's time, as every 파티 screen says it (dayAndClock).
 export function whenOf(instant: string): string {
-  return `${koreaDay(instant, now())} ${koreaClock(instant)}`;
+  return dayAndClock(instant, now());
 }
 
 // When and where a Quest next meets, as its post and an invitation's card say it: "내일 19:30" or "시간 미정", and
@@ -87,6 +93,7 @@ interface Head {
   description: string;
   leader: Person;
   event: string | null;
+  eventId: string | null;
   board: Board | null;
   joinPolicy: JoinPolicy;
   holders: number;
@@ -106,6 +113,7 @@ function postOf({ next, ...head }: Head): PostView {
     fill: `${String(head.holders)}/${String(head.capacity)}명`,
     startsAt: next?.startsAt ?? null,
     ...planWords(next),
+    point: pointOnMap(next?.place),
     members: membersOf(head.leader.name, head.holders, head.friends.length),
   };
 }
@@ -135,6 +143,7 @@ export function entryPost(
     description: entry.description,
     leader: entry.leader,
     event: entry.globalEvent?.title ?? null,
+    eventId: entry.globalEvent?.id ?? null,
     board: entry.board,
     joinPolicy: asks ? 'approval' : entry.joinPolicy,
     holders: entry.holderCount,
@@ -163,6 +172,7 @@ export function questPost(quest: ShownQuest, meId: string, friends: readonly Kno
     description: quest.description,
     leader,
     event: quest.globalEvent?.title ?? null,
+    eventId: quest.globalEvent?.id ?? null,
     board: quest.board,
     joinPolicy: quest.joinPolicy,
     holders: quest.holders.length,

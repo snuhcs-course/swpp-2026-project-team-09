@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
@@ -92,7 +93,7 @@ describe('what waits for the User', () => {
     expect(screen.getByText('받은 초대 · 1')).toBeVisible();
     expect(screen.getByText('물리 실험 보고서')).toBeVisible();
     // The mock's time and place, each on its line under the title; the frame's invitation names no companion.
-    expect(screen.getByText('10월 3일 (토) 14:00')).toBeVisible();
+    expect(screen.getByText('10/3(토) 14:00')).toBeVisible();
     expect(screen.getByText('중앙도서관 (62동)')).toBeVisible();
     expect(screen.queryByText('학관 점심')).toBeNull();
     expect(screen.queryByText(/보낸 초대/u)).toBeNull();

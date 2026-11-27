@@ -88,6 +88,9 @@ interface PlanAt {
   skipped?: readonly LeftOutClass[];
 }
 
+// Who may set a person's constraint: the asker, and for the asker alone also the step before (P05 ticket 74).
+const setBy = (index: number, source: string): boolean => source === 'asker' || (index === 0 && source === 'step');
+
 @Injectable()
 export class MealPlanService {
   constructor(
@@ -225,7 +228,7 @@ export class MealPlanService {
     if (new Set(input.people.map(({ userId }) => userId)).size < input.people.length) {
       throw new BadRequestException('A person is in a plan once');
     }
-    if (input.people.some(({ constraints }) => constraints.some(({ source }) => source !== 'asker'))) {
+    if (input.people.some(({ constraints }, index) => constraints.some(({ source }) => !setBy(index, source)))) {
       throw new BadRequestException('Only the asker sets constraints');
     }
     const listed = await this.friends.list(askerId);

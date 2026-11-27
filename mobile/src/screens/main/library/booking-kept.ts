@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { now } from '@/clock';
@@ -25,4 +26,16 @@ export function bookingKept({ card, space, place }: ShownBooking, chat: Pick<Cha
   const actions = { roomOf: (one: string): CardRoom | null => chat.rooms.get(one) ?? null, showRoom: chat.showRoom };
   const { kept, keep } = keptRoom({ card, space, place }, actions, cardSlot(card, at));
   return { kept, keep, live: liveSlot(kept.space, kept.slot, at) };
+}
+
+// The booking's time card while it stands: none while its booking is on its way or once it is booked, so that the time
+// stays as it was booked (P04 ticket 07), nor when no time is left that day.
+export function bookingBarOf(
+  booking: ShownBooking,
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes'>,
+): (BookingKept & { live: Slot }) | null {
+  const kept = bookingKept(booking, chat);
+  const { live } = kept;
+  const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
+  return live === null || pending || booking.booked ? null : { ...kept, live };
 }

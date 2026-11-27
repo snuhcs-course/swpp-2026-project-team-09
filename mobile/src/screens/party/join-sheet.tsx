@@ -3,13 +3,18 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { useQuery } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { questsQuery } from '@/api/queries';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
 import type { JoinPolicy } from '@/api/types';
 import { BottomSheet, Button, color, font, Icon, RoundIcon, space, text } from '@/design-system';
+import { partyHeldAloneFor } from '@/features/events/adapter';
+import { topicParticle } from '@/features/map/short-name';
 import { joinLabel } from './post-card';
 
 // What the sheet asks the User to join: a post, or official recruiting.
@@ -20,6 +25,8 @@ export interface JoinSubject {
   members: string;
   fill: string;
   joinPolicy: JoinPolicy;
+  // The Global Event it goes to, or null.
+  eventId: string | null;
 }
 
 // Official recruiting as the sheet asks about it: its host in place of its members.
@@ -31,6 +38,7 @@ export function officialSubject(recruiting: OfficialRecruiting): JoinSubject {
     members: recruiting.host,
     fill: recruiting.fill,
     joinPolicy: 'open',
+    eventId: null,
   };
 }
 
@@ -45,6 +53,27 @@ function Row({ label, words }: { label: string; words: string }): ReactElement {
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowWords}>{words}</Text>
+    </View>
+  );
+}
+
+// "이 행사로 올린 내 파티 ‘AI 커리어 설명회’는 없어져요": joining another Quest of an event ends the one the User holds
+// alone for it.
+function goneWords(title: string): string {
+  return `이 행사로 올린 내 파티 ‘${title}’${topicParticle(title)} 없어져요`;
+}
+
+// The warning over the note when joining ends the User's own Quest of the event, or nothing.
+function GoneNote({ eventId }: { eventId: string | null }): ReactElement | null {
+  const quests = useQuery(questsQuery).data ?? [];
+  const gone = partyHeldAloneFor(quests, eventId);
+  if (gone === null) {
+    return null;
+  }
+  return (
+    <View style={styles.note}>
+      <Icon color={color.danger} name="alert" size={16} />
+      <Text style={styles.goneWords}>{goneWords(gone.title)}</Text>
     </View>
   );
 }
@@ -69,6 +98,7 @@ export function JoinSheet<Subject extends JoinSubject>({
             <Row label="장소" words={post.place} />
             <Row label="멤버" words={`${post.members} (${post.fill})`} />
           </View>
+          <GoneNote eventId={post.eventId} />
           <View style={styles.note}>
             <Icon color={color.inkMuted} name="info" size={16} />
             <Text style={styles.noteWords}>멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.</Text>
@@ -107,6 +137,7 @@ const styles = StyleSheet.create({
   rowWords: { flex: 1, fontFamily: font.medium, fontSize: 14, lineHeight: 20, color: color.ink },
   note: { flexDirection: 'row', gap: 6 },
   noteWords: { flex: 1, ...text.caption, color: color.inkMuted },
+  goneWords: { flex: 1, ...text.caption, fontFamily: font.semiBold, color: color.danger },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[1] },
   button: { flex: 1 },
 });

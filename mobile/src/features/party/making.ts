@@ -15,6 +15,8 @@ import type { QuestChange, QuestMaking } from '@/api/party-types';
 import type { QuestEntries, QuestPhoto, ShownQuest } from '@/api/quest-parts-types';
 import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
 import type { Board, GlobalEvent, Quest, SubQuest } from '@/api/types';
+import { now as clockNow } from '@/clock';
+import { stepsAhead } from '@/features/quests/plan-steps';
 
 // What 파티 만들기 sends: a new Quest, or the change to one, from what the form holds.
 
@@ -128,19 +130,15 @@ export function withEvent(form: PartyForm, event: FormEvent | null, editing = fa
   };
 }
 
-function upcoming({ cancelled, ended, done }: SubQuest): boolean {
-  return !cancelled && !ended && !done;
-}
-
-// The Sub Quest that editing changes the time and place of: the first still to come that is not the event itself, whose
-// time and place the main server keeps as the event's.
-export function editedSubQuest(quest: Quest): SubQuest | null {
-  return quest.subQuests.find((subQuest) => upcoming(subQuest) && !subQuest.attending) ?? null;
+// The Sub Quest that editing changes the time and place of: the first step not grey (`plan-steps`) that is not the
+// event itself, whose time and place the main server keeps as the event's.
+export function editedSubQuest(quest: Quest, now: Date = clockNow()): SubQuest | null {
+  return stepsAhead(quest.subQuests, now).find(({ attending }) => !attending) ?? null;
 }
 
 // The time and place `언제` and `어디서` show when editing: the edited Sub Quest's, else the event's.
-export function shownSubQuest(quest: Quest): SubQuest | null {
-  return editedSubQuest(quest) ?? quest.subQuests.find((subQuest) => upcoming(subQuest)) ?? null;
+export function shownSubQuest(quest: Quest, now: Date = clockNow()): SubQuest | null {
+  return editedSubQuest(quest, now) ?? stepsAhead(quest.subQuests, now)[0] ?? null;
 }
 
 // The form of a Quest the Leader edits, with its event as the picker knows it when it does. A 공개 파티 stored for one,

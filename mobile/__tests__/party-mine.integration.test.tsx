@@ -10,6 +10,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -25,7 +26,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMyParty, DINNER_PARTY_MINE, myPicnicParty, PICNIC, toast } from './support/room';
 import { answerParty, MY_HIKE, openAt } from './support/party';
-import { askMainServer, DINNER, DINNER_PARTY, PHONE_NOW } from './support/server';
+import { askMainServer, DINNER, DINNER_PARTY, LOBBY, PHONE_NOW } from './support/server';
 
 // 내 파티, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea. 초대 is in
 // `party-invites.integration.test.tsx`, a card's status and activation strip in
@@ -156,6 +157,7 @@ describe('내 파티 without a Quest', () => {
 
 describe('a card of 내 파티', () => {
   it('shows the strip of a Party running without the User, whose 참여 enters it', async () => {
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
     server.on('GET /parties', { status: 200, body: [DINNER_PARTY] });
     server.on(`POST /parties/${DINNER_PARTY.id}/join`, { status: 201, body: DINNER_PARTY_MINE });
     const user = await openAt('/party?tab=mine');
@@ -228,7 +230,7 @@ describe('지난 일정 in the build that asks the main server', () => {
     await pass(500);
 
     expect(groups()).toEqual(['오늘']);
-    expect(card('어제 시작한 여행').getByText('10월 5일 (월) 19:00')).toBeVisible();
+    expect(card('어제 시작한 여행').getByText('10/5(월) 19:00')).toBeVisible();
   });
 });
 

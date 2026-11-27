@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -214,7 +215,7 @@ describe('a member who stops sharing', () => {
     await pass(500);
 
     expect(hisLine()).toBe('김민준 · 위치 꺼짐');
-    expect(within(screen.getByLabelText('멤버')).getByText('공유 일시정지')).toBeVisible();
+    expect(within(screen.getByLabelText('멤버')).queryByText('위치 공유 중')).toBeNull();
     expect(within(screen.getByLabelText('멤버')).queryByText(/도보/u)).toBeNull();
   });
 });

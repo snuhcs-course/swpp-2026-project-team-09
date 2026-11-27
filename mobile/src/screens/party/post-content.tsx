@@ -3,9 +3,10 @@
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { now } from '@/clock';
 import { Avatar, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
@@ -13,6 +14,7 @@ import { boardName } from '@/features/party/boards';
 import type { PostView } from '@/features/party/posts';
 import type { PostDetailView } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
+import { PlaceWords, usePlaceOnMap } from '../place-map/place-on-map-sheet';
 import { Fill } from './post-card';
 import { PostReasons } from './post-reasons';
 
@@ -44,19 +46,29 @@ interface InfoLineProps {
   children: string;
   // The lines it may take before "…"; left out, as many as it needs.
   lines?: number;
-  // The event of a 파티 for one, in blue. It opens nothing yet.
+  // The event of a 파티 for one, in blue. In the room it opens the event's sheet.
   event?: boolean;
   // A card's smaller, muted words, or the 모집글's.
   small?: boolean;
+  // A line whose press opens something, in the 행사 line's blue: a place picked on the map (P06 ticket 27).
+  link?: boolean;
 }
 
 // A line after its icon: the time, the place, the members, or the event in blue.
-export function InfoLine({ icon, children, lines, event = false, small = false }: InfoLineProps): ReactElement {
-  const ink = event ? color.blue600 : small ? color.inkMuted : color.ink;
+export function InfoLine({
+  icon,
+  children,
+  lines,
+  event = false,
+  small = false,
+  link = false,
+}: InfoLineProps): ReactElement {
+  const blue = event || link;
+  const ink = blue ? color.blue600 : small ? color.inkMuted : color.ink;
   return (
     <View style={styles.line} testID={event ? 'event-line' : undefined}>
       <View style={small ? styles.smallIcon : styles.icon}>
-        <Icon color={event ? color.blue600 : color.inkMuted} name={icon} size={16} />
+        <Icon color={blue ? color.blue600 : color.inkMuted} name={icon} size={16} />
       </View>
       <Text numberOfLines={lines} style={[small ? styles.smallWords : styles.words, { color: ink }]}>
         {children}
@@ -65,9 +77,29 @@ export function InfoLine({ icon, children, lines, event = false, small = false }
   );
 }
 
+// The Leader's row: the face, the name with `role` after it, and the department with when the post went up. The room
+// draws it without a role.
+export function PostHost({ name, role, line }: { name: string; role?: string; line: string }): ReactElement {
+  return (
+    <View style={styles.host}>
+      <Avatar name={name} />
+      <View style={styles.hostWords}>
+        <Text style={styles.hostName}>{role === undefined ? name : `${name} · ${role}`}</Text>
+        <Text style={styles.hostLine}>{line}</Text>
+      </View>
+    </View>
+  );
+}
+
+// The grey box of the time, the place and the rest, each an `InfoLine`.
+export function InfoBox({ children }: { children: ReactNode }): ReactElement {
+  return <View style={styles.box}>{children}</View>;
+}
+
 // The 모집글: the board and the fill, the title, the Leader, a grey box with the time, the place, the members and the
 // event, the description and 추천 이유.
 export function PostContent({ post, reasons }: PostDetailView): ReactElement {
+  const placeOnMap = usePlaceOnMap();
   return (
     <View style={styles.content}>
       <View style={styles.head}>
@@ -76,25 +108,30 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
           {post.title}
         </Text>
       </View>
-      <View style={styles.host}>
-        <Avatar name={post.leader.name} />
-        <View style={styles.hostWords}>
-          <Text style={styles.hostName}>{`${post.leader.name} · 모집자`}</Text>
-          <Text style={styles.hostLine}>{`${post.leader.department} · ${agoWords(post.createdAt, now())}`}</Text>
-        </View>
-      </View>
-      <View style={styles.box}>
+      <PostHost
+        line={`${post.leader.department} · ${agoWords(post.createdAt, now())}`}
+        name={post.leader.name}
+        role="모집자"
+      />
+      <InfoBox>
         <InfoLine icon="clock">{post.time}</InfoLine>
-        <InfoLine icon="pin">{post.place}</InfoLine>
+        <PlaceWords onOpen={placeOnMap.open} point={post.point}>
+          {(link) => (
+            <InfoLine icon="pin" link={link}>
+              {post.place}
+            </InfoLine>
+          )}
+        </PlaceWords>
         <InfoLine icon="users">{post.members}</InfoLine>
         {post.event === null ? null : (
           <InfoLine event icon="calendar">
             {post.event}
           </InfoLine>
         )}
-      </View>
+      </InfoBox>
       {post.description === '' ? null : <Text style={styles.description}>{post.description}</Text>}
       {reasons === null ? null : <PostReasons reasons={reasons} />}
+      {placeOnMap.sheet}
     </View>
   );
 }

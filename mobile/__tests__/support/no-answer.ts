@@ -36,6 +36,7 @@ export const NO_ANSWER: ShownAnswer = {
   finishPicking: nothing,
   recalculating: false,
   change: nothing,
+  putBack: nothing,
   again: nothing,
   add: nothing,
   pendingAdd: null,

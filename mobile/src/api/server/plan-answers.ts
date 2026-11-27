@@ -9,6 +9,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, AnswerReply, MapScene, Plan, TimeBand } from '@/api/assistant-types';
@@ -282,7 +283,9 @@ export function isPlan(value: unknown): value is Plan {
 }
 
 export function isAnswerReply(value: unknown): value is AnswerReply {
+  const key = field(value, 'key');
   return (
+    (key === undefined || isText(key)) &&
     isInput(field(value, 'input')) &&
     listOf(isChip)(field(value, 'chips')) &&
     listOf(isPlan)(field(value, 'plans')) &&

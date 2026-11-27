@@ -46,6 +46,7 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   'party-removed': 'muted',
   'join-cancelled': 'muted',
   'invitation-cancelled': 'muted',
+  'became-leader': 'navy',
   'leave-by': 'navy',
   'room-declined': 'invitation',
   'room-agreed': 'invitation',

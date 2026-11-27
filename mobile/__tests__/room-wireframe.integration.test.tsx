@@ -5,6 +5,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -33,9 +34,9 @@ import { apiClient } from '@/api/client';
 import { TAG_SET } from '@/api/mock/data/quest-parts';
 import { pickFor } from '@/api/quest-parts/stable-pick';
 
-// The room as `PartyDetail` and `PartyLeave` draw it, against the fake main server: the head of a public and a
-// private Quest, the order of its parts, a request's note, the Leader's ending sheet, the sheet that switches from
-// another Party, 파티 채팅, and what the room keeps that the frame does not draw.
+// The room as `PartyDetail` and `PartyLeave` draw it, against the fake main server, with P06 ticket 19's head: the
+// 모집글 under the title of a public and a private Quest, the event in its box, a request's row, the Leader's ending
+// sheet, the sheet that switches from another Party, 파티 채팅, and what the room keeps that the frame does not draw.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -84,43 +85,53 @@ afterEach(() => {
 });
 
 describe("the room's head", () => {
-  it('shows a private Quest its text only, without 모집글 보기', async () => {
+  it('draws the 모집글 under the title: the Leader without 모집자, the text, the tags and the time and place', async () => {
+    answerRoom(server, PUBLIC);
+
+    await openRoom(PUBLIC);
+
+    expect(screen.queryByRole('button', { name: '모집글 보기' })).toBeNull();
+    expect(screen.queryByText('파티 · 3/4명')).toBeNull();
+    expect(screen.queryByText('내가 만든 파티')).toBeNull();
+    // The Leader's row and the User's in 멤버.
+    expect(screen.getAllByText(ME_HOLDER.name)).toHaveLength(2);
+    expect(screen.queryByText(`${ME_HOLDER.name} · 모집자`)).toBeNull();
+    expect(screen.getByText('컴퓨터공학부 · 18시간 전')).toBeVisible();
+    expect(screen.getByText('자하연에서 피크닉 해요')).toBeVisible();
+    for (const tag of pickFor(PUBLIC.id, TAG_SET)) {
+      expect(within(screen.getByLabelText('태그')).getByText(`#${tag}`)).toBeVisible();
+    }
+    expect(screen.getByText('오늘 17:40')).toBeVisible();
+    // The box's place and the step's.
+    expect(screen.getAllByText('301동 앞')).toHaveLength(2);
+  });
+
+  it('shows a private Quest its text the same way, without 비공개', async () => {
     answerRoom(server, PRIVATE);
 
     await openRoom(PRIVATE);
 
     expect(screen.getByText('우리끼리 자하연에서 만나요')).toBeVisible();
-    expect(screen.queryByRole('button', { name: '모집글 보기' })).toBeNull();
+    expect(screen.queryByText('비공개')).toBeNull();
+    expect(screen.queryByText('파티 · 3명')).toBeNull();
   });
 
-  it('gives a public Quest 모집글 보기, and leaves its text to the post', async () => {
-    answerRoom(server, PUBLIC);
+  it('puts the event as the box’s last line, before the activation, with no card of its own', async () => {
+    answerRoom(server, FOR_EVENT);
 
-    await openRoom(PUBLIC);
+    await openRoom(FOR_EVENT);
 
-    expect(screen.getByRole('button', { name: '모집글 보기' })).toBeVisible();
-    expect(screen.queryByText('자하연에서 피크닉 해요')).toBeNull();
-  });
-
-  it('shows the tags under the text, and the event card below the activation box', async () => {
-    const withText = { ...FOR_EVENT, joinPolicy: 'closed' as const, board: null };
-    answerRoom(server, withText);
-
-    await openRoom(withText);
-
-    const tags = pickFor(withText.id, TAG_SET);
-    for (const tag of tags) {
-      expect(within(screen.getByLabelText('태그')).getByText(`#${tag}`)).toBeVisible();
-    }
     // The queries give what they find in the order the screen draws it.
     const order = screen
       .getAllByLabelText(/^(?:태그|파티 활성화|행사 · AI 커리어 설명회|일정)$/u)
       .map((node) => String(node.props.accessibilityLabel));
-    expect(order).toEqual(['태그', '파티 활성화', '행사 · AI 커리어 설명회', '일정']);
+    expect(order).toEqual(['태그', '행사 · AI 커리어 설명회', '파티 활성화', '일정']);
+    expect(screen.getByTestId('event-line')).toHaveTextContent('AI 커리어 설명회');
+    expect(screen.queryByText('공식 행사')).toBeNull();
   });
 });
 
-describe("a request's note", () => {
+describe('a request to join', () => {
   const APPROVAL = { ...PICNIC, joinPolicy: 'approval' as const };
 
   beforeEach(() => {
@@ -128,7 +139,7 @@ describe("a request's note", () => {
     server.on(`GET /quests/${PICNIC.id}/join-requests`, { status: 200, body: JOIN_REQUESTS });
   });
 
-  it('is shown under the request where the client gives one', async () => {
+  it('has no line under its name: neither a note the client gives nor when it came', async () => {
     jest.spyOn(apiClient, 'listJoinRequests').mockResolvedValue(
       JOIN_REQUESTS.map(({ id, user, sentAt }, index) => ({
         id,
@@ -141,18 +152,10 @@ describe("a request's note", () => {
     await openRoom(APPROVAL);
 
     const requests = within(screen.getByLabelText('참여 신청'));
-    expect(requests.getByText('처음인데 같이 가도 될까요?')).toBeVisible();
-    // The other has none, and says when it came.
-    expect(requests.getByText('10분 전')).toBeVisible();
-  });
-
-  it('is not shown in the build connected to the server, which keeps none', async () => {
-    await openRoom(APPROVAL);
-
-    const requests = within(screen.getByLabelText('참여 신청'));
-    expect(requests.getByText('20분 전')).toBeVisible();
-    expect(requests.getByText('10분 전')).toBeVisible();
+    expect(requests.getAllByRole('button', { name: '수락' })).toHaveLength(2);
     expect(requests.queryByText('처음인데 같이 가도 될까요?')).toBeNull();
+    expect(requests.queryByText('10분 전')).toBeNull();
+    expect(requests.queryByText('20분 전')).toBeNull();
   });
 });
 
@@ -205,7 +208,7 @@ describe('switching from another Party', () => {
 
     expect(
       screen.getByText(
-        '멤버 2명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 내가 켠 ‘저녁 먹으러 가요’ 활성화는 꺼져요.\n내 정보에서 위치 공유를 켜야 멤버에게 내 위치가 보여요',
+        '다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 내가 켠 ‘저녁 먹으러 가요’ 활성화는 꺼져요.',
       ),
     ).toBeVisible();
     await answer(user, '활성화');
@@ -223,7 +226,7 @@ describe('switching from another Party', () => {
     server.on(`POST /parties/${PICNIC_PARTY.id}/join`, { status: 201, body: myPicnicParty() });
     const user = await openRoom();
 
-    await user.press(screen.getByRole('button', { name: '참여' }));
+    await user.press(screen.getByRole('button', { name: '나도 참여' }));
 
     expect(
       screen.getByText(
@@ -253,14 +256,14 @@ describe('switching from another Party that ended, into one that refuses', () =>
       ['GET /parties/mine', 'GET /parties', 'GET /quests'].map((route) => server.received(route).length);
     const [mine = 0, parties = 0, quests = 0] = asked();
 
-    await user.press(screen.getByRole('button', { name: '참여' }));
+    await user.press(screen.getByRole('button', { name: '나도 참여' }));
     await answer(user, '나가고 참여');
 
     expect(toast()).toHaveTextContent('‘저녁 먹으러 가요’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요');
     expect(toastIcon()).toBe('alert');
     expect(asked()).toEqual([mine + 1, parties + 1, quests + 1]);
     // The room no longer names the ended Party as the one the User is in.
-    await user.press(screen.getByRole('button', { name: '참여' }));
+    await user.press(screen.getByRole('button', { name: '나도 참여' }));
     expect(screen.queryByText(/한 번에 한 파티에만/u)).toBeNull();
   });
 
@@ -288,14 +291,12 @@ describe('파티 채팅', () => {
 });
 
 describe('what the frame does not draw, which the room keeps', () => {
-  it('keeps 수정, 내 위치 공유, marking a step done, handing over the role and a member who opens the map', async () => {
+  it('keeps 수정, handing over the role and a member who opens the map', async () => {
     answerMyParty(server, myPicnicParty(ME_ID));
 
     await openRoom();
 
     expect(screen.getByRole('button', { name: '수정' })).toBeVisible();
-    expect(screen.getByRole('switch', { name: '내 위치 공유' })).toBeVisible();
-    expect(screen.getAllByRole('button', { name: '완료로 표시' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: '김민준님에게 파티장 넘기기' })).toBeVisible();
     // The row itself, read as the name and its line, not its buttons ("김민준님 …").
     expect(within(screen.getByLabelText('멤버')).getByRole('button', { name: /^김민준(?: · |$)/u })).toBeVisible();

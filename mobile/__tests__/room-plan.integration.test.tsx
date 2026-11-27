@@ -4,6 +4,8 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -65,7 +67,7 @@ describe('일정', () => {
     await openRoom();
 
     expect(screen.getAllByTestId('plan-step')).toHaveLength(2);
-    for (const words of ['17:40', '301동 앞에서 만나기', '301동 앞', '18:00–20:00', '피크닉', '자하연']) {
+    for (const words of ['오늘 17:40', '301동 앞에서 만나기', '301동 앞', '오늘 18:00–20:00', '피크닉', '자하연']) {
       expect(plan().getByText(words)).toBeVisible();
     }
   });
@@ -79,18 +81,47 @@ describe('일정', () => {
     expect(plan().getByText('일정 없음')).toBeVisible();
   });
 
-  it("marks a Sub Quest done for the User, for any Holder, and shows no Leader's control to another", async () => {
+  it("shows another Holder no Leader's control and no mark of done", async () => {
     answerRoom(server, HIS_PICNIC);
-    server.on(`POST ${STEPS}/${MEET?.id}/done`, { status: 204 });
-    const user = await openRoom(HIS_PICNIC);
+    await openRoom(HIS_PICNIC);
 
-    expect(screen.queryByRole('button', { name: '일정 추가' })).toBeNull();
-    expect(screen.queryByRole('button', { name: '일정 수정' })).toBeNull();
-    expect(screen.queryByRole('button', { name: '일정 삭제' })).toBeNull();
-    await user.press(screen.getAllByRole('button', { name: '완료로 표시' })[0]);
-    await pass(500);
+    expect(screen.getAllByTestId('plan-step')).toHaveLength(2);
+    for (const name of ['일정 추가', '일정 수정', '일정 삭제', '완료로 표시', '완료 취소']) {
+      expect(screen.queryByRole('button', { name })).toBeNull();
+    }
+  });
+});
 
-    expect(server.received(`POST ${STEPS}/${MEET?.id}/done`)).toHaveLength(1);
+describe('the days of 일정', () => {
+  it('says the day of a step that is not today: tomorrow, or its date', async () => {
+    const [meet, picnic] = PICNIC.subQuests;
+    const later = {
+      ...PICNIC,
+      subQuests: [
+        ...(meet === undefined ? [] : [{ ...meet, startsAt: '2026-10-07T05:00:00.000Z' }]),
+        ...(picnic === undefined ? [] : [{ ...picnic, startsAt: '2026-10-08T10:00:00.000Z', endsAt: null }]),
+      ],
+    };
+    answerRoom(server, later);
+    await openRoom(later);
+
+    expect(plan().getByText('내일 14:00')).toBeVisible();
+    expect(plan().getByText('10/8(목) 19:00')).toBeVisible();
+    // The time box above 일정 says the next step's day the same way.
+    expect(screen.getAllByText('내일 14:00')).toHaveLength(2);
+  });
+
+  it('says a step after tomorrow alike in the time box and in 일정', async () => {
+    const [, picnic] = PICNIC.subQuests;
+    const later = {
+      ...PICNIC,
+      subQuests: picnic === undefined ? [] : [{ ...picnic, startsAt: '2026-10-08T10:00:00.000Z', endsAt: null }],
+    };
+    answerRoom(server, later);
+    await openRoom(later);
+
+    expect(screen.getAllByText('10/8(목) 19:00')).toHaveLength(2);
+    expect(screen.queryByText(/10월 8일/u)).toBeNull();
   });
 });
 

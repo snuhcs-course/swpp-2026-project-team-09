@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -28,7 +29,7 @@ const NONE_REASONS: Record<Extract<WayAnswer, { result: 'none' }>['reason'], str
     'Where the User sets out from is not known: where they are could not be matched to a Place, and no item of theirs has ended earlier today.',
   'no-next': 'The User has no item with a Place later today.',
   'past-by':
-    'The time given as by is not later than now. Give it as 24-hour HH:MM (2시 in the afternoon is 14:00); if the time the User named has passed today, say so.',
+    'The time given as by is not later than now. Give it as 24-hour HH:MM (오후 2시 is 14:00, and a bare 2시 is read by the Bare hours line); if the time the User named has passed today, say so.',
 };
 
 export const STARTS: Record<Way['start']['basis'], string> = {
@@ -54,7 +55,7 @@ const input = z.object({
   by: clockTime
     .optional()
     .describe(
-      'The time the User must be there by, as 24-hour HH:MM, when they named one (2시까지 in the afternoon is 14:00). Left out otherwise.',
+      'The time the User must be there by, as 24-hour HH:MM, when they named one (오후 2시까지 is 14:00, and a bare 2시까지 is read by the Bare hours line). Left out otherwise.',
     ),
   date: z.iso
     .date()

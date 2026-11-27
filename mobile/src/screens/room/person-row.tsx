@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, color, font, Icon, radius, space } from '@/design-system';
 
-// A row of the room's people: a face, the name with the Leader's or another mark, a line, and the row's buttons.
+// A row of the room's people: a face with the Leader's crown, the name with another mark, a line, and the row's
+// buttons. A line parts it from the next row.
 
 export interface PersonRowProps {
   name: string;
@@ -19,6 +21,8 @@ export interface PersonRowProps {
   // Beside the name, such as `전에 내보낸 멤버`.
   mark?: string;
   dimmed?: boolean;
+  // The list's last row, with no line under it.
+  last?: boolean;
   onPress?: () => void;
   children?: ReactNode;
 }
@@ -31,15 +35,16 @@ export function PersonRow({
   leader = false,
   mark,
   dimmed = false,
+  last = false,
   onPress,
   children,
 }: PersonRowProps): ReactElement {
   const words = (
     <>
-      <View style={[styles.face, leader && styles.leaderRing, dimmed && styles.dimmed]}>
+      <View style={[styles.face, dimmed && styles.dimmed]}>
         <Avatar name={name} />
         {leader ? (
-          <View accessibilityLabel="파티장" style={styles.crown}>
+          <View accessibilityLabel="파티장" accessible style={styles.crown}>
             <Icon color={color.onPrimary} name="crown" size={12} />
           </View>
         ) : null}
@@ -47,7 +52,6 @@ export function PersonRow({
       <View style={styles.words}>
         <View style={styles.nameLine}>
           <Text style={styles.name}>{name}</Text>
-          {leader ? <Text style={styles.leaderPill}>파티장</Text> : null}
           {mark === undefined ? null : <Text style={styles.markPill}>{mark}</Text>}
           <Text style={styles.department}>{department}</Text>
         </View>
@@ -56,12 +60,12 @@ export function PersonRow({
     </>
   );
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, last && styles.lastRow]} testID="person-row">
       {onPress === undefined ? (
         <View style={styles.person}>{words}</View>
       ) : (
         <Pressable
-          accessibilityLabel={`${name}${line === null ? '' : ` · ${line}`}`}
+          accessibilityLabel={`${name}${leader ? ' · 파티장' : ''}${line === null ? '' : ` · ${line}`}`}
           accessibilityRole="button"
           onPress={onPress}
           style={styles.person}
@@ -85,9 +89,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: color.border,
   },
+  lastRow: { borderBottomWidth: 0 },
   person: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 64 },
   face: { borderRadius: radius.full },
-  leaderRing: { boxShadow: `0 0 0 2px ${color.surface}, 0 0 0 4px #E8A400` },
   dimmed: { opacity: 0.6 },
   crown: {
     position: 'absolute',
@@ -105,16 +109,6 @@ const styles = StyleSheet.create({
   words: { flex: 1, minWidth: 0 },
   nameLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   name: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
-  leaderPill: {
-    paddingHorizontal: 6,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    backgroundColor: '#FFF4D6',
-    fontFamily: font.bold,
-    fontSize: 11,
-    lineHeight: 18,
-    color: '#8A5A00',
-  },
   markPill: {
     paddingHorizontal: 6,
     borderRadius: radius.full,

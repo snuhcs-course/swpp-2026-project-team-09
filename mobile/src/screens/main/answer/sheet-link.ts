@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createContext, use, useMemo } from 'react';
 import { type SharedValue, useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
 import { heightOf, type Level, type LevelHeights } from './card-levels';
 import type { Raising } from './raise-handle';
+import { type TopStops, useTopStops } from './top-stops';
 
 // The answer sheet as the time card over it sees it (P04 ticket 61): only one of the two is expanded at a time, and the
 // card touched last wins. A pull that opens the time card while the sheet is high brings the sheet down with the
@@ -30,6 +32,8 @@ export interface SheetLink {
   // leads (1): from when a drag takes it until the run after the let-go arrives.
   rise?: SharedValue<number>;
   sheetLeads?: SharedValue<number>;
+  // How far the top is folded (P01 ticket 22): the steps card and the time card, then the steps card, then a tab.
+  top?: TopStops;
 }
 
 function nothing(): void {
@@ -43,6 +47,7 @@ export function useSheetLink({ level, setLevel }: Pick<Raising, 'level' | 'setLe
   const following = useSharedValue(0);
   const rise = useSharedValue(0);
   const sheetLeads = useSharedValue(0);
+  const top = useTopStops();
   return useMemo(
     () => ({
       high: level === 'high',
@@ -55,8 +60,9 @@ export function useSheetLink({ level, setLevel }: Pick<Raising, 'level' | 'setLe
       following,
       rise,
       sheetLeads,
+      top,
     }),
-    [level, setLevel, pull, following, rise, sheetLeads],
+    [level, setLevel, pull, following, rise, sheetLeads, top],
   );
 }
 

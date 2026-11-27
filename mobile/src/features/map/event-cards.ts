@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { eventTime, recruitingCounts } from '@/features/events/adapter';
@@ -34,7 +35,7 @@ export function eventCards(sources: MapSources): CardView[] {
         ...(event.place === null ? [] : [line('pin', event.place)]),
         ...(recruiting === 0 ? [] : [line('users', `같이 갈 파티 ${recruiting}개 모집 중`)]),
       ],
-      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: event.id },
+      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: event.id, recruiting },
       secondary: null,
       position: { latitude: event.latitude, longitude: event.longitude },
       event: { id: event.id, favorite: event.favorite },

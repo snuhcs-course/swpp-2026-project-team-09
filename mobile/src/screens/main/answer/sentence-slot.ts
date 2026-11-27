@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createContext, use } from 'react';
@@ -25,8 +26,15 @@ function wordsAreItsCard({ answer, lookup }: ChatBubble): boolean {
   return (answer ?? null) !== null || (lookup ?? null) !== null;
 }
 
-// Which bubbles of a turn draw their words: the latest one only, since a later reply, or the app's own line after a
-// button, takes the slot from an earlier one. A reply whose words are its card keeps them.
+// Whether a bubble holds the turn's slot: the latest one only, since a later reply, or the app's own line after a
+// button, takes it from an earlier one.
+export function holdsSlot(bubble: ChatBubble, after: readonly ChatBubble[]): boolean {
+  return bubble === after.at(-1);
+}
+
+// Which bubbles of a turn draw their words: the one holding the slot, and a reply whose words are its card, which
+// keeps the card; under a later bubble its sentence and its explaining line give way (`SlotHeld`), as a seat booked
+// from the steps of a seat and a meal gives the slot to its ticket (P10 ticket 29).
 export function drawsWords(bubble: ChatBubble, after: readonly ChatBubble[]): boolean {
-  return bubble === after.at(-1) || wordsAreItsCard(bubble);
+  return holdsSlot(bubble, after) || wordsAreItsCard(bubble);
 }

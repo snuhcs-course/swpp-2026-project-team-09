@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -17,6 +18,7 @@ import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import {
+  answer,
   answerMyParty,
   DINNER_PARTY_MINE,
   ME_HOLDER,
@@ -26,7 +28,7 @@ import {
   toast,
 } from './support/room';
 import { answerParty, MY_HIKE, openAt, YU_NA } from './support/party';
-import { askMainServer, DINNER, DINNER_PARTY, ME_ID, PHONE_NOW } from './support/server';
+import { askMainServer, DINNER, DINNER_PARTY, LOBBY, ME_ID, PHONE_NOW } from './support/server';
 
 // The count of a card of 내 파티 and its activation strip, against the fake main server, on Tuesday 6 October 2026 at
 // 13:00 in Korea.
@@ -118,6 +120,7 @@ describe('declining an activation from a card of 내 파티', () => {
   });
 
   it('moves the card to 다른 활성 파티, kept on the phone, and comes back with 참여', async () => {
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
     const mine = answerMyParty(server, null);
     server.on(`POST /parties/${DINNER_PARTY.id}/join`, { status: 201, body: DINNER_PARTY_MINE });
     const user = await openAt('/party?tab=mine');
@@ -150,5 +153,26 @@ describe('declining an activation from a card of 내 파티', () => {
     expect(firstGroup()).toBe('다른 활성 파티');
     expect(card(DINNER.title).getByText('활성화 중 · 참여 안 함')).toBeVisible();
     expect(card(DINNER.title).getByRole('button', { name: `${DINNER.title} 활성화 참여` })).toBeVisible();
+  });
+});
+
+describe('참여 on a card of 내 파티 while the Master Switch is off', () => {
+  it('asks to turn it on, as the room asks, then turns it on and enters with no second question', async () => {
+    server.on('GET /parties', { status: 200, body: [DINNER_PARTY] });
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: false } });
+    server.on('PUT /users/me/master-switch', { status: 204 });
+    server.on(`POST /parties/${DINNER_PARTY.id}/join`, { status: 201, body: DINNER_PARTY_MINE });
+    const user = await openAt('/party?tab=mine');
+
+    await user.press(screen.getByRole('button', { name: `${DINNER.title} 활성화 참여` }));
+    expect(screen.getByRole('header', { name: '전체 위치 공유를 켤까요?' })).toBeVisible();
+    expect(server.received(`POST /parties/${DINNER_PARTY.id}/join`)).toHaveLength(0);
+    await answer(user, '켜고 참여');
+
+    const asked = server.received().map(({ method, path }) => `${method} ${path}`);
+    expect(asked.indexOf('PUT /users/me/master-switch')).toBeLessThan(
+      asked.indexOf(`POST /parties/${DINNER_PARTY.id}/join`),
+    );
+    expect(toast()).toHaveTextContent('활성화에 참여했어요 · 위치 공유 시작');
   });
 });

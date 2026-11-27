@@ -6,6 +6,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -20,12 +21,11 @@ import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, expectNoWrite, SEAT_CARD, sendFromBar, startLibraryChat } from './support/library-chat';
 import { openMain } from './support/main';
-import { DINNER } from './support/server';
+import { onNov2 } from './support/day-quests';
 import { text } from '@/design-system';
 import { LOW_LINES } from '@/screens/main/answer/card-caps';
 import { ticketHeightAt } from '@/screens/main/library/seat-ticket';
 import { styleOf } from './support/seat-ticket';
-import type { Quest } from '@/api/types';
 import { markLibraryLoggedIn } from '@/library/flag';
 import { layStage } from './support/lists';
 import { pressMarker } from './support/made-quest';
@@ -244,23 +244,6 @@ describe('a seat card that is one of several requests', () => {
 // P01 ticket 05: the seat bar knows the User's day, as a meal's bar does. The Quests of 2026-11-02: a Class at 301동
 // until 15:45, a Class at 302동 from 17:30, inside the band of 17:00 to 18:00, and a dinner at 19:00. Expected values:
 // worked by hand from those times.
-const nov2 = (clock: string): string => `2026-11-02T${clock}:00+09:00`;
-
-function onNov2(id: string, title: string, start: string, end: string, label: string, classQuest: boolean): Quest {
-  const [sub] = DINNER.subQuests;
-  if (sub === undefined) {
-    throw new Error('DINNER has no Sub Quest');
-  }
-  const place = { placeId: null, label, latitude: null, longitude: null };
-  return {
-    ...DINNER,
-    id,
-    title,
-    classQuest,
-    subQuests: [{ ...sub, id: `${id}-1`, title, startsAt: nov2(start), endsAt: nov2(end), place }],
-  };
-}
-
 describe("the seat bar's day", () => {
   it('draws the Classes and Quests on the track, names what bounds it before, and says the Class it runs into', async () => {
     server.on('GET /quests', {

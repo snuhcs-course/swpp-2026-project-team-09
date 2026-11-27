@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
-import type { LibrarySpace, MealInput, TimeBand } from '@/api/assistant-types';
+import type { LeftOutClass, LibrarySpace, MealInput, TimeBand } from '@/api/assistant-types';
 import type { Quest } from '@/api/types';
 import { now } from '@/clock';
-import { fixedOnDay, wordsOn } from '@/features/assistant/booking-day';
+import { type FixedThing, fixedOnDay, wordsOn } from '@/features/assistant/booking-day';
 import type { BandBound, Stretch } from '@/features/assistant/time-band';
 import { koreaClock, koreaDateKey, koreaMinutes } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
@@ -46,19 +47,33 @@ function rangeOf(limits: SpanLimits, span: Span, date: string, shownAt: Date): S
   return { start: Math.max(limits.open, start), end: limits.close };
 }
 
+// The ids of the conversation's Classes left out on `date` (P01 ticket 40).
+export function leftOutIdsOn(leftOut: readonly LeftOutClass[], date: string): string[] {
+  return leftOut.flatMap((one) => (one.date === date ? [one.classId] : []));
+}
+
+// What of the day the band draws apart: its Classes whose ids the conversation leaves out (P01 ticket 40).
+export function leftOutOfDay(day: readonly FixedThing[], ids: readonly string[]): FixedThing[] {
+  return day.filter(({ id, isClass }) => isClass && ids.includes(id));
+}
+
 // `shownAt`, the moment the answer came, sets the range, which stays while the card is open; `at`, now, sets the line
-// of now and the earliest start.
+// of now and the earliest start. The Classes the conversation leaves out (`skipped`, their ids, P01 ticket 40) are
+// free: off the lane and out of the card's words, drawn apart as every answer's band draws them.
 export function bookingBandOf(
   slot: Slot,
   space: LibrarySpace,
   quests: readonly Quest[],
   at: Date,
   shownAt: Date = at,
+  skipped: readonly string[] = [],
 ): TimeBand {
   const { date } = slot;
   const limits = limitsOf(space, date, at);
   const span = spanOf(slot);
-  const fixed = fixedOnDay(quests, date, span);
+  const day = fixedOnDay(quests, date, span);
+  const leftOut = leftOutOfDay(day, skipped);
+  const fixed = day.filter((thing) => !leftOut.includes(thing));
   const range = rangeOf(limits, span, date, shownAt);
   return {
     range: { startAt: onDay(date, range.start), endAt: onDay(date, range.end) },
@@ -74,6 +89,16 @@ export function bookingBandOf(
         })),
       },
     ],
+    ...(leftOut.length === 0
+      ? {}
+      : {
+          skipped: leftOut.map(({ id, start, end, words }) => ({
+            id,
+            startAt: onDay(date, start),
+            endAt: onDay(date, end),
+            label: words,
+          })),
+        }),
     startAt: onDay(date, span.start),
     endAt: onDay(date, span.end),
     text: wordsOn(span, fixed).words,
@@ -106,6 +131,8 @@ export interface BookingBand {
   onDrop: (bound: BandBound, clock: string) => void;
   onMove: (at: Stretch, letGo: boolean) => void;
   moving: Stretch | null;
+  // A Class left out put back by its ✕: back on the lane, with the card's own clash words, the slot kept (P01 ticket 40).
+  onPutBack?: (classId: string) => void;
 }
 
 // The band's props for the time card: a handle let go or stepped, and the band let go after a whole move, keep the new
@@ -115,13 +142,15 @@ export function useBookingBand(
   space: LibrarySpace,
   quests: readonly Quest[],
   keep: (slot: Slot) => void,
+  // The conversation's Classes left out on the slot's date, by id, and how a ✕ puts one back (P01 ticket 40).
+  skipped?: { ids: readonly string[]; putBack?: (classId: string) => void },
 ): BookingBand {
   const [moving, setMoving] = useState<Stretch | null>(null);
   // The moment the answer came, whose range the card keeps (P01 ticket 17).
   const [shownAt] = useState(now);
   const span = spanOf(slot);
   return {
-    band: bookingBandOf(slot, space, quests, now(), shownAt),
+    band: bookingBandOf(slot, space, quests, now(), shownAt, skipped?.ids),
     fixed: { from: clockOf(span.start), until: clockOf(span.end) },
     focus: null,
     disabled: false,
@@ -135,5 +164,6 @@ export function useBookingBand(
       }
     },
     moving,
+    ...(skipped?.putBack === undefined ? {} : { onPutBack: skipped.putBack }),
   };
 }

@@ -10,7 +10,7 @@ import type { StudyInput } from '@/api/study-plan-types';
 import { koreaClock } from '@/korea-time';
 import STORED from './study-answer.json';
 
-// "공부할 곳 추천해 줘" answered alone (P10 ticket 17), as a main server with `study-plan` sends it: the stored answer of
+// "공부할 자리 있어?" answered alone (P10 tickets 17 and 23), as the main server sends it to the app, which says `study-plan`: the stored answer of
 // main-server's `test/fixtures/study-answer.ts` (Wednesday 2026-11-04 at 19:10, the User at 301동 with nothing after it),
 // each Plan's scene drawn as `study-plan-parts.ts` draws it. The stored scenes hold each Plan's own building alone;
 // the main server's hold every ranked building, its own the pick and the others numbered candidates, the buildings no
@@ -74,7 +74,3 @@ export const STUDY_PLAN_REPLY: AssistantReply & { answer: AnswerReply } = {
   proposal: null,
   answer: STUDY_PLAN_ANSWER,
 };
-
-// What the mock takes for asking where to study alone, the stored answer's question, until the app says `study-plan`
-// (P10 ticket 23) and "공부할 자리 있어?" asks it as the main server would.
-export const STUDY_PLAN_ASKED = '공부할 곳 추천해 줘';
