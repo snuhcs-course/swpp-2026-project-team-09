@@ -20,7 +20,9 @@ import { useIsFocused } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
+import type { ShownSteps } from '@/features/assistant/steps-scene';
 import { turnOf } from '@/features/assistant/turn';
+import type { ChatBubble } from '@/features/assistant/use-chat';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
@@ -116,6 +118,16 @@ function slotHeld({ chat }: ChatSheetControl): boolean {
   return chat.waiting || (turnOf(chat.bubbles)?.after.some(({ text }) => text !== '') ?? false);
 }
 
+// A reply's steps over its bubble: those on the map as they stand now (P10 ticket 29), so that a step not done since
+// says why.
+function BubbleSteps({ bubble, onMap }: { bubble: ChatBubble; onMap: ShownSteps | null }): ReactElement | null {
+  if (bubble.steps === undefined) {
+    return null;
+  }
+  const live = onMap?.bubbleId === bubble.id ? onMap : null;
+  return <ReplySteps onMap={live !== null} steps={live?.steps ?? bubble.steps} />;
+}
+
 // The open card's content: the turn's bubbles, each under its steps, and the dots with 그만 while a reply is on its way.
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
   const { control, cardActions, focus, onClose, room } = props;
@@ -135,9 +147,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
         <View key={bubble.id} style={styles.part}>
           {bubble === turn?.after[0] ? <SetQuestLine control={control} /> : null}
           {bubble === last && picking ? <ReplyPicks control={control} /> : null}
-          {bubble.steps === undefined ? null : (
-            <ReplySteps onMap={control.steps?.bubbleId === bubble.id} steps={bubble.steps} />
-          )}
+          <BubbleSteps bubble={bubble} onMap={control.steps} />
           <BubbleParts
             bubble={bubble}
             cardActions={cardActions}
