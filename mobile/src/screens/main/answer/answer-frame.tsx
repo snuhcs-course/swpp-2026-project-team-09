@@ -14,13 +14,16 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
+import type { ShownSteps } from '@/features/assistant/steps-scene';
 import { turnOf } from '@/features/assistant/turn';
+import type { ChatBubble } from '@/features/assistant/use-chat';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
@@ -35,7 +38,7 @@ import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
 import { useAnswerRaising } from './card-state';
 import { KeptCards } from './kept-scene';
-import { drawsWords, SlotHeld } from './sentence-slot';
+import { drawsWords, holdsSlot, SlotHeld } from './sentence-slot';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
@@ -116,6 +119,41 @@ function slotHeld({ chat }: ChatSheetControl): boolean {
   return chat.waiting || (turnOf(chat.bubbles)?.after.some(({ text }) => text !== '') ?? false);
 }
 
+// A reply's words in the card. A reply under a later bubble of its turn, whose words are its card, keeps the card, and
+// its sentence and explaining line give way to the slot's holder (P01 ticket 20; P10 ticket 29).
+function slotWords(
+  { control, cardActions, focus, onClose, room }: AnswerCardProps & { room: number | null },
+  bubble: ChatBubble,
+  holds: boolean,
+): ReactElement {
+  return (
+    <SlotHeld value={!holds}>
+      <Words
+        group={{ act: control.libraryAct.tell, library: cardActions.library }}
+        addRecalculated={control.chat.addRecalculated}
+        bubble={bubble}
+        focus={focus}
+        invitation={control.invitation}
+        lookup={control.lookup}
+        onAsk={control.chat.send}
+        onClose={onClose}
+        room={room}
+        shown={control.answer}
+      />
+    </SlotHeld>
+  );
+}
+
+// A reply's steps over its bubble: those on the map as they stand now (P10 ticket 29), so that a step not done since
+// says why.
+function BubbleSteps({ bubble, onMap }: { bubble: ChatBubble; onMap: ShownSteps | null }): ReactElement | null {
+  if (bubble.steps === undefined) {
+    return null;
+  }
+  const live = onMap?.bubbleId === bubble.id ? onMap : null;
+  return <ReplySteps onMap={live !== null} steps={live?.steps ?? bubble.steps} />;
+}
+
 // A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
 // booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review), and a
 // study answer's 관정관 opened its reply's words, which hold the ticket (P10 ticket 27).
@@ -125,7 +163,7 @@ function dockedBubble({ booking, steps }: ChatSheetControl): number | null {
 
 // The open card's content: the turn's bubbles, each under its steps, and the dots with 그만 while a reply is on its way.
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
-  const { control, cardActions, focus, onClose, room } = props;
+  const { control, cardActions } = props;
   const { bubbles, waiting, retry } = control.chat;
   const docked = dockedBubble(control);
   const turn = turnOf(bubbles);
@@ -140,29 +178,16 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
         <View key={bubble.id} style={styles.part}>
           {bubble === turn?.after[0] ? <SetQuestLine control={control} /> : null}
           {bubble === last && picking ? <ReplyPicks control={control} /> : null}
-          {bubble.steps === undefined ? null : (
-            <ReplySteps onMap={control.steps?.bubbleId === bubble.id} steps={bubble.steps} />
-          )}
+          <BubbleSteps bubble={bubble} onMap={control.steps} />
           <BubbleParts
             bubble={bubble}
             cardActions={cardActions}
             onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
             onShowLayer={control.leaving.showLayer}
             words={
-              bubble.id === docked || speaksForItself(bubble) || !drawsWords(bubble, turn?.after ?? []) ? null : (
-                <Words
-                  group={{ act: control.libraryAct.tell, library: cardActions.library }}
-                  addRecalculated={control.chat.addRecalculated}
-                  bubble={bubble}
-                  focus={focus}
-                  invitation={control.invitation}
-                  lookup={control.lookup}
-                  onAsk={control.chat.send}
-                  onClose={onClose}
-                  room={room}
-                  shown={control.answer}
-                />
-              )
+              bubble.id === docked || speaksForItself(bubble) || !drawsWords(bubble, turn?.after ?? [])
+                ? null
+                : slotWords(props, bubble, holdsSlot(bubble, turn?.after ?? []))
             }
           />
           {bubble === last && !picking ? <ReplyPicks control={control} /> : null}
