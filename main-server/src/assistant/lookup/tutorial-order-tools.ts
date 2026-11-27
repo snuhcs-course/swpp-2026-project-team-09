@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { type TutorialAnswer } from './tutorial-lookup.js';
 import { type TutorialOrderService } from './tutorial-order.service.js';
 import { STARTS } from './way-tools.js';
@@ -39,9 +41,7 @@ export function findTutorialOrder(orders: TutorialOrderService): Tool {
       if (answer.result === 'none') {
         return { ...noneFound(NONE_REASONS[answer.reason]), leftOut: answer.leftOut, online: answer.online };
       }
-      presented.lookup = answer.lookup;
-      presented.answer = null;
-      presented.mapButtons.length = 0;
+      presentLookup(presented, answer.lookup);
       return { result: 'found', ...answer.words, fromIs: STARTS[answer.start.basis] };
     },
   });
