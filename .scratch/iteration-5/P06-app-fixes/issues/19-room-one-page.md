@@ -221,6 +221,9 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
 - **The help bubbles, trimmed by the user on 2026-11-27.** Part 2.6 and 3.5 above now list the lines kept.
   - The activation help dropped '켜면 다른 멤버의 알림 목록에 떠요', '일정 시작 30분 전부터 그 장소에 도착하면, 위치를 보는 멤버에게 도착 알림이 가요' and '다 모이면 꺼 주세요. 꺼도 파티는 그대로 남아요'.
   - The 일정 help dropped '지도에서 고르거나 건물 이름으로 적은 장소는 활성화 중 멤버의 도보 시간과 도착 알림에 쓰여요' and '내 파티 목록의 시간과 장소도 일정에서 가져와요'.
+- **Two of fyoon46's suggestions, taken by the user on 2026-11-27:**
+  - **The names leave out members nobody sees.** While the User is in the Party, the card names only the members `myParty.members[].visible` marks as seen, and '나' only on the in card. The not-in card names the seen members alone, which while a switch is off is nobody. Out of the Party, the names stay `GET /parties`'s `members`, which carries no visibility.
+  - **A way out from the not-in card.** A small text button under `위치 공유 켜고 참여`: `활성화에서 나가기`, or `활성화 끄기` for the member who leads the Party. It asks as the in card's button does.
 - **The library's booked room** (PR 684, merged during the build) stays on the step `shownSubQuest` shows, as the lists show it. The head's box takes the orange step's place line as 일정 draws it, so it carries the room whenever the orange step is that step.
 - **Tests:**
   - `answerRoom` now answers the Lobby with the Master Switch on, as the room's flows need. The Master-Switch-off flows are in `room-activation-master`.
@@ -233,11 +236,12 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
 
 ### Agent usage (2026-11-27)
 
-- Agent time: about 1 h 20 min (an estimate). One session, in this worktree:
+- Agent time: about 1 h 40 min (an estimate). One session, in this worktree:
   - the build, 20:41 to 21:46 KST;
   - the 수정 fix after the phone check, about 10 min from 22:05;
-  - the review's README fix and a merge of `5.0/Main`, about 5 min from 22:25.
+  - the review's README fix and a merge of `5.0/Main`, about 5 min from 22:25;
+  - fyoon46's review (one way into an activation), the trimmed help and the two suggestions, about 25 min from 22:30.
   - About half of it was spent waiting on the room's integration tests, which take about 30 s per test on this machine. No subagents.
 - Tokens:
-  - Input: about 107.1M in all. That is 0.0006M uncached, 106.6M cache reads and 0.52M cache writes.
-  - Output: about 0.21M.
+  - Input: about 130.4M in all. That is 0.0007M uncached, 129.8M cache reads and 0.58M cache writes.
+  - Output: about 0.25M.

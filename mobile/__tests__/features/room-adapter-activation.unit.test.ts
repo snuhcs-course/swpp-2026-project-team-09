@@ -17,15 +17,21 @@ describe('toRoom 활성화 of the User', () => {
     expect(view.members.map(({ state }) => state)).toEqual([null, null, null]);
   });
 
-  it("the User is in the Quest's Party → in and joined, with those in by the order they entered", () => {
+  it("the User is in the Quest's Party → in and joined, with those seen by the order they entered", () => {
     const party = myParty('q1', [member(MIN_JUN, false, true), member(ME, true, true), member(SEO_YEON, false, false)]);
     expect(room({ myParty: party }).activation).toEqual({
       state: 'in',
       leadsParty: true,
       switchOn: true,
       joined: true,
-      people: people(MIN_JUN, ME, SEO_YEON),
+      // 이서연, whom nobody sees, is left out.
+      people: people(MIN_JUN, ME),
     });
+  });
+
+  it('in the Party with the Master Switch off, seeing nobody → nobody named', () => {
+    const party = myParty('q1', [member(MIN_JUN, true, false), member(ME, false, false)]);
+    expect(room({ myParty: party, masterOn: false }).activation).toMatchObject({ joined: false, people: [] });
   });
 
   it.each([

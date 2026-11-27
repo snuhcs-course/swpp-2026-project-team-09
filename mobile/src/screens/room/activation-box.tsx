@@ -32,8 +32,9 @@ interface Steps extends ActivationBoxProps {
   entry: PartyEntry;
 }
 
-// The Leader of the Party ends it for everyone; a member leaves it.
-function outButton({ actions, onAsk }: ActivationBoxProps, leadsParty: boolean): ReactElement {
+// The Leader of the Party ends it for everyone; a member leaves it. `small`: the way out of the not-in card, under its
+// main button.
+function outButton({ actions, onAsk }: ActivationBoxProps, leadsParty: boolean, small = false): ReactElement {
   const ask: Ask = leadsParty
     ? {
         title: '활성화를 끌까요?',
@@ -45,11 +46,12 @@ function outButton({ actions, onAsk }: ActivationBoxProps, leadsParty: boolean):
     : leaveAsk(() => void actions.leaveParty());
   return (
     <Button
-      full
+      centred={small}
+      full={!small}
       onPress={() => {
         onAsk(ask);
       }}
-      variant="danger"
+      variant={small ? 'ghost' : 'danger'}
     >
       {leadsParty ? '활성화 끄기' : '활성화에서 나가기'}
     </Button>
@@ -80,23 +82,27 @@ function People({ people }: { people: readonly PartyPerson[] }): ReactElement | 
 
 type Running = Exclude<ActivationView, { state: 'none' }>;
 
-// `활성화 끄기` or `활성화에서 나가기` for the User in; `위치 공유 켜고 참여` for one in whom nobody sees; else `나도 참여`.
+// `활성화 끄기` or `활성화에서 나가기` for the User in; `위치 공유 켜고 참여` for one in whom nobody sees, with a small way out
+// under it; else `나도 참여`.
 function cardButton(props: Steps & { activation: Running }): ReactElement {
   const { activation } = props;
   if (activation.state === 'in' && activation.joined) {
     return outButton(props, activation.leadsParty);
   }
   if (activation.state === 'in') {
-    const { switchOn } = activation;
+    const { switchOn, leadsParty } = activation;
     return (
-      <Button
-        full
-        onPress={() => {
-          props.entry.shareAgain(switchOn);
-        }}
-      >
-        위치 공유 켜고 참여
-      </Button>
+      <View style={styles.notIn}>
+        <Button
+          full
+          onPress={() => {
+            props.entry.shareAgain(switchOn);
+          }}
+        >
+          위치 공유 켜고 참여
+        </Button>
+        {outButton(props, leadsParty, true)}
+      </View>
     );
   }
   const { partyId, title } = activation;
@@ -178,6 +184,7 @@ const styles = StyleSheet.create({
   openRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   grow: { flex: 1 },
   card: { gap: space[3] },
+  notIn: { gap: space[1] },
   live: {
     borderWidth: 2,
     borderColor: color.snuBlue,

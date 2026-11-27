@@ -149,7 +149,6 @@ describe('a member of the running Party whom nobody sees', () => {
 
     expect(activationBox().getByText(NOT_IN)).toBeVisible();
     expect(activationBox().getByLabelText('김민준 참여 중')).toBeVisible();
-    expect(activationBox().queryByRole('button', { name: '활성화에서 나가기' })).toBeNull();
     await user.press(activationBox().getByRole('button', { name: '위치 공유 켜고 참여' }));
     await pass(500);
 
@@ -167,10 +166,28 @@ describe('a member of the running Party whom nobody sees', () => {
     const user = await openRoom(HIS_PICNIC);
 
     expect(activationBox().getByText(NOT_IN)).toBeVisible();
+    // The way out of the Party's Leader ends it, as the in card's does.
+    expect(activationBox().getByRole('button', { name: '활성화 끄기' })).toBeVisible();
     await user.press(activationBox().getByRole('button', { name: '위치 공유 켜고 참여' }));
     await pass(500);
 
     expect(server.received(PARTY_SWITCH).map(({ body }) => body)).toEqual([{ on: true }]);
+    expect(server.received(SWITCH)).toHaveLength(0);
+  });
+});
+
+describe('the way out of the not-in card', () => {
+  it('lets a member whom nobody sees leave, asking as the in card does', async () => {
+    answerMyParty(server, myPicnicParty(MIN_JUN.id));
+    server.on('POST /parties/mine/leave', { status: 204 });
+    const user = await openRoom(HIS_PICNIC);
+    expect(activationBox().getByRole('button', { name: '위치 공유 켜고 참여' })).toBeVisible();
+
+    await user.press(activationBox().getByRole('button', { name: '활성화에서 나가기' }));
+    expect(screen.getByRole('header', { name: '활성화에서 나갈까요?' })).toBeVisible();
+    await answer(user, '나가기');
+
+    expect(server.received('POST /parties/mine/leave')).toHaveLength(1);
     expect(server.received(SWITCH)).toHaveLength(0);
   });
 });

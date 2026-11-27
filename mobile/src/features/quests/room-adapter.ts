@@ -32,7 +32,7 @@ export type ActivationView =
   // No Party runs for the Quest.
   | { state: 'none' }
   // The User is in it. `joined`: the Master Switch and the Party switch are both on, without which nobody sees the
-  // User, who then reads as not in. `people` leaves the User out until then.
+  // User, who then reads as not in. `people` names the members the User sees, and the User once joined.
   | { state: 'in'; leadsParty: boolean; switchOn: boolean; joined: boolean; people: PartyPerson[] }
   // It runs without the User, who has not answered. `people`: its members, which `GET /parties` names for a Quest the
   // User holds, else its Leader.
@@ -132,7 +132,7 @@ function activationOf({ quest, myParty, parties, declined, meId, masterOn }: Roo
   if (myParty?.quest?.id === quest.id) {
     const leadsParty = myParty.members.some(({ id, leader }) => id === meId && leader);
     const joined = masterOn && myParty.sharing;
-    const members = myParty.members.filter(({ id }) => joined || id !== meId);
+    const members = myParty.members.filter(({ id, visible }) => (id === meId ? joined : visible));
     return {
       state: 'in',
       leadsParty,
