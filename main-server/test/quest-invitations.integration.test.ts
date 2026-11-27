@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -86,6 +87,14 @@ describe('The Leader inviting a Friend', () => {
           createdAt: ANY_STRING,
         },
         sentAt: ANY_STRING,
+        nextSubQuest: {
+          id: ANY_STRING,
+          attending: false,
+          title: '저녁',
+          startsAt: ANY_STRING,
+          endsAt: null,
+          place: null,
+        },
       },
     ]);
     expect((await getQuest(app, friend, questId)).status).toBe(404);
