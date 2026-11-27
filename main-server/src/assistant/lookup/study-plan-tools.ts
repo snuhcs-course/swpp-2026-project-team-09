@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { type StudyInput } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { addDays } from '../library/booking-rules.js';
 import { koreaDate } from '../korea-time.js';
 import { type StudyPlanService } from './study-plan.service.js';
@@ -36,16 +37,20 @@ const input = z.object({
     .describe(
       'true when the User asked around the map they see or where they are: 근처, 이 근처, 이 주변, 여기서 가까운.',
     ),
+  ...skipParameters,
 });
 
 const NO_AREA = 'The app sent no visible area of the map, so 근처 cannot be read.';
 
-export function planStudy(studyPlans: Pick<StudyPlanService, 'plan'>): Tool {
+type StudyPlans = Pick<StudyPlanService, 'plan'> & Partial<Pick<StudyPlanService, 'classesOn'>>;
+
+export function planStudy(studyPlans: StudyPlans): Tool {
   return defineTool({
     description:
       "Ranks the places to study the User may use, one per building: those known open when the User gets there first, then those whose hours are not known, each by the longest stay before the User's next item, then the shorter walk. The app draws them on the map, numbered, the first opened, with the buildings open only to others faded and those closed then listed apart. Answers result 'planned' with the plans in order (building, first space, whether its hours are known, when it closes, the walk and the stay), why the first comes first, and the dropped and closed buildings; or result 'none' with the reason. It never knows free seats.",
     input,
-    run: async ({ what, date, from, until, near }, { userId, now, context, presented }) => {
+    run: async (args, { userId, now, context, presented }) => {
+      const { what, date, from, until, near } = args;
       const today = koreaDate(now);
       const day = date ?? today;
       if (day < today || day > addDays(today, DAYS_AHEAD)) {
@@ -54,6 +59,10 @@ export function planStudy(studyPlans: Pick<StudyPlanService, 'plan'>): Tool {
       const area = near === true ? context.viewport : null;
       if (near === true && area === null) {
         return noneFound(NO_AREA);
+      }
+      const skip = await skipFor(studyPlans.classesOn, { userId, date: day, context, presented }, args);
+      if ('result' in skip) {
+        return skip;
       }
       const studyInput: StudyInput = {
         kind: 'study',
@@ -70,11 +79,12 @@ export function planStudy(studyPlans: Pick<StudyPlanService, 'plan'>): Tool {
         now,
         location: context.location,
         locationMissing: context.locationMissing,
+        skipped: skip.skipped,
       });
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;
-      return studyWords(answer);
+      return { ...studyWords(answer), ...skip.said };
     },
   });
 }
@@ -99,7 +109,7 @@ export const STUDY_PLAN_RULES = studyPlanRules(false);
 // 2026-11-26). One that says `study-group` too gets the answer together from planStudyGroup.
 export function withStudyPlan(
   planned: { rules: string[]; tools: Record<string, Tool> },
-  studyPlans: Pick<StudyPlanService, 'plan'>,
+  studyPlans: StudyPlans,
   drawsStudy: boolean,
   drawsStudyGroup = false,
 ): { rules: string[]; tools: Record<string, Tool> } {

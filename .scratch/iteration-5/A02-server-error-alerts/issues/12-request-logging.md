@@ -43,3 +43,8 @@ The main server logs no request. Nothing ties a warning in `#team9-main-server-e
 - Storing the Assistant's conversations for monitoring: its own table, a retention period and a notice to Users, as separate later work.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 2 hours, an estimate. The session that built it (PR 542) recorded no figures in its stop note; this is read from that note and the PR's size.
+- Tokens: not measured; that session's stop note gives none.

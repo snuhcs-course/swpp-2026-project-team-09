@@ -59,6 +59,8 @@ export interface GroupPerson {
   me: boolean;
   // Each day's items, by its date.
   itemsByDate: Readonly<Record<string, readonly DayItem[]>>;
+  // The asker's Classes the conversation leaves out, by date, which their items no longer hold (P05 ticket 70).
+  skippedByDate?: Readonly<Record<string, readonly DayItem[]>>;
   constraints: PlanPerson['constraints'];
 }
 

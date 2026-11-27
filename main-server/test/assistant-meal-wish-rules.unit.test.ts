@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { chatAssistant, type ChatAssistantServices } from '../src/assistant/chat/chat-assistant.js';
@@ -44,15 +45,16 @@ describe('The chat of an app that draws answers', () => {
 });
 
 // P05 ticket 54: a Class the User says is cancelled is left out of the plan, which ticket 49's rule could only say
-// it was not.
+// it was not; since ticket 70 by one rule for every kind of answer, and no longer by a meal's rule ("식사 추천에서만",
+// the user's phone, 2026-11-27).
 describe("A Class the User says is cancelled, in an app's chat that draws answers", () => {
-  it("is left out through planMeal, and put back when they go after all; a Friend's never", () => {
-    expect(drawingRules()).toContain(
-      'call planMeal with skipClasses, each by its start (1시 수업 → 13:00) or its name',
-    );
-    expect(drawingRules()).toContain("When it answers result 'unknownClass', plan nothing: ask which");
-    expect(drawingRules()).toContain('call planMeal with attendClasses');
+  it("is left out through the tool of what is asked, of any kind, and put back when they go after all; a Friend's never", () => {
+    expect(drawingRules()).toContain('pass skipClasses to the tool that answers it');
+    expect(drawingRules()).toContain('Never say that a Class can be left out of only one kind of answer.');
+    expect(drawingRules()).toContain("When a tool answers result 'unknownClass', plan nothing: ask which");
+    expect(drawingRules()).toContain('call the same tool with attendClasses');
     expect(drawingRules()).toContain("A Friend's Class is never left out");
+    expect(drawingRules()).not.toContain('call planMeal with skipClasses');
     expect(drawingRules()).not.toContain('아직 반영하지 못해서');
   });
 });

@@ -27,6 +27,7 @@ import {
 } from './answer-words.js';
 import { type GatheringFit, MINUTE_MS, minutesSaid, type PersonPart } from './gathering.js';
 import { freedReach } from './meal-plan-parts.js';
+import { skippedBand } from '../free-time/left-out-classes.js';
 import { type SetOut, setOutOf } from './other-friends.js';
 
 // What the map draws of a plan, and its time band.
@@ -153,7 +154,7 @@ export function halfHoursAround(earliest: number, latest: number): { from: Date;
 }
 
 // What a busy stretch is, never its name: a Class by its Place, a Class without one, or a Sub Quest.
-function busyLabel({ isClass, placeId }: DayItem, placeLabel: (placeId: string) => string): string {
+export function busyLabel({ isClass, placeId }: DayItem, placeLabel: (placeId: string) => string): string {
   if (!isClass) {
     return '일정';
   }
@@ -224,12 +225,7 @@ export function otherLane(
 
 // The asker's Classes left out of the plan, whole, labelled as a lane's busy stretch.
 export function skippedOf(items: readonly DayItem[], naming: Naming): NonNullable<TimeBand['skipped']> {
-  return items.map((item) => ({
-    id: item.id,
-    startAt: koreaTime(item.start),
-    endAt: koreaTime(item.end),
-    label: busyLabel(item, (placeId) => naming.placeLabel(placeId)),
-  }));
+  return skippedBand(items, (item) => busyLabel(item, (placeId) => naming.placeLabel(placeId))).skipped ?? [];
 }
 
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
