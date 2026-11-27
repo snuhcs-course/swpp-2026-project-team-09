@@ -46,3 +46,8 @@ Steps without keys keep the rule of before: a main server before P05 ticket 74, 
 - [x] A single answer, steps without keys and #706's live steps behave as before. (The existing steps, sheet and booking tests, unchanged.)
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 70 minutes, an estimate: this ticket's share of one session's active time, which also built P03-23 and P05-78, and the emulator pictures.
+- Tokens, by the same share: input about 95M, of which cache reads about 94.6M and cache writes about 0.38M; output about 193K. No subagents.
