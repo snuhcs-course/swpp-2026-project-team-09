@@ -2,7 +2,7 @@
 
 Parent: [P10 spec](../spec.md)
 Status: ready-for-agent
-Pull request: see the P10-19 PR
+Pull request: #679
 Blocked by: 18; the main server's 24 for the button
 
 Native files: none. Releases: an app OTA update, though no answer reaches it until the app says `study-plan` (ticket 23).

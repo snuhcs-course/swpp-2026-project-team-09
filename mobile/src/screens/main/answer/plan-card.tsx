@@ -33,6 +33,7 @@ import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { StudyGroupBody } from './study-group-body';
 import type { TellAct } from '../library/act-stage';
+import type { LibraryCardActions } from '../library/use-library-call';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
 
 interface CardProps {
@@ -145,6 +146,8 @@ interface PlanCardProps extends CardProps {
   // Where a study answer's group study room tells its main button, and the bubble it tells it for (P10 ticket 11).
   act?: TellAct;
   bubbleId?: number;
+  // The chat's library cards, for 관정관's seat ticket in a study answer's opened place (P10 ticket 22).
+  library?: LibraryCardActions;
 }
 
 // The answer on screen in the answer frame's card, with no text of its own by default: "＋ 같이" while the Plan can
@@ -179,7 +182,13 @@ function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
     <>
       {over.length > 0 ? null : <MealWords said={said} shown={shown} />}
       {shown.menuFor === null ? <AnswerHints offers={answer.offers ?? []} /> : null}
-      <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
+      <MealSheet
+        answer={answer}
+        bubbleId={props.bubbleId}
+        busy={props.busy || settled(invitation)}
+        library={props.library}
+        shown={shown}
+      />
     </>
   );
 }
@@ -189,14 +198,18 @@ function MealSheet({
   shown,
   answer,
   busy,
+  library,
+  bubbleId,
 }: {
   shown: ShownAnswer;
   answer: AnswerReply;
   busy: boolean;
+  library?: LibraryCardActions;
+  bubbleId?: number;
 }): ReactElement | null {
   const { plan, menuFor } = shown;
   if (plan !== null && menuFor === plan.id) {
-    return <MealMenu answer={answer} plan={plan} shown={shown} />;
+    return <MealMenu answer={answer} bubbleId={bubbleId} library={library} plan={plan} shown={shown} />;
   }
   return <MealList answer={answer} busy={busy} shown={shown} />;
 }

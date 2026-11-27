@@ -105,13 +105,17 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   );
 }
 
+// A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
+// booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review).
+function dockedBubble(control: AnswerCardProps['control']): number | null {
+  return control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
+}
+
 // The open card's content: the turn's bubbles, each under its steps, and the dots with 그만 while a reply is on its way.
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
   const { control, cardActions, focus, onClose, room } = props;
   const { bubbles, waiting, retry } = control.chat;
-  // A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
-  // booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review).
-  const docked = control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
+  const docked = dockedBubble(control);
   const turn = turnOf(bubbles);
   const parts = shownParts(turn?.after ?? []);
   const last = bubbles.at(-1);
@@ -136,6 +140,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
               bubble.id === docked || speaksForItself(bubble) ? null : (
                 <Words
                   act={control.libraryAct.tell}
+                  library={cardActions.library}
                   addRecalculated={control.chat.addRecalculated}
                   bubble={bubble}
                   focus={focus}
