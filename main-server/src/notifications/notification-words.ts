@@ -151,31 +151,33 @@ function memberWords(told: Of<'step-changed'> | Of<'arrived'> | Of<'late'>): Not
   };
 }
 
-// A request to join and its answer ring. An answer of accepting opens the party, one of declining 보낸 신청; the
-// requests waiting open the party, whose room answers them.
+// A request to join and its answer ring. The title leads with the answer and the line names the 파티, so that a long
+// title of the 파티 is what one line cuts. An answer of accepting opens the party; one of declining opens 찾기, for
+// another 파티. The requests waiting open the party, whose room answers them.
 function joinWords(told: Of<'join-accepted'> | Of<'join-declined'> | Of<'join-asked'>): NotificationWords {
   if (told.kind === 'join-asked') {
-    const who = told.waiting > 1 ? `${told.name}님 외 ${String(told.waiting - 1)}명이` : `${told.name}님이`;
-    const title = `${who} ${told.questTitle}에 참여를 신청했어요`;
+    const who = told.waiting > 1 ? `${told.name}님 외 ${String(told.waiting - 1)}명` : `${told.name}님`;
     return {
-      title,
+      title: `새 참여 신청 ${String(told.waiting)}명`,
       ahead: null,
-      line: `참여 신청 ${String(told.waiting)}명`,
+      line: `${told.questTitle} · ${who}`,
       card: { kind: 'party', id: told.questId },
       about: null,
       rings: true,
-      body: '파티방에서 수락하거나 거절할 수 있어요.',
+      body: `${who}이 ${told.questTitle}에 참여를 신청했어요.`,
     };
   }
   const accepted = told.kind === 'join-accepted';
   return {
-    title: `${told.questTitle} 참여 신청이 ${accepted ? '수락됐어요' : '거절됐어요'}`,
+    title: accepted ? '참여 신청이 수락됐어요' : '참여 신청이 거절됐어요',
     ahead: null,
-    line: `${told.leaderName}님의 파티`,
-    card: { kind: accepted ? 'party' : 'sent-requests', id: told.questId },
+    line: `${told.questTitle} · ${told.leaderName}님의 파티`,
+    card: { kind: accepted ? 'party' : 'find-parties', id: told.questId },
     about: null,
     rings: true,
-    body: accepted ? '이제 내 파티에서 볼 수 있어요.' : `${told.leaderName}님이 신청을 받지 않았어요.`,
+    body: accepted
+      ? `${told.questTitle}, 이제 내 파티에서 볼 수 있어요.`
+      : `${told.questTitle}, ${told.leaderName}님이 신청을 받지 않았어요.`,
   };
 }
 

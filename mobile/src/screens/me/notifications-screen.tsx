@@ -40,7 +40,7 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   accepted: 'invitation',
   declined: 'invitation',
   'join-accepted': 'invitation',
-  'join-declined': 'invitation',
+  'join-declined': 'muted',
   'join-asked': 'request',
   'leave-by': 'navy',
   'room-declined': 'invitation',
