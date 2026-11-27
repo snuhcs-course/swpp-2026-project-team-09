@@ -42,7 +42,9 @@ Built from a triage of nightly-level run 46046862134. Each failure was read from
 
 The mock's held 파티 `m1` names three `members` but counts four (`memberCount: 4`); the fourth is the User. The app reads the members of the User's own 파티 from `GET /parties/mine`, so no screen shows the difference. It is left as PR 688 made it.
 
+The Mac's load went up to about 60 from other sessions during the runs. Under that load, three files timed out on their first case and the cases after it failed with it: `room-wireframe` (2 cases), `events-recruiting` (3 refusal cases), and `notifications` (1 case, then all 11). The changed tests were not among them. Each file then passed alone: `room-wireframe` 15/15 in 445 s, `events-recruiting` 17/17 in 556 s, and `notifications` 11/11 in 353 s. Load, not a fault, so nothing was changed for it.
+
 ### Agent usage (2026-11-28)
 
-- Agent time: about 1 hour in one session, test runs included (an estimate).
+- Agent time: about 1.3 hours in one session, test runs included (an estimate).
 - Tokens (estimates; no exact counter was available to the session): input about 7,000,000 (cache reads about 6,800,000, cache writes about 150,000); output about 25,000. No subagents.
