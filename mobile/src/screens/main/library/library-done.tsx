@@ -99,7 +99,7 @@ function BookedDone({
   if (gone) {
     return (
       <View style={styles.done} testID="library-done">
-        <Said>{ACT_WORDS.cancel.done}</Said>
+        <Said byButton>{ACT_WORDS.cancel.done}</Said>
         <BookedTicket ticket={{ ...ticket, state: 'ended', word: ENDED_WORDS.cancel }} />
       </View>
     );

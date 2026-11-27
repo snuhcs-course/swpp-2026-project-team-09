@@ -9,7 +9,8 @@ import type { StudyGroup } from '@/api/study-plan-types';
 import { useLibrarySession } from '@/library/library-session';
 import type { TellAct } from '../library/act-stage';
 import type { PartyRequest } from '../library/room-party';
-import { isOut } from './study-group-request';
+import { isWaiting } from './study-group-booking';
+import { isBooked, isOut } from './study-group-request';
 
 // The study answer together's main button beside the input (P10 tickets 11 and 12), told as a booking ticket's is:
 // - before the request: "+ 같이" while people are missing, 로그인 while logged out of the library, else "동의 요청 보내기";
@@ -19,7 +20,8 @@ import { isOut } from './study-group-request';
 
 const TELLER = 'study-group';
 
-type Main = 'add' | 'logIn' | 'send' | 'sending' | 'waiting' | 'ready' | 'askMore';
+type Main =
+  'add' | 'logIn' | 'send' | 'sending' | 'waiting' | 'ready' | 'logInBook' | 'wait' | 'again' | 'booked' | 'askMore';
 
 interface Seen {
   main: Main;
@@ -27,15 +29,42 @@ interface Seen {
   disabled: boolean;
 }
 
+// Once everyone has consented (P10 ticket 14): 예약하기, "로그인하고 예약" logged out, the booking window's wait, or
+// asking again at the next free time when the kind has no free room (`again`, the button's words); once booked from
+// this phone, "예약했어요" dimmed, though the server may still say ready.
+function readyMain(group: StudyGroup, loggedIn: boolean, again: string | null, booked: boolean): Seen {
+  if (booked) {
+    return { main: 'booked', words: '예약했어요', disabled: true };
+  }
+  if (isWaiting(group)) {
+    return { main: 'wait', words: '예약 창이 열리면 알려 드려요', disabled: true };
+  }
+  if (again !== null) {
+    return { main: 'again', words: again, disabled: false };
+  }
+  return loggedIn
+    ? { main: 'ready', words: '예약하기', disabled: false }
+    : { main: 'logInBook', words: '로그인하고 예약', disabled: false };
+}
+
 // `group` is the one on screen: while the request is out, its people those still in.
-export function mainOf(group: StudyGroup, loggedIn: boolean, party: PartyRequest): Seen {
+export function mainOf(
+  group: StudyGroup,
+  loggedIn: boolean,
+  party: PartyRequest,
+  again: string | null = null,
+  booked = false,
+): Seen {
   const { request } = party;
+  if (isBooked(request)) {
+    return { main: 'booked', words: '예약했어요', disabled: true };
+  }
   if (isOut(request)) {
     if ((request.moreNeeded ?? 0) > 0) {
       return { main: 'askMore', words: '+ 같이 한 명 더', disabled: false };
     }
     return request.status === 'ready'
-      ? { main: 'ready', words: '예약하기', disabled: true }
+      ? readyMain(group, loggedIn, again, booked)
       : { main: 'waiting', words: '모두 동의하면 예약', disabled: true };
   }
   if (party.sending) {
@@ -59,21 +88,32 @@ export interface GroupAct {
   onAdd: () => void;
   // Opens the picker of one more Friend for the request out.
   onAsk: () => void;
+  // Once everyone has consented (P10 ticket 14): books the room, or asks again at the next free time; `again` is that
+  // button's words, null while the kind has a free room. `booking` dims 예약하기 while the room or the use is missing,
+  // or while it books.
+  onBook?: () => void;
+  onLoggedIn?: () => void;
+  onAgain?: () => void;
+  booked?: boolean;
+  again?: string | null;
+  booking?: boolean;
   act?: TellAct;
   bubbleId?: number;
 }
 
 // Its words are told when they change, and its press reads the card's latest functions, so that telling it costs no
 // render.
-export function useGroupAct({ group, loggedIn, party, busy, onAdd, onAsk, act, bubbleId }: GroupAct): void {
+export function useGroupAct(props: GroupAct): void {
+  const { group, loggedIn, party, busy, act, bubbleId, again = null, booking = false, booked = false } = props;
   const { logIn } = useLibrarySession();
-  const latest = useRef({ onAdd, onAsk, logIn, send: party.send });
+  const handlers = { ...props, logIn, send: party.send };
+  const latest = useRef(handlers);
   useEffect(() => {
-    latest.current = { onAdd, onAsk, logIn, send: party.send };
+    latest.current = handlers;
   });
-  const seen = mainOf(group, loggedIn, party);
+  const seen = mainOf(group, loggedIn, party, again, booked);
   const { main, words } = seen;
-  const disabled = busy || seen.disabled;
+  const disabled = busy || seen.disabled || (main === 'ready' && booking);
   useEffect(() => {
     if (act === undefined || bubbleId === undefined) {
       return;
@@ -88,6 +128,15 @@ export function useGroupAct({ group, loggedIn, party, busy, onAdd, onAsk, act, b
         void now.logIn().catch(() => null);
       } else if (main === 'send') {
         now.send?.();
+      } else if (main === 'ready') {
+        now.onBook?.();
+      } else if (main === 'logInBook') {
+        void now
+          .logIn()
+          .then(() => now.onLoggedIn?.())
+          .catch(() => null);
+      } else if (main === 'again') {
+        now.onAgain?.();
       }
     };
     act(TELLER, bubbleId, { words, onPress, disabled, danger: false });

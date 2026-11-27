@@ -32,6 +32,7 @@ import { StepsTop } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 import type { TellAct } from '../library/act-stage';
+import type { LibraryCardActions } from '../library/use-library-call';
 import { offeredAnswer } from '@/features/assistant/meal-offered';
 import { SENTENCE } from './line-types';
 
@@ -115,8 +116,9 @@ interface WordsProps extends OnScreen {
   onAsk: RefusalAsk;
   // A turn a Lookup's button asked of the recalculation.
   addRecalculated: Chat['addRecalculated'];
-  // Where a study answer's group study room tells its main button (P10 ticket 11).
-  act?: TellAct;
+  // Where a study answer's group study room tells its main button (P10 ticket 11), and what its booking adds to the chat
+  // (P10 ticket 14).
+  group?: { act: TellAct; library: LibraryCardActions };
 }
 
 // The card of the answer on screen a reply's words are, by `wordsKindOf`, with a refusal's lines over the Plan's when
@@ -130,7 +132,8 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
     const steps = (bubble.steps?.length ?? 0) > 1;
     // A choice's words are not the card's: the history list keeps them (P05 ticket 56).
     const said = bubble.select === undefined ? bubble.text : '';
-    return <PlanCard {...card} act={props.act} bubbleId={bubble.id} focus={focus} said={said} steps={steps} />;
+    const group = { act: props.group?.act, bubbleId: bubble.id, library: props.group?.library };
+    return <PlanCard {...card} {...group} focus={focus} said={said} steps={steps} />;
   }
   if (kind === 'made' && answer !== null && plan !== null && invitation.made !== null) {
     return <MadeCard {...{ answer, invitation, onClose, over, plan }} made={invitation.made} />;

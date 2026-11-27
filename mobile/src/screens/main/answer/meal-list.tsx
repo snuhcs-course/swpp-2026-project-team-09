@@ -183,7 +183,7 @@ export function listOrderWords(answer: AnswerReply): string {
 
 interface MealListProps {
   answer: AnswerReply;
-  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'show' | 'chooseKind' | 'change'>;
+  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'chooseKind' | 'change'>;
   // A Plan is being sent or is made, or a recalculation is on its way: nothing is chosen, as on the map.
   busy: boolean;
 }
@@ -203,14 +203,14 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
   const rows = candidateRowsOf(answer, kind);
 
   const closed = answer.closed ?? [];
-  // A study place's own view is ticket 19's: until then a press chooses it, as a press on its round does.
+  // A press opens the place: a Restaurant's menu, or a study place's spaces (P10 ticket 19).
   const row = (one: CandidateRow): ReactElement => (
     <Row
       chosen={one.planId === chosen}
       disabled={busy}
       key={one.planId}
       onPress={() => {
-        (study ? shown.show : shown.openMenu)(one.planId);
+        shown.openMenu(one.planId);
       }}
       row={one}
       study={study}
@@ -230,21 +230,36 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
       />
       {rows.map((one) => row(one))}
       <OverPriceRows answer={answer} />
-      {closed.length === 0 ? null : <Heading words={CLOSED_HEADING} />}
-      {closed.map(({ place, notices }) => (
-        <ClosedRow key={`${place.placeId}:${place.label}`} name={place.label} notice={notices.join(' ')} />
+      {closed.length === 0 ? null : (
+        <View style={styles.list} testID="meal-closed-group">
+          <Heading words={CLOSED_HEADING} />
+          {closed.map(({ place, notices }) => (
+            <ClosedRow key={`${place.placeId}:${place.label}`} name={place.label} notice={notices.join(' ')} />
+          ))}
+        </View>
+      )}
+      {study ? <DroppedRows answer={answer} /> : null}
+    </View>
+  );
+}
+
+// The places open but not for this User, faded at the very end, after 쉬는 곳 and outside its heading, with no heading of
+// their own: they are not closed (P10 ticket 19).
+function DroppedRows({ answer }: { answer: AnswerReply }): ReactElement | null {
+  const rows = droppedRowsOf(answer);
+  return rows.length === 0 ? null : (
+    <View style={[styles.list, styles.apart]} testID="meal-dropped-group">
+      {rows.map(({ key, name, reason }) => (
+        <ClosedRow key={key} name={name} notice={reason} testID="meal-dropped-row" />
       ))}
-      {study
-        ? droppedRowsOf(answer).map(({ key, name, reason }) => (
-            <ClosedRow key={key} name={name} notice={reason} testID="meal-dropped-row" />
-          ))
-        : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   list: { gap: space[1] },
+  // As far from the group over it as a heading stands.
+  apart: { marginTop: space[2] },
   // On the list's left edge, above the kinds.
   order: { ...text.caption, color: color.inkMuted },
 });

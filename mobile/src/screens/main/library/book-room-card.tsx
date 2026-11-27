@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -58,7 +59,7 @@ interface BookRoomCardProps {
   actions: LibraryCardActions;
 }
 
-interface RoomWrite {
+export interface RoomWrite {
   room: LibraryRoomTimes;
   useDesc: string;
   // The room request every companion consented to, for a card with companions.
@@ -72,8 +73,25 @@ function slotOf(card: LibraryCardData): Slot {
 // 예약하기: the room form's own values (the applicant, and the phone number and email the site prefilled, which stay on
 // the phone), the companions as the library knows them, then the booking, then the done message. A room request is told
 // only whether the booking was made; its BSEQNO stays on the phone, for the cancel.
-async function sendBooking(
+function sendBooking(
   { card, space, actions }: BookRoomCardProps,
+  slot: Slot,
+  write: RoomWrite,
+  press: ConfirmedPress,
+): Promise<CardFailure | null> {
+  return bookRoom({ space, notes: card.notes, addOwn: actions.addOwn }, slot, write, press);
+}
+
+// What a room is booked for and where its done message goes: a room card's, or a study answer together's group study
+// room (P10 ticket 14), which books the same way.
+export interface RoomTarget {
+  space: LibrarySpace;
+  notes: LibraryCardData['notes'];
+  addOwn: LibraryCardActions['addOwn'];
+}
+
+export async function bookRoom(
+  { space, notes, addOwn }: RoomTarget,
   slot: Slot,
   { room, useDesc, request }: RoomWrite,
   press: ConfirmedPress,
@@ -95,14 +113,14 @@ async function sendBooking(
   }
   // The room is booked from here on, whatever the report comes to: the card never offers 예약하기 again.
   const bseqno = bseqnoOf(info);
-  const done = doneOf(space, { slot, label: room.NAME, bseqno, notes: card.notes }, now());
-  actions.addOwn({ text: done.title, done });
+  const done = doneOf(space, { slot, label: room.NAME, bseqno, notes }, now());
+  addOwn({ text: done.title, done });
   if (request !== null) {
     await keepRoomBooking(Number(bseqno), request.id).catch(() => null);
     void forgetWaitingRoom(request.questId).catch(() => null);
     const reported = await reportRoomBooked(request.id).catch(() => 'queued' as const);
     if (reported === 'ended') {
-      actions.addOwn({
+      addOwn({
         text: partyChangedWords(room.NAME),
         cards: [{ kind: 'library', library: roomCancelCardOf(space, slot) }],
       });
@@ -197,7 +215,7 @@ function RoomOffer(props: FormProps): ReactElement {
       />
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
       {open ? <RoomChoices {...props} /> : null}
-      {write.busy ? <Said>예약하는 중이에요</Said> : null}
+      {write.busy ? <Said byButton>예약하는 중이에요</Said> : null}
     </>
   );
 }

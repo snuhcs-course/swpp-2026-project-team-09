@@ -13,7 +13,7 @@ import { MORE_FRIENDS, type PartyCard } from '../library/room-party';
 // the card says while it is out.
 
 // The request's card: the group's key, the Friends of the answer after the asker by the names its parts give, and the
-// study input, which the server keeps to give the answer back.
+// study input, which the server keeps to give the answer back; an answer given back holds its request (ticket 13).
 export function partyCardOf(answer: AnswerReply, plan: Plan, group: StudyGroup): PartyCard {
   const names = new Map(plan.parts.map(({ userId, name }) => [userId, name]));
   const friends = answer.input.kind === 'study' ? answer.input.people.slice(1) : [];
@@ -22,6 +22,7 @@ export function partyCardOf(answer: AnswerReply, plan: Plan, group: StudyGroup):
     questId: null,
     companions: friends.map(({ userId }) => ({ friendId: userId, name: names.get(userId) ?? '' })),
     ...(answer.input.kind === 'study' ? { input: answer.input } : {}),
+    ...(group.request === null ? {} : { requestId: group.request.id }),
   };
 }
 
@@ -86,4 +87,9 @@ export function groupOfRequest(group: StudyGroup, request: RoomRequest | null): 
 // Whether the request is out: gathering or ready, its people, time and room held.
 export function isOut(request: RoomRequest | null): request is RoomRequest {
   return request !== null && (request.status === 'gathering' || request.status === 'ready');
+}
+
+// Whether the request's room is booked: no longer out, but still sent, so nothing on the card is chosen or sent again.
+export function isBooked(request: RoomRequest | null): boolean {
+  return request?.status === 'booked';
 }

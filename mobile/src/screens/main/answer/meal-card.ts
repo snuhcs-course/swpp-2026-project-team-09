@@ -4,18 +4,18 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useSpokenChoice } from '@/features/assistant/use-spoken-choice';
-import type { ChatSheetControl } from '../chat-sheet';
 import { useRaisedForMenu } from './card-raise';
 
 // A restaurant's menu opened from the map ("메뉴 ›" on the chosen place's label): that place chosen, and the card
 // raised to its menu (board E4, `useMenuRaising`).
-export function openMealMenu(control: Pick<ChatSheetControl, 'answer'>, planId: string): void {
+export function openMealMenu(control: { answer: Pick<ShownAnswer, 'openMenu'> }, planId: string): void {
   control.answer.openMenu(planId);
 }
 

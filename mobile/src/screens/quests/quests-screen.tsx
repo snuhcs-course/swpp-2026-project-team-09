@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -32,26 +33,35 @@ import { now } from '@/clock';
 
 type Filter = 'all' | 'class' | 'party';
 
+// A booking party whose room request is out says the request in its line instead of its place, its time within it
+// and no day word, since its row sits under its day's heading (P10 ticket 13, #662's pictures).
 function QuestRow({ row, onPress }: { row: QuestRowView; onPress: () => void }): ReactElement {
+  const request = row.reopens === true;
+  const line = request ? (row.requestLine ?? row.meta) : row.place;
+  const time = request ? '' : row.time;
   return (
     <ListRow
       kicker={{ words: row.label, color: questTone[row.tone].kicker }}
-      label={[row.label, row.title, row.place, row.time].filter((part) => part !== '').join(' · ')}
+      label={[row.label, row.title, line, time].filter((part) => part !== '').join(' · ')}
       large
       leading={<QuestRound tone={row.tone} />}
-      lines={row.place === '' ? [] : [row.place]}
+      lines={line === '' ? [] : [line]}
       onPress={onPress}
       title={row.title}
-      trailing={row.time === '' ? null : <Text style={styles.time}>{row.time}</Text>}
+      trailing={time === '' ? null : <Text style={styles.time}>{time}</Text>}
     />
   );
 }
 
 // What a press on a row does. A class's row closes this screen and brings the map to the class's place, by the main
-// screen's address (`/main?quest=…`), as its row on the map does. Any other row opens the Quest's room above it.
+// screen's address (`/main?quest=…`), as its row on the map does. A booking party's row whose room request is out
+// closes it and opens that answer again (`/main?card=party:…`, P10 ticket 13). Any other row opens the Quest's room
+// above it.
 function press(row: QuestRowView): void {
   if (row.kind === 'class') {
     router.dismissTo({ pathname: '/main', params: { quest: row.id } });
+  } else if (row.reopens === true) {
+    router.dismissTo({ pathname: '/main', params: { card: `party:${row.id}` } });
   } else {
     router.push(`/room/${row.id}`);
   }

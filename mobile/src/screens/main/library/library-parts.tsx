@@ -14,6 +14,7 @@ import { color, font, Icon, type IconName, radius, space, text } from '@/design-
 import { LIBRARY_FAILURE_TEXT, type LibraryFailure } from '@/library/client';
 import { needsLogin } from './use-library-call';
 import { FAILURE, SENTENCE } from '../answer/line-types';
+import { useSlotHeld } from '../answer/sentence-slot';
 
 // The parts the library cards share, as the MainChatLib frames draw them inside the Assistant's bubble: white boxes
 // on the bubble's blue, the space as a row with its round icon, the round buttons under it, and the site's notes.
@@ -86,8 +87,23 @@ export function Pills({ children }: { children: ReactNode }): ReactElement {
   return <View style={styles.pills}>{children}</View>;
 }
 
-// What the card says: an outcome, an empty list or a failure.
-export function Said({ children, tone = 'plain' }: { children: string; tone?: 'plain' | 'danger' }): ReactElement {
+// What the card says: an outcome, an empty list or a failure. A card kept from an earlier turn stands under the turn's
+// sentence slot (P01 ticket 20): while the slot holds a newer reply or the waiting dots, the card's own explaining,
+// loading and empty lines give way. A line a button made (`byButton`, such as "예약하는 중이에요" or "예약을 취소했어요")
+// and a failure stay.
+export function Said({
+  children,
+  tone = 'plain',
+  byButton = false,
+}: {
+  children: string;
+  tone?: 'plain' | 'danger';
+  byButton?: boolean;
+}): ReactElement | null {
+  const held = useSlotHeld();
+  if (held && tone === 'plain' && !byButton) {
+    return null;
+  }
   return <Text style={[styles.said, tone === 'danger' && styles.danger]}>{children}</Text>;
 }
 
