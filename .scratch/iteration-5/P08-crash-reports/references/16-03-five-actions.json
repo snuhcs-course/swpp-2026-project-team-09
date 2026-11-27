@@ -80,8 +80,29 @@
       }
     ],
     "trendsFilter": {
-      "formulas": ["A", "B", "C", "D / 2", "E"],
-      "display": "ActionsLineGraph"
+      "display": "ActionsLineGraph",
+      "formulaNodes": [
+        {
+          "formula": "A",
+          "custom_name": "AI 답변"
+        },
+        {
+          "formula": "B",
+          "custom_name": "파티 만들기"
+        },
+        {
+          "formula": "C",
+          "custom_name": "파티 참여"
+        },
+        {
+          "formula": "D / 2",
+          "custom_name": "친구 맺기"
+        },
+        {
+          "formula": "E",
+          "custom_name": "관정 좌석 예약"
+        }
+      ]
     },
     "interval": "day",
     "dateRange": {

@@ -56,19 +56,21 @@ API reference and written under Comments.
 
 The dashboard **Beta**: https://us.posthog.com/project/769149/dashboard/2419982 (members of the organisation only).
 
-| Insight                              | Query                                         | Link                                                    |
-| ------------------------------------ | --------------------------------------------- | ------------------------------------------------------- |
-| 일간 사용자 수 (DAU)                 | `../references/16-01-daily-active-users.json` | https://us.posthog.com/project/769149/insights/ci0djkN3 |
-| 재방문 (1일, 7일)                    | `../references/16-02-retention.json`          | https://us.posthog.com/project/769149/insights/oj0Men0y |
-| 다섯 행동, 하루 횟수 (마무리하는 쪽) | `../references/16-03-five-actions.json`       | https://us.posthog.com/project/769149/insights/6HKeffg8 |
-| 많이 본 화면 (7일)                   | `../references/16-04-top-screens.json`        | https://us.posthog.com/project/769149/insights/tJCm8iGt |
-| 행동별 응답률 (서버 도달, 폰 도달)   | `../references/16-05-response-rates.json`     | https://us.posthog.com/project/769149/insights/VUwN2LaL |
-| 실패 이유별 횟수 (내 파티 없음 제외) | `../references/16-06-failures-by-reason.json` | https://us.posthog.com/project/769149/insights/Fh8guOUs |
+| Insight                            | Query                                         | Link                                                    |
+| ---------------------------------- | --------------------------------------------- | ------------------------------------------------------- |
+| 일간 사용자 수 (DAU)               | `../references/16-01-daily-active-users.json` | https://us.posthog.com/project/769149/insights/ci0djkN3 |
+| 재방문 (1일, 7일)                  | `../references/16-02-retention.json`          | https://us.posthog.com/project/769149/insights/oj0Men0y |
+| 주요 기능 사용 횟수                | `../references/16-03-five-actions.json`       | https://us.posthog.com/project/769149/insights/6HKeffg8 |
+| 많이 본 화면 (7일)                 | `../references/16-04-top-screens.json`        | https://us.posthog.com/project/769149/insights/tJCm8iGt |
+| 행동별 응답률 (서버 도달, 폰 도달) | `../references/16-05-response-rates.json`     | https://us.posthog.com/project/769149/insights/VUwN2LaL |
+| 실패 원인                          | `../references/16-06-failures-by-reason.json` | https://us.posthog.com/project/769149/insights/Fh8guOUs |
 
 - **API**: `POST /api/projects/:id/dashboards/` for the dashboard, `POST /api/projects/:id/insights/` with `query` and
   `dashboards` for each insight, `PATCH /api/projects/:id/insights/:id/` to change one, and `POST
 /api/projects/:id/query/` to run a query, as PostHog's API reference describes. Each query was run once after it was
   made and gave today's events.
+- **Names in Korean** (the owner asked on 2026-11-27): the insights, the lines of insight 3 (`formulaNodes` with a
+  `custom_name` each) and the tables' columns and values of insights 5 and 6.
 - **Kinds**: 1 and 3 are Trends (3 with the formulas `A, B, C, D / 2, E`, the friendships halved); 2 is Retention
   from `app_opened` to `app_opened`, by day over 8 days; 4 is Trends broken down by `route` as a table of 7 days; 5
   and 6 are HogQL tables. 5 counts, per day and action, the app's `_requested`, the server's `_completed` (a
