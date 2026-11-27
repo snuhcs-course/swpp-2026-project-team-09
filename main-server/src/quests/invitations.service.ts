@@ -13,6 +13,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -41,7 +42,7 @@ import {
 import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
-import { alreadyHolder, conflict, notFound, takenAloneRefused } from './refusals.js';
+import { alreadyHolder, conflict, notFound, questFull, takenAloneRefused } from './refusals.js';
 
 export type CreatedInvitation = Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_INCLUDE }>;
 
@@ -71,20 +72,28 @@ export class InvitationsService {
     private readonly usage: UsageService,
   ) {}
 
+  // Refused into a Quest its Holders fill at that moment. Waiting invitations take no place, so a Quest with places
+  // left may invite more Friends than it has places: whoever accepts after it fills hears QUEST_FULL.
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
     const created = await this.prisma.$transaction(async (tx) => {
-      if ((await this.leader.lockLed(questId, leaderId, tx)).takenAlone) {
+      const quest = await this.leader.lockLed(questId, leaderId, tx);
+      if (quest.takenAlone) {
         throw takenAloneRefused();
       }
-      if ((await this.quests.holderIds(questId, tx)).includes(userId)) {
+      const holderIds = await this.quests.holderIds(questId, tx);
+      if (holderIds.includes(userId)) {
         throw alreadyHolder();
+      }
+      if (holderIds.length >= quest.capacity) {
+        throw questFull();
       }
       return this.create(leaderId, questId, userId, tx);
     });
     this.announce(created);
   }
 
-  // An invitation of the Leader's Friend into the Quest, in the caller's transaction. Announce it once that is committed.
+  // An invitation of the Leader's Friend into the Quest, sent by the Leader, in the caller's transaction. Announce it once
+  // that is committed.
   async create(
     leaderId: string,
     questId: string,
@@ -98,7 +107,7 @@ export class InvitationsService {
       throw conflict('QUEST_INVITATION_ALREADY_SENT', 'An invitation of this User into the Quest is waiting.');
     }
     await tx.questDecline.deleteMany({ where: { questId, userId } });
-    return tx.questInvitation.create({ data: { questId, userId }, include: WAITING_INCLUDE });
+    return tx.questInvitation.create({ data: { questId, userId, invitedById: leaderId }, include: WAITING_INCLUDE });
   }
 
   announce(invitation: CreatedInvitation): void {

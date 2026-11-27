@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type {
@@ -85,7 +86,7 @@ export function isNextSubQuest(value: unknown): value is NextSubQuest {
 // An invitation as its User lists it, with when and where its Quest next meets.
 function isQuestInvitation(value: unknown): value is QuestInvitation {
   const next = field(value, 'nextSubQuest');
-  return isMyJoinRequest(value) && (next === null || isNextSubQuest(next));
+  return isMyJoinRequest(value) && (next === null || isNextSubQuest(next)) && isHolder(field(value, 'invitedBy'));
 }
 
 export const isQuestInvitations = listOf(isQuestInvitation);

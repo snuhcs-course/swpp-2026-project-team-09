@@ -9,6 +9,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Board, JoinPolicy, Person, SubQuest, UserSummary } from './types';
@@ -46,6 +47,8 @@ export interface QuestInvitation {
   // When and where its Quest next meets: the first Sub Quest ahead, as the recruiting list carries it. Null for a Quest
   // with none ahead, which the main server leaves out of the list.
   nextSubQuest: NextSubQuest | null;
+  // The Leader who sent it, who may no longer lead the Quest; the Quest's Leader for one that kept no sender.
+  invitedBy: Person;
 }
 
 // The first Sub Quest ahead of a Quest, in the Quest's order, which tells one who does not hold it when and where it

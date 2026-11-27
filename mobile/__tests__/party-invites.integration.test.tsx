@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -87,6 +88,18 @@ describe('초대', () => {
 
     expect(server.received(`POST /quest-invitations/${INVITATION.id}/decline`)).toHaveLength(1);
     expect(screen.getByText('받은 초대가 없어요')).toBeVisible();
+  });
+});
+
+describe('an invitation sent by a Leader who no longer leads the 파티', () => {
+  it('names the one who invited, not the Leader now', async () => {
+    const inviter = { id: '6d1c3f5e-4444-4a5b-8c9d-000000000009', name: '한도경', department: '산업공학과' };
+    setAnswers({ invitations: [{ ...INVITATION, invitedBy: inviter }] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('한도경님이 비공개 파티에 초대했어요')).toBeVisible();
+    expect(invitation.queryByText(/윤태오/u)).toBeNull();
   });
 });
 
