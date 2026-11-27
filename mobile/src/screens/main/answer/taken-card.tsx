@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -39,7 +40,7 @@ export function TakenCard({ taken, plan, dropping, onAgain, onClose, over = [] }
   const to = walkTo(plan);
   return (
     <View style={styles.card} testID="taken-card">
-      <AnswerLines lines={[...over, ...taken.lines.slice(over.length)]} />
+      <AnswerLines lines={[...over, ...taken.lines.slice(over.length)]} refusal={over.length} />
       <View style={styles.buttons}>
         {to === null ? null : (
           <View style={styles.guide}>

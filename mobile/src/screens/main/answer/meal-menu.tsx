@@ -20,7 +20,9 @@ import { travelWords } from '@/features/assistant/answer-walks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { MEAL_NAMES, won } from '@/features/dining/adapter';
 import { koreaClock, koreaDayWord } from '@/korea-time';
-import { StudySpaces, studyLineOf } from './study-spaces';
+import type { LibraryCardActions } from '../library/use-library-call';
+import { StudyBody } from './study-seat';
+import { studyLineOf } from './study-spaces';
 
 // A restaurant's menu in the raised card (board E4): back to the list, the place, the meals of its day, and the menu in
 // corners. It scrolls with the card. A menu question's answer shows the same (P04 ticket 72): opened at its Restaurant's
@@ -197,12 +199,17 @@ interface MealMenuProps {
   answer: AnswerReply;
   plan: Plan;
   shown: Pick<ShownAnswer, 'index' | 'closeMenu'>;
+  // The chat's library cards and the reply that holds the Plan, for 관정관's seat ticket (P10 ticket 22); left out, its
+  // spaces stand instead.
+  library?: LibraryCardActions;
+  bubbleId?: number;
 }
 
 // The Plan's restaurant: "‹ N곳 목록" with the day and meal, its number, name and time, the meals of its day, and the
 // chosen meal's menu in corners. Without the day's menus, the Plan's own menu. A study place opens the same view, with
-// its walk and stay as its line and its spaces and their hours in the place of a menu (P10 ticket 19).
-export function MealMenu({ answer, plan, shown }: MealMenuProps): ReactElement {
+// its walk and stay as its line and its spaces and their hours in the place of a menu (P10 ticket 19), or for 관정관
+// today's seat ticket (ticket 22).
+export function MealMenu({ answer, plan, shown, library, bubbleId }: MealMenuProps): ReactElement {
   const date = answer.input.kind === 'meal' ? answer.input.date : '';
   const asked: Meal = answer.input.kind === 'meal' ? answer.input.meal : 'lunch';
   const study = plan.study;
@@ -230,7 +237,10 @@ export function MealMenu({ answer, plan, shown }: MealMenuProps): ReactElement {
           find={(menus) => restaurantOf(menus, plan)}
         />
       ) : (
-        <StudySpaces spaces={study.spaces} />
+        <StudyBody
+          chat={library === undefined || bubbleId === undefined ? null : { actions: library, bubbleId }}
+          study={study}
+        />
       )}
     </View>
   );

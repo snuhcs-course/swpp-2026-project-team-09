@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -19,6 +20,7 @@ import { FrameCard } from './frame-card';
 import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
 import { QuestSteps } from './quest-steps';
+import { FAILURE } from './line-types';
 
 interface ReceivedInvitationCardProps {
   // Null while it is read, or when the read failed.
@@ -125,7 +127,7 @@ export function ReceivedInvitationCard(props: ReceivedInvitationCardProps): Reac
         <Heading onClose={onClose} words="파티 초대" />
         {failed ? (
           <>
-            <Text style={styles.with}>초대를 불러오지 못했어요</Text>
+            <Text style={styles.failed}>초대를 불러오지 못했어요</Text>
             <View style={styles.buttons}>
               <Button onPress={onRetry} variant="secondary">
                 다시 시도
@@ -184,6 +186,8 @@ const styles = StyleSheet.create({
   title: { ...text.title, fontFamily: font.bold, color: color.ink },
   time: { color: color.snuBlue },
   with: { ...text.body, color: color.inkMuted },
+  // A failure, as every failure line is (P01 ticket 19).
+  failed: FAILURE,
   steps: { padding: space[3], borderRadius: radius.lg, backgroundColor: color.surfaceSunken },
   buttons: { flexDirection: 'row', gap: space[2] },
   accept: { flex: 1 },

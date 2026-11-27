@@ -53,6 +53,8 @@ export interface RoomRequest {
   companions?: RoomRequestCompanion[];
   // How many more people the room's minimum needs.
   moreNeeded?: number;
+  // The room the library booked, once booked and reported with it (P05 ticket 68); absent from a server before it.
+  bookedRoom?: string | null;
 }
 
 // A request that asks the User, for the consent dialog on the main screen.
@@ -103,7 +105,8 @@ export interface RoomRequestsClient {
   // The booker asks one more Friend into a request made for booking.
   askOneMore: (id: string, friendId: string, idempotencyKey: string) => Promise<RoomRequest>;
   // What the booking came to, with no library data.
-  result: (id: string, result: { ok: boolean; failedUserId?: string }) => Promise<void>;
+  // `room`: the room the library booked, as the library names it ("G412"), with `ok` only (P05 ticket 68).
+  result: (id: string, result: { ok: boolean; failedUserId?: string; room?: string }) => Promise<void>;
   cancelled: (id: string) => Promise<void>;
   seen: (noticeId: string) => Promise<void>;
 }
@@ -153,8 +156,13 @@ export function isRoomRequest(value: unknown): value is RoomRequest {
       return isPerson(each) && isAnswer(field(each, 'consented'));
     })(field(value, 'consents')) &&
     (companions === undefined || isCompanionStates(companions)) &&
-    (moreNeeded === undefined || isNumber(moreNeeded))
+    (moreNeeded === undefined || isNumber(moreNeeded)) &&
+    isRoomOrNone(field(value, 'bookedRoom'))
   );
+}
+
+function isRoomOrNone(value: unknown): value is string | null | undefined {
+  return value === undefined || value === null || (typeof value === 'string' && value !== '');
 }
 
 function isAsk(value: unknown): value is RoomAsk {

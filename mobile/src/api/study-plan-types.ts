@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { PlanPerson } from './assistant-types';
-import type { LibrarySpace } from './library-card-types';
+import type { LibraryCardData, LibrarySpace } from './library-card-types';
 import type { RoomRequestStatus } from './room-requests';
 
 // A study answer's conditions and its Plans' study part (P10), as main-server `assistant/dto/plan-input.dto.ts` and
@@ -84,7 +84,8 @@ export interface StudySpot {
 export interface PlanStudy {
   // Alone, the building's study spaces, best first; empty with Friends.
   spaces: StudySpot[];
-  book: { spaceId: string } | null;
+  // Alone, 관정관's seat space to book with the book card the app opens in its view (P10 ticket 21); null elsewhere.
+  book: { spaceId: string; card: LibraryCardData } | null;
   liveSeats: 'kwanjeong' | null;
   // Together or with Friends; absent alone.
   group?: StudyGroup;

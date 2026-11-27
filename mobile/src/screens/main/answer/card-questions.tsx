@@ -5,12 +5,13 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import { now } from '@/clock';
-import { color, space, text } from '@/design-system';
+import { space } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import { type TypingWords, typingWordsOf } from '@/features/assistant/typing-words';
 import { koreaDateKey } from '@/korea-time';
@@ -23,6 +24,7 @@ import { FollowUpChips } from './follow-up-chips';
 import { LeaveRow } from './leave-button';
 import { pressOffer } from './refusal-reply';
 import { QuestionList, questionRowsOf } from './question-list';
+import { SENTENCE } from './line-types';
 
 // Whether the list of questions is open in the card, and what opens and closes it.
 export interface QuestionsOpen {
@@ -177,7 +179,7 @@ function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | n
 }
 
 const styles = StyleSheet.create({
-  // The docked line's type (`DockLine`), so that the words keep their look when the keyboard comes up.
-  words: { ...text.body, color: color.ink },
+  // The answer's sentence's type, so that the words keep their look when the keyboard comes up (P01 ticket 19).
+  words: SENTENCE,
   offers: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
 });

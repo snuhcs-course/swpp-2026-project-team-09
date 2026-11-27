@@ -9,7 +9,7 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import type { RoomRequest } from '@/api/room-requests';
 import type { StudyGroup } from '@/api/study-plan-types';
-import { color, space, text } from '@/design-system';
+import { space, text } from '@/design-system';
 import { withChosenRoom } from '@/features/assistant/plan-input';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaClock } from '@/korea-time';
@@ -28,6 +28,7 @@ import { BookingFailure, Choosers, type Open, RequestLine, UseLine } from './stu
 import { useGroupBooking } from './use-group-booking';
 import { consentWords, groupOfRequest, isBooked, isOut, outWords, partyCardOf } from './study-group-request';
 import { ChatMarkdown } from '../chat-markdown';
+import { SENTENCE } from './line-types';
 import { LOW_LINES } from './card-caps';
 
 // The study answer together in the meal's frame (P10 ticket 11; design group-study-design ② ③ 가): the Assistant's one
@@ -265,5 +266,5 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
 
 const styles = StyleSheet.create({
   body: { gap: space[3] },
-  words: { ...text.bodyLg, color: color.ink },
+  words: SENTENCE,
 });

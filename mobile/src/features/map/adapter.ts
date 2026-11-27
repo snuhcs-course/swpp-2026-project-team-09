@@ -31,6 +31,7 @@ import {
   type QuestParty,
   shownSubQuest,
 } from '@/features/quests/adapter';
+import { placeWithRoom } from '@/features/quests/booked-room';
 import { type RequestFlag, requestFlagOf, requestWords } from '@/features/quests/room-request-flag';
 import { koreaClock, koreaDay } from '@/korea-time';
 import { eventCards } from './event-cards';
@@ -265,7 +266,7 @@ function partyCard(
     title,
     lines: [
       ...(start === null ? [] : [line('clock', `${koreaDay(start, now)} ${koreaClock(start)}`)]),
-      line('pin', label),
+      line('pin', placeWithRoom(label, quest.bookedRoom)),
       ...(party === null && !alone ? [line('info', '활성화에 참여하면 서로 위치가 공유돼요')] : []),
     ],
     primary: { label: '길찾기', action: 'route' },

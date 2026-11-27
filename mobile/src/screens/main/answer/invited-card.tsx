@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -85,7 +86,7 @@ export function InvitedCard(props: InvitedCardProps): ReactElement {
   return (
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
-      <AnswerLines lines={[...over, ...linesOf(props).slice(over.length)]} />
+      <AnswerLines lines={[...over, ...linesOf(props).slice(over.length)]} refusal={over.length} />
       <QuestSteps steps={steps} />
     </View>
   );
