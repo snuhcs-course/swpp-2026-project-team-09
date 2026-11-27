@@ -39,6 +39,11 @@ Native files: none. Releases: the main server; the app's button comes with ticke
 - [x] `aloneInputOf` takes a study alone and not one together or with a Friend. (Unit test, failing before the change.)
 - [x] A study plan has its stay as its one step. (Unit test, failing before the change.)
 - [x] The card's first line where the User is: "에서 공부해요". (Unit test, failing before the change.)
-- [ ] The whole of main-server's and mobile's lint, format and types; the touched test files run locally.
+- [x] The whole of main-server's and mobile's lint, format and types; the touched test files run locally.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 25 minutes, an estimate, in one session.
+- Tokens, estimated as a quarter of that session's: input 10M, of which 9.9M cache reads, 0.07M cache writes and under 1k uncached; output 20k.
