@@ -14,6 +14,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -145,6 +146,9 @@ export interface Presented {
   notDone?: NotDone[];
   // The requests of the message in time order, when it asked for two or more (P03).
   steps?: ReplyStep[];
+  // What the reply adds to the model's words for the steps the server planned into another plan than the one the model
+  // worded, one short sentence each (P05 ticket 74). The model's words stay whole.
+  addedWords?: string;
   // The plan of the meal answer on screen the User chose in words (choosePlan).
   select?: string;
   // A request for another plan, or another request, ended with nothing drawn: the plan on screen leaves it (P05 ticket

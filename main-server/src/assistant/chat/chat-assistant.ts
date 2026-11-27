@@ -55,9 +55,9 @@ import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-orde
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { DELIMITER } from '../others-text.js';
 import { withRefusals } from '../refusals/refusal-tools.js';
-import { bookingSteps, pointOf, presentSteps, STEPS_RULES } from '../steps/plan-steps.js';
-import { type PlacePoint, type ReplyStep } from '../dto/answer.dto.js';
-import { KWANJEONG_PLACE_NUMBER } from '../library/catalogue.js';
+import { STEPS_RULES } from '../steps/plan-steps.js';
+import { type MealInput } from '../dto/answer.dto.js';
+import { mealStartAfter, stepsAfterRun } from './chat-steps.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
@@ -194,13 +194,8 @@ function plannedOnMap(
   if (options?.drawsAnswers !== true) {
     return { rules: [FREE_TIME_RULES], tools: cards };
   }
-  const kwanjeong = (): PlacePoint | null => {
-    const place = freeTime.places.numbered(KWANJEONG_PLACE_NUMBER);
-    return place === null ? null : pointOf(place);
-  };
-  const earlier = ({ presented }: ToolContext): ReplyStep[] => bookingSteps(presented, kwanjeong());
   const planned = withLeftOut(
-    mealsAndEvents(plans, options.drawsEvents === true, earlier, freeTime.days),
+    mealsAndEvents(plans, options.drawsEvents === true, mealStartAfter(freeTime), freeTime.days),
     freeTime.days,
   );
   if (options.drawsMeets !== true) {
@@ -212,20 +207,20 @@ function plannedOnMap(
 function mealsAndEvents(
   plans: PlanAnswersService,
   drawsEvents: boolean,
-  earlier: (context: ToolContext) => ReplyStep[],
+  startAfterSteps: (input: MealInput, context: ToolContext) => Promise<MealInput>,
   days: FreeTimeServices['days'],
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
     return {
       rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES],
-      tools: { planMeal: planMeal(meals, earlier), choosePlan: choosePlan() },
+      tools: { planMeal: planMeal(meals, startAfterSteps), choosePlan: choosePlan() },
     };
   }
   return {
     rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
     tools: {
-      planMeal: planMeal(meals, earlier),
+      planMeal: planMeal(meals, startAfterSteps),
       choosePlan: choosePlan(),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
@@ -281,16 +276,6 @@ function withInterests(
     return planned;
   }
   return { rules: [...planned.rules, INTEREST_RULES], tools: { ...planned.tools, ...interestTools(interests) } };
-}
-
-// The steps of a message that asked for several things, a meal planned again from the step before it (P03).
-function stepsAfterRun({ freeTime, plans }: ChatAssistantServices): (context: ToolContext) => Promise<void> {
-  return (context) =>
-    presentSteps(context, {
-      kwanjeong: () => freeTime.places.numbered(KWANJEONG_PLACE_NUMBER),
-      replanMeal: (input, { userId, now, context: { location, locationMissing } }) =>
-        plans.meals.plan(userId, input, { now, location, locationMissing }),
-    });
 }
 
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
