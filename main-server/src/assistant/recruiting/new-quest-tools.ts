@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { type NewQuestInput, type Plan, QUEST_IDS_MAX } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
@@ -163,9 +164,7 @@ export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayServic
         const friendIds = free.slice(0, FREE_FRIENDS_MAX).map(({ userId: id }) => id);
         answer = await plans.newQuests.plan(userId, inputOf(userId, given, placeId, friendIds), at);
       }
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       const [plan] = answer.plans;
       if (plan === undefined) {
         return { ...noneFound('Not everyone of the 파티 can be there then.'), ...skip.said };

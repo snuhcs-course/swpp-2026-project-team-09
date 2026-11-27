@@ -6,14 +6,31 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Card } from './card-address.js';
+
+// A 파티 gone by the Leader's doing: ended, told to each other member and to whoever waited on it, or the User removed.
+export type GoneKind = 'party-ended' | 'party-removed' | 'join-cancelled' | 'invitation-cancelled';
+
+export interface PartyGone {
+  kind: GoneKind;
+  questId: string;
+  questTitle: string;
+  leaderName: string;
+}
 
 // The facts of each kind, from which the service writes the words. The kinds are a closed list.
 export type Told =
   | { kind: 'accepted'; questId: string; questTitle: string; friendId: string; friendName: string }
   | { kind: 'declined'; questId: string; questTitle: string; friendId: string; friendName: string }
+  // The Leader's answer to a request to join, told to the one who asked.
+  | { kind: 'join-accepted'; questId: string; questTitle: string; leaderName: string }
+  | { kind: 'join-declined'; questId: string; questTitle: string; leaderName: string }
+  // The requests to join that wait for the Leader: the newest one's name, and how many wait in all.
+  | { kind: 'join-asked'; questId: string; questTitle: string; name: string; waiting: number }
+  | PartyGone
   // Given for a Plan taken alone: `toward`, the next item the walk is for, "13:00 수업"; `by`, a way by shuttle.
   | {
       kind: 'leave-by';
