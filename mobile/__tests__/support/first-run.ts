@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -77,7 +78,7 @@ export function answerFirstRun(server: FakeServer): Held {
 
 // The User finishes Onboarding on this phone and lands on the map.
 export async function finishOnboarding(): Promise<User> {
-  await keep({ signedIn: true, consented: true, onboardingCompleted: true });
+  await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: true });
   await startApp();
   await pass(1000);
   const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });

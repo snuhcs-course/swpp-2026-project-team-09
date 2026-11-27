@@ -7,9 +7,9 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, type TextStyle, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import type { AnswerLabel } from './map-answer';
-import { BADGE, GAP, LABEL_MAX, MEAL_PICK_MAX, RING, SUB_MAX } from './map-answer-box';
+import { BADGE, GAP, LABEL_MAX, pickTimeMax, RING, SUB_MAX } from './map-answer-box';
 import { RoundNumber } from './round-number';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
@@ -68,6 +68,7 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
 // The label of an answer's mark (`MapAnswerMark`): its words in a tag beside the symbol box.
 export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
   const { side, tone, line, number, shift, sub = null, note = null, meal = false } = label;
+  const { fontScale } = useWindowDimensions();
   return (
     <View
       style={[
@@ -77,7 +78,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         tone === 'candidate' && styles.candidateLabel,
         tone === 'kept' && styles.keptLabel,
         (sub !== null || tone === 'pick') && styles.subLabel,
-        tone === 'pick' && note !== null && styles.mealPickLabel,
+        tone === 'pick' && note !== null && [styles.mealPickLabel, { maxWidth: pickTimeMax(fontScale) }],
         meal && (tone === 'pick' || tone === 'candidate') && styles.mealEdge,
         label.study === true && tone === 'pick' && styles.studyEdge,
         tone === 'meeting' && styles.meetingLabel,
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
   sub: { ...mapText.rowLine, color: color.inkMuted },
   subLabel: { maxWidth: SUB_MAX },
   // A meal pick's label (its time, `note`, marks it): coral since P04 ticket 85, its time still gold.
-  mealPickLabel: { maxWidth: MEAL_PICK_MAX, borderColor: color.meal },
+  mealPickLabel: { borderColor: color.meal },
   meetingLabel: { backgroundColor: color.ink },
   lateLabel: { backgroundColor: color.dangerSoft },
   shuttleLabel: { backgroundColor: color.svcShuttleSoft },

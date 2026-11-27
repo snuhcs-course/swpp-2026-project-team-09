@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -95,7 +96,7 @@ describe('opening an Invite Link', () => {
   });
 
   it('shows the accept screen after the loading screen, at a start of the app', async () => {
-    await keep({ signedIn: true, consented: true, onboardingCompleted: true });
+    await keep({ signedIn: true, consent: { version: 1, usage: false }, onboardingCompleted: true });
     await startApp(`/invite/${TOKEN}`);
     await pass(1000);
     await pass(1000);
@@ -108,12 +109,14 @@ describe('opening an Invite Link', () => {
     server = await askMainServer({ signedIn: false });
     answerMainScreen(server);
     server.on(`GET /invite-links/${TOKEN}`, { status: 200, body: { sender: SENDER, status: 'usable' } });
-    server.on('POST /auth/google', { status: 200, body: { ...TOKENS, onboarding: { completed: true } } });
+    server.on('POST /auth/google', {
+      status: 200,
+      body: { ...TOKENS, onboarding: { completed: true }, consent: { version: 1, usage: false } },
+    });
     jest.mocked(askGoogle).mockResolvedValue({
       kind: 'token',
       idToken: idTokenOf({ email: 'gildong@snu.ac.kr', hd: 'snu.ac.kr', name: '홍길동' }),
     });
-    await keep({ consented: true });
     await startApp(`/invite/${TOKEN}`);
     await pass(1000);
     expect((await readKept()).inviteToken).toBe(TOKEN);

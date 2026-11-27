@@ -9,6 +9,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan } from '../dto/answer.dto.js';
@@ -34,6 +35,7 @@ import { kindFirst, mainMenu, menuBasis, withMenu } from './meal-menu.js';
 import { priceOrder, servedPrice } from './meal-price.js';
 import { bandOf, mealSpan, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
+import { mealNoPlanBand, withBand } from './no-plan-band.js';
 import { notPostedLines } from './not-posted.js';
 import { conditionsOf, type PersonConditions, servingWindowOf, untilOf, windowOf } from './plan-conditions.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
@@ -321,7 +323,7 @@ export function mealAnswer(args: MealAnswerArgs): AnswerReply {
     chips: chipsOf(naming),
     plans,
     dropped: droppedOf(naming),
-    noPlan: plans.length > 0 ? null : (notNowPlan(naming) ?? noPlanOf(naming)),
+    noPlan: plans.length > 0 ? null : withBand(notNowPlan(naming) ?? noPlanOf(naming), () => mealNoPlanBand(naming)),
     ...missingParts(args.missing),
     choosable: true,
   };

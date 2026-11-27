@@ -8,6 +8,7 @@ import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { type PrismaClient } from '../src/generated/prisma/client.js';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { postFriendship } from './admin-users.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { putConsent, putUsageConsent } from './consent.js';
@@ -23,6 +24,7 @@ import {
 import { acceptInviteLink, createInviteLink } from './invite-links.js';
 import { answerInvitation, answerJoinRequest, invitationOf, joinRequestOf } from './quest-recruiting.js';
 import { attend, joinQuest, ownQuest, storeEvent } from './quests.js';
+import { NOW as ROOM_NOW, RoomStage } from './room-requests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -159,6 +161,33 @@ describe('party_join_completed', () => {
       { distinctId: user.id, ...event('party_join_completed', { how: 'request_accepted' }) },
     ]);
     expect(posthog.of(leader.id)).toEqual([]);
+  });
+});
+
+describe('party_join_completed of a booking party', () => {
+  it("a booking party's invitation accepted through the room request's consent sends nothing", async () => {
+    // The room requests' stage on this app, its clock on the day before the requests' Thursday.
+    const stage = Object.assign(new RoomStage(), { app, prisma, clock: app.get<Clock>(CLOCK) });
+    const now = vi.spyOn(stage.clock, 'now').mockReturnValue(ROOM_NOW);
+    try {
+      // Four people, which 그룹스터디룸 6인실 takes.
+      const users = await stage.party(['사용부커', '사용친구', '사용둘', '사용셋'] as const, '20267');
+      const [booker, friend, ...others] = users;
+      await Promise.all(
+        users.map((user) => putConsent(app, user.accessToken, { version: 1, usage: true }).expect(204)),
+      );
+      const { id, questId } = await stage.made(booker, [friend, ...others]);
+      await settle();
+      posthog.reset();
+
+      await stage.consent(friend, id).expect(200);
+      await settle();
+
+      expect(await stage.holderIds(questId)).toContain(friend.id);
+      expect([...posthog.of(friend.id), ...posthog.of(booker.id)]).toEqual([]);
+    } finally {
+      now.mockRestore();
+    }
   });
 });
 

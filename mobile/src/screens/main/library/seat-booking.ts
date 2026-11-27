@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -15,7 +16,8 @@ import { nextFreeSeat, seatState } from '@/library/cards/seats';
 import { liveSlot, sameSlot } from '@/library/cards/slot-band';
 import { siteDate, siteInstant } from '@/library/cards/times';
 import { library } from '@/library/library';
-import type { LibrarySeat } from '@/library/replies';
+import type { LibrarySeat, LibraryWriteResult } from '@/library/replies';
+import { type SeatBookingStages, seatBooking } from '@/telemetry';
 import { BOOKING_CLOSED } from './seats-card';
 import { bseqnoOf, type CardFailure, type LibraryCardActions, libraryMessage } from './use-library-call';
 import { seatsFor } from './use-room-counts';
@@ -80,7 +82,8 @@ export async function bookedStart(date: string, bseqno: string): Promise<string 
 }
 
 // 예약하기: the booking, its start read back, then the done message; a seat just taken offers the next free one. A time whose start has
-// gone by at the press, or that the space no longer has room for, is never sent, whatever the band did.
+// gone by at the press, or that the space no longer has room for, is never sent, whatever the band did. The usage
+// data's stages start just before the library is asked, so a press turned away before it sends nothing.
 export async function sendBooking(
   booking: Booking,
   seat: LibrarySeat,
@@ -94,21 +97,42 @@ export async function sendBooking(
   if (live === null || !sameSlot(live, slot)) {
     return { failure: null, message: live === null ? BOOKING_CLOSED : SLOT_PASSED };
   }
-  const result = await library.book(seatBookingOf(space, slot, seat), press);
+  const stages = seatBooking();
+  const result = await library.book(seatBookingOf(space, slot, seat), press).catch((error: unknown) => {
+    stages.threw(error);
+    throw error;
+  });
   const info = result.bookingResultInfo;
-  if (info !== undefined) {
-    const bseqno = bseqnoOf(info);
-    const start = await bookedStart(slot.date, bseqno);
-    booking.close('booked');
-    const made = { slot, label: seat.VNAME, bseqno, notes: card.notes, start };
-    booking.hold(space, slot, made.bseqno);
-    const done = { ...doneOf(space, made, now()), place: booking.place };
-    booking.actions.addOwn({ text: done.title, done });
-    return null;
+  if (info === undefined) {
+    return notBooked(booking, seat, result, stages);
   }
-  const fresh = await seatsFor(space, slot);
+  stages.booked();
+  const bseqno = bseqnoOf(info);
+  const start = await bookedStart(slot.date, bseqno);
+  booking.close('booked');
+  const made = { slot, label: seat.VNAME, bseqno, notes: card.notes, start };
+  booking.hold(space, slot, made.bseqno);
+  const done = { ...doneOf(space, made, now()), place: booking.place };
+  booking.actions.addOwn({ text: done.title, done });
+  return null;
+}
+
+// The library answered without a booking: a seat just taken offers the next free one, and the usage data says which.
+async function notBooked(
+  booking: Booking,
+  seat: LibrarySeat,
+  result: LibraryWriteResult,
+  stages: SeatBookingStages,
+): Promise<CardFailure> {
+  const { space, slot } = booking;
+  const fresh = await seatsFor(space, slot).catch((error: unknown) => {
+    stages.notBooked('not_allowed');
+    throw error;
+  });
   const after = fresh.find(({ SEATNO }) => SEATNO === seat.SEATNO);
-  if (after !== undefined && seatState(after) !== 'free') {
+  const taken = after !== undefined && seatState(after) !== 'free';
+  stages.notBooked(taken ? 'seat_taken' : 'not_allowed');
+  if (taken) {
     const next = nextFreeSeat(fresh, seat.VNAME);
     if (next !== null) {
       booking.choose(next.VNAME);

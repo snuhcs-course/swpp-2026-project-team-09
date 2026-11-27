@@ -1,0 +1,7 @@
+{
+  "kind": "DataTableNode",
+  "source": {
+    "kind": "HogQLQuery",
+    "query": "select day as `날짜`, multiIf(action = 'assistant_reply', 'AI 답변', action = 'party_creation', '파티 만들기', action = 'party_join', '파티 참여', action = 'friendship_creation', '친구 맺기', action) as `기능`, sum(r) as `앱에서 요청`, sum(s) as `서버가 처리`, sum(c) as `앱이 결과 받음`, round(sum(s) / nullIf(sum(r), 0), 3) as `서버 도달 비율`, round(sum(c) / nullIf(sum(s), 0), 3) as `폰 도달 비율` from ( select toDate(timestamp) as day, replaceRegexpOne(event, '_(requested|completed)$', '') as action, if(endsWith(event,'_requested') and properties.source = 'app', 1, 0) as r, if(endsWith(event,'_completed') and properties.source = 'server' and not (properties.how = 'requests_crossed'), if(event = 'friendship_creation_completed', 0.5, 1), 0) as s, if(endsWith(event,'_completed') and properties.source = 'app', 1, 0) as c from events where timestamp > now() - interval 14 day and event in ('assistant_reply_requested','assistant_reply_completed','party_creation_requested','party_creation_completed','party_join_requested','party_join_completed','friendship_creation_requested','friendship_creation_completed') ) group by day, action order by `날짜` desc, `기능`"
+  }
+}

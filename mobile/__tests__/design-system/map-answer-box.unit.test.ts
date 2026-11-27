@@ -3,10 +3,11 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLabel, answerLabelBox } from '@/design-system';
-import { MEAL_PICK_MAX, SUB_MAX } from '@/design-system/map-answer-box';
+import { MEAL_PICK_MAX, PICK_TIME_CEILING, pickTimeMax, SUB_MAX } from '@/design-system/map-answer-box';
 
 function label(
   side: AnswerLabel['side'],
@@ -99,5 +100,36 @@ describe("a meal answer's chosen place's label box", () => {
 
     expect(meal.right - meal.left).toBe(MEAL_PICK_MAX);
     expect(other.right - other.left).toBe(SUB_MAX);
+  });
+});
+
+// A pick's label with its time (a meal's chosen place, a 관정 booking): its words grow with the font scale, and so does
+// its cap, 200 at the usual size, so that a larger font does not cut its time (P01 ticket 30, the emulator started cold
+// at 1.3). "관정 4층 그룹스터디룸 15:00" at 14: nine syllables 7.83, four narrow 1.16 (three spaces and ":"), five digits
+// 3.35 (the "4" and four of the time's), 12.34 of the title's size, and 20 of padding and border.
+// Partitions: font scale 1, 1.3 and 2; words within the cap and past it.
+function width({ left, right }: { left: number; right: number }): number {
+  return right - left;
+}
+
+describe("a pick's label with its time at a larger font", () => {
+  const room = label('above', 'pick', '관정 4층 그룹스터디룸', { note: '15:00', line: '6인실 · 4명' });
+  const long = label('above', 'pick', '자하연식당 2층 교직원식당 학생식당', { note: '11:30' });
+
+  it('is as wide as before at font scale 1', () => {
+    expect(width(answerLabelBox(room, 1))).toBe(Math.ceil(12.34 * 14 + 20));
+  });
+
+  it('keeps its whole time at 1.3, past the 200 it was cut at', () => {
+    expect(width(answerLabelBox(room, 1.3))).toBe(Math.ceil(12.34 * 14 * 1.3 + 20));
+  });
+
+  it.each([
+    [1, 200],
+    [1.3, 260],
+    [2, PICK_TIME_CEILING],
+  ])('stops at its cap at font scale %s: %s', (scale, cap) => {
+    expect(width(answerLabelBox(long, scale))).toBe(cap);
+    expect(pickTimeMax(scale)).toBe(cap);
   });
 });

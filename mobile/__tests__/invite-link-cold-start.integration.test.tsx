@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -85,7 +86,7 @@ async function startBy(link: string | null, { late = false }: { late?: boolean }
 function signedIn(): Promise<unknown> {
   return keep({
     signedIn: true,
-    consented: true,
+    consent: { version: 1, usage: false },
     onboardingCompleted: true,
     answers: {
       name: '홍길동',
@@ -120,7 +121,7 @@ describe('an Invite Link that starts the stopped app on Android', () => {
     await user.press(screen.getByRole('button', { name: SIGN_IN }));
     await pass(400);
     await user.press(screen.getByRole('button', { name: '동의하고 시작' }));
-    await pass(100);
+    await pass(400);
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.queryByRole('header', { name: INVITE })).toBeNull();
 

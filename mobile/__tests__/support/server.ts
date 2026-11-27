@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -95,6 +96,7 @@ export const LOBBY: Lobby = {
   },
   masterSwitch: false,
   masterOffAsked: false,
+  consent: { version: 1, usage: false },
 };
 
 // The moment the tests that ask the main server run at, by the phone's clock: 6 October 2026, 13:00 in Korea. Give it
