@@ -215,7 +215,7 @@ Rows of 52, each with an 18 icon, the label (15 Medium) and a line under it.
 - The title (30) and the text (200) keep their limits but show no counter, as the wireframe has none.
 - The grey placeholder with its red `*` is drawn under the empty field, since a field's own placeholder takes one colour. The field keeps an unseen placeholder of the same words for a screen reader.
 - A mark shows on a field the last press marked, while it is empty: emptying it again brings the mark back. The button shows the busy dots while sending, in place of being disabled.
-- The room's tag chips went in the smallest diff (`room-adapter.ts`'s `tags`, the chips in `room-screen.tsx`'s `Head`, and their tests), because PR 688 had not merged. Whichever lands second resolves the conflict.
+- The room's tag chips first went in the smallest diff, because PR 688 had not merged. PR 688 then landed, and the merge of `5.0/Main` (2026-11-28) keeps its new head (the 모집글 under the title, the time and place box) and drops only its tags: `room-adapter.ts`'s `tags`, the chips in `room-screen.tsx`'s `Head`, and the tag checks in `room-wireframe` and `features/room-adapter.unit` (and `tags` in `support/room-sources.ts`).
 - `useBoardRows` and `boardPosts`, which only the board sheet used, and `listMyTags` / `myTagsQuery`, which only the tag field and 찾기's order used, went with them. The phone's old `snunow.quest-entries` key and any `documents/quest-photos` files stay where they are, read by nothing.
 - `party-form-fields.tsx` went over the 300-line lint limit, so the toggle and the stepper's buttons are in `small-controls.tsx`.
 
