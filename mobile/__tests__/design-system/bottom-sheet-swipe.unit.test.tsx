@@ -5,8 +5,9 @@
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { StyleSheet, Text, type ViewStyle } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { holdSwipe, layList, laySheet, scrollList, swipe } from '../support/sheet-swipe';
 
 import { BottomSheet } from '@/design-system/bottom-sheet';
@@ -163,6 +164,67 @@ describe('a swipe that starts in a list', () => {
     await held.letGo(200, MOVING * 5);
 
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+// How far the sheet stands below its place, from its pull's animated style.
+function sheetDown(): number {
+  const style: unknown = getAnimatedStyle(screen.getByLabelText(LABEL));
+  const { transform } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  const shift: unknown = Array.isArray(transform) ? transform[0] : undefined;
+  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : Number.NaN;
+}
+
+// A few of the UI thread's frames, which run on real timers in the tests: the list scrolled to where its swipe put it,
+// the sheet drawn where its pull put it.
+async function frames(): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+  });
+}
+
+// Ticket 35's rule 5, with the list scrolled by its own swipe as a finger scrolls it, not by a scroll event, and the
+// sheet's place read as it is drawn. Partitions: the list at its very top as the finger lands, or scrolled from it;
+// in the second, the swipe going on past the list's top.
+describe("a list's own swipe, as rule 5 asks", () => {
+  it('pulls the sheet down with the finger and closes it, when the list was at its very top', async () => {
+    const onClose = jest.fn<void, []>();
+    await renderSheet(onClose);
+    await laySheet(LABEL, 400);
+    await layList(LIST, 300, 2000);
+
+    const held = await holdSwipe('sheet-list-drag');
+    await held.move(150 + PAN_STARTS);
+    await frames();
+    expect(sheetDown()).toBe(150);
+    await held.letGo(150 + PAN_STARTS, MOVING * 2);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('only scrolls a list scrolled from its top, though the swipe goes on past its top, and the next swipe from the top closes', async () => {
+    const onClose = jest.fn<void, []>();
+    await renderSheet(onClose);
+    await laySheet(LABEL, 400);
+    await layList(LIST, 300, 2000);
+    const up = await holdSwipe('sheet-list-drag', -PAN_STARTS);
+    await up.move(-150 - PAN_STARTS);
+    await up.letGo(-150 - PAN_STARTS);
+    await frames();
+
+    const down = await holdSwipe('sheet-list-drag');
+    await down.move(400);
+    await frames();
+    expect(sheetDown()).toBe(0);
+    await down.letGo(400, MOVING * 5);
+    await frames();
+    expect(sheetDown()).toBe(0);
+    expect(onClose).not.toHaveBeenCalled();
+
+    await swipe('sheet-list-drag', 200, MOVING * 2);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
 
