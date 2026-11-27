@@ -21,6 +21,7 @@ import {
   type AnswerReply,
   CHAT_HISTORY_MAX,
   type ChatMessage,
+  type LeftOutClass,
   lengthOf,
   type LibrarySpace,
   type MapLayer,
@@ -43,6 +44,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
 import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
+import { leftOutOf, withPutBack } from './left-out';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
 import { shownText } from './shown-text';
@@ -84,6 +86,8 @@ export interface ChatBubble {
   clears?: true;
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.
   area?: RequestContext['viewport'];
+  // The conversation's Classes left out as this reply gave them (P01 ticket 40), which later requests send.
+  skipped?: readonly LeftOutClass[];
   // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a
   // reply on screen, and never sent to the Assistant.
   recalculated?: boolean;
@@ -179,6 +183,10 @@ export interface Chat {
   showRoom: (card: string, room: CardRoom | null) => void;
   // The Proposal of that bubble was made into that Quest: it goes back with the Quest's id (P04 ticket 19).
   proposalMade: (bubbleId: number, questId: string) => void;
+  // The conversation's Classes left out, as the next request sends them, and one put back by a time card's ✕ (P01
+  // ticket 40).
+  leftOut: () => readonly LeftOutClass[];
+  putBack: (classId: string) => void;
 }
 
 function textLength(messages: readonly ChatMessage[]): number {
@@ -367,5 +375,28 @@ export function useChat(readContext: () => RequestContext): Chat {
   const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, askApp, ...cardsKept, proposalMade };
+  // The conversation's Classes left out, read when a request is sent, and one put back by a time card's ✕ at once, so
+  // that the recalculation it asks sends the list without it (P01 ticket 40).
+  const leftOut = useCallback((): readonly LeftOutClass[] => leftOutOf(said.current), [said]);
+  const putBack = useCallback(
+    (classId: string): void => {
+      show(withPutBack(said.current, classId));
+    },
+    [said, show],
+  );
+
+  return {
+    bubbles,
+    waiting,
+    send,
+    retry,
+    ...conversations,
+    stop,
+    ...own,
+    askApp,
+    ...cardsKept,
+    proposalMade,
+    leftOut,
+    putBack,
+  };
 }

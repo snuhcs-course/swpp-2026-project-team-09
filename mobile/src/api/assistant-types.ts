@@ -197,6 +197,14 @@ export interface RequestContext extends WithLocationMissing {
   // The plans of the meal answer on screen in its order, which the list and the map number from 1, so that "2번으로
   // 할게" chooses one of them (P05 ticket 51). Left out without a meal answer on screen that says `choosable`.
   planIds?: string[];
+  // The User's Classes the conversation leaves out, as the latest reply gave them (P01 ticket 40). Left out for none.
+  skipped?: LeftOutClass[];
+}
+
+// A Class of the User the conversation leaves out: the id of its time on that day (P01 ticket 40).
+export interface LeftOutClass {
+  date: string;
+  classId: string;
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
@@ -416,6 +424,8 @@ export interface AssistantReply extends WithRefusal {
   // The answer on screen leaves the map, with its time card and button: the User asked for another plan, or something
   // else, and nothing could be drawn for it (P05 ticket 55). A server before it leaves it out.
   clears?: true;
+  // The conversation's Classes left out (P01 ticket 40), which the next requests send. A server before it leaves it out.
+  skipped?: LeftOutClass[];
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';

@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AnswerReply, Cuisine, Plan, PlanInput } from '@/api/assistant-types';
+import type { AnswerReply, Cuisine, LeftOutClass, Plan, PlanInput } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
@@ -104,6 +104,8 @@ export interface Recalculation {
   // Left out as null.
   locationMissing?: LocationMissing;
   onFailed: () => void;
+  // The conversation's Classes left out when the recalculation is sent (P01 ticket 40); none when left out.
+  skipped?: () => readonly LeftOutClass[];
 }
 
 function sayNothing(): void {
@@ -221,7 +223,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
   return (alter, by, adds, asked) => {
     const {
       current: { answer, epoch },
-      recalculation: { location, locationMissing = null, onFailed },
+      recalculation: { location, locationMissing = null, onFailed, skipped },
     } = live.current;
     const input = answer === null ? null : alter(answer.input);
     if (input === null || input === answer?.input || flight.current === epoch) {
@@ -240,7 +242,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
       setStored((last) => (late || last.epoch !== epoch ? last : update(last)));
       return !late;
     };
-    apiClient.recalculateAnswer(input, location, locationMissing).then(
+    apiClient.recalculateAnswer(input, location, locationMissing, skipped?.() ?? []).then(
       (next) => {
         settle((last) => replaced(last, next, by));
       },

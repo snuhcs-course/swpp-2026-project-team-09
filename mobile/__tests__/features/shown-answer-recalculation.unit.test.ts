@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -63,15 +64,30 @@ describe('the answer on screen, by the last reply', () => {
   });
 });
 
-// Partitions: a change that is no drag; the Plan on screen in the new answer or not.
+// Partitions: a change that is no drag; the Plan on screen in the new answer or not; the conversation's Classes left
+// out.
 describe('a recalculation', () => {
+  it('sends the conversation’s Classes left out as they are when it is sent, after a ✕ put one back (P01 ticket 40)', async () => {
+    heldBack(recalculate);
+    let list = [
+      { date: '2026-11-17', classId: 'class-13' },
+      { date: '2026-11-17', classId: 'class-15' },
+    ];
+    const held = await hold(ANSWERED, () => list);
+
+    list = list.slice(1);
+    await change(held, ALONE_INPUT);
+
+    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null, [{ date: '2026-11-17', classId: 'class-15' }]);
+  });
+
   it('sends the input, the location, and no reason for a missing one, and is recalculating until its answer comes', async () => {
     const reply = heldBack(recalculate);
     const held = await hold(ANSWERED);
 
     await change(held, ALONE_INPUT);
 
-    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null);
+    expect(recalculate).toHaveBeenCalledWith(ALONE_INPUT, HERE, null, []);
     expect(held.shown().recalculating).toBe(true);
     await reply.come(MEAL_ANSWER_ALONE);
     expect(held.shown().recalculating).toBe(false);
