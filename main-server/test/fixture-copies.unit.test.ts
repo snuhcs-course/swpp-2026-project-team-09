@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 // The app's mobile/__tests__/fixture-copies.unit.test.ts reads the same pairs, so that a change on either side runs it.
 const COPIES: readonly (readonly [string, string])[] = [
   ['main-server/test/fixtures/library/app-seat-names.json', 'mobile/__tests__/fixtures/library-seat-names.json'],
+  ['main-server/test/fixtures/study/kwanjeong-book.json', 'mobile/__tests__/fixtures/study-kwanjeong-book.json'],
 ];
 
 const bytesOf = (path: string): Buffer => readFileSync(new URL(`../../${path}`, import.meta.url));

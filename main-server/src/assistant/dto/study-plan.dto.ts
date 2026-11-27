@@ -6,13 +6,15 @@
 
 // A study Plan's part (P10): its building's study spaces alone, and the 관정 group study room with Friends.
 
-import { type LibraryCardSpace } from '../library/library-card.js';
+import { type LibraryCard, type LibraryCardSpace } from '../library/library-card.js';
 
 export interface PlanStudy {
   // Alone: the building's study spaces that fit, best first. Empty with Friends.
   spaces: StudySpot[];
-  // Alone, 관정관's catalogue space to book (7F-7A-zone2 for a quiet place); null elsewhere and with Friends.
-  book: { spaceId: string } | null;
+  // Alone, 관정관's catalogue space to book (7F-7A-zone2 for a quiet place), with the book card proposeLibraryBooking
+  // shows for it at the plan's day, start and length, which the app opens in the plan (P10 ticket 21); null elsewhere
+  // and with Friends.
+  book: { spaceId: string; card: LibraryCard['library'] } | null;
   // 관정관's free seats and rooms are read on the phone, through the User's own library login; null elsewhere.
   liveSeats: 'kwanjeong' | null;
   // Together (`StudyInput.together`) or with Friends: the 관정 group study room (P10, 2026-11-27). Absent alone.

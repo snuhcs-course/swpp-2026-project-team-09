@@ -21,6 +21,7 @@ import {
   type Spot,
   type StudyHours,
 } from './study-plan-parts.js';
+import { type Catalogue } from '../library/catalogue.js';
 import { type WayArgs } from './way.js';
 
 // "공부할 자리 있어?" answered as ranked study places (P10 ticket 03): one plan per building holding a space of the kind
@@ -37,6 +38,8 @@ export interface StudyPlanArgs {
   // The asker's Friends with their day, for each time card's "+ 같이"; none given, the band has no `others`.
   others?: readonly OtherFriend[];
   hoursOf: (key: string, at: Date) => StudyHours;
+  // The 관정 catalogue, for the card of the seat 관정관's plan books (P10 ticket 21).
+  catalogue: Catalogue;
 }
 
 // The stay when no next item, end set, or close ends it.

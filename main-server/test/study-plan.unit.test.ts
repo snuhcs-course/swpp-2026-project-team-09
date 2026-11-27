@@ -4,10 +4,12 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { readFileSync } from 'node:fs';
 import { type AnswerReply, type StudyInput } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
 import { type StudyArea } from '../src/assistant/lookup/study-near.js';
 import { readyAt, studyPlanAnswer } from '../src/assistant/lookup/study-plan.js';
+import { CATALOGUE_FILE, type Catalogue, readCatalogue } from '../src/assistant/library/catalogue.js';
 import { type WayArgs } from '../src/assistant/lookup/way.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type StudyBuildingDto } from '../src/study-spaces/dto/study-spaces.dto.js';
@@ -21,10 +23,12 @@ import { classAt, id, ME, numbered, position, readCampus, TUESDAY, wayArgs } fro
 
 let schedules = new Map<string, Schedule>();
 let calendar: Calendar;
+let catalogue: Catalogue;
 const buildingsBy = new Map<string, StudyBuildingDto[]>();
 
 beforeAll(async () => {
   await readCampus();
+  catalogue = await readCatalogue(CATALOGUE_FILE);
   const file = await readSeedFile(SEED_DIRECTORY, STUDY_SPACES_FILE, studySpacesSchema);
   schedules = new Map(file.buildings.flatMap(({ spaces }) => spaces.map(({ key, schedule }) => [key, schedule])));
   calendar = file.calendar;
@@ -37,6 +41,7 @@ beforeAll(async () => {
 
 interface Asked {
   clock: string;
+  date?: string;
   department?: string;
   what?: StudyInput['what'];
   area?: StudyArea | null;
@@ -52,12 +57,13 @@ function asked({
   what = 'any',
   area = null,
   items = [],
+  date = TUESDAY,
   ...given
 }: Asked): AnswerReply {
-  const now = onDay(TUESDAY, clock);
+  const now = onDay(date, clock);
   const input: StudyInput = {
     kind: 'study',
-    date: TUESDAY,
+    date,
     what,
     people: [{ userId: ME, constraints: [] }],
     together: false,
@@ -81,6 +87,7 @@ function asked({
       }
       return { opening: openAt(schedule, calendar, when), confidence: schedule.confidence };
     },
+    catalogue,
   });
 }
 
@@ -198,9 +205,11 @@ describe('관정관’s plan', () => {
   it('books the first 7층 seat for a quiet place or any, and no other plan books', () => {
     for (const what of ['quiet', 'any'] as const) {
       const { plans } = asked({ clock: '10:00', what });
-      const booked = plans.flatMap(({ id: planId, study }) => (study?.book === null ? [] : [[planId, study?.book]]));
+      const booked = plans.flatMap(({ id: planId, study }) =>
+        study?.book === null || study?.book === undefined ? [] : [[planId, study.book.spaceId]],
+      );
 
-      expect(booked).toEqual([['관정관', { spaceId: '7F-7A-zone2' }]]);
+      expect(booked).toEqual([['관정관', '7F-7A-zone2']]);
       expect(plans.find(({ id: planId }) => planId === '관정관')?.study?.liveSeats).toBe('kwanjeong');
     }
   });
@@ -221,5 +230,33 @@ describe('When the User is ready', () => {
     expect(readyAt({ date: TUESDAY, window: { from: '15:00', until: null } }, now)).toEqual(onDay(TUESDAY, '15:00'));
     expect(readyAt({ date: '2026-11-18', window }, now)).toEqual(onDay('2026-11-18', '09:00'));
     expect(readyAt({ date: TUESDAY, window }, now)).toEqual(now);
+  });
+});
+
+// 관정관's plan carries the book card the app opens in it (P10 ticket 21), as proposeLibraryBooking shows it for the
+// plan's day, start and length on the space's steps. The fixture's copy, mobile/__tests__/fixtures/
+// study-kwanjeong-book.json, is what the app checks its card reading against.
+describe("관정관's plan's book card", () => {
+  const kwanjeongOf = (answer: AnswerReply): AnswerReply['plans'][number] | undefined =>
+    answer.plans.find(({ id: planId }) => planId === '관정관');
+
+  it('is the fixture of the app: "공부할 자리 있어?" on Wednesday 2026-11-04 at 19:10 at 301동', () => {
+    const fixture: unknown = JSON.parse(
+      readFileSync(new URL('fixtures/study/kwanjeong-book.json', import.meta.url), 'utf8'),
+    );
+
+    expect(kwanjeongOf(asked({ clock: '19:10', date: '2026-11-04' }))?.study).toEqual(fixture);
+  });
+
+  it('moves with the time asked', () => {
+    const book = kwanjeongOf(asked({ clock: '20:40', date: '2026-11-04' }))?.study?.book;
+
+    expect(book?.card).toMatchObject({ action: 'book', date: '2026-11-04' });
+    expect(book?.card.start).not.toBe(
+      kwanjeongOf(asked({ clock: '19:10', date: '2026-11-04' }))?.study?.book?.card.start,
+    );
+    expect(book?.card.key).toBe(
+      `book:7F-7A-zone2:2026-11-04:${(book?.card.start ?? '').replace(':', '')}:${String(book?.card.minutes)}`,
+    );
   });
 });
