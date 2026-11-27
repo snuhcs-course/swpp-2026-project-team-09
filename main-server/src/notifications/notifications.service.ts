@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -20,6 +21,9 @@ import { wordsOf } from './notification-words.js';
 const KINDS: ReadonlySet<string> = new Set<NotificationKind>([
   'accepted',
   'declined',
+  'join-accepted',
+  'join-declined',
+  'join-asked',
   'leave-by',
   'room-declined',
   'room-agreed',
@@ -53,6 +57,12 @@ export class NotificationsService {
 
   async schedule(userId: string, told: Told, at: Date): Promise<void> {
     await this.store.keep(userId, kept(told, at));
+    this.signals.send([userId], 'notice');
+  }
+
+  // Rings only when none is kept under the same identity: one kept is rewritten, and is not sent again once sent.
+  async renew(userId: string, told: Told, at: Date): Promise<void> {
+    await this.store.renew(userId, kept(told, at));
     this.signals.send([userId], 'notice');
   }
 

@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Href } from 'expo-router';
@@ -34,9 +35,9 @@ export function readCardAddress(url: unknown): CardAddress | null {
 }
 
 // The screen the row of 알림 opens, for a card the map does not hold. An event the map shows no card of, such as one on
-// a later day, opens in the 행사 tab.
+// a later day, opens in the 행사 tab. A declined request to join (`sent-requests:<questId>`) opens 보낸 신청, under 초대.
 export function fallbackFor({ kind, id }: CardAddress): Href {
-  if (kind === 'invitation') {
+  if (kind === 'invitation' || kind === 'sent-requests') {
     return { pathname: '/party', params: { tab: 'invites' } };
   }
   if (kind === 'event') {

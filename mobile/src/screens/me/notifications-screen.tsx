@@ -6,6 +6,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -38,6 +39,9 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   'join-requests': 'request',
   accepted: 'invitation',
   declined: 'invitation',
+  'join-accepted': 'invitation',
+  'join-declined': 'invitation',
+  'join-asked': 'request',
   'leave-by': 'navy',
   'room-declined': 'invitation',
   'room-agreed': 'invitation',
