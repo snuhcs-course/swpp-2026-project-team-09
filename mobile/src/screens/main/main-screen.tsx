@@ -24,19 +24,17 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { questsQuery } from '@/api/queries';
 import type { LatLng } from '@/api/types';
 import { color, useNotReadyToast } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
-import { EventSheets, type PickedEvent, useEventSheets } from '@/screens/events/event-sheets';
+import { type PickedEvent, useEventSheetsOver } from '@/screens/events/event-sheets';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
 import { useFriendPanelShown } from './friend-panel';
@@ -307,18 +305,12 @@ function useMainParts(): MainParts {
   return { map, me, layers, selection, party, tutorial, pin, guided, view, ...framedRoom };
 }
 
-// The sheet of the 파티 gathering for an event, which its card's "같이 갈 사람 찾기" opens over the map.
-function useEventCardSheets(): { open: (event: PickedEvent) => void; sheet: ReactElement } {
-  const sheets = useEventSheets();
-  const quests = useQuery(questsQuery).data ?? [];
-  return { open: sheets.setRecruitEvent, sheet: <EventSheets quests={quests} sheets={sheets} /> };
-}
-
 export function MainScreen(): ReactElement {
   const { map, me, layers, selection, party, tutorial, pin, guided, view, ...framedRoom } = useMainParts();
   const { stack, shuttle, chat, route } = layers;
   const { unasked, framed, taken, firstRun, room, ...bottom } = framedRoom;
-  const eventSheets = useEventCardSheets();
+  // The sheet of the 파티 gathering for an event, which its card's "같이 갈 사람 찾기" opens over the map.
+  const eventSheets = useEventSheetsOver();
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
