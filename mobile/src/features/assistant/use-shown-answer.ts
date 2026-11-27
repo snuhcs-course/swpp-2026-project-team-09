@@ -8,6 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -114,7 +115,7 @@ const NO_RECALCULATION: Recalculation = { location: null, onFailed: sayNothing }
 
 // A reply that only refuses to answer for a Friend, which the server never sends with an answer or a Lookup, keeps
 // what is on screen, and the card puts its lines over the kept card's (board n8b).
-export const keepsShown = ({ refusal }: ChatBubble): boolean => refusal?.kind === 'for-someone-else';
+export const keepsShown = ({ refusal }: Pick<ChatBubble, 'refusal'>): boolean => refusal?.kind === 'for-someone-else';
 
 // A failure, the app's own bubble, and a reply that keeps what is on screen are no reply.
 export function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefined {

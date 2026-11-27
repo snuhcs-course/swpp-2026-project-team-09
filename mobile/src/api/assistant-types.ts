@@ -15,8 +15,10 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { PersonConstraint } from './constraint-types';
 import type { TimeBand } from './time-band-types';
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
@@ -197,6 +199,11 @@ export interface RequestContext extends WithLocationMissing {
   // The plans of the meal answer on screen in its order, which the list and the map number from 1, so that "2번으로
   // 할게" chooses one of them (P05 ticket 51). Left out without a meal answer on screen that says `choosable`.
   planIds?: string[];
+  // With steps on screen, for an app that says `answers` (P03 ticket 20): the conditions of every answer of the steps in
+  // their order, and the steps whole as the last reply gave them. Left out otherwise; a main server before P05 ticket 73
+  // and 74 refuses them.
+  answers?: PlanInput[];
+  steps?: ReplyStep[];
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
@@ -234,13 +241,12 @@ export interface PlanPerson {
   constraints: PersonConstraint[];
 }
 
-// `source` says who set it: the asker (words, a tap, a drag) or the person it is about.
-export type PersonConstraint =
-  | { kind: 'from'; placeId: string; source: 'asker' | 'person' }
-  | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
-  | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
+export type { ConstraintSource, PersonConstraint } from './constraint-types';
 
 export interface AnswerReply extends WithMissing, WithAdding {
+  // The request it answers, the main server's name for it, in a reply's `answers` and a recalculation's answer to an app
+  // that says `answers` (P03 ticket 20). Opaque: the app compares it and never builds it.
+  key?: string;
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -411,8 +417,14 @@ export interface AssistantReply extends WithRefusal {
   // Each request of a message that asked for two or more, in time order (P03). A server before P03 leaves it out.
   steps?: ReplyStep[];
   // The plan the User chose in words (P05 ticket 51): of the meal answer on screen, kept with its list and numbers, or
-  // of the reply's own answer, which then opens at it.
-  select?: { planId: string };
+  // of the reply's own answer, which then opens at it. `key`: the request whose answer holds it, to an app that says
+  // `answers`.
+  select?: { planId: string; key?: string };
+  // To an app that says `answers` (P03 ticket 20): the answers the reply draws or changes, one per request, each with its
+  // `key`; an answer on screen it does not name stays. `withdrawn`: the keys of the requests that ended with none, whose
+  // answers leave. A main server before P05 ticket 73 leaves both out, and so does one the app does not tell `answers`.
+  answers?: AnswerReply[];
+  withdrawn?: string[];
   // The answer on screen leaves the map, with its time card and button: the User asked for another plan, or something
   // else, and nothing could be drawn for it (P05 ticket 55). A server before it leaves it out.
   clears?: true;

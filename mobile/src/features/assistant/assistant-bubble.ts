@@ -3,14 +3,23 @@
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ChatMessage, RequestContext } from '@/api/assistant-types';
+import type { AssistantReply, ChatMessage, RequestContext } from '@/api/assistant-types';
 import { ApiError } from '@/api/errors';
 import { askAssistant } from './tracked-requests';
 import type { ChatBubble, ChatFailure } from './use-chat';
 
 // The Assistant's bubble of a request, as the chat adds it: the reply's words and what it drew, or a failure's words.
+
+const keyOf = ({ key }: { key?: string }): Pick<NewBubble, 'selectKey'> =>
+  key === undefined ? {} : { selectKey: key };
+
+// The answers of a reply to an app that says `answers`, and the requests it withdrew (P03 ticket 20).
+function answersOf({ answers, withdrawn = [] }: AssistantReply): Pick<NewBubble, 'answers' | 'withdrawn'> {
+  return { ...(answers === undefined ? {} : { answers }), ...(withdrawn.length === 0 ? {} : { withdrawn }) };
+}
 
 // Two lines: what failed, then why and where the words are (the input holds them again).
 export const CHAT_FAILED =
@@ -26,12 +35,13 @@ export async function answerTo(messages: ChatMessage[], context: RequestContext)
   try {
     const reply = await askAssistant(messages, context);
     const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers, steps } = reply;
-    const chosen = reply.select === undefined ? {} : { select: reply.select.planId };
+    const chosen = reply.select === undefined ? {} : { select: reply.select.planId, ...keyOf(reply.select) };
     const cleared = reply.clears === true && answer === null && lookup === null ? { clears: true as const } : {};
     const drawn = { answer, lookup, refusal, area: context.viewport, ...chosen, ...cleared };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
     const stepped = steps === undefined || steps.length < 2 ? {} : { steps };
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered, ...stepped };
+    const keyed = { ...answersOf(reply), ...stepped };
+    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered, ...keyed };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
