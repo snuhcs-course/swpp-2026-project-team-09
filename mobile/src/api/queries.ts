@@ -17,6 +17,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -188,8 +189,6 @@ export const questRemovalsQuery = queryOptions({
   queryKey: [...RECRUITING_KEY, 'removals'],
   queryFn: async () => (await apiClient.listQuestRemovals()).map(({ questId }) => questId),
 });
-// The mocked parts of 찾기 (`./quest-parts/`).
-
 // The User's past Quests, which `me` held: a mock, none in the server build (`./quest-parts/past-quests.ts`).
 export function pastQuestsQuery(me: Person): UseQueryOptions<ShownQuest[], Error, ShownQuest[], string[]> {
   return { queryKey: [...PAST_QUESTS_KEY, me.id], queryFn: () => apiClient.listPastQuests(me) };

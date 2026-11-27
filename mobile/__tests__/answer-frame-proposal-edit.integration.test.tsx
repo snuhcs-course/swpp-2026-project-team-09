@@ -7,6 +7,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -209,6 +210,18 @@ describe('수정 on a Proposal of a 비공개 파티 for an event', () => {
       { userId: YU_NA.id },
     ]);
     expect(toast()).toHaveTextContent('비공개 파티를 만들었어요 · 2명에게 초대 요청');
+  });
+
+  // The review of 2026-11-28: as the card's own 만들기 does, a Place that holds the event adds no step beside the event's.
+  it('adds no 모이기 at the event’s time for a Place that holds the event', async () => {
+    server.on('GET /places/at', { status: 200, body: { place: PLACES[3], relation: 'inside' } });
+    const user = await edited({ ...CLOSED, startsAt: CAREER.startsAt, place: { id: 'p302', name: '제2공학관' } });
+
+    await user.press(screen.getByRole('button', { name: '파티 만들기' }));
+    await pass(500);
+
+    expect(bodies('POST /quests')).toHaveLength(1);
+    expect(bodies(`POST /quests/${MY_CAREER.id}/sub-quests`)).toEqual([]);
   });
 });
 

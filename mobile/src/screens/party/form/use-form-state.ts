@@ -16,8 +16,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { apiClient } from '@/api/client';
 import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery } from '@/api/queries';
 import type { ShownQuest } from '@/api/quest-parts-types';
+import type { SubQuestPlace } from '@/api/room-types';
 import type { Friend, GlobalEvent } from '@/api/types';
 import type { PickedPlace } from '@/features/places/picked-place';
 import { sameSentPlace, usePlaceToSend } from '@/features/places/typed-place';
@@ -145,6 +147,24 @@ function useWhere(
 
 type Where = ReturnType<typeof useWhere>;
 
+// Whether a new 파티 for an event meets at a place of the User's own, which its `모이기` then names: not the event's own
+// place, nor the building that holds the event (the review of 2026-11-28), as a Place picked from the search or a
+// Proposal's Place is. Unknown, the building counts as the User's own.
+async function meetsElsewhere(
+  where: WhereStart,
+  event: FormEvent | null,
+  place: SubQuestPlace | undefined,
+): Promise<boolean> {
+  if (event === null || place === undefined || sameSentPlace(where, eventWhere(event))) {
+    return false;
+  }
+  if (!('placeId' in place) || event.place === null) {
+    return true;
+  }
+  const at = await apiClient.findPlaceAt({ latitude: event.latitude, longitude: event.longitude }).catch(() => null);
+  return !(at?.relation === 'inside' && at.place.id === place.placeId);
+}
+
 // Sends the form with its place named: back to the room or the post after an edit, to 내 파티 after making one. A
 // Quest made from a Proposal is told to the chat, after which its card makes nothing more.
 function useSubmit(
@@ -157,10 +177,9 @@ function useSubmit(
   return (form, friends) => {
     setSaving(true);
     void placeToSend(where.words, where.picked)
-      .then((place) => {
+      .then(async (place) => {
         const sent = { ...form, place };
-        // A new 파티 for an event at a place of the User's own meets there.
-        const elsewhere = quest === null && form.event !== null && !sameSentPlace(where, eventWhere(form.event));
+        const elsewhere = quest === null && (await meetsElsewhere(where, form.event, place));
         return send(sent, friends, quest === null ? null : planChangeOf(quest, sent, where.changed), elsewhere);
       })
       .then((sending) => {
@@ -257,8 +276,13 @@ export function useFormState(props: FormProps): FormState {
     pickEvent,
     eventLocked: (quest?.globalEvent ?? null) !== null,
     editing,
-    changed: shownChosen.length > 0 || where.changed || JSON.stringify(form) !== JSON.stringify(opened),
+    changed: shownChosen.length > 0 || where.changed || JSON.stringify(sentOf(form)) !== JSON.stringify(sentOf(opened)),
   };
+}
+
+// The form as sending reads it: the title and the text trimmed, so that spaces alone change nothing.
+function sentOf(form: PartyForm): PartyForm {
+  return { ...form, title: form.title.trim(), description: form.description.trim() };
 }
 
 // The edited Quest's event, from the Global Events where they hold it, else from what the Quest says of it: an event

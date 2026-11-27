@@ -36,6 +36,9 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const STUDENT_HALL = { id: 'p63', number: '63', name: '학생회관', latitude: 37.45932, longitude: 126.95058 };
+// The building that holds AI 커리어 설명회 (301동 대강당).
+const ENGINEERING_1 = { id: 'p301', number: '301', name: '제1공학관', latitude: 37.45016, longitude: 126.95259 };
+const BUILDINGS = [STUDENT_HALL, ENGINEERING_1];
 const [STEP] = MY_HIKE.subQuests;
 const STEP_PATH = `PUT /quests/${MY_HIKE.id}/sub-quests/${STEP?.id ?? ''}`;
 
@@ -47,10 +50,10 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerForm(server);
-  server.on('GET /places', { status: 200, body: [STUDENT_HALL] });
+  server.on('GET /places', { status: 200, body: BUILDINGS });
   server.on('GET /places/search', ({ query }) => ({
     status: 200,
-    body: [STUDENT_HALL].filter(({ name }) => name.includes(query.q ?? '')),
+    body: BUILDINGS.filter(({ name }) => name.includes(query.q ?? '')),
   }));
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
@@ -209,7 +212,34 @@ describe('a place changed for an event, at the event’s own time', () => {
     ]);
   });
 
-  it('meets at it with 모이기 for an edit, whose event stays', async () => {
+  // The review of 2026-11-28: the event's own building, picked from the search, is no place of the User's own.
+  it.each([
+    ['the event’s own building', '제1공학관', '제1공학관 301동', []],
+    [
+      'another building',
+      '학생회관',
+      '학생회관 63동',
+      [{ title: '모이기', startsAt: CAREER.startsAt, place: { placeId: 'p63' } }],
+    ],
+  ])('meets with 모이기 at %s only if it is not the event’s', async (_, words, row, steps) => {
+    server.on('GET /places/at', { status: 200, body: { place: ENGINEERING_1, relation: 'inside' } });
+    server.on('POST /quests', { status: 201, body: MY_CAREER });
+    server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
+    server.on(`POST /quests/${MY_CAREER.id}/sub-quests`, { status: 201, body: MY_CAREER.subQuests[0] });
+    const user = await openAt(`/party-form?eventId=${CAREER.id}`);
+    await fillPublic(user);
+
+    await setPlace(user, words, row);
+    await user.press(submit('파티 올리기'));
+    await pass(500);
+
+    expect(server.received('POST /quests')).toHaveLength(1);
+    expect(server.received(`POST /quests/${MY_CAREER.id}/sub-quests`).map(({ body }) => body)).toEqual(steps);
+  });
+});
+
+describe('a place changed in an edit for an event, at the event’s own time', () => {
+  it('meets at it with 모이기, and the event stays', async () => {
     server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
     server.on(`POST /quests/${MY_CAREER.id}/sub-quests`, { status: 201, body: MY_CAREER.subQuests[0] });
     const user = await openAt(`/party-form?questId=${MY_CAREER.id}`);

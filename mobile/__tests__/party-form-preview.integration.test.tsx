@@ -209,7 +209,11 @@ describe('수정 완료', () => {
     const user = await openAt(`/party-form?questId=${MY_HIKE.id}`);
 
     expect(submit('수정 완료')).toBeDisabled();
-    await user.type(screen.getByLabelText('제목'), '!');
+    // Spaces alone change nothing that is sent (the review of 2026-11-28).
+    await user.type(screen.getByLabelText('제목'), '  ');
+    expect(submit('수정 완료')).toBeDisabled();
+    await user.clear(screen.getByLabelText('제목'));
+    await user.type(screen.getByLabelText('제목'), `${MY_HIKE.title}!`);
     expect(submit('수정 완료')).toBeEnabled();
     await user.clear(screen.getByLabelText('제목'));
     await user.type(screen.getByLabelText('제목'), MY_HIKE.title);

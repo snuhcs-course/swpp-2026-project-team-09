@@ -269,21 +269,41 @@ The sweep found nothing else. These cases pass before and after:
 
 The new 파티's place none → building / point / words, words → building by typing a building's name, and point → building by a map pick inside a building are in `party-form-place-sheet.integration`. The time set and changed are in `party-form`, `party-form-edit` and `events-party-form`.
 
+## 코드 리뷰 반영 (2026-11-28)
+
+fyoon46's and Jaehyun0320's reviews of f1fe2091:
+
+1. **Type check.** CI's `pnpm typecheck` failed on `party-form-place-saving`'s place-replacing cases, which spread tuples of two lengths (TS2556). The local type check had run before they were added. The cases now type their places as `[words, row?]`, and `pnpm typecheck` on `mobile/` passes, `__tests__` included.
+2. **The event's own building made a second step.** A new 파티 for an event counted a Place picked from the search (`{placeId}`) as a place of the User's own, because `eventWhere` gives the event's point. `meetingOf` then added a `모이기` at the event's time beside the event's step. A Proposal with a Place, opened with 수정 and sent, did the same.
+   - At sending, the form now asks the main server which building holds the event's point (`findPlaceAt`). A Place that is that building, 'inside', is not the User's own, so it adds no step.
+   - Unknown, the Place counts as the User's own.
+   - A different place still meets there.
+3. **One building search.** The 300 ms settled search of `placeSearchQuery` is `usePlaceSearch` (`features/places/use-place-search.ts`). The place sheet and the timetable's place picker both use it.
+4. **수정 완료** compares the title and the text trimmed, as they are sent, so an edit that only adds spaces leaves it grey. The orphan comment "The mocked parts of 찾기" in `queries.ts` went.
+5. **The toggles' halves** are equal (`SmallToggle`'s parts `flex: 1`, every toggle 192 wide), the user's decision of 2026-11-28. The 게시판 pills stay in 찾기's filter look, by the user's own choice from the wireframe review.
+6. **Tests.** These failed before the change and pass after:
+   - `party-form-place-saving`: the event's own building;
+   - `answer-frame-proposal-edit`: a Place that holds the event;
+   - `party-form-preview`: spaces alone.
+
+   Then passing: `party-form-place-saving`, `answer-frame-proposal-edit`, `party-form-preview`, `events-party-form`, `party-form-place-sheet`, `timetable`, `timetable-server` and `timetable-class-slots`. Its one failure, 'removing a slot', fails the same way on `5.0/Main`.
+
 ## Comments
 
 ### Agent usage (2026-11-28)
 
-Estimates. Agent time is this session's working time from 2026-11-27 23:05 to 2026-11-28 04:50 (Korea time), with every pause of more than 15 minutes left out as waiting for another session or the user: about 5 hours 15 minutes. It covers:
+Estimates. Agent time is this session's working time from 2026-11-27 23:05 to 2026-11-28 05:30 (Korea time), with every pause of more than 15 minutes left out as waiting for another session or the user: about 5 hours 50 minutes. It covers:
 - the build and the pull request (about 2 hours, of which some 70 minutes were Jest runs slowed by a load average above 20);
 - the nightly-level CI run and its triage;
 - four merges of `5.0/Main`;
 - the changes after the user's review;
-- the bugs found after the phone check.
+- the bugs found after the phone check;
+- the code reviews' changes.
 
 No subagents. Tokens are counted up to this entry, so this commit is left out.
 
 | Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
-| Ticket 34 (tests first, the preview, the place sheet, '파티 설정', the marks, the photo and tag removal, the pull request, CI triage, four merges of `5.0/Main`, the changes after review, the bugs after the phone check) | about 5 hours 15 minutes | 196,776,417 | 196,075,328 | 700,231 | 858 | 323,127 |
+| Ticket 34 (tests first, the preview, the place sheet, '파티 설정', the marks, the photo and tag removal, the pull request, CI triage, four merges of `5.0/Main`, the changes after review, the bugs after the phone check, the code reviews) | about 5 hours 50 minutes | 232,089,581 | 231,334,348 | 754,279 | 954 | 362,537 |
 
-Without cache reads, the input is 701,089.
+Without cache reads, the input is 755,233.

@@ -5,17 +5,15 @@
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { type ReactElement, type ReactNode, useEffect, useState } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { placeSearchQuery } from '@/api/queries';
 import type { Place } from '@/api/types';
 import { BottomSheet, Button, color, font, Icon, type IconName, radius, SearchField, space } from '@/design-system';
+import { usePlaceSearch } from '@/features/places/use-place-search';
 import { type Help, HelpButton } from '../../help-bubble';
 import { KindTag, PLACE_KIND_WORDS, usePlaceKind } from './place-kind';
 import { type PlaceChoice, placeOfChoice, type PlaceSheetState } from './use-place-sheet';
 
-const SEARCH_AFTER_MS = 300;
 const TYPED_LINE = '지도에 없거나 더 구체적인 곳(카페, 301동 203호 등)';
 
 // The ? beside 장소: the three kinds of a place, in the tags the form shows (reviewed on 2026-11-28).
@@ -35,24 +33,9 @@ export function placeWords({ name, number }: Place): string {
   return number === null ? name : `${name} ${number}동`;
 }
 
-// The words once they have not changed for a while.
-function useSettled(words: string): string {
-  const [settled, setSettled] = useState(words);
-  useEffect(() => {
-    const timer = setTimeout(setSettled, SEARCH_AFTER_MS, words);
-    return (): void => {
-      clearTimeout(timer);
-    };
-  }, [words]);
-  return settled;
-}
-
-// The buildings the main server finds for the words once the User stopped typing; the previous ones stay while the
-// next are asked, and none before anything is typed.
+// The buildings found for the words, none before anything is typed.
 function useFound(words: string): Place[] {
-  const settled = useSettled(words.trim());
-  const asked = words.trim() === '' ? '' : settled;
-  const found = useQuery({ ...placeSearchQuery(asked), enabled: asked !== '', placeholderData: keepPreviousData });
+  const { asked, found } = usePlaceSearch(words);
   return asked === '' ? [] : (found.data ?? []);
 }
 

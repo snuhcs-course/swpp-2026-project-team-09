@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,7 +18,8 @@ interface ToggleProps<Key extends string> {
   onSelect: (key: Key) => void;
 }
 
-// A small two-part toggle: a grey track and the chosen part white and raised.
+// A small two-part toggle: a grey track and the chosen part white and raised. Its halves are equal, and every toggle is
+// as wide, so that 공개 범위's and 참여 방식's stand one above the other (the review of 2026-11-28).
 export function SmallToggle<Key extends string>({
   label,
   options,
@@ -77,6 +79,8 @@ interface StepButtonProps {
 const STEP = 32;
 const STEP_SLOP = (48 - STEP) / 2;
 const TOGGLE = 30;
+// Wide enough for '승인 후 참여' in a half.
+const TOGGLE_WIDTH = 192;
 
 const styles = StyleSheet.create({
   step: {
@@ -91,17 +95,19 @@ const styles = StyleSheet.create({
   stepOff: { borderColor: color.border },
   track: {
     flexDirection: 'row',
+    width: TOGGLE_WIDTH,
     height: TOGGLE,
     padding: 2,
     borderRadius: radius.sm + 2,
     backgroundColor: color.surfaceSunken,
   },
   part: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     borderRadius: radius.sm,
   },
   partOn: { backgroundColor: color.surface, boxShadow: '0 1px 2px rgba(14, 19, 48, 0.12)' },
