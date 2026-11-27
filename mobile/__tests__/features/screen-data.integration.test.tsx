@@ -195,7 +195,7 @@ describe('the cards of the map', () => {
         { icon: 'pin', text: '301동 대강당' },
         { icon: 'users', text: '같이 갈 파티 1개 모집 중' },
       ],
-      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1' },
+      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1', recruiting: 1 },
       secondary: null,
       position: { latitude: 37.45016, longitude: 126.95259 },
       event: { id: 'e1', favorite: true },

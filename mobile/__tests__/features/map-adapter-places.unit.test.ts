@@ -35,7 +35,7 @@ describe('toCards of a Global Event', () => {
         { icon: 'pin', text: '301동 대강당' },
         { icon: 'users', text: '같이 갈 파티 2개 모집 중' },
       ],
-      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1' },
+      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: 'e1', recruiting: 2 },
       secondary: null,
       position: HALL,
       event: { id: 'e1', favorite: true },

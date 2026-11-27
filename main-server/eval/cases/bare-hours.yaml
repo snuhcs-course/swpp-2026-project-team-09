@@ -1,0 +1,118 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-28  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# An hour said with no word for the half of the day is its nearest upcoming time (P05 ticket 75): "7시에 공부할거야"
+# at 01:10 was planned for 19:00. At 01:10 7시 is 07:00 today, at 08:00 19:00 today, at 20:00 07:00 tomorrow; 저녁,
+# 아침 or a 24-hour time wins. The rule is one line for every answer kind, so the cases cover a study place, a meal and
+# a meet. The P6 world from the app that says `study-plan` (`capabilities: study-app`) on Wednesday 2026-11-04, and the
+# P4 world from the current app (`capabilities: app`) on Monday 2026-11-02. Written, and not run.
+
+- id: bare-hours-study-at-night
+  category: bare-hours
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T01:10:00+09:00'
+  repeat: 3
+  turns:
+    - user: 7시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+    args:
+      planStudy: { from: '07:00' }
+
+- id: bare-hours-study-in-the-morning
+  category: bare-hours
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T08:00:00+09:00'
+  repeat: 3
+  turns:
+    - user: 7시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+    args:
+      planStudy: { from: '19:00' }
+
+- id: bare-hours-study-in-the-evening
+  category: bare-hours
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T20:00:00+09:00'
+  repeat: 3
+  turns:
+    - user: 7시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+    args:
+      planStudy: { date: '2026-11-05', from: '07:00' }
+
+- id: bare-hours-study-evening-word-wins
+  category: bare-hours
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T01:10:00+09:00'
+  repeat: 3
+  turns:
+    - user: 저녁 7시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+    args:
+      planStudy: { from: '19:00' }
+
+- id: bare-hours-study-24-hour-wins
+  category: bare-hours
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T01:10:00+09:00'
+  repeat: 3
+  turns:
+    - user: 19시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+    args:
+      planStudy: { from: '19:00' }
+
+- id: bare-hours-meal-in-the-morning
+  category: bare-hours
+  world: p4-answer
+  now: '2026-11-02T08:00:00+09:00'
+  repeat: 3
+  turns:
+    - user: 6시에 민수랑 밥 먹자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-02', from: '18:00' }
+
+- id: bare-hours-meet-at-night
+  category: bare-hours
+  world: p4-answer
+  capabilities: app
+  now: '2026-11-02T01:10:00+09:00'
+  repeat: 3
+  turns:
+    - user: 이민수랑 학생회관에서 10시에 보자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeet]
+      allowed: [resolveFriend, resolvePlace, findDay]
+      forbidden: [proposeQuest]
+    args:
+      planMeet: { date: '2026-11-02', at: '10:00' }
