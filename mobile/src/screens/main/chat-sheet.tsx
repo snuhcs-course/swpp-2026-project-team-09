@@ -31,7 +31,7 @@ import { placesQuery } from '@/api/queries';
 import { now } from '@/clock';
 import type { Place } from '@/api/types';
 import { useToast } from '@/design-system';
-import { type ShownBooking, shownBookingOf } from '@/features/assistant/booking-scene';
+import { type ShownBooking, shownBookingOf, studyBookingOf } from '@/features/assistant/booking-scene';
 import { type ShownCards, shownCardsOf } from '@/features/assistant/cards-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
 import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/steps-scene';
@@ -179,6 +179,21 @@ function useAnswerOnScreen(
   return { answer: shown, invitation };
 }
 
+// The booking on the map: the seat card the reply gave alone, else a study answer's 관정관 opened (P10 ticket 26).
+function useStudyBooking(
+  replied: ShownBooking | null,
+  shown: ShownAnswer,
+  bubbles: readonly ChatBubble[],
+  { outcomes }: Pick<Chat, 'outcomes'>,
+): ShownBooking | null {
+  const places = useQuery(placesQuery).data ?? NO_PLACES;
+  const { plan, menuFor, source } = shown;
+  return useMemo(
+    () => replied ?? studyBookingOf({ plan, menuFor, source }, bubbles, places, (place) => outcomes.get(place) ?? null),
+    [replied, plan, menuFor, source, bubbles, places, outcomes],
+  );
+}
+
 // What the seat card whose booking the map draws learns of it: its place, how it tells what it offers, whether it is
 // one of several requests, its building, and the walk there (P04 ticket 07; P01 ticket 06).
 function useBookingLeaving(
@@ -209,8 +224,9 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const bookingStage = useBookingStage();
   const libraryAct = useActStage();
   const card = useCardRaise(kept.framed);
-  const booking = useBookingLeaving(onMap, bookingStage);
   const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
+  const shown = { ...onMap, booking: useStudyBooking(onMap.booking, onScreen.answer, sceneBubbles, chat) };
+  const booking = useBookingLeaving(shown, bookingStage);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const pick = usePicking(chat);
   return {
@@ -231,7 +247,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     ...onScreen,
     answer: useMenuRaising(onScreen.answer, card.setRaised, chat.bubbles),
     lookup: useShownLookup(sceneBubbles, start, kept.hide),
-    ...onMap,
+    ...shown,
     ...useActiveStep(onMap.steps),
     bookingStage,
     libraryAct,
