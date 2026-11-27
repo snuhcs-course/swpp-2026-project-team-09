@@ -1,7 +1,7 @@
 # 20: The answer card's one sentence slot, and when a kept card leaves
 
 Parent: [P01 spec](../spec.md); the user's card-screen rules of 2026-11-27, items 1 and 2 (both approved: "1번 권장안은 승인할게", "권장 2, 3은 좋아")
-Status: ready-for-agent
+Status: done
 Blocked by: none
 
 Native files: none. Server: none. Releases: the app's JavaScript only.
@@ -23,7 +23,7 @@ The card is, top to bottom: one sentence slot → the ticket, when there is one 
 The waiting dots stand in the slot. Earlier replies do not pile up; they are reachable from the question chip. One path for every answer kind (`answer/sentence-slot.ts`):
 - The frame draws the turn's words and dots first, and a card kept from an earlier turn under them.
 - In a turn, only the latest bubble draws its words. A reply whose words are its card (an answer, a Lookup) keeps them.
-- Under a reply or the dots, a kept card's explaining line gives way (`SlotHeld`). The seat card's line, made by its button ("예약하는 중이에요"), stays.
+- Under a reply or the dots, a kept card's explaining, loading and empty lines give way (`SlotHeld`, read by the library cards' shared line `Said`, so every library card follows it: seat, room, waiting room, bookings, done message). A line a button made (`Said byButton`: "예약하는 중이에요", "예약을 취소했어요", a room request's status) and a failure stay.
 
 When a kept card leaves is unchanged; the app looks at two things only:
 - the new reply has its own screen (a Plan, a Lookup, cards, steps): it takes the card;
@@ -46,11 +46,12 @@ Any other words-only reply keeps what is on screen, and only the slot changes. `
 
 ## Acceptance criteria
 
-- [ ] A seat card at first: the explaining line over the ticket. (Integration test.)
-- [ ] Under a words-only follow-up: the reply over the ticket, and the explaining line gone. (Integration test, red first; written, not yet run.)
-- [ ] While the reply is on its way: the dots over the ticket. (Integration test, red first; written, not yet run.)
-- [ ] After 예약하기 under a follow-up: no earlier reply over the booked ticket. (Integration test, red first; written, not yet run.)
-- [ ] A reply marked `clears` lowers the ticket and its flag; a thank-you keeps them. (Integration tests; written, not yet run.)
-- [ ] Pictures at 1.0 and 1.3: the four states of the seat card as on the page, and the same follow-up on a meal answer.
+- [x] A seat card at first: the explaining line over the ticket. (Integration test.)
+- [x] Under a words-only follow-up: the reply over the ticket, and the explaining line gone. (Integration test, red on Main.)
+- [x] While the reply is on its way: the dots over the ticket. (Integration test, red on Main.)
+- [x] After 예약하기 under a follow-up: no earlier reply over the booked ticket. (Integration test, red on Main.)
+- [x] A reply marked `clears` lowers the ticket and its flag; a thank-you keeps them. (Integration tests; pins of unchanged behaviour, green on Main too.)
+- [x] Every library card's explaining and loading lines give way under a newer reply; a button's line and a failure stay. (Unit test of the shared `Said`, red on Main.)
+- [ ] Pictures at 1.0 and 1.3: the four states of the seat card as on the page, and the same follow-up on a meal answer. (Waiting on the emulator.)
 
 ## Comments

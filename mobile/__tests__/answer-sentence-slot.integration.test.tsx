@@ -95,7 +95,7 @@ async function asked(): Promise<Awaited<ReturnType<typeof askForCards>>> {
   return chat;
 }
 
-function wordsReply(text: string, more: object = {}): object {
+function wordsReply(text: string, more: object = {}): { status: number; body: unknown } {
   return { status: 200, body: { text, mapButtons: [], cards: [], proposal: null, ...more } };
 }
 
