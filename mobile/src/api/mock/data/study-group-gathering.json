@@ -30,7 +30,7 @@
     "minutes": 120,
     "chosen": {
       "seatSpaceId": null,
-      "roomSpaceId": null
+      "roomSpaceId": "4F-group-6"
     }
   },
   "chips": [
@@ -345,31 +345,32 @@
             "capacity": {
               "min": 4,
               "max": 6
+            },
+            "space": {
+              "id": "4F-group-6",
+              "name": "그룹스터디룸 6인실 (24 rooms)",
+              "floor": 4,
+              "kind": "group-study-room",
+              "placeNumber": "62-1",
+              "unit": "room",
+              "roomNo": 141,
+              "sectorNo": 14103,
+              "seatNos": [
+                14103001, 14103002, 14103003, 14103004, 14103005, 14103006, 14103007, 14103008, 14103009, 14103010,
+                14103012, 14103013, 14103014, 14103015, 14103016, 14103017, 14103018, 14103019, 14103020, 14103021,
+                14103022, 14103023, 14103024, 14103025
+              ],
+              "mapImage": null,
+              "hours": {
+                "open": "09:00",
+                "close": "23:00"
+              },
+              "minMinutes": 30,
+              "maxMinutes": 180,
+              "stepMinutes": 30
             }
           },
           "rooms": [
-            {
-              "spaceId": "2F-group-6",
-              "floor": 2,
-              "name": "6인실",
-              "capacity": {
-                "min": 4,
-                "max": 6
-              },
-              "fits": true,
-              "reason": null
-            },
-            {
-              "spaceId": "2F-group-10",
-              "floor": 2,
-              "name": "10인실",
-              "capacity": {
-                "min": 7,
-                "max": 10
-              },
-              "fits": false,
-              "reason": "7명부터"
-            },
             {
               "spaceId": "4F-group-6",
               "floor": 4,
@@ -378,30 +379,31 @@
                 "min": 4,
                 "max": 6
               },
+              "space": {
+                "id": "4F-group-6",
+                "name": "그룹스터디룸 6인실 (24 rooms)",
+                "floor": 4,
+                "kind": "group-study-room",
+                "placeNumber": "62-1",
+                "unit": "room",
+                "roomNo": 141,
+                "sectorNo": 14103,
+                "seatNos": [
+                  14103001, 14103002, 14103003, 14103004, 14103005, 14103006, 14103007, 14103008, 14103009, 14103010,
+                  14103012, 14103013, 14103014, 14103015, 14103016, 14103017, 14103018, 14103019, 14103020, 14103021,
+                  14103022, 14103023, 14103024, 14103025
+                ],
+                "mapImage": null,
+                "hours": {
+                  "open": "09:00",
+                  "close": "23:00"
+                },
+                "minMinutes": 30,
+                "maxMinutes": 180,
+                "stepMinutes": 30
+              },
               "fits": true,
               "reason": null
-            },
-            {
-              "spaceId": "4F-group-8",
-              "floor": 4,
-              "name": "8인실",
-              "capacity": {
-                "min": 6,
-                "max": 8
-              },
-              "fits": false,
-              "reason": "6명부터"
-            },
-            {
-              "spaceId": "4F-group-10",
-              "floor": 4,
-              "name": "10인실",
-              "capacity": {
-                "min": 7,
-                "max": 10
-              },
-              "fits": false,
-              "reason": "7명부터"
             }
           ],
           "people": 4,
