@@ -148,8 +148,12 @@ function useGroupRequest(
   const [asking, setAsking] = useState(false);
   const held = out !== null;
   const { lock } = shown;
+  // Let go when the card goes, as when the User asks anything else after sending (#656's review).
   useEffect(() => {
     lock(held);
+    return (): void => {
+      lock(false);
+    };
   }, [lock, held]);
   return { party, out, asking, setAsking, sent };
 }
@@ -223,7 +227,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
       <LogInNote shown={mainOf(onScreen, loggedIn, party).main === 'logIn' && open !== 'kind' && open !== 'room'} />
       {held && !ready ? null : chooser(open === 'use' ? null : open)}
       {out === null ? (
-        <UseLine onPress={toggle('use')} use={use} />
+        <UseLine failed={party.failed} onPress={toggle('use')} use={use} />
       ) : (
         <RequestLine onCancel={party.cancel} words={booking.line ?? consentWords(out)} />
       )}

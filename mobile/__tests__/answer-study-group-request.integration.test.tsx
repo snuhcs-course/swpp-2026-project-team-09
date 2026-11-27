@@ -5,13 +5,14 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
+import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { forgetPartyRequests } from '@/screens/main/library/room-party';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
-import { inDock, inFrame, startLibraryChat } from './support/library-chat';
+import { inDock, inFrame, sendFromBar, startLibraryChat } from './support/library-chat';
 import { ASKED_AT, FRIENDS, QUEST_ID, REQUEST_ID, requestOf, sendTogether, type User } from './support/study-group';
 
 // Sending the consent requests of the study answer together and waiting for them (P10 ticket 12; design
@@ -123,5 +124,82 @@ describe('A sent request of studying together', () => {
     expect(server.received(`POST /quests/${QUEST_ID}/end`)).toHaveLength(1);
     expect(screen.getByTestId('room-ticket-kind-chevron')).toBeOnTheScreen();
     expect(inDock().getByRole('button', { name: '동의 요청 보내기' })).toBeEnabled();
+  });
+});
+
+const cancelLink = (): ReturnType<typeof screen.getByRole> =>
+  within(screen.getByTestId('study-group-line')).getByRole('button', { name: '요청 취소 ›' });
+
+// Partitions, from #656's review: the next answer after a held one, and sending again after 요청 취소 or once the
+// request ended. Expected values: the answer's rules and today's room card.
+describe('A held request of studying together, after it', () => {
+  it('leaves the next answer free to change', async () => {
+    const user = await sent();
+    server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_MENUS_REPLY });
+
+    await sendFromBar(user, '배고파');
+    await user.press(screen.getByRole('button', { name: '같이 먹을 친구 추가' }));
+
+    expect(screen.getByTestId('time-card-rows')).toBeOnTheScreen();
+  });
+
+  it('is sent again after 요청 취소 with a new idempotency key', async () => {
+    const user = await sent();
+    server.on(`POST /quests/${QUEST_ID}/end`, { status: 204 });
+    await user.press(cancelLink());
+    await pass(500);
+
+    await user.press(inDock().getByRole('button', { name: '동의 요청 보내기' }));
+    await pass(500);
+
+    const keys = server.received('POST /library/room-requests').map(({ idempotencyKey }) => idempotencyKey);
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).not.toBe(keys[0]);
+    expect(inFrame().getByText('동의 0/3 · 다 받으면 알려 드려요. 닫아도 돼요.')).toBeVisible();
+  });
+
+  it('can be sent again once the request ended on the server', async () => {
+    await sent();
+    server.on(`GET /library/room-requests/${REQUEST_ID}`, {
+      status: 200,
+      body: { ...requestOf(['declined', 'declined', 'declined'], 3), status: 'dissolved' },
+    });
+    await pass(3500);
+
+    expect(inDock().getByRole('button', { name: '동의 요청 보내기' })).toBeEnabled();
+  });
+});
+
+// Partitions, from #656's review: a send that failed, 요청 취소 pressed twice, and every Friend still in consented while
+// one more is needed. Expected values: today's room card's words.
+describe('Sending and taking back the consent requests', () => {
+  it('says when they could not be sent', async () => {
+    server.on('POST /library/room-requests', { status: 500, body: {} });
+
+    await sent();
+
+    expect(inFrame().getByText('동의 요청을 보내지 못했어요. 다시 해 주세요.')).toBeVisible();
+  });
+
+  it('ends the booking party once when 요청 취소 is pressed twice', async () => {
+    const user = await sent();
+    server.on(`POST /quests/${QUEST_ID}/end`, { status: 204, afterMs: 2000 });
+
+    await user.press(cancelLink());
+    await user.press(cancelLink());
+    await pass(3000);
+
+    expect(server.received(`POST /quests/${QUEST_ID}/end`)).toHaveLength(1);
+  });
+
+  it('asks for one more Friend when everyone still in has consented', async () => {
+    await sent();
+    server.on(`GET /library/room-requests/${REQUEST_ID}`, {
+      status: 200,
+      body: requestOf(['declined', 'consented', 'consented'], 1),
+    });
+    await pass(3500);
+
+    expect(inFrame().getByText('동의 2/2 · 친구를 더 불러 주세요')).toBeVisible();
   });
 });
