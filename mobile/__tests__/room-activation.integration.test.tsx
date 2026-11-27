@@ -125,7 +125,7 @@ describe('활성화 while none runs', () => {
     expect(shownAddress()).toBe(`/room/${PICNIC.id}`);
   });
 
-  it('opens the Party for the Quest, closed and for the Quest’s capacity, after the sheet, and shows that the User is in it', async () => {
+  it('opens the Party for the Quest, closed and for 8, after the sheet, and shows that the User is in it', async () => {
     const mine = answerMyParty(server, null);
     server.on('POST /parties', () => {
       mine.set(myPicnicParty(ME_ID, [{ id: ME_ID, name: '홍길동', department: '컴퓨터공학부' }]));
@@ -140,7 +140,7 @@ describe('활성화 while none runs', () => {
     await answer(user, '활성화');
 
     expect(server.received('POST /parties').map(({ body }) => body)).toEqual([
-      { title: '자하연 피크닉', capacity: PICNIC.capacity, joinPolicy: 'closed', questId: PICNIC.id },
+      { title: '자하연 피크닉', capacity: 8, joinPolicy: 'closed', questId: PICNIC.id },
     ]);
     expect(toast()).toHaveTextContent(/^파티를 활성화했어요$/u);
     expect(activationBox().getByText('활성화 중')).toBeVisible();

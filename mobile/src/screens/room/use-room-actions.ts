@@ -152,8 +152,9 @@ function showSharing(queryClient: QueryClient, on: boolean): void {
 }
 
 // Opens the Quest's Party, or enters the one another Holder opened at the same moment. It sends no push: the other
-// Holders see it in their 알림 list. The Party takes the Quest's capacity, so that its size reads as the 파티's (P06
-// ticket 30).
+// Holders see it in their 알림 list. It opens for 8, the most a Quest holds, so that no Holder is ever refused: the
+// main server does not change a Party's capacity when the Leader changes the Quest's, and the app reads the 파티's size
+// from the Quest (P06 ticket 30).
 function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: Tools): RoomActions['openParty'] {
   return async (quest, leaveFirst) => {
     let ended: string | null = null;
@@ -161,12 +162,7 @@ function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: To
       ended = await leaveIf(queryClient, leaveFirst);
       enter(
         queryClient,
-        await apiClient.openParty({
-          title: quest.title,
-          capacity: quest.capacity,
-          joinPolicy: 'closed',
-          questId: quest.id,
-        }),
+        await apiClient.openParty({ title: quest.title, capacity: 8, joinPolicy: 'closed', questId: quest.id }),
       );
       showToast('파티를 활성화했어요');
     } catch (error) {

@@ -35,8 +35,8 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const ROW = '12:18 나설 시각 · 학생회관식당까지 걸어서 15분 · 12:18';
-// The dinner's Party as the room opens it: closed and for the Quest's capacity, 2 (P06 ticket 30).
-const OPENING = { title: DINNER.title, capacity: 2, joinPolicy: 'closed', questId: DINNER.id };
+// The dinner's Party as the room opens it: closed and for 8.
+const OPENING = { title: DINNER.title, capacity: 8, joinPolicy: 'closed', questId: DINNER.id };
 
 let server: FakeServer;
 
@@ -83,7 +83,7 @@ describe('파티 켜기 on the time to leave', () => {
 });
 
 describe('a press on 파티 켜기', () => {
-  it("opens the Quest's Party, closed and for the Quest's capacity, with the room's toast, and the User stays in 알림", async () => {
+  it("opens the Quest's Party, closed and for 8, with the room's toast, and the User stays in 알림", async () => {
     const mine = answerMyParty(server, null);
     server.on('POST /parties', () => {
       mine.set(DINNER_PARTY_MINE);
