@@ -124,4 +124,15 @@ describe("the places a study answer's list cannot offer", () => {
     expect(last).toHaveProp('testID', 'meal-dropped-row');
     expect(last).toHaveStyle({ opacity: 0.45 });
   });
+
+  it('stands after 쉬는 곳, outside its heading, with no heading of its own (P10 ticket 19)', async () => {
+    await list();
+    const closed = within(screen.getByTestId('meal-closed-group'));
+    const dropped = within(screen.getByTestId('meal-dropped-group'));
+
+    expect(closed.getByRole('header', { name: '쉬는 곳' })).toBeOnTheScreen();
+    expect(closed.queryByTestId('meal-dropped-row')).toBeNull();
+    expect(dropped.getByTestId('meal-dropped-row')).toBeOnTheScreen();
+    expect(dropped.queryByRole('header')).toBeNull();
+  });
 });
