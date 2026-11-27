@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -97,7 +98,7 @@ export class RoomRequestsService {
         'questId' in body
           ? await this.sameHolders(userId, body.questId, companionIds, tx)
           : await this.makeBookingParty(userId, space, slot, companionIds, tx);
-      const request = await tx.roomRequest.create({
+      return tx.roomRequest.create({
         data: {
           ...slot,
           questId,
@@ -106,12 +107,12 @@ export class RoomRequestsService {
           spaceId: space.id,
           startsAt: startsAtOf(date, start),
           useDesc,
+          studyInput: body.input,
           // By the Quests' clock, from which the answers' deadline is counted.
           createdAt: now,
           consents: { create: companionIds.map((companion) => ({ userId: companion, askedAt: now })) },
         },
       });
-      return request;
     });
     this.signals.send(companionIds, 'quests-changed');
     this.signals.send([userId, ...companionIds], 'room-requests-changed');

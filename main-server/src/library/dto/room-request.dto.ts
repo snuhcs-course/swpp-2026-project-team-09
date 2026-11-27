@@ -3,9 +3,12 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
+import { type AnswerReply } from '../../assistant/dto/answer.dto.js';
+import { studyInputSchema } from '../../assistant/dto/plan-input.dto.js';
 import { PARTY_MAX } from '../../assistant/library/booking-rules.js';
 import { LIBRARY_KEY_MAX } from '../../assistant/library/library-card.js';
 import { RoomRequestStatus } from '../../generated/prisma/client.js';
@@ -22,17 +25,27 @@ export const createRoomRequestSchema = z.union([
       .min(1)
       .max(PARTY_MAX * 3),
     useDesc: z.string().trim().min(1).max(20).optional(),
+    // The study input of the answer it is sent from (P10), kept to rebuild that answer; absent from a chat card.
+    input: studyInputSchema.optional(),
   }),
   z.strictObject({
     key: z.string().max(LIBRARY_KEY_MAX),
     questId: z.uuid(),
     useDesc: z.string().trim().min(1).max(20).optional(),
+    input: studyInputSchema.optional(),
   }),
 ]);
 
 export type CreateRoomRequestDto = z.infer<typeof createRoomRequestSchema>;
 
-export const roomResultSchema = z.strictObject({ ok: z.boolean(), failedUserId: z.uuid().optional() });
+// `room`, with `ok`, is the room the library booked as it names it ("G412"), which the phone alone reads (P05 ticket 68).
+export const roomResultSchema = z
+  .strictObject({
+    ok: z.boolean(),
+    failedUserId: z.uuid().optional(),
+    room: z.string().trim().min(1).max(40).optional(),
+  })
+  .refine(({ ok, room }) => ok || room === undefined, { message: 'A room comes with ok only', path: ['room'] });
 
 export type RoomResultDto = z.infer<typeof roomResultSchema>;
 
@@ -78,6 +91,8 @@ export interface RoomRequestDto {
   companions: RoomCompanionStateDto[];
   // How many more people the room's minimum needs while the request gathers; 0 when met, and once it is not active.
   moreNeeded: number;
+  // The room the library booked, as the booker's phone reported it; null before, or when it did not say (P05 ticket 68).
+  bookedRoom: string | null;
 }
 
 // A room request that asks the User, for the consent dialog on the main screen.
@@ -110,3 +125,7 @@ export interface RoomCompanionDto {
   registeredName: string;
   studentNumber: string | null;
 }
+
+// GET …/:id/answer (P10): the study answer rebuilt at the request's room, time and people, its one 관정관 plan locked,
+// with `study.group.request` set.
+export type RoomRequestAnswerDto = AnswerReply;

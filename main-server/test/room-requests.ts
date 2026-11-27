@@ -57,6 +57,7 @@ export const roomRequestSchema = z.strictObject({
   consents: z.array(personSchema.extend({ consented: z.boolean().nullable() })),
   companions: z.array(personSchema.extend({ state: z.enum(['asked', 'consented', 'declined', 'unanswered']) })),
   moreNeeded: z.number(),
+  bookedRoom: z.string().nullable(),
 });
 
 export type RoomRequestBody = z.infer<typeof roomRequestSchema>;

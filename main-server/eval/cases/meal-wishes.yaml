@@ -5,6 +5,7 @@
 # 2026-11-22  Opus 5.5   prompted by fyoon46
 # 2026-11-23  Opus 5.5   prompted by fyoon46
 # 2026-11-26  Opus 5.5   prompted by fyoon46
+# 2026-11-27  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Choosing what or where to eat is planned on the map (P05 ticket 14). In use of the released app, "월요일에 밥 뭐
@@ -551,3 +552,36 @@
       planMeal: { meal: breakfast }
     text:
       mentions: [[점심, 저녁]]
+
+# A question about the meal plan on screen that changes nothing gets one short sentence of only what was asked (P05
+# ticket 66): its hours with restaurantHours, and where it is from the plan on screen with no tool. Written, not run:
+# no model key on the machine it was written on.
+- id: meal-plan-follow-ups
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 내일 점심 뭐 먹을까?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+    - user: 거기 몇 시까지 해?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [restaurantHours]
+          forbidden: [planMeal, getMenus]
+        text:
+          absent: [버튼, 카드]
+          maxChars: 40
+    - user: 거기 어디야?
+      expect:
+        actions: [CHAT]
+        tools:
+          forbidden: '*'
+        text:
+          absent: [버튼, 카드]
+          maxChars: 30
