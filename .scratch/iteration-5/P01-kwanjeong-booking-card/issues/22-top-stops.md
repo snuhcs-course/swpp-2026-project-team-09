@@ -69,6 +69,8 @@ For length, the time card's grip strip moved to `time-card-strip.tsx`, the grip'
 - [x] The sheet's high edge is the stop's at each of 2, 1 and 0. (Same test.)
 - [x] The sheet rising to high folds 2 → 1 for several requests, and lowering it leaves stop 1. (Same test.)
 - [x] One request tucks to its strip at the stage's top as on Main, in no frame, and the sheet rising to high leaves it. (Same test; `answer-time-bar` and `answer-time-bar-height` are as on Main.)
+- [x] An answer to one request after several requests folded to stop 0 keeps its one high edge and opens unfolded: the stop left in the sheet link moves only the edge of several requests (#686's review). (Same test.)
+- [x] The strip of a step with no time card keeps the lift at its stop's resting place when the stop or the steps card's bottom changes (#686's review).
 - [x] The places, the press and the screen reader's steps between them, and each stop's room. (Unit test `grip-places`.)
 - [x] The Plan's bar under the steps card tells its height without an endless update loop (a fault on Main: a new callback each render, told again in an effect). (`answer-top-stops`: its first run ran out of memory on "Maximum update depth exceeded" at `StepsTop`; passing since the callbacks are stable.)
 - [ ] Pictures at 1.0 and 1.3 of each stop, for a seat + meal answer and for one request. (Waiting on the emulator.)

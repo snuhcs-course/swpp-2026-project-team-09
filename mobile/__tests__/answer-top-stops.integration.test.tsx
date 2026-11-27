@@ -4,9 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, fireEvent } from '@testing-library/react-native';
-import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { StyleSheet, type ViewStyle } from 'react-native';
+import { fireEvent } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { stepsReplyOn } from '@/api/mock/data/steps-answer';
 import { radius, space } from '@/design-system';
@@ -21,6 +19,7 @@ import { hideKeyboard } from './support/keyboard';
 import { layStage } from './support/lists';
 import { openMain } from './support/main';
 import { layFolded, stepGrip } from './support/time-card';
+import { type Found, highHeight, pull, shiftOf, styleOf } from './support/top-stops';
 
 // The top of an answer to several requests folds upward in stops (P01 ticket 22, the user's choice of 2026-11-27,
 // "이 안으로"): 2, the steps card with the time card under it; 1, the time card wholly behind the steps card with only
@@ -29,8 +28,6 @@ import { layFolded, stepGrip } from './support/time-card';
 // the steps card. The reply is "17시 반에 관정 갔다가 19시쯤 저녁 먹을래": ① a seat, ② a dinner Plan. Expected values:
 // the steps card laid out 120 high; the time card 100 folded; the gap between them 8; the strip 20; so behind the
 // steps card the time card goes up 8 + 100 − 20 = 88.
-
-type Found = ReturnType<typeof screen.getByTestId>;
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -98,20 +95,6 @@ function timeCard(): Found | undefined {
   return screen.queryAllByTestId('time-bar')[1];
 }
 
-function styleOf(element: Found): ViewStyle {
-  const style: unknown = element.props.style;
-  return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
-}
-
-// Where a view rests, as React holds it: its translation.
-function shiftOf(element: Found | undefined): number {
-  if (element === undefined) {
-    return Number.NaN;
-  }
-  const shift: unknown = styleOf(element).transform?.[0];
-  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : 0;
-}
-
 const frame = (): Found => screen.getByTestId('time-card-frame');
 
 // The steps card's bottom edge from the stage's top, where stop 0 takes it up to.
@@ -120,22 +103,6 @@ const stepsBottom = (): number => Number(styleOf(stepsCard()).top) + STEPS;
 async function pressGrip(testID = 'time-card-grip'): Promise<void> {
   await fireEvent.press(screen.getByTestId(testID));
   await pass(50);
-}
-
-async function pull(drag: string, dy: number): Promise<void> {
-  await act(() => {
-    fireGestureHandler(getByGestureTestId(drag), [
-      { translationY: 0, velocityY: 0 },
-      { translationY: dy / 2, velocityY: 0 },
-      { translationY: dy, velocityY: 0 },
-    ]);
-  });
-  await pass(50);
-}
-
-// High's height: the sheet's scrolling part is laid out at it.
-function highHeight(): number {
-  return Number(styleOf(screen.getByTestId('answer-card-content')).height);
 }
 
 // The emulator, 2026-11-28: the stage starts under the status bar, and the steps card gone up above it at stop 0 showed
@@ -267,6 +234,45 @@ describe("the answer sheet's high at each stop", () => {
     await lowerCard();
     await pass(50);
     expect(shiftOf(timeCard())).toBe(-BEHIND);
+  });
+});
+
+// #686's review: an answer drawn without the steps card took its high edge from a stop an earlier answer left in the
+// sheet link. A follow-up in words keeps the earlier scene, steps card and stop included (P01 ticket 31); a new answer to
+// one request draws its own top. Partitions: that answer asked first, then again after several requests folded to 0.
+describe('an answer to one request, after a fold of several', () => {
+  it('keeps its one high edge, and its card unfolded', async () => {
+    await markLibraryLoggedIn();
+    server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
+    const user = await openMain();
+    await layStage(390, 760);
+    await sendFromBar(user, '배고파');
+    await hideKeyboard();
+    await layFolded(FOLDED);
+    await pass(50);
+    const plain = highHeight();
+
+    server.on('POST /assistant/messages', { status: 200, body: stepsReplyOn('2026-11-02') });
+    await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
+    await hideKeyboard();
+    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await pass(50);
+    await layStepsCard();
+    await layFolded(FOLDED);
+    await stepGrip('tuck');
+    await stepGrip('tuck');
+    await pass(50);
+    expect(shiftOf(stepsCard())).toBe(-stepsBottom());
+
+    server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
+    await sendFromBar(user, '배고파');
+    await hideKeyboard();
+    await layFolded(FOLDED);
+    await pass(50);
+
+    expect(screen.queryByTestId('steps-top')).toBeNull();
+    expect(shiftOf(screen.getByTestId('time-bar'))).toBe(0);
+    expect(highHeight()).toBe(plain);
   });
 });
 

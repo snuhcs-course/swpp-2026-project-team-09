@@ -4,7 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import { type ReactElement, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import Reanimated, { type SharedValue, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -41,6 +41,29 @@ function useStripPan(lift: SharedValue<number>, stepsBottom: number, go: (to: To
     });
 }
 
+// The lift goes to its stop's resting place whenever the stop or the steps card's bottom changes: when the strip comes,
+// after a time card unmounted mid-settle, or for a follow-up whose steps card lays out at another height (#686's
+// review). A let-go at the stop it stood at goes back there itself, as no stop changes then.
+function useStripLift({ lift, stop, setStop }: TopStops, stepsBottom: number): (to: TopStop) => void {
+  const reduce = useReduceMotionSetting() !== false;
+  const settle = useCallback(
+    (at: number): void => {
+      lift.value = reduce ? at : withSpring(at, SETTLE);
+    },
+    [lift, reduce],
+  );
+  useEffect(() => {
+    settle(restingLift(stop, stepsBottom));
+  }, [settle, stop, stepsBottom]);
+  return (to: TopStop): void => {
+    if (to === stop) {
+      settle(restingLift(to, stepsBottom));
+    } else {
+      setStop(to);
+    }
+  };
+}
+
 // The grip strip under the bar of several requests while the step shown has no time card, a seat or a room (P01 ticket
 // 22): it stands where the time card's own strip would, at the card's width and corners, its top behind the bar's
 // rounded bottom, so that the top folds the same way on every step. A pull up takes the bar up with it until the strip
@@ -48,14 +71,9 @@ function useStripPan(lift: SharedValue<number>, stepsBottom: number, go: (to: To
 // opens nothing: there is no time card.
 export function StepsStrip({ stops }: { stops: TopStops }): ReactElement {
   const { top } = useSafeAreaInsets();
-  const { lift, setStop, stop, stepsHeight } = stops;
+  const { lift, stop, stepsHeight } = stops;
   const stepsBottom = barTop(top) + stepsHeight;
-  const reduce = useReduceMotionSetting() !== false;
-  const go = (to: TopStop): void => {
-    const at = restingLift(to, stepsBottom);
-    lift.value = reduce ? at : withSpring(at, SETTLE);
-    setStop(to);
-  };
+  const go = useStripLift(stops, stepsBottom);
   const pan = useStripPan(lift, stepsBottom, go);
   const moved = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
   const rested = { transform: [{ translateY: restingLift(stop, stepsBottom) }] };
