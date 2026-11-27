@@ -197,13 +197,17 @@ export function libraryActOf({ framed, chat, libraryAct }: ChatSheetControl): Pl
   return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting, danger: seen.danger, ...back };
 }
 
-// Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's.
+// Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, then its ticket's once
+// booked (가는 길, 예약 취소; P10 ticket 29), or its Plan's, else the one its card tells, as a group study room's does
+// alone (P10 ticket 16): the chains one request's button takes.
 function stepActionOf(control: ChatSheetControl): PlanAction | null {
   const step = control.steps?.steps[control.activeStep];
   if (step === undefined || step.status !== 'shown') {
     return null;
   }
-  return step.kind === 'seat' || step.kind === 'room' ? bookingActionOf(control) : planActionOf(control);
+  return step.kind === 'seat' || step.kind === 'room'
+    ? (bookingActionOf(control) ?? libraryActOf(control))
+    : (planActionOf(control) ?? libraryActOf(control));
 }
 
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {

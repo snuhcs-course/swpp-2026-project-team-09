@@ -2,11 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { RequestContext } from '@/api/assistant-types';
 import { ANSWER_CAPABILITIES } from '@/api/capabilities';
-import { mockRecalculation } from '@/api/mock/assistant';
+import { mockAssistantReply, mockRecalculation } from '@/api/mock/assistant';
 import { STUDY_GROUP_MORE_NEEDED, STUDY_GROUP_TO_SEND, studyGroupReplyTo } from '@/api/mock/data/study-group-answers';
+import { STUDY_PLAN_REPLY } from '@/api/mock/data/study-plan-answer';
 import { isAnswerReply } from '@/api/server/plan-answers';
 import {
   hasPeople,
@@ -28,6 +31,14 @@ import toSend from '@/api/mock/data/study-group-to-send.json';
 // (`main-server/test/fixtures/study-answer.ts` and `study-group-answers.ts`, PR 643), as JSON.
 
 const FIXTURES = { alone, gathering, moreNeeded, ready, toSend };
+
+const CONTEXT: RequestContext = {
+  location: { latitude: 37.45016, longitude: 126.95259 },
+  viewport: null,
+  tapped: null,
+  conditions: null,
+  planId: null,
+};
 
 function firstGroupOf(copy: unknown): unknown {
   if (!isAnswerReply(copy)) {
@@ -123,11 +134,11 @@ describe('A study input changed on the card', () => {
   });
 });
 
-// Partitions: the capabilities sent today. Expected values: P10 ticket 16 turns study-group on, last.
+// Partitions: the capabilities sent today. Expected values: P10 ticket 16 turns study-group on; study-plan is ticket
+// 23's (`mock-study-plan.unit`).
 describe('The capabilities the app sends', () => {
-  it('say neither study-group nor study-plan yet', () => {
-    expect(ANSWER_CAPABILITIES).not.toContain('study-group');
-    expect(ANSWER_CAPABILITIES).not.toContain('study-plan');
+  it('say study-group', () => {
+    expect(ANSWER_CAPABILITIES).toContain('study-group');
   });
 });
 
@@ -151,5 +162,15 @@ describe('Studying together asked without a main server', () => {
     expect(studyGroupReplyTo('민수, 서연, 지은이랑 같이 공부할 자리 있어?')?.answer).toBe(STUDY_GROUP_TO_SEND);
     expect(studyGroupReplyTo('같이 공부할 자리 있어?')?.answer).toBe(STUDY_GROUP_MORE_NEEDED);
     expect(studyGroupReplyTo('공부할 자리 있어?')).toBeNull();
+  });
+
+  // With `study-plan` said too (P10 ticket 23), "공부할 자리 있어?" is the places to study alone (`mock-study-plan.unit`).
+  it('answers "같이 공부할 자리 있어?" with the answer together, and "공부할 자리 있어?" with the places to study alone', () => {
+    const together = mockAssistantReply([{ role: 'user', text: '같이 공부할 자리 있어?' }], CONTEXT);
+    const studyAlone = mockAssistantReply([{ role: 'user', text: '공부할 자리 있어?' }], CONTEXT);
+
+    expect(together.answer).toBe(STUDY_GROUP_MORE_NEEDED);
+    expect(together.cards).toEqual([]);
+    expect(studyAlone).toBe(STUDY_PLAN_REPLY);
   });
 });

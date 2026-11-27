@@ -10,6 +10,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlanStudy } from './study-plan.dto.js';
@@ -21,6 +22,7 @@ import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
 import { type PlanInput, planInputSchema } from './plan-input.dto.js';
+import { replyStepsSchema, STEPS_MAX } from './reply-step.dto.js';
 
 // The contract of an answer drawn on the map, declared with the same shape in the app's Assistant types. Times are
 // Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
@@ -45,6 +47,12 @@ export interface RequestContext {
   // The asker's Classes the conversation leaves out, as the last reply gave them (`AssistantReplyDto.skipped`, P05
   // ticket 70). Left out by an app before it, and by any app until a reply gives them.
   skipped?: LeftOutClass[];
+  // The conditions of every answer on screen, in the order of their steps, when a reply drew several (P05 ticket 73);
+  // `conditions` is the one the User has open. Left out by an app that does not say `answers`.
+  answers?: PlanInput[];
+  // The steps on screen, whole and in their order, as the last reply gave them (P05 ticket 74): the server keeps them,
+  // and plans a later one again when a step before it changes. Left out by an app that does not say `answers`.
+  steps?: ReplyStep[];
 }
 
 // One of the asker's Classes left out on one day: the id of its time in the Timetable, which repeats every week.
@@ -60,6 +68,9 @@ export interface Mention {
 }
 
 export interface AnswerReply extends WithMissing {
+  // The request it answers, the server's own words for it, given in the reply's `answers` only (P05 ticket 73). Opaque to
+  // the app, which compares it and never builds it.
+  key?: string;
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];
@@ -315,8 +326,10 @@ export interface ReplyStep {
   // `shown`: its card or its answer is in the reply. `not-done`: it could not be done, for `reason`.
   status: 'shown' | 'not-done';
   reason: string | null;
-  // Where the reply shows it: the library card of that key, or the answer.
-  shows: { kind: 'card'; key: string } | { kind: 'answer' } | null;
+  // Where the reply shows it: the library card of that key, or the answer. `key`: the request whose answer it is, as
+  // `AnswerReply.key` names it, for an app that says `answers` (P05 ticket 74); left out for any other, whose answer is
+  // the one `answer`.
+  shows: { kind: 'card'; key: string } | { kind: 'answer'; key?: string } | null;
 }
 
 export type { CardFact, Lookup, LookupAction, LookupCard } from './lookup.dto.js';
@@ -350,6 +363,8 @@ const tappedSchema = z.discriminatedUnion('kind', [
 const MENTIONS_MAX = 20;
 const NAME_MAX = 100;
 const mentionSchema = z.strictObject({ userId: z.uuid(), name: z.string().trim().min(1).max(NAME_MAX) });
+// As many answers on screen as steps.
+const ANSWERS_MAX = STEPS_MAX;
 // More than a conversation leaves out over its days is a wrong request.
 const LEFT_OUT_MAX = 24;
 
@@ -371,6 +386,8 @@ export const requestContextSchema = z.strictObject({
   planIds: z.array(z.string().min(1).max(PLAN_ID_MAX)).max(PLANS_MAX).optional(),
   mentions: z.array(mentionSchema).max(MENTIONS_MAX).optional(),
   skipped: leftOutSchema.optional(),
+  answers: z.array(planInputSchema).max(ANSWERS_MAX).optional(),
+  steps: replyStepsSchema.optional(),
 }) satisfies z.ZodType<RequestContext>;
 
 // The body of a recalculation: the changed input, and where the asker is now or why that is not sent.

@@ -127,7 +127,8 @@ describe('"＋ 같이" in the bar’s head', () => {
     expect(StyleSheet.flatten(chip.props.style)).not.toHaveProperty('borderWidth');
     expect(BAR_ADD_HEIGHT).toBe(CHIP_HEIGHT);
     expect(chip).toHaveTextContent(/^같이( \d ›)?$/u);
-    expect(screen.getByTestId('time-bar')).toHaveStyle({ paddingTop: space[3] });
+    // The face holds the padding; the card's moving place around it holds the caret beside it (P01 ticket 23).
+    expect(screen.getByTestId('time-card-face')).toHaveStyle({ paddingTop: space[3] });
     expect(screen.getByTestId('time-bar-add')).toHaveStyle({ top: space[3] });
     expect(screen.getByTestId('time-band-head')).toHaveStyle({ minHeight: BAR_ADD_HEIGHT });
   });

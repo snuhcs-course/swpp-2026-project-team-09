@@ -5,7 +5,6 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import { STUDY_PLAN_ASKED } from '@/api/mock/data/study-plan-answer';
 import { pass, screen } from './support/app';
 import { card } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
@@ -42,7 +41,7 @@ describe('"일정에 넣기" on a study place over the mocks', () => {
     givePhone({ permission: 'refused', position: ON_CAMPUS });
     const user = await openMain();
     await pass(500);
-    await user.type(screen.getByLabelText(AI_INPUT), STUDY_PLAN_ASKED);
+    await user.type(screen.getByLabelText(AI_INPUT), '공부할 자리 있어?');
     await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(3000);
 
