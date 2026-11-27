@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -21,8 +22,9 @@ import {
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
-import { type AnswerReply, type QuestsInput } from '../dto/answer.dto.js';
+import { type AnswerReply, type LeftOutClass, type QuestsInput } from '../dto/answer.dto.js';
 import { dateOf, type DayItem } from '../free-time/free-time.js';
+import { idsOn, skippedOut } from '../free-time/left-out-classes.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { koreaDate } from '../korea-time.js';
@@ -35,6 +37,13 @@ import {
   type QuestPlanning,
   type QuestStep,
 } from './quest-fit.js';
+
+interface PlanAt {
+  now: Date;
+  location: Position | null;
+  // The conversation's Classes left out, of any day (P05 ticket 70).
+  skipped?: readonly LeftOutClass[];
+}
 
 // The one place that gathers what an answer of recruiting Quests needs: the Quests the recruiting list gives the asker,
 // their steps and Holders, the asker's Friends and days, and the Places, for the tool and the recalculation alike.
@@ -50,23 +59,28 @@ export class QuestsPlanService {
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
   ) {}
 
-  async plan(askerId: string, input: QuestsInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
+  async plan(askerId: string, input: QuestsInput, at: PlanAt): Promise<AnswerReply> {
     return (await this.planned(askerId, input, at)).answer;
   }
 
-  // The answer, and the calculation it words, in the same order.
+  // The answer, and the calculation it words, in the same order. The asker's Classes left out on each day are free.
   async planned(
     askerId: string,
     input: QuestsInput,
-    at: { now: Date; location: Position | null },
+    at: PlanAt,
   ): Promise<{ answer: AnswerReply; planning: QuestPlanning }> {
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const [asker, listed] = await Promise.all([this.users.findById(askerId), this.listedFor(askerId, input)]);
     const quests = await this.dayQuests(askerId, listed);
     const dates = [...new Set(quests.flatMap((quest) => judgedStepDate(quest, now) ?? []))];
-    const days = new Map<string, DayItem[]>(
-      await Promise.all(dates.map(async (date) => [date, await this.days.itemsOn(askerId, date)] as const)),
+    const read = await Promise.all(
+      dates.map(
+        async (date) =>
+          [date, skippedOut(await this.days.itemsOn(askerId, date), idsOn(at.skipped ?? [], date))] as const,
+      ),
     );
+    const days = new Map<string, readonly DayItem[]>(read.map(([date, { items }]) => [date, items]));
+    const skipped = read.flatMap(([, day]) => day.skipped ?? []);
     const planning = fitQuests(
       {
         quests,
@@ -79,7 +93,14 @@ export class QuestsPlanService {
     const answer = questAnswer({
       input,
       now,
-      asker: { userId: askerId, name: asker.name, me: true, items: [...days.values()].flat(), position: at.location },
+      asker: {
+        userId: askerId,
+        name: asker.name,
+        me: true,
+        items: [...days.values()].flat(),
+        ...(skipped.length === 0 ? {} : { skipped }),
+        position: at.location,
+      },
       planning,
       placeOf: (placeId) => this.placeOf(placeId),
       listed: new Map(listed.map((quest) => [quest.id, quest])),

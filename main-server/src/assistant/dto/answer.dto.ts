@@ -42,6 +42,15 @@ export interface RequestContext {
   // The Friends the User's new message mentions with "@". Left out by an app before the mention, and checked against
   // the asker's Friends before anything reads it.
   mentions?: Mention[];
+  // The asker's Classes the conversation leaves out, as the last reply gave them (`AssistantReplyDto.skipped`, P05
+  // ticket 70). Left out by an app before it, and by any app until a reply gives them.
+  skipped?: LeftOutClass[];
+}
+
+// One of the asker's Classes left out on one day: the id of its time in the Timetable, which repeats every week.
+export interface LeftOutClass {
+  date: string;
+  classId: string;
 }
 
 // A Friend the User picked with "@" from their Friend list: exactly that Friend, never found by the name.
@@ -282,8 +291,9 @@ export interface TimeBand {
     walkMinutes: number | null;
     after?: string;
   }[];
-  // A meal's Plan: the asker's Classes of the day left out of it (`MealInput.skipped`), whole, labelled as a lane's busy
-  // stretch. They are in no lane. Absent for none.
+  // The asker's Classes of the day the conversation leaves out (`RequestContext.skipped`, and a meal's
+  // `MealInput.skipped`), whole, labelled as a lane's busy stretch, in a Plan's band of any kind. They are in no lane.
+  // Absent for none.
   skipped?: { id: string; startAt: string; endAt: string; label: string }[];
   startAt: string;
   endAt: string;
@@ -340,6 +350,12 @@ const tappedSchema = z.discriminatedUnion('kind', [
 const MENTIONS_MAX = 20;
 const NAME_MAX = 100;
 const mentionSchema = z.strictObject({ userId: z.uuid(), name: z.string().trim().min(1).max(NAME_MAX) });
+// More than a conversation leaves out over its days is a wrong request.
+const LEFT_OUT_MAX = 24;
+
+export const leftOutSchema = z
+  .array(z.strictObject({ date: z.iso.date(), classId: z.uuid() }))
+  .max(LEFT_OUT_MAX) satisfies z.ZodType<LeftOutClass[]>;
 const locationMissingSchema = z.enum(['permission', 'off-campus']).nullable().default(null);
 
 export const requestContextSchema = z.strictObject({
@@ -354,6 +370,7 @@ export const requestContextSchema = z.strictObject({
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
   planIds: z.array(z.string().min(1).max(PLAN_ID_MAX)).max(PLANS_MAX).optional(),
   mentions: z.array(mentionSchema).max(MENTIONS_MAX).optional(),
+  skipped: leftOutSchema.optional(),
 }) satisfies z.ZodType<RequestContext>;
 
 // The body of a recalculation: the changed input, and where the asker is now or why that is not sent.
@@ -363,6 +380,8 @@ export const recalculationSchema = z.strictObject({
   locationMissing: locationMissingSchema,
   // What the app draws, as the chat request says it: `plan-set` sets a meeting aside here too.
   clientCapabilities: z.array(z.enum(CLIENT_CAPABILITIES)).max(CLIENT_CAPABILITIES.length).default([]),
+  // The conversation's Classes left out, as the chat request sends them: the plan of any kind leaves those of its day out.
+  skipped: leftOutSchema.optional(),
 });
 
 export type Recalculation = z.infer<typeof recalculationSchema>;

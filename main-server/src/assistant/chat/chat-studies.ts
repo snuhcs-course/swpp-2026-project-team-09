@@ -57,8 +57,8 @@ export function withStudies(
   );
 }
 
-// The 관정도서관 rules: with a study answer, "공부할 자리" asked without a booking is planStudy's; with the answer
-// together, studying together is planStudyGroup's.
+// The 관정도서관 rules: with a study answer, "공부할 자리" asked with no 관정 named and no booking is planStudy's; with
+// the answer together, studying together is planStudyGroup's.
 export function libraryRulesOf({ drawsAnswers, drawsStudy, drawsStudyGroup }: StudyDrawing): string {
   if (!drawsAnswers) {
     return LIBRARY_RULES;

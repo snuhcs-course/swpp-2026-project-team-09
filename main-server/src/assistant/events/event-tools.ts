@@ -3,12 +3,15 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { EVENT_IDS_MAX, type EventsInput, type Plan } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
+import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { othersText } from '../others-text.js';
 import { type EventsPlanService } from './events-plan.service.js';
@@ -41,6 +44,7 @@ const input = z.object({
     .describe(
       'Only these Global Events, as searchGlobalEvents returned them in this message, when the User asked for a kind of event. Left out for every event of the day.',
     ),
+  ...skipParameters,
 });
 
 export function planEvents(plans: EventsPlanService): Tool {
@@ -48,22 +52,30 @@ export function planEvents(plans: EventsPlanService): Tool {
     description:
       "Plans the campus events (Global Events) of a day the User can attend between their Classes and Quests, from today to a week ahead. The server decides when they arrive, how long they can stay, and when they must leave, the longest stay first and those that clash with a Class last, and the app draws the plans on the map. Answers result 'planned' with the plans in order, each with its title, place, arrive, stayMinutes, leaveBy, and clash, or result 'none' with the reason.",
     input,
-    run: async ({ date, eventIds }, { userId, now, context, found, presented }) => {
+    run: async (args, { userId, now, context, found, presented }) => {
+      const { date, eventIds } = args;
       if (outOfReach(date, now)) {
         return outOfReachDay(date, presented);
       }
       found.refuseUnfound('globalEvent', eventIds ?? []);
+      const skip = await skipFor(plans.classesOn, { userId, date, context, presented }, args);
+      if ('result' in skip) {
+        return skip;
+      }
       const planInput: EventsInput = { kind: 'events', date, eventIds: eventIds ?? null };
-      const { answer, planning } = await plans.planned(userId, planInput, { now, location: context.location });
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      const at = { now, location: context.location, skipped: skip.skipped };
+      const { answer, planning } = await plans.planned(userId, planInput, at);
+      presentAnswer(presented, answer);
       if (answer.noPlan !== null) {
-        return noneFound('No event of that day can be attended between the User’s Classes and Quests.');
+        return {
+          ...noneFound('No event of that day can be attended between the User’s Classes and Quests.'),
+          ...skip.said,
+        };
       }
       return {
         result: 'planned',
         plans: answer.plans.map((plan, index) => planWords(plan, planning.plans[index]?.clash ?? null)),
+        ...skip.said,
       };
     },
   });

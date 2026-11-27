@@ -17,7 +17,13 @@
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type AnswerReply, type Lookup, type ReplyStep, type RequestContext } from './dto/answer.dto.js';
+import {
+  type AnswerReply,
+  type LeftOutClass,
+  type Lookup,
+  type ReplyStep,
+  type RequestContext,
+} from './dto/answer.dto.js';
 import { type ReplyOffer } from './dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
@@ -136,6 +142,8 @@ export interface Presented {
   // A request for another plan, or another request, ended with nothing drawn: the plan on screen leaves it (P05 ticket
   // 55). Left out when the reply may be about the plan on screen.
   clears?: true;
+  // The conversation's Classes left out, once a tool of the run left one out or put one back (P05 ticket 70).
+  leftOut?: LeftOutClass[];
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.

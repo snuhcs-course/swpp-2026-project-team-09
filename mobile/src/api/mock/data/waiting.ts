@@ -4,9 +4,10 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { QuestInvitation } from '@/api/waiting-types';
+import type { KeptNotification, QuestInvitation } from '@/api/waiting-types';
 import { frameTime } from './frame';
 
 // What waits for the User in the `Profile` frame's 알림 besides the Friend Requests, which `../friendships.ts` keeps:
@@ -30,5 +31,28 @@ export const QUEST_INVITATIONS: QuestInvitation[] = [
       createdAt: frameTime('10:10'),
     },
     sentAt: frameTime('10:15'),
+  },
+];
+
+// The Notifications the main server keeps for the User: 김민준's answers to the User's requests to join, one accepted
+// into the AI 커리어 설명회 party the User holds and one declined from the board's 알고리즘 코테 스터디.
+export const KEPT_NOTIFICATIONS: KeptNotification[] = [
+  {
+    id: 'join-accepted:party:q-ai',
+    kind: 'join-accepted',
+    title: '참여 신청이 수락됐어요',
+    ahead: null,
+    line: 'AI 커리어 설명회 · 김민준님의 파티',
+    at: frameTime('11:20'),
+    url: '/main?card=party:q-ai',
+  },
+  {
+    id: 'join-declined:find-parties:post-1',
+    kind: 'join-declined',
+    title: '참여 신청이 거절됐어요',
+    ahead: null,
+    line: '알고리즘 코테 스터디 · 김민준님의 파티',
+    at: frameTime('10:40'),
+    url: '/main?card=find-parties:post-1',
   },
 ];
