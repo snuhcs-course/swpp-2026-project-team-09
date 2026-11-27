@@ -4,7 +4,6 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { readFileSync } from 'node:fs';
 import { APP_SEAT_NAMES, appNameOf, appTitleOf } from '../src/assistant/library/app-names.js';
 import { CATALOGUE_FILE, type Catalogue, readCatalogue } from '../src/assistant/library/catalogue.js';
 
@@ -12,12 +11,21 @@ import { CATALOGUE_FILE, type Catalogue, readCatalogue } from '../src/assistant/
 // over the seat card of 8층 정숙 열람실 was answered with the library's "8A 열람실 1 구역(QUIET ZONE)".
 
 let catalogue: Catalogue;
+// The app's own `shortName`, read from the module, so that how its file is laid out does not matter.
+let appShortName: (space: { id: string; name: string }) => unknown;
+
+const APP_FILE = new URL('../../mobile/src/library/cards/seat-rooms.ts', import.meta.url);
 
 beforeAll(async () => {
   catalogue = await readCatalogue(CATALOGUE_FILE);
+  // A path computed at run time, so that the types of the app, with its own aliases, stay out of this project's.
+  const app: unknown = await import(APP_FILE.href);
+  const shortName: unknown = app !== null && typeof app === 'object' ? Reflect.get(app, 'shortName') : undefined;
+  if (typeof shortName !== 'function') {
+    throw new TypeError(`${APP_FILE.pathname} exports no shortName`);
+  }
+  appShortName = (space): unknown => Reflect.apply(shortName, undefined, [space]);
 });
-
-const APP_FILE = new URL('../../mobile/src/library/cards/seat-rooms.ts', import.meta.url);
 
 const spaceOf = (id: string): Parameters<typeof appTitleOf>[0] => {
   const space = catalogue.byId.get(id);
@@ -28,13 +36,13 @@ const spaceOf = (id: string): Parameters<typeof appTitleOf>[0] => {
 };
 
 describe("The app's names of 관정관's spaces", () => {
-  it("are the short names of the app's seat card, mobile/src/library/cards/seat-rooms.ts", () => {
-    const source = readFileSync(APP_FILE, 'utf8');
-    const names = Object.fromEntries(
-      [...source.matchAll(/^ {2}'([0-9A-Za-z-]+)': \{ short: '([^']+)'/gmu)].map(([, id, short]) => [id, short]),
-    );
+  it("are the short names the app's seat card gives every seat space of the catalogue", () => {
+    const seats = catalogue.spaces.filter(({ unit }) => unit === 'seat');
+    const app = Object.fromEntries(seats.map(({ id, name }) => [id, appShortName({ id, name })]));
+    const ours = Object.fromEntries(seats.map(({ id, name }) => [id, APP_SEAT_NAMES[id] ?? name]));
 
-    expect(names).toEqual(APP_SEAT_NAMES);
+    expect(app).toEqual(ours);
+    expect(Object.keys(APP_SEAT_NAMES).every((id) => id in app)).toBe(true);
   });
 
   it("call a seat space by the app's name with its floor, never by the sector", () => {
@@ -47,11 +55,5 @@ describe("The app's names of 관정관's spaces", () => {
 
   it("keep the catalogue's label for a room", () => {
     expect(appTitleOf(spaceOf('4F-group-6'))).toBe('관정 4층 6인실');
-  });
-
-  it('name every seat space of the catalogue', () => {
-    const seats = catalogue.spaces.filter(({ id }) => id in APP_SEAT_NAMES);
-
-    expect(seats).toHaveLength(Object.keys(APP_SEAT_NAMES).length);
   });
 });
