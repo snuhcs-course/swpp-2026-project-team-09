@@ -87,7 +87,7 @@ describe('The room of studying together once everyone has consented', () => {
     );
     expect(library.writes()).toHaveLength(1);
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/result`).map(({ body }) => body)).toEqual([
-      { ok: true },
+      { ok: true, room: FIRST_FREE },
     ]);
     expect(inFrame().getByText(`${FIRST_FREE} 예약되었어요!`)).toBeVisible();
   });
@@ -166,6 +166,22 @@ describe('The room of studying together once booked', () => {
     expect(screen.queryByTestId('room-use-line')).toBeNull();
     expect(screen.queryByText('요청 취소')).toBeNull();
     expect(screen.queryByRole('button', { name: '동의 요청 보내기' })).toBeNull();
+  });
+});
+
+// Partition: the card shown again once booked, on a phone that did not book (P10 ticket 25). Expected value: the room the
+// library booked, as the request carries it (P05 ticket 68), not the room the card would choose.
+describe('The room of studying together booked, shown again', () => {
+  it('locks its ticket on the room the request says was booked', async () => {
+    await readyToBook();
+    server.on(`GET /library/room-requests/${REQUEST_ID}`, {
+      status: 200,
+      body: { ...requestOf(['consented', 'consented', 'consented'], 0, 'booked'), bookedRoom: 'G409' },
+    });
+    await pass(3500);
+
+    expect(inFrame().getByTestId('room-ticket-room')).toHaveTextContent('G409', { exact: false });
+    expect(inFrame().getByTestId('room-ticket-room')).toBeDisabled();
   });
 });
 

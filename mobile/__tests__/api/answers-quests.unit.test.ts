@@ -225,6 +225,22 @@ describe('isQuest with its room request', () => {
   );
 });
 
+// The room the library booked for the Quest's booking party (P05 ticket 68, P10 ticket 25): main-server's README.
+describe('isQuest with its booked room', () => {
+  checks(
+    isQuest,
+    [
+      ['none, from a main server before it', QUEST],
+      ['none, null while nothing is booked', { ...QUEST, bookedRoom: null }],
+      ['the room the library booked', { ...QUEST, bookedRoom: 'G412' }],
+    ],
+    [
+      ['a room not a text', { ...QUEST, bookedRoom: 412 }],
+      ['an empty room', { ...QUEST, bookedRoom: '' }],
+    ],
+  );
+});
+
 describe('isQuests', () => {
   checks(
     isQuests,
