@@ -13,7 +13,7 @@ import {
   conversationAnswersOf,
   withRecalculated,
 } from '@/features/assistant/conversation-answers';
-import { chosenOnReply, firstSeenIndex, stepIdOf } from '@/features/assistant/step-choice';
+import { chosenOnReply, firstSeenIndex, renamedChoice, stepIdOf } from '@/features/assistant/step-choice';
 import { dueStepOf, type ShownSteps, type StepsNow } from '@/features/assistant/steps-scene';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -25,7 +25,7 @@ import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 
 // What became of a step's answer on screen: recalculated (`answer`, null when it is the reply's), and the plan last on;
 // `from` is the key it had when the reply gave it, and `after` the reply it was kept after.
-interface Kept {
+export interface Kept {
   from: string;
   answer: AnswerReply | null;
   index: number;
@@ -58,17 +58,21 @@ const givenAgain = (bubbles: readonly ChatBubble[], kept: Kept, key: string): bo
       id > kept.after && answers.some((answer) => answer.key === kept.from || answer.key === key),
   );
 
-// The conversation's answers with each recalculation on screen in its place, unless a later reply gave it again.
-function recalculatedConversation(
-  given: ConversationAnswers,
+// What is kept of each step's answer, less what a later reply gave again: the main server's answer is then newer, and
+// it opens as that reply opens it (TaeHyun79's review of #725).
+export function keptOnScreen(
   kept: ReadonlyMap<string, Kept>,
   bubbles: readonly ChatBubble[],
-): ConversationAnswers {
+): ReadonlyMap<string, Kept> {
+  const stale = [...kept].filter(([key, one]) => givenAgain(bubbles, one, key));
+  return stale.length === 0 ? kept : new Map([...kept].filter(([key, one]) => !givenAgain(bubbles, one, key)));
+}
+
+// The conversation's answers with each recalculation on screen in its place.
+function recalculatedConversation(given: ConversationAnswers, kept: ReadonlyMap<string, Kept>): ConversationAnswers {
   return [...kept].reduce(
-    (conversation, [key, one]) =>
-      one.answer === null || givenAgain(bubbles, one, key)
-        ? conversation
-        : withRecalculated(conversation, one.from, one.answer),
+    (conversation, [, one]) =>
+      one.answer === null ? conversation : withRecalculated(conversation, one.from, one.answer),
     given,
   );
 }
@@ -105,7 +109,7 @@ function useChoice(
   steps: ShownSteps | null,
   bubbles: readonly ChatBubble[],
   keyed: boolean,
-): { choice: Choice; activeStep: number; setActiveStep: (index: number) => void } {
+): { choice: Choice; activeStep: number; setActiveStep: (index: number) => void; rename: Rename } {
   const of = bubbles[0]?.id ?? null;
   const [choice, setChoice] = useState<Choice>(() => noChoice(of));
   const held = choice.of === of ? choice : noChoice(of);
@@ -131,8 +135,13 @@ function useChoice(
     },
     [steps],
   );
-  return { choice: current, activeStep, setActiveStep };
+  const rename = useCallback<Rename>((from, to) => {
+    setChoice((last) => renamedChoice(last, from, to));
+  }, []);
+  return { choice: current, activeStep, setActiveStep, rename };
 }
+
+type Rename = (from: string, to: string) => void;
 
 const NOTHING_KEPT: ReadonlyMap<string, Kept> = new Map();
 
@@ -157,8 +166,12 @@ function useKept(of: number | null): [ReadonlyMap<string, Kept>, SetKept] {
 }
 
 // Keeps what the answer on screen became, under the key of the step chosen: under its new key when a recalculation
-// made it another request's.
-function useKeep(chosen: ChosenAnswer | null, bubbles: readonly ChatBubble[], setKept: SetKept): StepAnswer['keep'] {
+// made it another request's, the step chosen moving with it.
+function useKeep(
+  chosen: ChosenAnswer | null,
+  bubbles: readonly ChatBubble[],
+  { setKept, rename }: { setKept: SetKept; rename: Rename },
+): StepAnswer['keep'] {
   return useCallback(
     ({ source, answer, index }) => {
       if (chosen === null || answer === null) {
@@ -166,8 +179,11 @@ function useKeep(chosen: ChosenAnswer | null, bubbles: readonly ChatBubble[], se
       }
       const recalculated = answer === source ? null : answer;
       const key = recalculated?.key ?? chosen.key;
+      if (key !== chosen.key) {
+        rename(chosen.key, key);
+      }
       setKept((last) => {
-        const was = last.get(key);
+        const was = keptOnScreen(last, bubbles).get(key);
         if (was !== undefined && was.answer === recalculated && was.index === index) {
           return last;
         }
@@ -175,7 +191,7 @@ function useKeep(chosen: ChosenAnswer | null, bubbles: readonly ChatBubble[], se
         return new Map(last).set(key, { from, answer: recalculated, index, after: lastReplyId(bubbles) });
       });
     },
-    [chosen, bubbles, setKept],
+    [chosen, bubbles, setKept, rename],
   );
 }
 
@@ -195,25 +211,23 @@ function useKeptOf(kept: ReadonlyMap<string, Kept>, conversation: ConversationAn
 }
 
 export function useStepAnswer(bubbles: readonly ChatBubble[], replied: ShownSteps | null): StepAnswer {
-  const [kept, setKept] = useKept(bubbles[0]?.id ?? null);
-  const conversation = useMemo(
-    () => recalculatedConversation(conversationAnswersOf(bubbles), kept, bubbles),
-    [bubbles, kept],
-  );
+  const [all, setKept] = useKept(bubbles[0]?.id ?? null);
+  const kept = useMemo(() => keptOnScreen(all, bubbles), [all, bubbles]);
+  const conversation = useMemo(() => recalculatedConversation(conversationAnswersOf(bubbles), kept), [bubbles, kept]);
   const keyed = conversation.answers.some(({ key }) => key !== undefined);
   const steps = useMemo(
     () =>
       replied === null || conversation.steps === null || !keyed ? replied : { ...replied, steps: conversation.steps },
     [replied, conversation.steps, keyed],
   );
-  const { choice, activeStep, setActiveStep } = useChoice(steps, bubbles, keyed);
+  const { choice, activeStep, setActiveStep, rename } = useChoice(steps, bubbles, keyed);
   const active = steps?.steps[activeStep];
   const answerKey = (active === undefined ? null : keyOf(active)) ?? choice.answerKey ?? firstKeyOf(steps);
   const chosen = useMemo(
     () => (keyed && answerKey !== null ? chosenOf(answerKey, conversation, kept, bubbles) : null),
     [keyed, answerKey, conversation, kept, bubbles],
   );
-  const keep = useKeep(chosen, bubbles, setKept);
+  const keep = useKeep(chosen, bubbles, { setKept, rename });
   const keptOf = useKeptOf(kept, conversation);
   return { steps, conversation, activeStep, setActiveStep, chosen, keep, keptOf };
 }
@@ -236,7 +250,7 @@ function chosenOf(
   if (given === undefined || shown === undefined) {
     return null;
   }
-  return { key, source: given, answer: shown, index: one?.index ?? firstSeenIndex };
+  return { key, source: given, answer: shown, index: one?.index ?? null };
 }
 
 // Each step's answer as now drawn, for the steps as they stand (`liveStepsOf`): the step chosen at the answer on screen,

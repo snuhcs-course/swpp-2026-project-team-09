@@ -4,8 +4,8 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen, type userEvent, within } from '@testing-library/react-native';
-import type { AssistantReply } from '@/api/assistant-types';
+import { fireEvent, screen, type userEvent, within } from '@testing-library/react-native';
+import type { AnswerReply, AssistantReply } from '@/api/assistant-types';
 import { severalAnswersReplyTo } from '@/api/mock/data/several-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -126,5 +126,84 @@ describe('The steps of lunch and dinner', () => {
     expect(screen.getByRole('button', { name: /^2번 /u })).toBeSelected();
     expect(bandWords()).toHaveTextContent(new RegExp(DINNER_BAND, 'u'));
     expect(bandWords()).not.toHaveTextContent(new RegExp(LUNCH_BAND, 'u'));
+  });
+});
+
+// TaeHyun79's review of #725: what is kept of a step gives way to the main server's newer answer, and moves with its key.
+// The main server answers the words again, or a recalculation of dinner, as these tests set it.
+
+async function askAgain(user: User, reply: AssistantReply): Promise<void> {
+  server.on('POST /assistant/messages', { status: 200, body: reply, afterMs: 100 });
+  await user.type(screen.getByLabelText(AI_INPUT), WORDS);
+  await user.press(screen.getByRole('button', { name: '보내기' }));
+  await pass(500);
+}
+
+function dinnerOf(reply: AssistantReply): AnswerReply {
+  const dinner = reply.answers?.[1];
+  if (dinner === undefined) {
+    throw new Error('No dinner in the stored reply');
+  }
+  return dinner;
+}
+
+// Dinner recalculated half an hour later, under `key`, as the main server answers a moved band.
+function laterDinner(key: string | undefined): AnswerReply {
+  const dinner = dinnerOf(twoMeals());
+  const [first] = dinner.plans;
+  if (first === undefined) {
+    throw new Error('No dinner plan');
+  }
+  const plan = {
+    ...first,
+    startAt: first.startAt.replace('17:00', '17:30'),
+    endAt: first.endAt.replace('18:00', '18:30'),
+  };
+  return { ...dinner, key, plans: dinner.plans.with(0, plan) };
+}
+
+// A drag of dinner's end, which asks the main server to plan dinner again.
+async function moveDinner(answer: AnswerReply): Promise<void> {
+  server.on('POST /assistant/answers', { status: 200, body: answer });
+  await fireEvent(screen.getByRole('adjustable', { name: '끝 시각' }), 'accessibilityAction', {
+    nativeEvent: { actionName: 'increment' },
+  });
+  await pass(1000);
+}
+
+// Partitions: a later reply over a plan browsed; a later reply over a recalculation; a recalculation under a new key.
+describe('A step of lunch and dinner kept on screen', () => {
+  it('opens an answer a later reply gave again at its first plan, not at the plan browsed before', async () => {
+    const user = await asked(twoMeals());
+    await choose(user, 2);
+    await user.press(within(screen.getByTestId('plan-stepper')).getByLabelText('다음 후보'));
+    await pass(300);
+    expect(screen.getByTestId('plan-count')).toHaveTextContent('2/3');
+
+    await askAgain(user, twoMeals());
+    await choose(user, 2);
+
+    expect(screen.getByTestId('plan-count')).toHaveTextContent('1/3');
+  });
+
+  it('draws a step at the answer a later reply gave again, not at its recalculation before', async () => {
+    const user = await asked(twoMeals());
+    await choose(user, 2);
+    await moveDinner(laterDinner(dinnerOf(twoMeals()).key));
+    expect(screen.getByRole('button', { name: /^2번 저녁 17:30–18:30/u })).toBeOnTheScreen();
+    await choose(user, 1);
+
+    await askAgain(user, twoMeals());
+
+    expect(screen.getByRole('button', { name: /^2번 저녁 17:00–18:00/u })).toBeOnTheScreen();
+  });
+
+  it('stays on a step whose answer a recalculation gave another key', async () => {
+    const user = await asked(twoMeals());
+    await choose(user, 2);
+
+    await moveDinner(laterDinner('meal 2026-10-07 dinner together'));
+
+    expect(screen.getByRole('button', { name: /^2번 저녁 17:30–18:30/u })).toBeSelected();
   });
 });

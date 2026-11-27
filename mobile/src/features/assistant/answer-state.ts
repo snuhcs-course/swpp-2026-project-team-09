@@ -32,7 +32,9 @@ export interface ChosenAnswer {
   key: string;
   source: AnswerReply;
   answer: AnswerReply;
-  index: number;
+  // The plan the User was last on in it; null for one not browsed since the reply that gave it, which opens as that
+  // reply opens it (TaeHyun79's review of #725).
+  index: number | null;
 }
 
 export interface AnswerState extends Shown {
@@ -66,7 +68,7 @@ export type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 
 // A new reply's answer on screen: at its first Plan, at a menu question's Restaurant with its menu open (P04 ticket
 // 72), or at the plan the reply chose in words, such as for a dish picked from the menus (P05 ticket 51).
-// The answer of a step chosen is its own, at the plan the User was last on in it (P03 ticket 21).
+// The answer of a step chosen is its own, at the plan the User was last on in it (P03 ticket 21), else as above.
 function fresh(reply: ChatBubble | undefined, epoch: number, step: ChosenAnswer | null = null): AnswerState {
   const given = step?.source ?? reply?.answer ?? null;
   const source = given === null ? null : offeredAnswer(given);
@@ -74,7 +76,8 @@ function fresh(reply: ChatBubble | undefined, epoch: number, step: ChosenAnswer 
   const opened = openedIndex(source);
   const chosen = source?.plans.findIndex(({ id }) => id === reply?.select) ?? -1;
   const last = Math.max((answer?.plans.length ?? 0) - 1, 0);
-  const index = step === null ? Math.max(opened >= 0 ? opened : chosen, 0) : Math.min(step.index, last);
+  const own = step === null || step.index === null;
+  const index = own ? Math.max(opened >= 0 ? opened : chosen, 0) : Math.min(step.index ?? 0, last);
   return {
     replyId: reply?.id ?? null,
     key: step?.key ?? null,
@@ -91,7 +94,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number, step: ChosenAnswer 
     recalculating: false,
     pendingAdd: null,
     moving: null,
-    menu: step === null && opened >= 0,
+    menu: own && opened >= 0,
     epoch,
     newest: reply?.id ?? 0,
   };
