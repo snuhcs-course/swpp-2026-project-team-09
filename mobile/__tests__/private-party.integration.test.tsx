@@ -3,6 +3,8 @@
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
@@ -49,8 +51,7 @@ function expectPresetToMinJun(): void {
   expect(shownAddress()).toBe('/party-form?friendId=f1');
   expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
   expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
-  expect(screen.getByRole('checkbox', { name: '김민준' })).toBeChecked();
-  expect(screen.getByText('1명에게 요청')).toBeVisible();
+  expect(screen.getByRole('button', { name: '친구 초대 김민준' })).toBeVisible();
 }
 
 describe('파티 만들기 from a Friend', () => {
@@ -73,7 +74,8 @@ describe('파티 만들기 from a Friend', () => {
 
   it('makes the 비공개 파티 once it has a title, and invites the Friend', async () => {
     const user = await openFromPanel();
-    expect(screen.getAllByRole('button', { name: '파티 만들기' }).at(-1)).toBeDisabled();
+    await answer(user, '파티 만들기');
+    expect(screen.getByText('제목을 입력해 주세요')).toBeVisible();
 
     await user.type(screen.getByLabelText('제목'), '저녁 같이');
     await answer(user, '파티 만들기');

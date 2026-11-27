@@ -10,6 +10,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -18,7 +19,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import {
   Badge,
   Button,
-  Chip,
   color,
   ErrorState,
   font,
@@ -51,9 +51,9 @@ function leaveRoom(): void {
   }
 }
 
-// The badges, the title, a Closed Quest's text, and the tags under it.
+// The badges, the title, and a Closed Quest's text.
 function Head({ room }: { room: RoomView }): ReactElement {
-  const { text: description, tags } = room;
+  const { text: description } = room;
   return (
     <View style={styles.head}>
       <View style={styles.badges}>
@@ -69,13 +69,6 @@ function Head({ room }: { room: RoomView }): ReactElement {
       {description === '' ? null : (
         <View style={styles.quote}>
           <Text style={styles.quoteWords}>{description}</Text>
-        </View>
-      )}
-      {tags.length === 0 ? null : (
-        <View accessibilityLabel="태그" style={styles.tags}>
-          {tags.map((tag) => (
-            <Chip key={tag}>{tag}</Chip>
-          ))}
         </View>
       )}
     </View>
@@ -268,6 +261,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSubtle,
   },
   quoteWords: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.ink },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
 });

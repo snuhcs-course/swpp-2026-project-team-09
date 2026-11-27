@@ -9,6 +9,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,7 +23,6 @@ import { useToast } from '@/design-system';
 import {
   attendingTitleOf,
   changeOf,
-  entriesChangeOf,
   makingOf,
   meetingOf,
   type PartyForm,
@@ -52,9 +52,9 @@ function toastOf(form: PartyForm, editing: boolean, invited: number, missed: num
   return missed === 0 ? main : `${main} · ${String(missed)}명은 초대하지 못했어요`;
 }
 
-// An edit: the Quest's fields, what the phone keeps, then the time and place of its plan.
+// An edit: the Quest's fields, then the time and place of its plan.
 async function change(quest: ShownQuest, form: PartyForm, plan: PlanChange | null): Promise<void> {
-  const fields = { ...changeOf(quest, form), ...entriesChangeOf(quest, form) };
+  const fields = changeOf(quest, form);
   if (Object.keys(fields).length > 0) {
     await apiClient.changeQuest(quest.id, fields);
   }
@@ -89,8 +89,8 @@ export type Sent = 'taken' | 'refused' | 'room';
 // moves on: the form, or the chat's Proposal card.
 export type Sending = { sent: 'refused'; toast: string } | { sent: 'taken' | 'room'; questId: string; toast: string };
 
-// Sends the form: makes the Quest, for an event by attending it, or changes it, then invites the chosen Friends. The
-// photo and the tags go with it, and the phone keeps them. It shows nothing and goes nowhere.
+// Sends the form: makes the Quest, for an event by attending it, or changes it, then invites the chosen Friends. It
+// shows nothing and goes nowhere.
 export function useSendParty(
   quest: ShownQuest | null,
 ): (form: PartyForm, friends: readonly string[], plan: PlanChange | null) => Promise<Sending> {
@@ -104,18 +104,15 @@ export function useSendParty(
   return async (form, friends, plan) => {
     let questId: string;
     let attended: Quest | null = null;
-    const entries = { photo: form.photo, tags: form.tags };
     try {
       if (quest !== null) {
         await change(quest, form, plan);
         questId = quest.id;
       } else if (form.event === null) {
-        questId = (
-          await making(form, () => apiClient.makeQuest({ ...makingOf(form), ...entries }, newIdempotencyKey()))
-        ).id;
+        questId = (await making(form, () => apiClient.makeQuest(makingOf(form), newIdempotencyKey()))).id;
       } else {
         const eventId = form.event.id;
-        attended = await making(form, () => apiClient.attendGlobalEvent(eventId, attendingTitleOf(form), entries));
+        attended = await making(form, () => apiClient.attendGlobalEvent(eventId, attendingTitleOf(form)));
         questId = attended.id;
       }
     } catch (error) {

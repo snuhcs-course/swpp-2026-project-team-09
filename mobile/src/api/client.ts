@@ -22,6 +22,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -353,12 +354,11 @@ export const apiClient: ShownClient = {
   listQuestRemovals: () => chosen().listQuestRemovals(),
   withdrawJoinRequest: (requestId) => chosen().withdrawJoinRequest(requestId),
   makeQuest: (making, key) => chosen().makeQuest(making, key),
-  attendGlobalEvent: (globalEventId, title, entries) => chosen().attendGlobalEvent(globalEventId, title, entries),
+  attendGlobalEvent: (globalEventId, title) => chosen().attendGlobalEvent(globalEventId, title),
   changeQuest: (questId, change) => chosen().changeQuest(questId, change),
   inviteToQuest: (questId, userId) => chosen().inviteToQuest(questId, userId),
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
-  listMyTags: () => chosen().listMyTags(),
   listPastQuests: (me) => chosen().listPastQuests(me),
   listOfficialRecruiting: () => chosen().listOfficialRecruiting(),
   joinOfficialRecruiting: (recruitingId) => chosen().joinOfficialRecruiting(recruitingId),

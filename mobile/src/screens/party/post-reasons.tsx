@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -18,8 +19,7 @@ function Reason({ label, children }: { label: string; children: ReactNode }): Re
   );
 }
 
-// 파티 모집글's 추천 이유: the shared tags, whether the User's timetable leaves the time free, and the Friends among the
-// members.
+// 파티 모집글's 추천 이유: whether the User's timetable leaves the time free, and the Friends among the members.
 export function PostReasons({ reasons }: { reasons: Reasons }): ReactElement {
   return (
     <View accessibilityLabel="추천 이유" style={styles.reasons}>
@@ -27,15 +27,6 @@ export function PostReasons({ reasons }: { reasons: Reasons }): ReactElement {
         <Icon color={color.snuBlue} name="info" size={16} />
         <Text style={styles.title}>추천 이유</Text>
       </View>
-      <Reason label="관심사">
-        {reasons.tags.length === 0 ? (
-          <Text style={styles.muted}>겹치는 관심사 없음</Text>
-        ) : (
-          <Text style={styles.words}>
-            <Text style={styles.shared}>{reasons.tags.map((tag) => `#${tag}`).join(' ')}</Text>가 내 관심사와 겹쳐요
-          </Text>
-        )}
-      </Reason>
       <Reason label="시간대">
         <Text style={styles.words}>{reasons.time}</Text>
       </Reason>
@@ -56,6 +47,4 @@ const styles = StyleSheet.create({
   label: { width: 44, fontFamily: font.semiBold, fontSize: 13, lineHeight: 22, color: color.inkMuted },
   body: { flex: 1, justifyContent: 'center' },
   words: { fontFamily: font.regular, fontSize: 13, lineHeight: 22, color: color.ink },
-  muted: { fontFamily: font.regular, fontSize: 13, lineHeight: 22, color: color.inkMuted },
-  shared: { fontFamily: font.bold, color: color.snuBlue },
 });

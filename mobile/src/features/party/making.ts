@@ -12,7 +12,7 @@
 
 import type { QuestProposal } from '@/api/assistant-types';
 import type { QuestChange, QuestMaking } from '@/api/party-types';
-import type { QuestEntries, QuestPhoto, ShownQuest } from '@/api/quest-parts-types';
+import type { ShownQuest } from '@/api/quest-parts-types';
 import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
 import type { Board, GlobalEvent, Quest, SubQuest } from '@/api/types';
 
@@ -35,9 +35,6 @@ export interface PartyForm {
   startsAt: string | null;
   place: SubQuestPlace | undefined;
   event: FormEvent | null;
-  // `사진` and `태그`, which the phone keeps. Tags without '#'.
-  photo: QuestPhoto | null;
-  tags: string[];
 }
 
 export const MIN_CAPACITY = 1;
@@ -64,8 +61,6 @@ export function emptyForm(): PartyForm {
     startsAt: null,
     place: undefined,
     event: null,
-    photo: null,
-    tags: [],
   };
 }
 
@@ -85,7 +80,7 @@ function eventPlace(event: GlobalEvent): SubQuestPlace | undefined {
 // The form a Proposal of the Assistant's fills: 공개 with 바로 참여 for an Open Quest and 승인 후 참여 for an Approval
 // one, 비공개 for a Closed one, with its Place, else its event's place, and its event with who announced it, as the
 // form's picker gives it. The time is the Proposal's: the event's start, or a meeting before it. The Friends to invite
-// are the Proposal's `invitees`, which the form keeps apart; it has no photo or tags.
+// are the Proposal's `invitees`, which the form keeps apart.
 export function proposalForm(proposal: QuestProposal, announcers: readonly Announcer[] = []): PartyForm {
   const { title, description, joinPolicy, board, capacity, startsAt, place, globalEvent } = proposal;
   const event =
@@ -106,26 +101,13 @@ export function proposalForm(proposal: QuestProposal, announcers: readonly Annou
   };
 }
 
-// "AI 커리어 설명회 같이 가요": the title an event gives.
-export function eventTitle(event: Pick<GlobalEvent, 'title'>): string {
-  return `${event.title} 같이 가요`;
-}
-
-// A chosen event gives its title, unless the User wrote one of their own, and its start, which `언제` may move to a
-// meeting before it. An edit keeps its title: the event only fills the time and the place. Taking the event away
-// leaves the title.
+// A chosen event gives its start, which `언제` may move to a meeting before it, and leaves the title to the User.
+// Taking the event away clears the time, except in an edit.
 export function withEvent(form: PartyForm, event: FormEvent | null, editing = false): PartyForm {
   if (event === null) {
     return { ...form, event, startsAt: editing ? form.startsAt : null };
   }
-  const title = form.title.trim();
-  const given = !editing && (title === '' || (form.event !== null && title === eventTitle(form.event)));
-  return {
-    ...form,
-    event,
-    title: given ? eventTitle(event) : form.title,
-    startsAt: event.startsAt,
-  };
+  return { ...form, event, startsAt: event.startsAt };
 }
 
 function upcoming({ cancelled, ended, done }: SubQuest): boolean {
@@ -158,8 +140,6 @@ export function formOf(quest: ShownQuest, event: FormEvent | null): PartyForm {
     board: quest.board,
     startsAt: shownSubQuest(quest)?.startsAt ?? null,
     event,
-    photo: quest.photo,
-    tags: quest.tags,
   };
 }
 
@@ -169,16 +149,25 @@ export function leastCapacity(holders: number, invited: number, visibility: Visi
   return Math.min(Math.max(Math.max(holders, 1) + invited, leastOf(visibility)), MAX_CAPACITY);
 }
 
-// 파티 올리기 waits for a title, a description and a board; 파티 만들기 for a title and a Friend; 수정 완료 as the
-// first for a public Quest and for a title for a private one.
-export function isReady(form: PartyForm, friends: number, editing: boolean): boolean {
-  if (form.title.trim() === '') {
-    return false;
-  }
+// A required field left empty, which the form marks when its button is pressed.
+export type Missing = 'title' | 'description' | 'board' | 'friends';
+
+// What the form still waits for, in the page's order: 파티 올리기 for a title, a description and a board; 파티 만들기
+// for a title and a Friend; 수정 완료 as the first for a public Quest and for a title for a private one.
+export function missingOf(form: PartyForm, friends: number, editing: boolean): Missing[] {
+  const missing: Missing[] = form.title.trim() === '' ? ['title'] : [];
   if (form.visibility === 'private') {
-    return editing || friends > 0;
+    return editing || friends > 0 ? missing : [...missing, 'friends'];
   }
-  return form.description.trim() !== '' && form.board !== null;
+  return [
+    ...missing,
+    ...(form.description.trim() === '' ? (['description'] as const) : []),
+    ...(form.board === null ? (['board'] as const) : []),
+  ];
+}
+
+export function isReady(form: PartyForm, friends: number, editing: boolean): boolean {
+  return missingOf(form, friends, editing).length === 0;
 }
 
 export function makingOf(form: PartyForm): QuestMaking {
@@ -222,18 +211,6 @@ export function changeOf(quest: Quest, form: PartyForm): QuestChange {
     change.board = wanted.board;
   }
   return change;
-}
-
-function samePhoto(one: QuestPhoto | null, other: QuestPhoto | null): boolean {
-  return JSON.stringify(one) === JSON.stringify(other);
-}
-
-// What the phone keeps that changed against the Quest: the photo and the tags.
-export function entriesChangeOf(quest: ShownQuest, form: PartyForm): Partial<QuestEntries> {
-  return {
-    ...(samePhoto(quest.photo, form.photo) ? {} : { photo: form.photo }),
-    ...(quest.tags.join(' ') === form.tags.join(' ') ? {} : { tags: form.tags }),
-  };
 }
 
 // How many Friends may be invited: the free places.

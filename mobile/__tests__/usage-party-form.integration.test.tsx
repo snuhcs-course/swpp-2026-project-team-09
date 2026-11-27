@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -13,6 +14,7 @@ import { answerEvents, CAREER, MY_CAREER } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { MY_HIKE } from './support/party';
+import { fillPublic, invite } from './support/party-form';
 import { fakePostHog } from './support/posthog';
 import { MIN_JUN_HOLDER } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
@@ -62,13 +64,6 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-async function fillPublic(user: User): Promise<void> {
-  await user.type(screen.getByLabelText('제목'), '보드게임 카페 가실 분');
-  await user.type(screen.getByLabelText('본문'), '룰 몰라도 알려드려요');
-  await user.press(screen.getByRole('button', { name: '게시판 게시판 선택' }));
-  await user.press(screen.getByRole('radio', { name: '취미 게시판' }));
-}
-
 async function send(user: User, name: string): Promise<void> {
   await user.press(screen.getByRole('button', { name }));
   await pass(500);
@@ -91,7 +86,7 @@ it('sends the stages of a private 파티 made', async () => {
   const { user, client } = await openWithUsage(server, '/party-form');
   await user.press(screen.getByRole('radio', { name: '비공개' }));
   await user.type(screen.getByLabelText('제목'), '저녁 같이');
-  await user.press(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name }));
+  await invite(user, [MIN_JUN_HOLDER.name]);
 
   await send(user, '파티 만들기');
 
@@ -121,8 +116,8 @@ it('counts recruiting for a Global Event by attending it', async () => {
   server.on('POST /quests', { status: 201, body: titled });
   server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: titled });
   const { user, client } = await openWithUsage(server, `/party-form?eventId=${CAREER.id}`);
+  await user.type(screen.getByLabelText('제목'), 'AI 커리어 설명회 같이 가요');
   await user.type(screen.getByLabelText('본문'), '설명회 끝나고 저녁도 같이 먹어요');
-  await user.press(screen.getByRole('button', { name: '게시판 게시판 선택' }));
   await user.press(screen.getByRole('radio', { name: '진로 게시판' }));
 
   await send(user, '파티 올리기');

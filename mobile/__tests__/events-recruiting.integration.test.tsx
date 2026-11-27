@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -199,8 +200,8 @@ describe('+ 파티 모집', () => {
     await pass(500);
 
     expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
-    expect(screen.getByTestId('chosen-event')).toHaveTextContent(CAREER.title, { exact: false });
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue(`${CAREER.title} 같이 가요`);
+    expect(screen.getByRole('button', { name: `관련 행사 ${CAREER.title}` })).toBeVisible();
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('');
   });
 
   it('opens the room of the Quest the User already shares for the event', async () => {

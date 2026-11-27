@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { TimetableClass } from '@/api/types';
@@ -26,11 +27,11 @@ const CLASSES: TimetableClass[] = [
   },
 ];
 
-function post(questId: string, tags: string[], place = '자하연'): PostView {
+function post(questId: string, description = '', place = '자하연'): PostView {
   return {
     questId,
     title: `제목 ${questId}`,
-    description: '',
+    description,
     leader: { id: 'l', name: '최유나', department: '디자인학부' },
     event: null,
     board: 'hobby',
@@ -44,8 +45,6 @@ function post(questId: string, tags: string[], place = '자하연'): PostView {
     members: '최유나',
     createdAt: '2026-10-01T00:00:00.000Z',
     role: { kind: 'open' },
-    photo: null,
-    tags,
     faces: [],
     friends: [],
   };
@@ -80,22 +79,16 @@ describe('시간대', () => {
 });
 
 describe('찾기’s order', () => {
-  const posts = [post('a', ['저녁']), post('b', ['러닝', '운동']), post('c', ['러닝', '재즈']), post('d', [])];
+  const posts = [post('a', '저녁 먹어요'), post('b', '천천히 러닝'), post('c', '재즈 공연 가요'), post('d')];
 
-  it('puts more shared tags first and keeps the given order otherwise', () => {
-    const found = findPosts(posts, { search: '', myTags: ['러닝', '재즈'], hidden: [] });
-
-    expect(found.map(({ questId }) => questId)).toEqual(['c', 'b', 'a', 'd']);
+  it('keeps the order given', () => {
+    expect(findPosts(posts, { search: '', hidden: [] }).map(({ questId }) => questId)).toEqual(['a', 'b', 'c', 'd']);
   });
 
-  it('leaves out the hidden posts and those the search misses', () => {
-    expect(findPosts(posts, { search: '', myTags: [], hidden: ['a', 'c'] }).map(({ questId }) => questId)).toEqual([
-      'b',
-      'd',
-    ]);
-    expect(findPosts(posts, { search: '#재즈', myTags: [], hidden: [] }).map(({ questId }) => questId)).toEqual(['c']);
-    expect(
-      findPosts([post('e', [], '버들골 (100동) 입구')], { search: '버들 골', myTags: [], hidden: [] }),
-    ).toHaveLength(1);
+  it('leaves out the hidden posts and those the search of the title, the text and the place misses', () => {
+    expect(findPosts(posts, { search: '', hidden: ['a', 'c'] }).map(({ questId }) => questId)).toEqual(['b', 'd']);
+    expect(findPosts(posts, { search: '#재즈', hidden: [] }).map(({ questId }) => questId)).toEqual(['c']);
+    expect(findPosts(posts, { search: '제목 d', hidden: [] }).map(({ questId }) => questId)).toEqual(['d']);
+    expect(findPosts([post('e', '', '버들골 (100동) 입구')], { search: '버들 골', hidden: [] })).toHaveLength(1);
   });
 });

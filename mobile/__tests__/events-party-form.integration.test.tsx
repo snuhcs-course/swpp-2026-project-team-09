@@ -43,9 +43,10 @@ let server: FakeServer;
 
 type User = Awaited<ReturnType<typeof openAt>>;
 
-async function fillRecruiting(user: User): Promise<void> {
+// The event leaves the title to the User.
+async function fillRecruiting(user: User, title = 'AI 커리어 설명회 같이 가요'): Promise<void> {
+  await user.type(screen.getByLabelText('제목'), title);
   await user.type(screen.getByLabelText('본문'), '설명회 끝나고 저녁도 같이 먹어요');
-  await user.press(screen.getByRole('button', { name: '게시판 게시판 선택' }));
   await user.press(screen.getByRole('radio', { name: '진로 게시판' }));
 }
 
@@ -67,13 +68,13 @@ describe('the event picker', () => {
   it('says in its search field what the search reads', async () => {
     const user = await openAt('/party-form');
 
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
     expect(screen.getByLabelText('행사 검색')).toHaveProp('placeholder', '제목·장소·내용 검색');
   });
 
   it("opens a row's sheet over the picker, without choosing it: 원문 보기 and 이 행사 추가, no party button", async () => {
     const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
 
     await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
 
@@ -90,9 +91,9 @@ describe('the event picker', () => {
     expect(screen.getByRole('button', { name: `행사 · ${CAREER.title}` })).not.toBeSelected();
   });
 
-  it('marks the chosen event when it opens again, and its sheet says 선택됨, which takes no press, in place of 이 행사 추가', async () => {
+  it('marks the chosen event when it opens again, and its sheet offers 행사 빼기 in place of 이 행사 추가', async () => {
     const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
     await pickEvent(user, CAREER);
 
     await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
@@ -101,59 +102,42 @@ describe('the event picker', () => {
     expect(screen.getByRole('button', { name: `행사 · ${CAREER.title}` })).toBeSelected();
     expect(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` })).not.toBeSelected();
     await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
-    expect(screen.getByRole('button', { name: '선택됨' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: '이 행사 추가' })).toBeNull();
-    await user.press(screen.getByRole('button', { name: '선택됨' }));
-    expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '행사 빼기' }));
+
+    expect(screen.queryByRole('header', { name: '관련 행사 고르기' })).toBeNull();
+    expect(screen.getByRole('button', { name: '관련 행사 고르기' })).toBeVisible();
   });
 });
 
 describe('관련 행사', () => {
-  it('chooses an event with its sheet’s 이 행사 추가, which fills the form with its title, time and place and adds no tags, and 행사 빼기 leaves the title', async () => {
+  it('chooses an event with its sheet’s 이 행사 추가, which fills the form with its time and place and leaves the title empty', async () => {
     const user = await openAt('/party-form');
 
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
     expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
     await pickEvent(user, CAREER);
 
     expect(screen.queryByRole('header', { name: '관련 행사 고르기' })).toBeNull();
-    expect(screen.getByTestId('chosen-event')).toHaveTextContent(`${CAREER.title}오늘 18:00–20:00 · 301동 대강당`);
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue('AI 커리어 설명회 같이 가요');
-    expect(screen.getByLabelText('제목')).toBeEnabled();
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
+    expect(screen.getByRole('button', { name: `관련 행사 ${CAREER.title}` })).toBeVisible();
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('');
+    expect(screen.getByRole('button', { name: '어디서 301동 대강당' })).toBeVisible();
     expect(screen.getByRole('button', { name: '언제 오늘 18:00' })).toBeVisible();
-    for (const tag of ['#진로', '#AI', '#커리어']) {
-      expect(screen.queryByRole('button', { name: tag, selected: true })).toBeNull();
-    }
-
-    await user.press(screen.getByRole('button', { name: '행사 빼기' }));
-    expect(screen.getByRole('button', { name: '관련 행사 선택' })).toBeVisible();
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue('AI 커리어 설명회 같이 가요');
   });
 
-  it('replaces the title an event gave when another is chosen', async () => {
+  it('keeps a title of the User’s when another event is chosen or the event is taken out', async () => {
     const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await pickEvent(user, CAREER);
-
-    await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
-    await pickEvent(user, MAJOR);
-
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue(`${MAJOR.title} 같이 가요`);
-  });
-
-  it('keeps a title of the User’s when another event is chosen', async () => {
-    const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await pickEvent(user, CAREER);
-
-    await user.clear(screen.getByLabelText('제목'));
     await user.type(screen.getByLabelText('제목'), '설명회 같이 가요');
-    await user.press(screen.getByRole('button', { name: '행사 빼기' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
+    await pickEvent(user, CAREER);
+
+    await user.press(screen.getByRole('button', { name: `관련 행사 ${CAREER.title}` }));
+    await pickEvent(user, MAJOR);
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('설명회 같이 가요');
 
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await pickEvent(user, MAJOR);
+    await user.press(screen.getByRole('button', { name: `관련 행사 ${MAJOR.title}` }));
+    await user.press(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
+    await user.press(screen.getByRole('button', { name: '행사 빼기' }));
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('설명회 같이 가요');
   });
 });
@@ -215,9 +199,7 @@ describe('recruiting for an event under a title of the User’s', () => {
     server.on('POST /quests', { status: 201, body: titled });
     server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: titled });
     const user = await openAt(`/party-form?eventId=${CAREER.id}`);
-    await user.clear(screen.getByLabelText('제목'));
-    await user.type(screen.getByLabelText('제목'), '설명회 같이 가요');
-    await fillRecruiting(user);
+    await fillRecruiting(user, '설명회 같이 가요');
 
     await user.press(screen.getByRole('button', { name: '파티 올리기' }));
     await pass(500);
@@ -234,9 +216,7 @@ describe('recruiting for an event under a title of the User’s', () => {
     server.on('POST /quests', { status: 201, body: MY_CAREER });
     server.on(`PATCH /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
     const user = await openAt(`/party-form?eventId=${CAREER.id}`);
-    await user.clear(screen.getByLabelText('제목'));
-    await user.type(screen.getByLabelText('제목'), '설명회 같이 가요');
-    await fillRecruiting(user);
+    await fillRecruiting(user, '설명회 같이 가요');
 
     await user.press(screen.getByRole('button', { name: '파티 올리기' }));
     await pass(500);

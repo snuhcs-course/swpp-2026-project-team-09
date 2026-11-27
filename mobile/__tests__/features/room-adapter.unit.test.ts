@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: Open and Closed Quests, led or not; 활성화's four states; the plan's order, next step and destination;
@@ -47,8 +48,6 @@ function quest(more: Partial<ShownQuest> = {}): ShownQuest {
     board: 'meal',
     description: '학관에서 저녁',
     createdAt: '2026-10-05T09:00:00.000Z',
-    photo: null,
-    tags: ['AI커리어'],
     faces: [],
     ...more,
   };
@@ -87,7 +86,6 @@ describe('toRoom head', () => {
       { label: '내가 만든 파티', tone: 'warning' },
     ]);
     expect(view).toMatchObject({ leads: true, editsPlan: true, hasPost: true, text: '', left: '1자리 남음' });
-    expect(view.tags).toEqual(['#AI커리어']);
   });
 
   it('a Closed Quest for a Global Event that another leads → the count, 비공개, the Event, its text in the room', () => {

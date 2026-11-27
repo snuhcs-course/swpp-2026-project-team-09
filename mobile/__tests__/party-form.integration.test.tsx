@@ -6,6 +6,8 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Keyboard } from 'react-native';
@@ -18,6 +20,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answer, MIN_JUN_HOLDER, SEO_YEON_HOLDER, toast, toastIcon } from './support/room';
 import { answerParty, MY_HIKE, openAt } from './support/party';
+import { invite } from './support/party-form';
 import { askMainServer, PHONE_NOW } from './support/server';
 
 // 파티 만들기 in public and in private, and its edit mode, against the fake main server.
@@ -57,7 +60,6 @@ async function openForm(): Promise<User> {
 async function fillPublic(user: User): Promise<void> {
   await user.type(screen.getByLabelText('제목'), '보드게임 카페 가실 분');
   await user.type(screen.getByLabelText('본문'), '룰 몰라도 알려드려요');
-  await user.press(screen.getByRole('button', { name: '게시판 게시판 선택' }));
   await user.press(screen.getByRole('radio', { name: '취미 게시판' }));
 }
 
@@ -79,23 +81,28 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('a public 파티', () => {
-  it('waits for a title, a description and a board', async () => {
+describe('the required fields of a public 파티', () => {
+  it('sends nothing until it has a title, a description and a board', async () => {
     const user = await openForm();
 
     expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
-    expect(submit('파티 올리기')).toBeDisabled();
     await user.type(screen.getByLabelText('제목'), '보드게임');
     await user.type(screen.getByLabelText('본문'), '같이 해요');
-    expect(screen.getByText('5/200')).toBeVisible();
-    expect(submit('파티 올리기')).toBeDisabled();
-    await user.press(screen.getByRole('button', { name: '게시판 게시판 선택' }));
+    await user.press(submit('파티 올리기'));
+    await pass(500);
+    expect(server.received('POST /quests/own')).toEqual([]);
+    expect(screen.getByText('게시판을 골라 주세요')).toBeVisible();
     await user.press(screen.getByRole('radio', { name: '취미 게시판' }));
 
-    expect(screen.getByRole('button', { name: '게시판 취미 게시판' })).toBeVisible();
-    expect(submit('파티 올리기')).toBeEnabled();
+    expect(screen.getByRole('radio', { name: '취미 게시판' })).toBeChecked();
+    expect(screen.queryByText('게시판을 골라 주세요')).toBeNull();
+    await user.press(submit('파티 올리기'));
+    await pass(500);
+    expect(server.received('POST /quests/own')).toHaveLength(1);
   });
+});
 
+describe('a public 파티', () => {
   it('posts it with a fresh Idempotency-Key, invites the Friends chosen and shows 내 파티', async () => {
     const user = await openForm();
     await fillPublic(user);
@@ -103,9 +110,10 @@ describe('a public 파티', () => {
     await user.press(screen.getByText('승인 후 참여'));
     await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
     await user.press(screen.getByRole('button', { name: '확인' }));
-    await user.press(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name }));
-    await user.press(screen.getByRole('checkbox', { name: SEO_YEON_HOLDER.name }));
-    expect(screen.getByText('2명에게 요청')).toBeVisible();
+    await invite(user, [MIN_JUN_HOLDER.name, SEO_YEON_HOLDER.name]);
+    expect(
+      screen.getByRole('button', { name: `친구 초대 ${MIN_JUN_HOLDER.name}, ${SEO_YEON_HOLDER.name}` }),
+    ).toBeVisible();
 
     await user.press(submit('파티 올리기'));
     await pass(500);
@@ -139,12 +147,13 @@ describe('어디서, typed', () => {
     ['서울대입구역', { label: '서울대입구역' }],
   ])('posts %j as the Place it names, or as the words alone', async (words, place) => {
     server.on('GET /places', { status: 200, body: [ENGINEERING] });
+    server.on('GET /places/search', { status: 200, body: [] });
     const user = await openForm();
     await fillPublic(user);
 
-    await user.type(screen.getByLabelText('어디서'), words);
-    expect(screen.queryByText('지도에서 위치를 골라 주세요')).toBeNull();
-    expect(submit('파티 올리기')).toBeEnabled();
+    await user.press(screen.getByRole('button', { name: '어디서 장소 검색' }));
+    await user.type(screen.getByLabelText('장소 검색'), words);
+    await user.press(screen.getByRole('button', { name: `‘${words}’ 그대로 쓰기` }));
     await user.press(submit('파티 올리기'));
     await pass(500);
 
@@ -196,11 +205,11 @@ describe('a private 파티', () => {
   it('waits for a title and a Friend, and is made Closed for its 인원 without a board', async () => {
     const user = await openForm();
     await user.press(screen.getByRole('radio', { name: '비공개' }));
-    expect(screen.getByText('초대한 친구만 볼 수 있어요')).toBeVisible();
-    expect(screen.getByText('1명 이상')).toBeVisible();
     await user.type(screen.getByLabelText('제목'), '저녁 같이');
-    expect(submit('파티 만들기')).toBeDisabled();
-    await user.press(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name }));
+    await user.press(submit('파티 만들기'));
+    await pass(500);
+    expect(server.received('POST /quests/own')).toEqual([]);
+    await invite(user, [MIN_JUN_HOLDER.name]);
     await user.press(screen.getByRole('button', { name: '인원 늘리기' }));
 
     await user.press(submit('파티 만들기'));
@@ -219,7 +228,7 @@ describe('a private 파티', () => {
   it('opens from a Friend as 비공개 with the Friend chosen, and invites the Friend once made', async () => {
     const user = await openAt(`/party-form?friendId=${MIN_JUN_HOLDER.id}`);
     expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name })).toBeChecked();
+    expect(screen.getByRole('button', { name: `친구 초대 ${MIN_JUN_HOLDER.name}` })).toBeVisible();
     await user.type(screen.getByLabelText('제목'), '저녁 같이');
 
     await user.press(submit('파티 만들기'));
@@ -243,7 +252,7 @@ describe('the edit mode', () => {
     await user.clear(screen.getByLabelText('제목'));
     await user.type(screen.getByLabelText('제목'), '관악산 등산');
     await user.press(screen.getByText('승인 후 참여'));
-    await user.press(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name }));
+    await invite(user, [MIN_JUN_HOLDER.name]);
     await answer(user, '수정 완료');
 
     expect(server.received(`PATCH /quests/${MY_HIKE.id}`)[0]?.body).toEqual({

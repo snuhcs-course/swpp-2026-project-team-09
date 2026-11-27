@@ -18,9 +18,9 @@ import { startFresh } from './support/mocks';
 import { cardName, openAt } from './support/party';
 import { answer, toast } from './support/room';
 
-// 찾기 and 파티 모집글 against the mocks, which show every mocked part: official recruiting, tags, hiding a post and
-// the people looking for company (P06 ticket 03). The stand-in photos, tags and faces stay off the cards and the 모집글
-// (ticket 12). The mock's clock stands at the frame's Thursday, 1 October 2026, 13:37.
+// 찾기 and 파티 모집글 against the mocks, which show every mocked part: official recruiting, hiding a post and the
+// people looking for company (P06 ticket 03). The stand-in faces stay off the cards and the 모집글 (ticket 12), and a
+// 파티 has no photo or tags at all (ticket 34). The mock's clock stands at the frame's Thursday, 1 October 2026, 13:37.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -128,14 +128,14 @@ describe('the banner where nobody sees it', () => {
 });
 
 describe('모집 중인 파티', () => {
-  it('puts the posts that share the User’s tags first', async () => {
+  it('keeps the posts in the order given, the newest first', async () => {
     await openAt('/party');
 
     const titles = screen
       .getAllByText(new RegExp(`^(${RUN}|${DINNER})$`, 'u'))
       .map(({ props }) => String(props.children));
-    // 샤로수길 was posted after 버들골, and shares no tag with the User.
-    expect(titles).toEqual([RUN, DINNER]);
+    // 샤로수길 was posted after 버들골, which shared more tags with the User when tags ordered the posts.
+    expect(titles).toEqual([DINNER, RUN]);
   });
 
   it('shows no photo, faces or tags on a card', async () => {
@@ -147,8 +147,10 @@ describe('모집 중인 파티', () => {
     expect(run.queryByText('최유나 외 2명 · 친구 1명 포함')).toBeNull();
     expect(run.queryByText('#러닝')).toBeNull();
   });
+});
 
-  it('searches the place and the tags as well as the title and the text', async () => {
+describe('찾기’s search', () => {
+  it('searches the place, the title and the text, and no tags', async () => {
     const user = await openAt('/party');
     await user.press(screen.getByRole('button', { name: '파티 검색' }));
 
@@ -160,8 +162,18 @@ describe('모집 중인 파티', () => {
     await user.type(screen.getByLabelText('파티 검색어'), '#보드게임');
     expect(screen.getByText('보드게임 카페 가실 분')).toBeVisible();
     expect(screen.queryByText(CODING)).toBeNull();
-  });
 
+    // A tag the stand-ins once gave 알고리즘 코테 스터디, in none of its words.
+    await user.clear(screen.getByLabelText('파티 검색어'));
+    await user.type(screen.getByLabelText('파티 검색어'), '#코딩테스트');
+    expect(screen.queryByText(CODING)).toBeNull();
+    await user.clear(screen.getByLabelText('파티 검색어'));
+    await user.type(screen.getByLabelText('파티 검색어'), '백준');
+    expect(screen.getByText(CODING)).toBeVisible();
+  });
+});
+
+describe('관심 없음', () => {
   it('hides a post with 관심 없음 once asked, and keeps it on the phone', async () => {
     const user = await openAt('/party');
 
@@ -197,7 +209,7 @@ describe('같이 할 사람을 찾는 중', () => {
 });
 
 describe('파티 모집글', () => {
-  it('shows 추천 이유, without the stand-in photo, tag badges and faces', async () => {
+  it('shows 추천 이유 without 관심사, and no photo, tag badges or faces', async () => {
     await openAt('/post/post-0');
 
     expect(screen.queryByLabelText(/^사진/u)).toBeNull();
@@ -205,16 +217,17 @@ describe('파티 모집글', () => {
     expect(screen.queryByText('#운동')).toBeNull();
     expect(screen.queryAllByRole('image', { name: /^(서하린|강민재)$/u })).toEqual([]);
     const reasons = within(screen.getByLabelText('추천 이유'));
-    expect(reasons.getByText('#러닝가 내 관심사와 겹쳐요')).toBeVisible();
+    expect(reasons.queryByText('관심사')).toBeNull();
+    expect(reasons.queryByText(/내 관심사와 겹쳐요$/u)).toBeNull();
     expect(reasons.getByText('오늘 수업이 11:00에 끝나서 19:30에 비어 있어요.')).toBeVisible();
     expect(reasons.getByText('친구 최유나님이 모집했어요.')).toBeVisible();
   });
 
-  it('says when no interest is shared, and leaves out 친구 without a Friend', async () => {
+  it('says nothing of interests, and leaves out 친구 without a Friend', async () => {
     await openAt('/post/post-3');
 
     const reasons = within(screen.getByLabelText('추천 이유'));
-    expect(reasons.getByText('겹치는 관심사 없음')).toBeVisible();
+    expect(reasons.queryByText('겹치는 관심사 없음')).toBeNull();
     expect(reasons.getByText('오늘 수업이 11:00에 끝나서 18:30에 비어 있어요.')).toBeVisible();
     expect(reasons.queryByText('친구')).toBeNull();
   });

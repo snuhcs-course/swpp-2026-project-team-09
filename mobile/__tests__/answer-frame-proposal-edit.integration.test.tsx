@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -133,12 +134,6 @@ function bodies(route: string): unknown[] {
   return server.received(route).map(({ body }) => body);
 }
 
-// No photo and no tag chosen, as in a new 파티.
-function expectNoPhotoOrTags(): void {
-  expect(screen.queryByTestId('photo-preview')).toBeNull();
-  expect(screen.queryAllByRole('button', { name: /^#/u, selected: true })).toEqual([]);
-}
-
 describe('수정 on a Proposal of a 공개 파티', () => {
   it('opens the party form with every field filled in', async () => {
     await edited(LUNCH);
@@ -148,14 +143,12 @@ describe('수정 on a Proposal of a 공개 파티', () => {
     expect(screen.getByLabelText('본문')).toHaveDisplayValue(LUNCH.description);
     expect(screen.getByRole('button', { name: '언제 내일 12:00' })).toBeVisible();
     expect(screen.getByText('5명')).toBeVisible();
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('학생회관');
+    expect(screen.getByRole('button', { name: '어디서 학생회관' })).toBeVisible();
     expect(screen.getByRole('radio', { name: '공개' })).toBeChecked();
-    expect(screen.getByRole('button', { name: '승인 후 참여' })).toBeSelected();
-    expect(screen.getByRole('button', { name: '게시판 식사 게시판' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '관련 행사 선택' })).toBeVisible();
-    expect(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: SEO_YEON_HOLDER.name })).not.toBeChecked();
-    expectNoPhotoOrTags();
+    expect(screen.getByRole('radio', { name: '승인 후 참여' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '식사 게시판' })).toBeChecked();
+    expect(screen.getByRole('button', { name: '관련 행사 고르기' })).toBeVisible();
+    expect(screen.getByRole('button', { name: `친구 초대 ${MIN_JUN_HOLDER.name}` })).toBeVisible();
   });
 
   it('makes the Quest at the Place and invites the Friend, as the form filled by hand does', async () => {
@@ -185,17 +178,13 @@ describe('수정 on a Proposal of a 비공개 파티 for an event', () => {
     await edited(CLOSED);
 
     expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
-    expect(screen.queryByRole('button', { name: /^게시판/u })).toBeNull();
-    expect(screen.getByTestId('chosen-event')).toHaveTextContent(CAREER.title, { exact: false });
+    expect(screen.queryByRole('radio', { name: /게시판$/u })).toBeNull();
+    expect(screen.getByRole('button', { name: `관련 행사 ${CAREER.title}` })).toBeVisible();
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(CLOSED.title);
     expect(screen.getByRole('button', { name: '언제 오늘 17:00' })).toBeVisible();
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
+    expect(screen.getByRole('button', { name: '어디서 301동 대강당' })).toBeVisible();
     expect(screen.getByText('4명')).toBeVisible();
-    expect(screen.getByRole('checkbox', { name: SEO_YEON_HOLDER.name })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: YU_NA.name })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name })).not.toBeChecked();
-    expect(screen.queryByRole('checkbox', { name: '한가람' })).toBeNull();
-    expectNoPhotoOrTags();
+    expect(screen.getByRole('button', { name: `친구 초대 ${SEO_YEON_HOLDER.name}, ${YU_NA.name}` })).toBeVisible();
   });
 
   it('attends the event, sets the Quest, meets before it and invites the Friends still Friends', async () => {

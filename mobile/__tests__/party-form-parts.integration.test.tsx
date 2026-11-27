@@ -7,36 +7,22 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { font } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { pass, screen } from './support/app';
+import { screen } from './support/app';
 import { BOOK_TALK, CAREER, MAJOR, pickEvent } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { MY_HIKE, openAt } from './support/party';
-import { answerForm, FESTIVAL, fillPublic, permission, PHOTO_URI, submit } from './support/party-form';
-import { toast, toastIcon } from './support/room';
+import { openAt } from './support/party';
+import { answerForm, FESTIVAL } from './support/party-form';
 import { askMainServer, PHONE_NOW } from './support/server';
-import { readQuestEntries } from '@/storage/quest-entries';
 
-// 파티 만들기's 사진, the event picker's list, 태그 and the board sheet, against the fake main server.
+// 파티 만들기's event picker: its list and its rows, against the fake main server.
 
 jest.mock('expo-location');
-jest.mock('expo-image-picker', () => ({
-  PermissionStatus: { GRANTED: 'granted', DENIED: 'denied', UNDETERMINED: 'undetermined' },
-  requestCameraPermissionsAsync: jest.fn(),
-  requestMediaLibraryPermissionsAsync: jest.fn(),
-  launchCameraAsync: jest.fn(),
-  launchImageLibraryAsync: jest.fn(),
-}));
-// The app keeps a picked photo in its documents, here under its own name.
-jest.mock('@/storage/kept-photo', () => ({
-  keepPhoto: jest.fn((uri: string) => Promise.resolve(uri.replace('/photos/', '/documents/quest-photos/'))),
-}));
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
   useMotionAllowed: (): boolean => false,
@@ -52,7 +38,6 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 let server: FakeServer;
 
-const KEPT_URI = PHOTO_URI.replace('/photos/', '/documents/quest-photos/');
 const HIDDEN = { includeHiddenElements: true };
 const LONG_TITLE = '제147회 규장각 콜로키엄 | 147th Kyujanggak Colloquium';
 const LONG_PLACE = '서울대학교 규장각한국학연구원(103동) 1-44호 & Zoom 온라인 회의실(전날 이메일로 접속 안내 예정)';
@@ -81,74 +66,12 @@ function shownEvents(): string[] {
   return screen.getAllByRole('button', { name: /^행사 · /u }).map(({ props }) => String(props.accessibilityLabel));
 }
 
-describe('사진', () => {
-  it('asks for the camera only when 카메라 is pressed, shows the photo, and 사진 빼기 takes it away', async () => {
-    const user = await openAt('/party-form');
-    expect(ImagePicker.requestCameraPermissionsAsync).not.toHaveBeenCalled();
-
-    await user.press(screen.getByRole('button', { name: '카메라' }));
-    await pass(0);
-
-    expect(ImagePicker.requestCameraPermissionsAsync).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('photo-preview')).toHaveProp('source', { uri: KEPT_URI });
-    expect(screen.queryByRole('button', { name: '앨범' })).toBeNull();
-
-    await user.press(screen.getByRole('button', { name: '사진 빼기' }));
-    expect(screen.queryByTestId('photo-preview')).toBeNull();
-    expect(screen.getByRole('button', { name: '카메라' })).toBeVisible();
-  });
-
-  it('keeps the album’s photo on the phone with the Quest, asking for no permission, and sends the main server none', async () => {
-    const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '앨범' }));
-    await pass(0);
-    expect(ImagePicker.requestMediaLibraryPermissionsAsync).not.toHaveBeenCalled();
-    await fillPublic(user);
-
-    await user.press(submit('파티 올리기'));
-    await pass(500);
-
-    expect(server.received('POST /quests/own')[0]?.body).not.toHaveProperty('photo');
-    expect((await readQuestEntries())[MY_HIKE.id]?.photo).toEqual({
-      kind: 'picked',
-      uri: KEPT_URI,
-      caption: '내가 첨부한 사진',
-    });
-  });
-});
-
-describe('사진 not taken', () => {
-  it('says what to allow when the camera is refused, and opens nothing', async () => {
-    jest.mocked(ImagePicker.requestCameraPermissionsAsync).mockResolvedValue(permission(false));
-    const user = await openAt('/party-form');
-
-    await user.press(screen.getByRole('button', { name: '카메라' }));
-    await pass(0);
-
-    expect(toast()).toHaveTextContent('카메라를 쓸 수 있게 해 주세요');
-    expect(ImagePicker.launchCameraAsync).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('photo-preview')).toBeNull();
-  });
-
-  it('says so when the photo cannot be taken from the album', async () => {
-    jest.mocked(ImagePicker.launchImageLibraryAsync).mockRejectedValue(new Error('No picker'));
-    const user = await openAt('/party-form');
-
-    await user.press(screen.getByRole('button', { name: '앨범' }));
-    await pass(0);
-
-    expect(toast()).toHaveTextContent('사진을 가져오지 못했어요. 다시 시도해 주세요');
-    expect(toastIcon()).toBe('alert');
-    expect(screen.queryByTestId('photo-preview')).toBeNull();
-  });
-});
-
 describe('the event picker', () => {
   // The main server lists them by their start, which the 행사 tab keeps.
   it('lists every event in one list, as the 행사 tab orders them, without tabs, and the search finds across them', async () => {
     server.on('GET /global-events', { status: 200, body: [CAREER, MAJOR, FESTIVAL, BOOK_TALK] });
     const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
 
     for (const name of ['진로', '이벤트', '축제']) {
       expect(screen.queryByRole('tab', { name })).toBeNull();
@@ -162,19 +85,17 @@ describe('the event picker', () => {
     expect(shownEvents()).toEqual([`행사 · ${FESTIVAL.title}`]);
   });
 
-  it('fills the title, the place and the time from a festival, adds no tags, and shows no kind over the title', async () => {
+  it('fills the place and the time from a festival, leaves the title empty, and shows no kind over the event', async () => {
     const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
     await pickEvent(user, FESTIVAL);
 
-    const chosen = within(screen.getByTestId('chosen-event'));
-    expect(chosen.getByText(FESTIVAL.title)).toBeVisible();
-    expect(chosen.queryByText('축제')).toBeNull();
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue('가을 축제 개막 공연 같이 가요');
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('버들골 풍산마당');
-    expect(screen.getByRole('button', { name: /^언제 10월 9일/u })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '#축제', selected: true })).toBeNull();
-    expect(screen.queryByRole('button', { name: '#공연', selected: true })).toBeNull();
+    const box = within(screen.getByTestId('plan-box'));
+    expect(box.getByRole('button', { name: `관련 행사 ${FESTIVAL.title}` })).toBeVisible();
+    expect(box.queryByText('축제')).toBeNull();
+    expect(screen.getByLabelText('제목')).toHaveDisplayValue('');
+    expect(box.getByRole('button', { name: '어디서 버들골 풍산마당' })).toBeVisible();
+    expect(box.getByRole('button', { name: /^언제 10월 9일/u })).toBeVisible();
   });
 });
 
@@ -190,7 +111,7 @@ describe('a row of the event picker', () => {
     });
     const user = await openAt('/party-form');
 
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
 
     const career = screen.getByRole('button', { name: `행사 · ${LONG_TITLE}` });
     const row = within(career);
@@ -214,54 +135,12 @@ describe('a row of the event picker', () => {
   // The picker has no ☆: only the chosen row keeps its words clear of its check.
   it("keeps room on the right only for the chosen row's check", async () => {
     const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
     await pickEvent(user, CAREER);
 
     await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
 
     expect(rowWords(CAREER)).toHaveStyle({ paddingRight: 32 });
     expect(rowWords(MAJOR)).not.toHaveStyle({ paddingRight: 32 });
-  });
-});
-
-describe('태그', () => {
-  it('offers the User’s tags, takes one typed after #, and keeps the chosen ones on the phone', async () => {
-    const user = await openAt('/party-form');
-    expect(screen.getByRole('button', { name: '#러닝' })).not.toBeSelected();
-    expect(screen.getByRole('button', { name: '#재즈' })).not.toBeSelected();
-
-    await user.press(screen.getByRole('button', { name: '#러닝' }));
-    await user.press(screen.getByRole('button', { name: '직접 입력' }));
-    expect(screen.getByRole('button', { name: '추가' })).toBeDisabled();
-    await user.type(screen.getByLabelText('태그 직접 입력'), '#보드 게임');
-    await user.press(screen.getByRole('button', { name: '추가' }));
-
-    expect(screen.getByRole('button', { name: '#러닝' })).toBeSelected();
-    expect(screen.getByRole('button', { name: '#보드게임' })).toBeSelected();
-    expect(screen.getByLabelText('태그 직접 입력')).toHaveDisplayValue('');
-
-    await fillPublic(user);
-    await user.press(submit('파티 올리기'));
-    await pass(500);
-
-    expect(server.received('POST /quests/own')[0]?.body).not.toHaveProperty('tags');
-    expect((await readQuestEntries())[MY_HIKE.id]?.tags).toEqual(['러닝', '보드게임']);
-  });
-});
-
-describe('the board sheet', () => {
-  it('counts each board’s posts and finds a board by its name', async () => {
-    const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '게시판 게시판 선택' }));
-
-    expect(within(screen.getByRole('radio', { name: '식사 게시판' })).getByText('모집글 0')).toBeVisible();
-    expect(within(screen.getByRole('radio', { name: '진로 게시판' })).getByText('모집글 1')).toBeVisible();
-    expect(within(screen.getByRole('radio', { name: '취미 게시판' })).getByText('모집글 1')).toBeVisible();
-    expect(within(screen.getByRole('radio', { name: '공연 게시판' })).getByText('모집글 1')).toBeVisible();
-
-    await user.type(screen.getByLabelText('게시판 검색'), '취미');
-    expect(screen.getByRole('radio', { name: '취미 게시판' })).toBeVisible();
-    expect(screen.queryByRole('radio', { name: '식사 게시판' })).toBeNull();
-    expect(screen.queryByRole('radio', { name: '진로 게시판' })).toBeNull();
   });
 });

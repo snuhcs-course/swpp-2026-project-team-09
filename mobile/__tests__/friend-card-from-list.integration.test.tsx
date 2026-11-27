@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -185,6 +186,6 @@ describe('파티 만들기 on the card', () => {
 
     expect(shownAddress()).toBe(`/party-form?friendId=${friend.id}`);
     expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: friend.name })).toBeChecked();
+    expect(screen.getByRole('button', { name: `친구 초대 ${friend.name}` })).toBeVisible();
   });
 });

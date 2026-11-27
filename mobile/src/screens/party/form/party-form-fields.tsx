@@ -5,226 +5,248 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Chip, color, font, Icon, radius, space, TextField } from '@/design-system';
-import { boardName } from '@/features/party/boards';
+import type { ReactElement, ReactNode, Ref } from 'react';
+import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { Board } from '@/api/types';
+import { color, eventText, font, Icon, type IconName, radius, space } from '@/design-system';
+import { BOARDS } from '@/features/party/boards';
 import { MAX_CAPACITY, type PartyForm, type Visibility, withVisibility } from '@/features/party/making';
-import { BoardSheet } from './board-sheet';
-import { FieldHead, FieldIcon } from './field-head';
+import { LineIcon, type LineIconName } from '../line-icon';
+import { MarkLine, markStyles, Required } from './mark';
+import { SmallToggle, StepButton } from './small-controls';
+
+// '파티 설정', changed in place: 인원, 공개 범위, and under 공개 참여 방식 and 게시판, then 친구 초대, the one that opens a
+// sheet. A press here drops the keyboard, as a press anywhere outside the title and the text does.
 
 type Change = (change: Partial<PartyForm>) => void;
 
-const DESCRIPTION_MOST = 200;
-
-export function DescriptionField({ form, onChange }: { form: PartyForm; onChange: Change }): ReactElement {
-  return (
-    <TextField
-      helper={`${String(form.description.length)}/${String(DESCRIPTION_MOST)}`}
-      label="본문"
-      labelIcon={<FieldIcon name="lines" />}
-      maxLength={DESCRIPTION_MOST}
-      multiline
-      onChangeText={(description) => {
-        onChange({ description });
-      }}
-      placeholder="내용"
-      value={form.description}
-    />
-  );
+function changing(onChange: Change, change: Partial<PartyForm>): void {
+  Keyboard.dismiss();
+  onChange(change);
 }
 
-function StepButton({ icon, label, onPress, disabled }: StepButtonProps): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.step, disabled && styles.stepOff]}
-    >
-      <Icon color={disabled ? color.inkSubtle : color.snuBlue} name={icon} size={20} />
-    </Pressable>
-  );
-}
-
-interface StepButtonProps {
-  icon: 'minus' | 'plus';
+interface RowProps {
+  icon: LineIconName;
   label: string;
-  onPress: () => void;
-  disabled: boolean;
+  required?: boolean;
+  // At the row's right.
+  children?: ReactNode;
 }
 
-interface CapacityFieldProps {
-  form: PartyForm;
-  // 2 under 공개, and the Holders now and the Friends invited: `인원` goes no lower.
-  least: number;
-  onChange: Change;
-}
-
-// `인원`: a stepper up to 8, from 2 under 공개 and 1 under 비공개, and from the Holders and the Friends invited.
-export function CapacityField({ form, least, onChange }: CapacityFieldProps): ReactElement {
-  const { capacity } = form;
+// A row of 52: the icon, the name and what changes it.
+function Row({ icon, label, required = false, children }: RowProps): ReactElement {
   return (
-    <View style={styles.field}>
-      <FieldHead icon="users" label="인원" />
-      <View style={styles.stepper}>
-        <StepButton
-          disabled={capacity <= least}
-          icon="minus"
-          label="인원 줄이기"
-          onPress={() => {
-            onChange({ capacity: capacity - 1 });
-          }}
-        />
-        <Text style={styles.count}>{`${String(capacity)}명`}</Text>
-        <StepButton
-          disabled={capacity >= MAX_CAPACITY}
-          icon="plus"
-          label="인원 늘리기"
-          onPress={() => {
-            onChange({ capacity: capacity + 1 });
-          }}
-        />
-      </View>
+    <View style={styles.row}>
+      <LineIcon name={icon} size={ICON} tint={color.ink} />
+      <Text style={styles.label}>
+        {label}
+        {required ? <Required /> : null}
+      </Text>
+      {children}
     </View>
   );
 }
 
-const VISIBILITY: readonly { key: Visibility; label: string; icon: 'users' | 'lock' }[] = [
+interface CapacityProps {
+  form: PartyForm;
+  // 2 under 공개, and the Holders now and the Friends invited: `인원` goes no lower.
+  least: number;
+  // Why `인원` goes no lower, said at the floor.
+  floor: string | null;
+  onChange: Change;
+}
+
+// `인원`: a small stepper up to 8, and at its floor the reason in a grey line.
+export function CapacityRow({ form, least, floor, onChange }: CapacityProps): ReactElement {
+  const { capacity } = form;
+  const atFloor = capacity <= least;
+  return (
+    <View style={styles.block}>
+      <Row icon="users" label="인원">
+        <View style={styles.stepper}>
+          <StepButton
+            disabled={atFloor}
+            icon="minus"
+            label="인원 줄이기"
+            onPress={() => {
+              changing(onChange, { capacity: capacity - 1 });
+            }}
+          />
+          <Text style={styles.count}>{`${String(capacity)}명`}</Text>
+          <StepButton
+            disabled={capacity >= MAX_CAPACITY}
+            icon="plus"
+            label="인원 늘리기"
+            onPress={() => {
+              changing(onChange, { capacity: capacity + 1 });
+            }}
+          />
+        </View>
+      </Row>
+      {atFloor && floor !== null ? <Text style={styles.under}>{floor}</Text> : null}
+    </View>
+  );
+}
+
+const VISIBILITY: readonly { key: Visibility; label: string; icon: IconName }[] = [
   { key: 'public', label: '공개', icon: 'users' },
   { key: 'private', label: '비공개', icon: 'lock' },
 ];
 
-// `공개 범위`, and under 공개 the Join Policy's chips. Choosing 공개 raises `인원` to its least.
-export function VisibilityField({ form, onChange }: { form: PartyForm; onChange: Change }): ReactElement {
-  const open = form.visibility === 'public';
+const POLICIES: readonly { key: PartyForm['policy']; label: string }[] = [
+  { key: 'open', label: '바로 참여' },
+  { key: 'approval', label: '승인 후 참여' },
+];
+
+// `공개 범위`, and under 공개 `참여 방식` on an indented row. Choosing 공개 raises `인원` to its least.
+export function VisibilityRows({ form, onChange }: { form: PartyForm; onChange: Change }): ReactElement {
   return (
-    <View style={styles.field}>
-      <FieldHead hint={open ? '찾기에 올라가요' : '초대한 친구만 볼 수 있어요'} icon="eye" label="공개 범위" />
-      <View accessibilityRole="radiogroup" style={styles.radios}>
-        {VISIBILITY.map(({ key, label, icon }) => {
-          const on = form.visibility === key;
-          return (
-            <Pressable
-              accessibilityLabel={label}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
-              key={key}
-              onPress={() => {
-                onChange(withVisibility(form, key));
-              }}
-              style={[styles.radio, on && styles.radioOn]}
-            >
-              <Icon color={on ? color.snuBlue : color.inkMuted} name={icon} size={18} />
-              <Text style={[styles.radioWords, on && styles.radioWordsOn]}>{label}</Text>
-            </Pressable>
-          );
-        })}
+    <>
+      <View style={styles.block}>
+        <Row icon="eye" label="공개 범위">
+          <SmallToggle
+            label="공개 범위"
+            onSelect={(visibility) => {
+              onChange(withVisibility(form, visibility));
+            }}
+            options={VISIBILITY}
+            selected={form.visibility}
+          />
+        </Row>
       </View>
-      {open ? (
-        <View style={styles.chips}>
-          <Chip
-            onPress={() => {
-              onChange({ policy: 'open' });
+      {form.visibility === 'public' ? (
+        <View style={[styles.block, styles.indented]}>
+          <Text style={styles.subLabel}>참여 방식</Text>
+          <SmallToggle
+            label="참여 방식"
+            onSelect={(policy) => {
+              onChange({ policy });
             }}
-            selected={form.policy === 'open'}
-          >
-            바로 참여
-          </Chip>
-          <Chip
-            onPress={() => {
-              onChange({ policy: 'approval' });
-            }}
-            selected={form.policy === 'approval'}
-          >
-            승인 후 참여
-          </Chip>
+            options={POLICIES}
+            selected={form.policy}
+          />
         </View>
       ) : null}
-    </View>
+    </>
   );
 }
 
-// `게시판`: the button that opens the sheet of boards.
-export function BoardField({ form, onChange }: { form: PartyForm; onChange: Change }): ReactElement {
-  const [picking, setPicking] = useState(false);
-  const words = form.board === null ? '게시판 선택' : boardName(form.board);
+interface BoardProps {
+  board: Board | null;
+  marked: boolean;
+  frameRef: Ref<View>;
+  onChange: Change;
+}
+
+// `게시판`, required under 공개: the four boards at once as pills, in 찾기's filter look.
+export function BoardRow({ board, marked, frameRef, onChange }: BoardProps): ReactElement {
   return (
-    <View style={styles.field}>
-      <FieldHead hint="모집글이 올라갈 곳" icon="clipboard" label="게시판" />
-      <Pressable
-        accessibilityLabel={`게시판 ${words}`}
-        accessibilityRole="button"
-        onPress={() => {
-          setPicking(true);
-        }}
-        style={styles.picker}
-      >
-        <Text style={[styles.pickerWords, form.board === null && styles.unset]}>{words}</Text>
-        <Icon color={color.inkMuted} name="chevronDown" size={18} />
-      </Pressable>
-      <BoardSheet
-        board={form.board}
-        onClose={() => {
-          setPicking(false);
-        }}
-        onPick={(board) => {
-          onChange({ board });
-        }}
-        open={picking}
-      />
+    <View style={styles.block}>
+      <View ref={frameRef} style={[markStyles.frame, marked && markStyles.marked, styles.boardFrame]}>
+        <Row icon="clipboard" label="게시판" required>
+          {marked ? <MarkLine missing="board" /> : null}
+        </Row>
+        <View accessibilityLabel="게시판" accessibilityRole="radiogroup" style={styles.pills}>
+          {BOARDS.map(({ key, name }) => {
+            const on = key === board;
+            return (
+              <Pressable
+                accessibilityLabel={`${name} 게시판`}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                key={key}
+                onPress={() => {
+                  changing(onChange, { board: key });
+                }}
+                style={[styles.pill, on && styles.pillOn]}
+              >
+                <Text style={on ? styles.pillWordsOn : styles.pillWords}>{name}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
     </View>
   );
 }
 
-const HEIGHT = 50;
+interface FriendsProps {
+  // The chosen Friends' names.
+  names: readonly string[];
+  // Under 비공개, which invites at least one Friend.
+  required: boolean;
+  marked: boolean;
+  frameRef: Ref<View>;
+  onOpen: () => void;
+}
+
+// `친구 초대`: the chosen names, or '고르기', and a press that opens its sheet.
+export function FriendsRow({ names, required, marked, frameRef, onOpen }: FriendsProps): ReactElement {
+  const words = names.length === 0 ? '고르기' : names.join(', ');
+  return (
+    <View style={styles.block}>
+      <View ref={frameRef} style={[markStyles.frame, marked && markStyles.marked]}>
+        <Pressable
+          accessibilityLabel={`친구 초대 ${words}`}
+          accessibilityRole="button"
+          onPress={() => {
+            Keyboard.dismiss();
+            onOpen();
+          }}
+        >
+          <Row icon="personPlus" label="친구 초대" required={required}>
+            <Text numberOfLines={1} style={[styles.chosen, names.length === 0 && styles.unset]}>
+              {words}
+            </Text>
+            <Icon color={color.inkSubtle} name="chevronRight" size={16} />
+          </Row>
+        </Pressable>
+        {marked ? (
+          <View style={styles.markUnder}>
+            <MarkLine missing="friends" />
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+const ICON = 18;
+const PILL = 36;
 
 const styles = StyleSheet.create({
-  field: { gap: space[2] },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
-  step: {
-    alignItems: 'center',
+  block: { borderBottomWidth: 1, borderBottomColor: color.border },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52 },
+  label: { flex: 1, fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: color.ink },
+  under: {
+    marginTop: -space[2],
+    paddingBottom: space[2],
+    paddingLeft: ICON + 10,
+    fontFamily: font.regular,
+    fontSize: 12,
+    lineHeight: 16,
+    color: color.inkMuted,
+  },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  count: { minWidth: 32, textAlign: 'center', fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: color.ink },
+  indented: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingLeft: ICON + 10 },
+  subLabel: { flex: 1, fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
+  boardFrame: { paddingBottom: space[3] },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], paddingLeft: ICON + 10 },
+  pill: {
     justifyContent: 'center',
-    width: 44,
-    height: 44,
-    borderWidth: 1,
-    borderColor: color.border,
-    borderRadius: radius.full,
-  },
-  stepOff: { backgroundColor: color.surfaceSubtle },
-  count: { minWidth: 48, textAlign: 'center', fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
-  radios: { flexDirection: 'row', gap: space[2] },
-  radio: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 48,
-    borderWidth: 1,
-    borderColor: color.border,
+    height: PILL,
+    paddingHorizontal: space[4],
     borderRadius: radius.md,
-    backgroundColor: color.surface,
+    backgroundColor: color.surfaceSubtle,
   },
-  radioOn: { borderWidth: 2, borderColor: color.snuBlue, backgroundColor: color.blue50 },
-  radioWords: { fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: color.inkMuted },
-  radioWordsOn: { fontFamily: font.bold, color: color.snuBlue },
-  chips: { flexDirection: 'row', gap: space[2] },
-  picker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: HEIGHT,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: color.border,
-    borderRadius: radius.md,
-    backgroundColor: color.surface,
-  },
-  pickerWords: { fontFamily: font.semiBold, fontSize: 16, lineHeight: 24, color: color.ink },
+  pillOn: { backgroundColor: color.blue100 },
+  pillWords: { ...eventText.filter, fontSize: 15, color: color.inkMuted },
+  pillWordsOn: { ...eventText.filterChosen, fontSize: 15, color: color.snuBlue },
+  chosen: { flexShrink: 1, maxWidth: '50%', fontFamily: font.medium, fontSize: 14, lineHeight: 20, color: color.ink },
   unset: { fontFamily: font.regular, color: color.inkSubtle },
+  markUnder: { paddingBottom: space[2], paddingLeft: ICON + 10 },
 });

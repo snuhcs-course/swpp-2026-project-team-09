@@ -7,6 +7,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
@@ -80,8 +81,6 @@ export interface RoomView {
   hasPost: boolean;
   // The text in the room, for a Closed Quest only: an Open or Approval Quest's is on its post. "" for none.
   text: string;
-  // "#AI커리어"
-  tags: string[];
   destination: RoomDestination | null;
   editsPlan: boolean;
   badges: BadgeView[];
@@ -227,7 +226,6 @@ export function toRoom(sources: RoomSources): RoomView {
     leads,
     hasPost: !closed,
     text: closed ? quest.description : '',
-    tags: quest.tags.map((tag) => `#${tag}`),
     destination: destinationOf(plan),
     editsPlan: editsSubQuests(quest, meId),
     badges: badgesOf(quest, leads),

@@ -1,7 +1,7 @@
 # 34: 파티 만들기 as a preview of its 모집글: title and text typed in place, time, place and event in one box, the settings changed in place, a building search for the place, and no photo or tags
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None to start. The room's tag chips (part 6) wait for ticket 19 (PR 688), which rewrites the room's head where they are.
 
 Native files: none. Releases: an app OTA update only.
@@ -195,14 +195,28 @@ Rows of 52, each with an 18 icon, the label (15 Medium) and a line under it.
 
 ## Acceptance criteria
 
-- [ ] The form opens as the preview: title and text typed in place with no confirm button, the poster row without time words, the box of three rows without labels, '파티 설정', and no 사진 or 태그. (App integration test, which fails before the change.)
-- [ ] The place sheet lists the matching buildings as the User types. The box shows 건물, 지도 or 직접 입력, with the line under 직접 입력, and what is sent is as before. (App integration test, which fails before the change.)
-- [ ] 인원, 공개 범위, 참여 방식 and 게시판 change in place. 비공개 hides 참여 방식 and 게시판. 친구 초대 opens its sheet. (App integration test, which fails before the change.)
-- [ ] With required fields empty, the button marks each in red with its line and sends nothing. (App integration test, which fails before the change.)
-- [ ] Picking an event leaves the title empty. The chosen event's sheet offers 행사 빼기. An edit's event row is locked. (App integration test, which fails before the change.)
-- [ ] No screen shows a 파티 tag or photo. 찾기's search still finds by title, text and place. 추천 이유 has no 관심사 line. (App integration test, which fails before the change.)
-- [ ] The pull request body says why tags and photos went and what bringing them back needs.
+- [x] The form opens as the preview: title and text typed in place with no confirm button, the poster row without time words, the box of three rows without labels, '파티 설정', and no 사진 or 태그. (App integration test, which fails before the change.)
+- [x] The place sheet lists the matching buildings as the User types. The box shows 건물, 지도 or 직접 입력, with the line under 직접 입력, and what is sent is as before. (App integration test, which fails before the change.)
+- [x] 인원, 공개 범위, 참여 방식 and 게시판 change in place. 비공개 hides 참여 방식 and 게시판. 친구 초대 opens its sheet. (App integration test, which fails before the change.)
+- [x] With required fields empty, the button marks each in red with its line and sends nothing. (App integration test, which fails before the change.)
+- [x] Picking an event leaves the title empty. The chosen event's sheet offers 행사 빼기. An edit's event row is locked. (App integration test, which fails before the change.)
+- [x] No screen shows a 파티 tag or photo. 찾기's search still finds by title, text and place. 추천 이유 has no 관심사 line. (App integration test, which fails before the change.)
+- [x] The pull request body says why tags and photos went and what bringing them back needs.
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- A building picked in the search reads as the map view names it, '제2공학관 302동', not the wireframe's '302동 제2공학관', so that a building has one name whichever way it was picked.
+- The badge follows what is sent (`placeKindOf(placeToSend(…))`): a map pick that lands on a listed building is sent as that Place, so it says 건물, not 지도.
+- 친구 초대's sheet keeps its checks until 'n명 초대' (or '완료'). Closed another way, it keeps the Friends chosen before. Its rows are `FriendPicker`'s checked rows, the navy round check, not the wireframe's bare ✓. `FriendPicker` itself stays for the library's '친구 한 명 더 부르기' (`room-ask-more.tsx`); the sheet reuses its exported `FriendRow` and `matchesFriend`.
+- 인원's line at the floor: the invited Friends first, then an edit's members, then 공개's two. 비공개 at 1 has none.
+- The place sheet offers '그대로 쓰기' only once words are typed. With an empty search there is only 지도에서 고르기, so a set place can be replaced but not cleared.
+- The title (30) and the text (200) keep their limits but show no counter, as the wireframe has none.
+- The grey placeholder with its red `*` is drawn under the empty field, since a field's own placeholder takes one colour. The field keeps an unseen placeholder of the same words for a screen reader.
+- A mark shows on a field the last press marked, while it is empty: emptying it again brings the mark back. The button shows the busy dots while sending, in place of being disabled.
+- The room's tag chips went in the smallest diff (`room-adapter.ts`'s `tags`, the chips in `room-screen.tsx`'s `Head`, and their tests), because PR 688 had not merged. Whichever lands second resolves the conflict.
+- `useBoardRows` and `boardPosts`, which only the board sheet used, and `listMyTags` / `myTagsQuery`, which only the tag field and 찾기's order used, went with them. The phone's old `snunow.quest-entries` key and any `documents/quest-photos` files stay where they are, read by nothing.
+- `party-form-fields.tsx` went over the 300-line lint limit, so the toggle and the stepper's buttons are in `small-controls.tsx`.
 
 ## Comments

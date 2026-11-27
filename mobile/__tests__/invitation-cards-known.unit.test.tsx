@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -20,7 +21,7 @@ import { freshWrapper, settle } from './support/queries';
 // only the Quest's title and its Leader.
 const LISTED: ShownQuestInvitation = {
   ...RECEIVED,
-  quest: { ...RECEIVED.quest, photo: null, tags: [], faces: [] },
+  quest: { ...RECEIVED.quest, faces: [] },
   startsAt: null,
   place: null,
 };

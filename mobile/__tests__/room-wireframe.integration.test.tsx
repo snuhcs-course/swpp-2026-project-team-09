@@ -5,6 +5,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -30,8 +31,6 @@ import {
 } from './support/room';
 import { askMainServer, JOIN_REQUESTS, ME_ID, PHONE_NOW } from './support/server';
 import { apiClient } from '@/api/client';
-import { TAG_SET } from '@/api/mock/data/quest-parts';
-import { pickFor } from '@/api/quest-parts/stable-pick';
 
 // The room as `PartyDetail` and `PartyLeave` draw it, against the fake main server: the head of a public and a
 // private Quest, the order of its parts, a request's note, the Leader's ending sheet, the sheet that switches from
@@ -102,21 +101,19 @@ describe("the room's head", () => {
     expect(screen.queryByText('자하연에서 피크닉 해요')).toBeNull();
   });
 
-  it('shows the tags under the text, and the event card below the activation box', async () => {
+  it('shows no tags, and the event card below the activation box', async () => {
     const withText = { ...FOR_EVENT, joinPolicy: 'closed' as const, board: null };
     answerRoom(server, withText);
 
     await openRoom(withText);
 
-    const tags = pickFor(withText.id, TAG_SET);
-    for (const tag of tags) {
-      expect(within(screen.getByLabelText('태그')).getByText(`#${tag}`)).toBeVisible();
-    }
+    expect(screen.queryByLabelText('태그')).toBeNull();
+    expect(screen.queryByText(/^#/u)).toBeNull();
     // The queries give what they find in the order the screen draws it.
     const order = screen
-      .getAllByLabelText(/^(?:태그|파티 활성화|행사 · AI 커리어 설명회|일정)$/u)
+      .getAllByLabelText(/^(?:파티 활성화|행사 · AI 커리어 설명회|일정)$/u)
       .map((node) => String(node.props.accessibilityLabel));
-    expect(order).toEqual(['태그', '파티 활성화', '행사 · AI 커리어 설명회', '일정']);
+    expect(order).toEqual(['파티 활성화', '행사 · AI 커리어 설명회', '일정']);
   });
 });
 

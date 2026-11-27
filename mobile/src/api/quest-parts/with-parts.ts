@@ -8,16 +8,15 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ChatCard } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
-import type { QuestChange } from '@/api/party-types';
-import type { QuestEntries, QuestParts, ShownChatCard, ShownClient, ShownQuest } from '@/api/quest-parts-types';
+import type { QuestParts, ShownChatCard, ShownClient, ShownQuest } from '@/api/quest-parts-types';
 import type { Quest } from '@/api/types';
 import type { QuestSummary } from '@/api/waiting-types';
 import { now } from '@/clock';
-import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
 import { facesOfQuest, facesOfSummary } from './faces';
 import { invitationPlaceOf } from './invitation-places';
@@ -26,49 +25,19 @@ import { pastQuestsOf } from './past-quests';
 import { hidePost, listHiddenPosts } from './hidden-posts';
 import { joinOfficialRecruiting, listOfficialRecruiting } from './official';
 import { noteOf } from './notes';
-import { photoOf } from './photos';
 import { askCompanionSeeker, listCompanionSeekers } from './seekers';
-import { myTagsOf, tagsOf } from './tags';
 
-// Adds the mocked parts of a Quest to a client's answers: its photo, its tags and its members' faces, each from its
-// own adapter, in every answer that carries a Quest, the Assistant's cards among them; the mocked parts of 찾기,
-// official recruiting, hiding a post and the people looking for company; and the room's, a request's note. When the main server gives one of them, its adapter is dropped here and the server client reads it.
+// Adds the mocked parts of a Quest to a client's answers: its members' faces, from its own adapter, in every answer
+// that carries a Quest, the Assistant's cards among them; the mocked parts of 찾기, official recruiting, hiding a post
+// and the people looking for company; and the room's, a request's note. When the main server gives one of them, its
+// adapter is dropped here and the server client reads it.
 
-type Entered = Partial<Record<string, QuestEntries>>;
-
-function questWithParts(quest: Quest, entered: Entered): ShownQuest {
-  const entries = entered[quest.id];
-  return { ...quest, photo: photoOf(quest, entries), tags: tagsOf(quest, entries), faces: facesOfQuest(quest) };
+function questWithParts(quest: Quest): ShownQuest {
+  return { ...quest, faces: facesOfQuest(quest) };
 }
 
-function summaryWithParts<Summary extends QuestSummary>(
-  summary: Summary,
-  entered: Entered,
-  build: Build,
-): Summary & QuestParts {
-  const entries = entered[summary.id];
-  return {
-    ...summary,
-    photo: photoOf(summary, entries),
-    tags: tagsOf(summary, entries),
-    faces: facesOfSummary(summary, build),
-  };
-}
-
-async function shown(quest: Quest): Promise<ShownQuest> {
-  return questWithParts(quest, await readQuestEntries());
-}
-
-// What the User entered, without what was left out.
-function enteredOf({ photo, tags }: Partial<QuestEntries>): Partial<QuestEntries> {
-  return { ...(photo === undefined ? {} : { photo }), ...(tags === undefined ? {} : { tags }) };
-}
-
-// A Quest the User has just made, on its own or for an event: its photo and tags are the ones the User gave, kept on
-// the phone even when none is given, so that it gets no mocked ones.
-async function ownQuest(quest: Quest, { photo, tags }: Partial<QuestEntries>): Promise<ShownQuest> {
-  await keepQuestEntries(quest.id, { photo: photo ?? null, tags: tags ?? [] });
-  return shown(quest);
+function summaryWithParts<Summary extends QuestSummary>(summary: Summary, build: Build): Summary & QuestParts {
+  return { ...summary, faces: facesOfSummary(summary, build) };
 }
 
 // The requests to join a Quest, each with its note.
@@ -85,8 +54,8 @@ function withNotes(client: ApiClient, build: Build): Pick<ShownClient, 'listJoin
   };
 }
 
-function cardWithParts(card: ChatCard, entered: Entered, build: Build): ShownChatCard {
-  return card.kind === 'quest' ? { ...card, quest: summaryWithParts(card.quest, entered, build) } : card;
+function cardWithParts(card: ChatCard, build: Build): ShownChatCard {
+  return card.kind === 'quest' ? { ...card, quest: summaryWithParts(card.quest, build) } : card;
 }
 
 // The Assistant's reply, its Quest cards with the parts the Boards' post card draws, as the Boards' list has them.
@@ -94,8 +63,7 @@ function withShownCards(client: ApiClient, build: Build): Pick<ShownClient, 'ask
   return {
     askAssistant: async (messages, context) => {
       const { cards, ...reply } = await client.askAssistant(messages, context);
-      const entered = await readQuestEntries();
-      return { ...reply, cards: cards.map((card) => cardWithParts(card, entered, build)) };
+      return { ...reply, cards: cards.map((card) => cardWithParts(card, build)) };
     },
   };
 }
@@ -103,47 +71,27 @@ function withShownCards(client: ApiClient, build: Build): Pick<ShownClient, 'ask
 export function withQuestParts(client: ApiClient, build: Build): ShownClient {
   return {
     ...client,
-    listQuests: async () => {
-      const quests = await client.listQuests();
-      const entered = await readQuestEntries();
-      return quests.map((quest) => questWithParts(quest, entered));
-    },
-    getQuest: async (questId) => shown(await client.getQuest(questId)),
-    joinQuest: async (questId) => shown(await client.joinQuest(questId)),
-    makeQuest: async ({ photo, tags, ...making }, idempotencyKey) =>
-      ownQuest(await client.makeQuest(making, idempotencyKey), { photo, tags }),
-    attendGlobalEvent: async (globalEventId, title, entries = {}) =>
-      ownQuest(await client.attendGlobalEvent(globalEventId, title), entries),
-    // A change of the photo or the tags alone is not sent: the main server has nothing to change.
-    changeQuest: async (questId, { photo, tags, ...change }) => {
-      const sent: QuestChange = change;
-      const quest =
-        Object.keys(sent).length === 0 ? await client.getQuest(questId) : await client.changeQuest(questId, sent);
-      const entries = enteredOf({ photo, tags });
-      if (Object.keys(entries).length > 0) {
-        await keepQuestEntries(questId, entries);
-      }
-      return shown(quest);
-    },
-    acceptInvitation: async (invitationId) => shown(await client.acceptInvitation(invitationId)),
-    listRecruitingQuests: async (filter) => {
-      const summaries = await client.listRecruitingQuests(filter);
-      const entered = await readQuestEntries();
-      return summaries.map((summary) => summaryWithParts(summary, entered, build));
-    },
+    listQuests: async () => (await client.listQuests()).map((quest) => questWithParts(quest)),
+    getQuest: async (questId) => questWithParts(await client.getQuest(questId)),
+    joinQuest: async (questId) => questWithParts(await client.joinQuest(questId)),
+    makeQuest: async (making, idempotencyKey) => questWithParts(await client.makeQuest(making, idempotencyKey)),
+    attendGlobalEvent: async (globalEventId, title) =>
+      questWithParts(await client.attendGlobalEvent(globalEventId, title)),
+    changeQuest: async (questId, change) => questWithParts(await client.changeQuest(questId, change)),
+    acceptInvitation: async (invitationId) => questWithParts(await client.acceptInvitation(invitationId)),
+    listRecruitingQuests: async (filter) =>
+      (await client.listRecruitingQuests(filter)).map((summary) => summaryWithParts(summary, build)),
     listQuestInvitations: async () => {
       const invitations = await client.listQuestInvitations();
-      const entered = await readQuestEntries();
       const at = now();
       return invitations.map(({ id, quest, sentAt }) => ({
         id,
-        quest: summaryWithParts(quest, entered, build),
+        quest: summaryWithParts(quest, build),
         sentAt,
         startsAt: invitationStartOf(quest, build, at),
         place: invitationPlaceOf(quest, build),
       }));
     },
-    listMyTags: async () => myTagsOf(await client.getProfile(), build),
     ...mockedOnly(build),
     ...withNotes(client, build),
     ...withShownCards(client, build),
@@ -153,10 +101,7 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
 // The operations the main server has no counterpart for at all: each is its adapter alone.
 function mockedOnly(build: Build): Pick<ShownClient, MockedOnly> {
   return {
-    listPastQuests: async (me) => {
-      const entered = await readQuestEntries();
-      return pastQuestsOf(me, now(), build).map((quest) => questWithParts(quest, entered));
-    },
+    listPastQuests: (me) => Promise.resolve(pastQuestsOf(me, now(), build).map((quest) => questWithParts(quest))),
     listOfficialRecruiting: () => listOfficialRecruiting(build),
     joinOfficialRecruiting,
     listHiddenPosts,

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Quest } from '@/api/types';
@@ -73,7 +74,7 @@ describe("A booked party's place on its screens", () => {
 
   it("leads with the room on its room's screen", () => {
     const view = toRoom({
-      quest: { ...booked(), photo: null, tags: [], faces: [] },
+      quest: { ...booked(), faces: [] },
       myParty: null,
       parties: [],
       declined: [],
