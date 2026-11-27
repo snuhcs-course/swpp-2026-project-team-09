@@ -36,3 +36,8 @@ This ticket proposes adding the push that ticket 19 leaves out. The user asked o
 - [ ] No native file changes; lint, format and types pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 30 minutes (#708), an estimate, from 00:05 in Korea; time spent waiting for the shared emulator lock and for reviewers is left out.
+- Tokens, the session and its two review subagents, counted from the session's log when this was written (the last minutes may not be in it yet): input 144, output 39,895; the input's cache reads 27,676,951 and cache writes 188,665 (main session: input 98, output 30,304, cache reads 26,476,405, cache writes 53,905; subagents: input 46, output 9,591, cache reads 1,200,546, cache writes 134,760).
