@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { createContext, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,20 +12,19 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 
 // A swipe down that closes a `BottomSheet` (P06 ticket 35), on the UI thread. The sheet follows the finger down and,
-// let go, closes or springs back. A list inside the sheet (`SheetScrollView`) pulls the sheet only when it was at its
-// top where the finger landed, and only by a swipe that starts down: that is decided for the whole gesture, so a swipe
-// that scrolled the list never goes on to move the sheet.
+// let go, closes or springs back by the way the finger was moving. A list inside the sheet (`SheetScrollView`) has a
+// swipe of its own, which pulls the sheet only when the list was at its top where the finger landed (`sheet-list-pan.ts`).
 
 // A drag starts past this many points, so that a press stays a press, and a drag sideways past this many gives way to a
 // row that scrolls sideways, as on the answer card (`card-drag.ts`).
 export const PAN_STARTS = 8;
 export const SIDEWAYS = 16;
-// A let-go closes the sheet past a quarter of its height, but never asks for more than this.
+// A let-go at rest closes the sheet past a quarter of its height, but never asks for more than this.
 const CLOSE_MOST = 120;
-// A let-go faster than this down, in points a second, is a flick: it closes from any depth. The answer card's.
-export const FLICK = 500;
+// A let-go slower than this, in points a second, is at rest: a tremble of the finger is no way up or down.
+export const MOVING = 100;
 // A list within half a point of its top is at it.
-const AT_TOP = 0.5;
+export const AT_TOP = 0.5;
 const BACK = { stiffness: 400, damping: 40, mass: 1, overshootClamping: true } as const;
 
 export interface SheetPull {
@@ -38,6 +38,9 @@ export interface SheetPull {
   // A let-go that closes: the sheet asks its caller to close.
   onPulledAway: () => void;
 }
+
+// What a swipe's worklets take of the sheet: all but the ref, which holds the gesture and stays on the JS thread.
+export type Pulled = Omit<SheetPull, 'ref'>;
 
 // The sheet a `SheetScrollView` stands in, null outside one.
 export const SheetPullContext = createContext<SheetPull | null>(null);
@@ -68,10 +71,22 @@ export function useSheetPull(open: boolean, shown: boolean, close: () => void): 
   return useMemo(() => ({ down, height, ref, reduce, onPulledAway }), [down, height, reduce, onPulledAway]);
 }
 
+export function pulledOf({ down, height, reduce, onPulledAway }: SheetPull): Pulled {
+  return { down, height, reduce, onPulledAway };
+}
+
+// Whether a let-go `down` points below the sheet's place, moving `velocityY` points a second, closes it: moving up it
+// stays, moving down it closes, and at rest it closes past a quarter of its height or 120 points, whichever is less. How
+// far it went on the way counts for nothing (the user's phone check, 2026-11-28).
 export function closesOnLetGo(down: number, velocityY: number, height: number): boolean {
   'worklet';
-  const far = height > 0 ? Math.min(height / 4, CLOSE_MOST) : CLOSE_MOST;
-  return down > far || (velocityY > FLICK && down > 0);
+  if (down <= 0 || velocityY < -MOVING) {
+    return false;
+  }
+  if (velocityY > MOVING) {
+    return true;
+  }
+  return down > (height > 0 ? Math.min(height / 4, CLOSE_MOST) : CLOSE_MOST);
 }
 
 export function springBack(down: SharedValue<number>, reduce: boolean): void {
@@ -79,60 +94,45 @@ export function springBack(down: SharedValue<number>, reduce: boolean): void {
   down.value = reduce ? 0 : withSpring(0, BACK);
 }
 
-export interface Pull {
-  gesture: PanGesture;
-  // The swipe is moving the sheet: the list it started in stays at its top.
-  pulling: SharedValue<boolean>;
+// The sheet `by` points below where the swipe took it, never above its place.
+export function pullBy({ down }: Pulled, by: number): void {
+  'worklet';
+  down.value = Math.max(0, by);
 }
 
-// The swipe that pulls the sheet down: the sheet's own (`scrollY` null), which pulls whichever way the finger first
-// goes, or a list's, which pulls only when the list was at its top as the finger landed and the finger first goes down.
-export function usePull(sheet: SheetPull | null, scrollY: SharedValue<number> | null): Pull {
-  const may = useSharedValue(false);
-  const pulling = useSharedValue(false);
+// The finger lifts: the sheet closes or springs back. A swipe taken from the finger springs back.
+export function letSheetGo(pulled: Pulled, velocityY: number, success: boolean): void {
+  'worklet';
+  const { down, height, reduce, onPulledAway } = pulled;
+  if (success && closesOnLetGo(down.value, velocityY, height.value)) {
+    scheduleOnRN(onPulledAway);
+  } else {
+    springBack(down, reduce);
+  }
+}
+
+// A swipe up or down, which a press or a sideways row keeps.
+export function sheetPan(testId: string): PanGesture {
+  return Gesture.Pan().withTestId(testId).activeOffsetY([-PAN_STARTS, PAN_STARTS]).failOffsetX([-SIDEWAYS, SIDEWAYS]);
+}
+
+// The sheet's own swipe, anywhere on it outside a list: it pulls whichever way the finger first goes.
+export function useSheetPan(sheet: SheetPull): PanGesture {
   const from = useSharedValue(0);
-  const down = sheet?.down;
-  const height = sheet?.height;
-  const reduce = sheet?.reduce ?? true;
-  const onPulledAway = sheet?.onPulledAway;
-  const follow = (translationY: number): void => {
-    'worklet';
-    if (pulling.value && down !== undefined) {
-      down.value = Math.max(0, translationY - from.value);
-    }
-  };
-  const gesture = Gesture.Pan()
-    .withTestId(scrollY === null ? 'sheet-drag' : 'sheet-list-drag')
-    .activeOffsetY([-PAN_STARTS, PAN_STARTS])
-    .failOffsetX([-SIDEWAYS, SIDEWAYS])
-    .onBegin(() => {
-      'worklet';
-      may.value = scrollY === null || scrollY.value <= AT_TOP;
-    })
+  const pulled = pulledOf(sheet);
+  return sheetPan('sheet-drag')
+    .withRef(sheet.ref)
     .onStart(({ translationY }) => {
       'worklet';
-      pulling.value = may.value && (scrollY === null || translationY > 0);
       from.value = translationY;
     })
     .onUpdate(({ translationY }) => {
       'worklet';
-      follow(translationY);
+      pullBy(pulled, translationY - from.value);
     })
     .onEnd(({ translationY, velocityY }, success) => {
       'worklet';
-      if (!pulling.value || down === undefined || height === undefined || onPulledAway === undefined) {
-        return;
-      }
-      follow(translationY);
-      if (success && closesOnLetGo(down.value, velocityY, height.value)) {
-        scheduleOnRN(onPulledAway);
-      } else {
-        springBack(down, reduce);
-      }
-    })
-    .onFinalize(() => {
-      'worklet';
-      pulling.value = false;
+      pullBy(pulled, translationY - from.value);
+      letSheetGo(pulled, velocityY, success);
     });
-  return { gesture, pulling };
 }

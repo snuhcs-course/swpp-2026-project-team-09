@@ -5,6 +5,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useCallback, useState } from 'react';
@@ -15,7 +16,7 @@ import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { useInsets } from './insets';
 import { Overlay } from './overlay';
-import { type SheetPull, SheetPullContext, usePull, useSheetPull } from './sheet-pull';
+import { type SheetPull, SheetPullContext, useSheetPan, useSheetPull } from './sheet-pull';
 import { color, radius, space } from './tokens';
 import { useSlide } from './use-slide';
 
@@ -89,9 +90,10 @@ export function BottomSheet({ open, onClose, label, children }: BottomSheetProps
   const close = useClose(open, onClose);
   const content = useLastContent(open, children);
   const sheet = useSheetPull(open, shown, close);
-  const pan = usePull(sheet, null).gesture.withRef(sheet.ref);
+  const pan = useSheetPan(sheet);
   const { down, height } = sheet;
   const pulled = useAnimatedStyle(() => ({ transform: [{ translateY: down.value }] }));
+  const risen = progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] });
   if (!shown) {
     return null;
   }
@@ -101,27 +103,25 @@ export function BottomSheet({ open, onClose, label, children }: BottomSheetProps
       <View style={[styles.layer, { pointerEvents: open ? 'auto' : 'none' }]}>
         <Scrim label={label} onPress={close} progress={progress} sheet={sheet} />
         <View style={[styles.room, { bottom: keyboard }]} testID="sheet-room">
-          <Reanimated.View style={[styles.room, styles.whole, pulled]}>
+          <Animated.View style={[styles.room, styles.whole, { transform: [{ translateY: risen }] }]}>
+            {/* The swipe stands on the view it moves, as the answer card's does. */}
             <GestureDetector gesture={pan}>
-              <Animated.View
+              <Reanimated.View
                 accessibilityLabel={label}
+                collapsable={false}
                 onLayout={({ nativeEvent }: LayoutChangeEvent) => {
                   height.value = nativeEvent.layout.height;
                 }}
-                style={[
-                  styles.sheet,
-                  { paddingBottom: space[4] + bottom },
-                  { transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] }) }] },
-                ]}
+                style={[styles.sheet, { paddingBottom: space[4] + bottom }, pulled]}
               >
                 {/* The bar's touch row: a tap closes the sheet. The scrim's button is what a screen reader offers. */}
                 <Pressable accessible={false} onPress={close} style={styles.grip} testID="sheet-handle">
                   <View style={styles.handle} />
                 </Pressable>
                 <SheetPullContext value={sheet}>{content}</SheetPullContext>
-              </Animated.View>
+              </Reanimated.View>
             </GestureDetector>
-          </Reanimated.View>
+          </Animated.View>
         </View>
       </View>
     </Overlay>

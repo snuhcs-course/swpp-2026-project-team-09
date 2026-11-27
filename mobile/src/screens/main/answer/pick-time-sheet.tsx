@@ -3,13 +3,24 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { type NativeScrollEvent, type NativeSyntheticEvent, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { PickTimeOffer } from '@/api/pick-types';
 import { now } from '@/clock';
-import { BottomSheet, Button, color, font, radius, SheetScrollView, space, text } from '@/design-system';
+import {
+  BottomSheet,
+  Button,
+  color,
+  font,
+  radius,
+  type SheetScrollEvent,
+  SheetScrollView,
+  space,
+  text,
+} from '@/design-system';
 import { isFreeAt, wheelTimes } from '@/features/assistant/use-picking';
 import { koreaClock, koreaDateKey, koreaDayWord, koreaWeekdayName } from '@/korea-time';
 
@@ -38,7 +49,7 @@ interface WheelProps {
 
 // The rows, which stop with one in the middle band.
 function Wheel({ times, free, first, index, onIndex, onMoving }: WheelProps): ReactElement {
-  const settle = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>): void => {
+  const settle = ({ nativeEvent }: SheetScrollEvent): void => {
     onIndex(Math.min(Math.max(Math.round(nativeEvent.contentOffset.y / ROW), 0), times.length - 1));
   };
   return (

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, fireEvent, screen } from '@testing-library/react-native';
@@ -75,4 +76,11 @@ export async function scrollList(testId: string, y: number): Promise<void> {
       layoutMeasurement: { width: 390, height: 300 },
     },
   });
+}
+
+// The scroll view `testId` laid out `height` tall over content `contentHeight` tall.
+export async function layList(testId: string, height: number, contentHeight: number): Promise<void> {
+  const list = screen.getByTestId(testId);
+  await fireEvent(list, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 390, height } } });
+  await fireEvent(list, 'contentSizeChange', 390, contentHeight);
 }
