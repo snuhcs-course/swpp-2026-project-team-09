@@ -13,6 +13,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import { LIBRARY_FAILURE_TEXT, type LibraryFailure } from '@/library/client';
 import { needsLogin } from './use-library-call';
+import { EdgeText, EdgeView } from '../answer/row-edges';
 
 // The parts the library cards share, as the MainChatLib frames draw them inside the Assistant's bubble: white boxes
 // on the bubble's blue, the space as a row with its round icon, the round buttons under it, and the site's notes.
@@ -36,7 +37,7 @@ export function SpaceRow({
   icon?: IconName;
 }): ReactElement {
   return (
-    <View accessibilityLabel={`${title} ${meta}`} accessible style={styles.box}>
+    <EdgeView accessibilityLabel={`${title} ${meta}`} accessible style={styles.box}>
       <View style={styles.round}>
         <Icon color={color.onPrimary} name={icon} size={16} />
       </View>
@@ -44,7 +45,7 @@ export function SpaceRow({
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.meta}>{meta}</Text>
       </View>
-    </View>
+    </EdgeView>
   );
 }
 
@@ -82,12 +83,12 @@ export function Pill({ label, onPress, primary = false, disabled = false, name }
 }
 
 export function Pills({ children }: { children: ReactNode }): ReactElement {
-  return <View style={styles.pills}>{children}</View>;
+  return <EdgeView style={styles.pills}>{children}</EdgeView>;
 }
 
 // What the card says: an outcome, an empty list or a failure.
 export function Said({ children, tone = 'plain' }: { children: string; tone?: 'plain' | 'danger' }): ReactElement {
-  return <Text style={[styles.said, tone === 'danger' && styles.danger]}>{children}</Text>;
+  return <EdgeText style={[styles.said, tone === 'danger' && styles.danger]}>{children}</EdgeText>;
 }
 
 // The site's rules for this kind of space.

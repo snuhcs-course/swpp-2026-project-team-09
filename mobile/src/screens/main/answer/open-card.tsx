@@ -5,6 +5,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -27,7 +28,8 @@ import { useHeldHeight, useLayerScroll, useTopWhen } from './held-height';
 import { CloseHint } from './raise-handle';
 import { SheetHint, useSheetHint } from './sheet-hint';
 import { useFollowPull } from './sheet-link';
-import { LowBand } from './low-band';
+import { OverFooter } from './low-band';
+import { RowEdgesProvider, useRowEdgeRegistry } from './row-edges';
 import { useSteadyState } from './steady';
 
 // The frame's sheet, attached to the bottom of the screen (P04 tickets 52, 57, and 61): one surface whose content is
@@ -37,10 +39,6 @@ import { useSteadyState } from './steady';
 // every step the content scrolls as far as lets its end come clear of the fade, and keeps its place when the card
 // changes step. It moves as a sheet (`useCardMotion`). Only the low card tells its height, once settled, so that the
 // camera fits the answer to it alone.
-
-const FADED: ViewStyle = {
-  experimental_backgroundImage: `linear-gradient(to bottom, rgba(255, 255, 255, 0), ${color.surface})`,
-};
 
 interface ScrollingProps {
   props: FrameCardProps;
@@ -53,11 +51,13 @@ interface ScrollingProps {
   scroll: ReturnType<typeof useAnimatedRef<Reanimated.ScrollView>>;
   onScroll: ReturnType<typeof useAnimatedScrollHandler>;
   onNatural: (height: number) => void;
+  // The rows its parts tell (P01 ticket 32).
+  edges: ReturnType<typeof useRowEdgeRegistry>;
 }
 
 // The part that scrolls under the card's header, laid out once at `room`, its parts measured as they are laid out.
 function Scrolling(p: ScrollingProps): ReactElement {
-  const { props, room, padTop, padBottom, scrolls, scroll, onScroll, onNatural } = p;
+  const { props, room, padTop, padBottom, scrolls, scroll, onScroll, onNatural, edges } = p;
   const { minHeight, onContentSizeChange } = useHeldHeight(props.hold === true, scroll);
   useTopWhen(props.atTop === true, scroll);
   return (
@@ -80,10 +80,11 @@ function Scrolling(p: ScrollingProps): ReactElement {
           onNatural(height);
           onContentSizeChange(0, height);
         }}
+        ref={edges.root}
         style={[styles.parts, minHeight === undefined ? null : { minHeight: minHeight - padTop }]}
         testID={`${props.testID}-parts`}
       >
-        {props.children}
+        <RowEdgesProvider registry={edges.registry}>{props.children}</RowEdgesProvider>
       </View>
     </Reanimated.ScrollView>
   );
@@ -108,6 +109,8 @@ interface OpenCardState {
   hint: ReturnType<typeof useSheetHint>;
   onLayout: (event: LayoutChangeEvent) => void;
   band: number;
+  edges: ReturnType<typeof useRowEdgeRegistry>;
+  scrollY: SharedValue<number>;
 }
 
 // The sheet's measures: its header's and its content's heights, the caps, and the steps they make.
@@ -120,6 +123,9 @@ function useMeasures(props: FrameCardProps): {
   caps: Caps | null;
   heights: LevelHeights | null;
   steps: readonly Level[];
+  edges: ReturnType<typeof useRowEdgeRegistry>;
+  laid: number;
+  setLaid: (laid: number) => void;
 } {
   const topped = props.raising !== undefined || props.onClose !== undefined;
   const padTop = topped ? space[3] : CONTENT_TOP;
@@ -131,7 +137,11 @@ function useMeasures(props: FrameCardProps): {
   const heights = caps === null ? null : heightsOf(caps, natural, { padTop, under: underOf(props) });
   // Before the stage is laid out every step is offered; laid out, those of different heights.
   const steps = heights === null ? LEVELS : stepsOf(heights);
-  return { padTop, above, setAbove, natural, setNatural, caps, heights, steps };
+  // The rows its parts tell (P01 ticket 32); before the stage is laid out, the card's height as laid out, which a drag
+  // down measures against.
+  const edges = useRowEdgeRegistry(padTop);
+  const [laid, setLaid] = useState(0);
+  return { padTop, above, setAbove, natural, setNatural, caps, heights, steps, edges, laid, setLaid };
 }
 
 // The content's scroll view, how far it is scrolled, and its whole height with the fade's room under it, by which it
@@ -192,9 +202,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
   const { barRoom, onHeight, raising } = props;
   const level = raising?.level ?? 'low';
   const measures = useMeasures(props);
-  const { padTop, above, setAbove, setNatural, caps, heights, steps } = measures;
-  // Before the stage is laid out: the card's height as laid out, which a drag down measures against.
-  const [laid, setLaid] = useState(0);
+  const { padTop, above, setAbove, setNatural, caps, heights, steps, edges, laid, setLaid } = measures;
   const extra = above + barRoom;
   const { scroll, scrollY, onScroll, scrolls, whole, padBottom } = useContentScroll(
     { ...measures, under: Math.max(underOf(props), measures.caps?.band ?? 0) },
@@ -235,6 +243,8 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     lowHeight: heights === null ? laid : extra + heights.low,
     onLayout,
     band: caps?.band ?? 0,
+    edges,
+    scrollY,
   };
 }
 
@@ -283,6 +293,7 @@ export function OpenCard(props: FrameCardProps): ReactElement {
             ) : null}
             {children === null ? null : (
               <Scrolling
+                edges={card.edges}
                 onNatural={card.setNatural}
                 onScroll={card.onScroll}
                 padBottom={card.padBottom}
@@ -296,12 +307,7 @@ export function OpenCard(props: FrameCardProps): ReactElement {
           </View>
         </Reanimated.View>
       </GestureDetector>
-      {room === null ? null : (
-        <>
-          <View style={[styles.fade, FADED, { bottom: barRoom }]} testID={`${testID}-fade`} />
-          <LowBand barRoom={barRoom} card={card} offset={offset} />
-        </>
-      )}
+      {room === null ? null : <OverFooter barRoom={barRoom} card={card} offset={offset} testID={testID} />}
       {card.hint.shown ? <SheetHint bottom={card.lowHeight} /> : null}
       {motion.past ? <CloseHint barRoom={barRoom} cardHeight={card.lowHeight} drop={drop} /> : null}
     </>
@@ -321,5 +327,4 @@ const styles = StyleSheet.create({
   },
   content: { paddingHorizontal: OPEN_EDGE },
   parts: { gap: space[3] },
-  fade: { position: 'absolute', right: 0, left: 0, height: FADE, pointerEvents: 'none' },
 });

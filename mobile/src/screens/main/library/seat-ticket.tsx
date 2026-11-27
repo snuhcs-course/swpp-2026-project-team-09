@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  * AI-generated with Claude
  *
@@ -8,6 +9,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { color, font, Icon, radius, space, text } from '@/design-system';
+import { EdgeView } from '../answer/row-edges';
 
 // The seat card's ticket (P01 ticket 09): one row with the room and its free seats at the left, and the seat at the
 // right, a dashed line between. The room opens the room list under it, the seat the seat picture. It stands in its
@@ -173,9 +175,9 @@ export function TicketFrame({
   children: ReactNode;
 }): ReactElement {
   return (
-    <View style={[styles.ticket, dimmed && styles.dimmed]} testID={testID}>
+    <EdgeView style={[styles.ticket, dimmed && styles.dimmed]} testID={testID}>
       {children}
-    </View>
+    </EdgeView>
   );
 }
 

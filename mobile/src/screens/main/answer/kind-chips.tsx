@@ -15,6 +15,7 @@ import { conditionChipsOf, fittingPlans } from '@/features/assistant/meal-price'
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { ConditionChips } from './condition-chip';
 import { type StudyKind, studyKindsOf } from './study-rows';
+import { EdgeView } from './row-edges';
 
 const CHIP_HEIGHT = 34;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
@@ -123,34 +124,36 @@ export function KindChips(props: KindChipsProps): ReactElement | null {
     return null;
   }
   return (
-    <ScrollView
-      contentContainerStyle={styles.row}
-      horizontal
-      keyboardShouldPersistTaps="handled"
-      showsHorizontalScrollIndicator={false}
-      testID="kind-chips"
-    >
-      <ConditionChips answer={answer} change={change} disabled={disabled} divided={choices.length > 0} />
-      {choices.length === 0 ? null : (
-        <Chip
-          disabled={disabled}
-          on={chosen === null}
-          onPress={clear}
-          said={`전체 ${String(plans.length)}곳`}
-          words={`전체 ${String(plans.length)}`}
-        />
-      )}
-      {choices.map(({ key, places, pick }) => (
-        <Chip
-          disabled={disabled}
-          key={key}
-          on={key === chosen}
-          onPress={pick}
-          said={`${key} ${String(places)}곳`}
-          words={`${key} ${String(places)}`}
-        />
-      ))}
-    </ScrollView>
+    <EdgeView>
+      <ScrollView
+        contentContainerStyle={styles.row}
+        horizontal
+        keyboardShouldPersistTaps="handled"
+        showsHorizontalScrollIndicator={false}
+        testID="kind-chips"
+      >
+        <ConditionChips answer={answer} change={change} disabled={disabled} divided={choices.length > 0} />
+        {choices.length === 0 ? null : (
+          <Chip
+            disabled={disabled}
+            on={chosen === null}
+            onPress={clear}
+            said={`전체 ${String(plans.length)}곳`}
+            words={`전체 ${String(plans.length)}`}
+          />
+        )}
+        {choices.map(({ key, places, pick }) => (
+          <Chip
+            disabled={disabled}
+            key={key}
+            on={key === chosen}
+            onPress={pick}
+            said={`${key} ${String(places)}곳`}
+            words={`${key} ${String(places)}`}
+          />
+        ))}
+      </ScrollView>
+    </EdgeView>
   );
 }
 

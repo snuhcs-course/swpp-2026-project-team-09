@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Href, router } from 'expo-router';
@@ -14,6 +15,7 @@ import { ChoiceGrid, color, font, type GridChoice, radius, size, space, text } f
 import { profileLabel } from '@/features/friends/profile';
 import { useOpenFriendProfile } from '../friend-profile';
 import { offerLocation } from './location-offer';
+import { EdgeText } from './row-edges';
 
 // What cannot be answered (row 8): the server's lines in place of the model's sentence, and under them its offers as
 // buttons of one width in one row, in the board's order. The Friends of the question of which Friend stand as the
@@ -143,14 +145,14 @@ export function ReplyLines({ lines, testID }: { lines: readonly AnswerLine[]; te
       {lines.map((line, row) => (
         // The lines have no id, and their order is their meaning.
         // oxlint-disable-next-line react/no-array-index-key
-        <Text key={row} style={row === 0 ? styles.first : styles.second} testID={testID}>
+        <EdgeText key={row} style={row === 0 ? styles.first : styles.second} testID={testID}>
           {line.map(({ text: words, strong }, part) => (
             // oxlint-disable-next-line react/no-array-index-key
             <Text key={part} style={strong ? styles.strong : undefined}>
               {words}
             </Text>
           ))}
-        </Text>
+        </EdgeText>
       ))}
     </View>
   );

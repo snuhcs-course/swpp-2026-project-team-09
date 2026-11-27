@@ -54,6 +54,73 @@ function lowOf(mid: number, padTop: number, { line, footer }: { line: number; fo
   return [low, Math.max(0, low - padTop - lines * line)];
 }
 
+// A part of the content that stands as a row, from the content's top: lines of words, a ticket, a list's row, a row of
+// buttons or chips (`row-edges.tsx`). `line`, for lines of words, is each line's height.
+export interface RowEdge {
+  top: number;
+  bottom: number;
+  line: number | null;
+}
+
+// Half a point: a place within it of another is the same place.
+const SAME = 0.5;
+
+// The places the content may end at, in order (P01 ticket 32, one rule for every answer kind): the top or the bottom of
+// a row, or the bottom of a line inside lines of words, and never a place inside a row. The low step's content ends at
+// the last of them that shows (`cutAt`), the sentence's lines first, then only whole rows; a part that tells no row is
+// never cut either, as no place is offered inside it. With no row told, there is none.
+export function wholeCutsOf(rows: readonly RowEdge[]): number[] {
+  const places = rows.flatMap(({ top, bottom, line }) => {
+    if (line === null || line <= 0) {
+      return [top, bottom];
+    }
+    const lines = Math.floor((bottom - top + SAME) / line);
+    return [top, bottom, ...Array.from({ length: lines }, (_, index) => top + (index + 1) * line)];
+  });
+  const inside = (place: number, { top, bottom, line }: RowEdge): boolean => {
+    if (place <= top + SAME || place >= bottom - SAME) {
+      return false;
+    }
+    if (line === null || line <= 0) {
+      return true;
+    }
+    const lines = (place - top) / line;
+    return Math.abs(lines - Math.round(lines)) * line > SAME;
+  };
+  const cuts = places.filter((place) => !rows.some((row) => inside(place, row))).toSorted((one, other) => one - other);
+  const kept: number[] = [];
+  for (const cut of cuts) {
+    if (kept.length === 0 || cut - (kept.at(-1) ?? cut) > SAME) {
+      kept.push(cut);
+    }
+  }
+  return kept;
+}
+
+// The last place the content may end at that shows above `seen`, from the content's top; null with no place told.
+export function cutAt(cuts: readonly number[], seen: number): number | null {
+  'worklet';
+  let found: number | null = null;
+  for (const cut of cuts) {
+    if (cut > seen + SAME) {
+      break;
+    }
+    found = cut;
+  }
+  return found;
+}
+
+// At low, the room the band covers over the footer (`LowBand`) with the content scrolled `y`: under the last whole row
+// that shows, measured (`cuts`); with nothing measured, under the last whole line (`Caps.band`).
+export function bandAt(y: number, low: number, cuts: readonly number[], lineBand: number): number {
+  'worklet';
+  const cut = cutAt(cuts, y + low - FADE);
+  if (cut === null) {
+    return lineBand;
+  }
+  return Math.min(low, Math.max(0, y + low - Math.max(cut, y)));
+}
+
 // The place the folded time card takes, as `time-bar.tsx` lays it out: its top padding, the head's row, the track's
 // lane, and the ends' row, 4 apart, then the grip's strip under a gap of 4. Its rows of words grow with the font. While
 // a Class is left out of the Plan, the line of those Classes makes it one fixed step taller (P04 ticket 93).

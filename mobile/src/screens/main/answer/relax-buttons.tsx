@@ -3,12 +3,14 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RelaxOffer } from '@/api/relax-types';
 import { Button, space } from '@/design-system';
+import { EdgeView } from './row-edges';
 
 interface RelaxButtonsProps {
   relax: readonly RelaxOffer[];
@@ -25,7 +27,7 @@ export function RelaxButtons({ relax, busy, onRelax, undo }: RelaxButtonsProps):
     return null;
   }
   return (
-    <View style={styles.row} testID="relax-buttons">
+    <EdgeView style={styles.row} testID="relax-buttons">
       {undo === null ? null : (
         <View style={styles.cell}>
           <Button disabled={busy} full onPress={undo} variant="secondary">
@@ -47,7 +49,7 @@ export function RelaxButtons({ relax, busy, onRelax, undo }: RelaxButtonsProps):
           </Button>
         </View>
       ))}
-    </View>
+    </EdgeView>
   );
 }
 

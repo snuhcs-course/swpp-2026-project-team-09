@@ -4,12 +4,14 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AnswerLine } from '@/api/assistant-types';
 import { color, font, Icon, space, text } from '@/design-system';
+import { EdgeText } from './row-edges';
 
 const ICON = 16;
 
@@ -20,14 +22,14 @@ export function AnswerLines({ lines, way = false }: { lines: readonly AnswerLine
   const drawn = lines.map((line, row) => (
     // The lines have no id, and their order is their meaning.
     // oxlint-disable-next-line react/no-array-index-key
-    <Text key={row} style={look.line}>
+    <EdgeText key={row} style={look.line}>
       {line.map(({ text: words, strong }, part) => (
         // oxlint-disable-next-line react/no-array-index-key
         <Text key={part} style={strong ? look.strong : undefined}>
           {words}
         </Text>
       ))}
-    </Text>
+    </EdgeText>
   ));
   if (!way) {
     return <View testID="answer-lines">{drawn}</View>;

@@ -8,6 +8,7 @@ import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, MEAL_NUMBER, radius, RoundNumber, space, text } from '@/design-system';
 import type { CandidateRow } from './meal-list';
+import { EdgeText, EdgeView } from './row-edges';
 
 // The rows of a meal answer's list (moved out of `meal-list.tsx` for its length, P10 ticket 18): a candidate's row, a
 // place closed or none may use, and a heading over them.
@@ -66,34 +67,36 @@ export function Row({
     .filter((words) => words !== null)
     .join(' · ');
   return (
-    <Pressable
-      accessibilityLabel={said}
-      accessibilityRole="button"
-      accessibilityState={{ selected: chosen, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        chosen && (study ? styles.studyChosen : styles.chosen),
-        row.faded && !chosen && styles.faded,
-        pressed && styles.pressed,
-      ]}
-      testID={`meal-row-${String(number)}`}
-    >
-      <RowNumber chosen={chosen} number={number} study={study} />
-      <View style={styles.middle}>
-        <Text numberOfLines={1} style={styles.name}>
-          {name}
-        </Text>
-        {when === null ? null : <WayLine row={row} when={when} />}
-        {dishes === null ? null : (
-          <Text numberOfLines={1} style={styles.dishes}>
-            {dishes}
+    <EdgeView>
+      <Pressable
+        accessibilityLabel={said}
+        accessibilityRole="button"
+        accessibilityState={{ selected: chosen, disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.row,
+          chosen && (study ? styles.studyChosen : styles.chosen),
+          row.faded && !chosen && styles.faded,
+          pressed && styles.pressed,
+        ]}
+        testID={`meal-row-${String(number)}`}
+      >
+        <RowNumber chosen={chosen} number={number} study={study} />
+        <View style={styles.middle}>
+          <Text numberOfLines={1} style={styles.name}>
+            {name}
           </Text>
-        )}
-      </View>
-      {price === null ? null : <Text style={styles.price}>{price}</Text>}
-    </Pressable>
+          {when === null ? null : <WayLine row={row} when={when} />}
+          {dishes === null ? null : (
+            <Text numberOfLines={1} style={styles.dishes}>
+              {dishes}
+            </Text>
+          )}
+        </View>
+        {price === null ? null : <Text style={styles.price}>{price}</Text>}
+      </Pressable>
+    </EdgeView>
   );
 }
 
@@ -109,7 +112,7 @@ export function ClosedRow({
   testID?: string;
 }): ReactElement {
   return (
-    <View accessibilityLabel={`${name} · ${notice}`} accessible style={[styles.row, styles.faded]} testID={testID}>
+    <EdgeView accessibilityLabel={`${name} · ${notice}`} accessible style={[styles.row, styles.faded]} testID={testID}>
       <View style={[styles.badge, styles.closedBadge]} />
       <View style={styles.middle}>
         <Text numberOfLines={1} style={styles.name}>
@@ -119,15 +122,15 @@ export function ClosedRow({
           {notice}
         </Text>
       </View>
-    </View>
+    </EdgeView>
   );
 }
 
 export function Heading({ words }: { words: string }): ReactElement {
   return (
-    <Text accessibilityRole="header" style={styles.heading}>
+    <EdgeText accessibilityRole="header" style={styles.heading}>
       {words}
-    </Text>
+    </EdgeText>
   );
 }
 

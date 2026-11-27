@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { openBrowserAsync } from 'expo-web-browser';
 import type { ReactElement } from 'react';
 import { type StyleProp, StyleSheet, Text, type TextStyle, View } from 'react-native';
 import { color, font, space } from '@/design-system';
+import { EdgeText } from './answer/row-edges';
 
 // The markdown the model writes in the Assistant's bubbles, as a small hand-written subset: **bold** and __bold__,
 // *italic* and _italic_, line breaks, "- ", "* " and "1. " list items, and [words](url) links to http(s) pages.
@@ -257,20 +259,20 @@ export function ChatMarkdown({ text: words, style }: ChatMarkdownProps): ReactEl
     <View accessibilityLabel={markdownLabel(words)} accessible style={styles.blocks}>
       {groups.map((group, index) =>
         group.kind === 'lines' ? (
-          <Text key={index} style={style}>
+          <EdgeText key={index} style={style}>
             {group.lines.flatMap((runs, line) => [
               ...(line === 0 ? [] : ['\n']),
               ...runs.map((run, at) => <RunText key={`${String(line)}-${String(at)}`} run={run} />),
             ])}
-          </Text>
+          </EdgeText>
         ) : (
           <View key={index} style={styles.item}>
             <Text style={[style, styles.marker]}>{group.marker}</Text>
-            <Text style={[style, styles.itemText]}>
+            <EdgeText style={[style, styles.itemText]}>
               {group.runs.map((run, at) => (
                 <RunText key={at} run={run} />
               ))}
-            </Text>
+            </EdgeText>
           </View>
         ),
       )}

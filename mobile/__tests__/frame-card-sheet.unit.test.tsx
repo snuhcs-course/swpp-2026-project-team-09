@@ -5,6 +5,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -73,6 +74,12 @@ function card(level: Level, setLevel = jest.fn<undefined, [Level]>(), barRoom = 
 
 function heightOf(id: string): number {
   const style: unknown = screen.getByTestId(id, { includeHiddenElements: true }).props.style;
+  return Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).height);
+}
+
+// The band over the footer at low, which follows the content's rows as it scrolls (P01 ticket 32).
+function bandHeight(): number {
+  const style: unknown = getAnimatedStyle(screen.getByTestId('answer-card-band'));
   return Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).height);
 }
 
@@ -192,12 +199,12 @@ describe('low over a smaller footer', () => {
     expect(shown()).toBe(above);
     const lines = Math.floor((above - 12 - FADE) / text.bodyLg.lineHeight);
     expect(lines).toBe(4);
-    expect(heightOf('answer-card-band')).toBe(above - 12 - lines * text.bodyLg.lineHeight);
+    expect(bandHeight()).toBe(above - 12 - lines * text.bodyLg.lineHeight);
     expect(getAnimatedStyle(screen.getByTestId('answer-card-band'))).toMatchObject({ opacity: 1 });
     // PR 553's review: fully scrolled at low, the content's end comes clear of the band, not only of the fade.
     const style: unknown = screen.getByTestId('card-content').props.contentContainerStyle;
     const { paddingBottom } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
-    expect(paddingBottom).toBe(heightOf('card-content') - above + heightOf('answer-card-band'));
+    expect(paddingBottom).toBe(heightOf('card-content') - above + bandHeight());
 
     // Raised to middle, the band fades away.
     await view.rerender(card('mid', undefined, BARE_ROOM));

@@ -10,6 +10,7 @@ import { color, font, Icon, radius, space, text } from '@/design-system';
 import { seeThrough } from '@/design-system/see-through';
 import type { TicketView } from '@/library/cards/bookings';
 import { BORDER, Dashes, PAD_Y, VALUE_LINE } from './seat-ticket';
+import { EdgeView } from '../answer/row-edges';
 
 // A booking's ticket (P01 ticket 15): the seat card's ticket at its size, on a light sky ground once booked or in use,
 // grey once it ended. Its left label says how it stands and when, its value the room; its right cell the seat. Its
@@ -95,22 +96,24 @@ export function BookedTicket({
   const frame = [styles.ticket, { backgroundColor: look.ground, borderColor: chosen ? color.svcStudy : look.border }];
   if (onChoose === null) {
     return (
-      <View accessibilityLabel={ticketWords(ticket)} accessible style={frame} testID="booked-ticket">
+      <EdgeView accessibilityLabel={ticketWords(ticket)} accessible style={frame} testID="booked-ticket">
         <Cells ticket={ticket} />
-      </View>
+      </EdgeView>
     );
   }
   return (
-    <Pressable
-      accessibilityLabel={ticketWords(ticket)}
-      accessibilityRole="radio"
-      accessibilityState={{ checked: chosen }}
-      onPress={onChoose}
-      style={({ pressed }) => [frame, pressed && styles.pressed]}
-      testID="booked-ticket"
-    >
-      <Cells ticket={ticket} />
-    </Pressable>
+    <EdgeView>
+      <Pressable
+        accessibilityLabel={ticketWords(ticket)}
+        accessibilityRole="radio"
+        accessibilityState={{ checked: chosen }}
+        onPress={onChoose}
+        style={({ pressed }) => [frame, pressed && styles.pressed]}
+        testID="booked-ticket"
+      >
+        <Cells ticket={ticket} />
+      </Pressable>
+    </EdgeView>
   );
 }
 
@@ -126,7 +129,7 @@ export function TicketLine({
     return null;
   }
   return (
-    <View style={styles.line}>
+    <EdgeView style={styles.line}>
       <Text numberOfLines={1} style={styles.lineWords}>
         {words ?? ''}
       </Text>
@@ -135,7 +138,7 @@ export function TicketLine({
           <Text style={styles.link}>{`${link.words} ›`}</Text>
         </Pressable>
       )}
-    </View>
+    </EdgeView>
   );
 }
 
