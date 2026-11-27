@@ -101,8 +101,11 @@ function making<Answer>(form: PartyForm, request: () => Promise<Answer>): Promis
 export type Sent = 'taken' | 'refused' | 'room';
 
 // What sending did, with the Quest it made or changed and the words of its toast. Whoever sends shows the toast and
-// moves on: the form, or the chat's Proposal card.
-export type Sending = { sent: 'refused'; toast: string } | { sent: 'taken' | 'room'; questId: string; toast: string };
+// moves on: the form, or the chat's Proposal card. `invitesRefused`: a Friend was not invited, which the toast says
+// with the alert icon although the Quest was made or changed.
+export type Sending =
+  | { sent: 'refused'; toast: string }
+  | { sent: 'taken' | 'room'; questId: string; toast: string; invitesRefused?: boolean };
 
 // Sends the form: makes the Quest, for an event by attending it, or changes it, then invites the chosen Friends. The
 // photo and the tags go with it, and the phone keeps them. It shows nothing and goes nowhere.
@@ -150,7 +153,8 @@ export function useSendParty(
     if (invited > 0) {
       askForPush();
     }
-    return { sent: 'taken', questId, toast: toastOf(form, quest !== null, invited, refused) };
+    const toast = toastOf(form, quest !== null, invited, refused);
+    return { sent: 'taken', questId, toast, invitesRefused: refused.count > 0 };
   };
 }
 
@@ -162,8 +166,9 @@ export function useSend(
   const showToast = useToast();
   return async (form, friends, plan) => {
     const sending = await sendParty(form, friends, plan);
-    // A Quest that was made or changed is done, even with a Friend left uninvited.
-    showToast(sending.toast, undefined, sending.sent === 'taken' ? 'check' : 'alert');
+    // A Quest that was made or changed is done; a Friend left uninvited is a failure, with the alert icon.
+    const done = sending.sent === 'taken' && sending.invitesRefused !== true;
+    showToast(sending.toast, undefined, done ? 'check' : 'alert');
     if (sending.sent === 'room') {
       router.replace(`/room/${sending.questId}`);
     }

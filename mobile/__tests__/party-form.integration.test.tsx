@@ -126,7 +126,7 @@ describe('a public 파티', () => {
       { userId: SEO_YEON_HOLDER.id },
     ]);
     expect(toast()).toHaveTextContent('파티를 올렸어요 · 1명에게 초대 요청 · 1명은 초대하지 못했어요');
-    expect(toastIcon()).toBe('check');
+    expect(toastIcon()).toBe('alert');
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 });
@@ -166,6 +166,7 @@ describe('inviting into a 파티 full at that moment', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent('파티를 올렸어요 · 자리가 다 차서 초대할 수 없어요');
+    expect(toastIcon()).toBe('alert');
   });
 });
 
