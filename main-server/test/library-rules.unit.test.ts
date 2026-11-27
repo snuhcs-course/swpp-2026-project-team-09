@@ -45,7 +45,7 @@ describe('The 관정도서관 rules', () => {
 
   // In the usage test of 2026-11-21 the words said "예약하기를 눌러야" while a signed-out card showed only 로그인.
   it('of an app that draws answers say to sign in first when the card shows 로그인, and name the library one way', () => {
-    expect(LIBRARY_ANSWER_RULES).toContain('they sign in first when the card shows 로그인');
+    expect(LIBRARY_ANSWER_RULES).toContain('they sign in first when 로그인 shows');
     expect(LIBRARY_ANSWER_RULES).toContain('Call the library 관정도서관 in replies, not 관정관.');
   });
 
@@ -63,5 +63,29 @@ describe('The 관정도서관 rules', () => {
     expect(LIBRARY_ANSWER_RULES).not.toContain('or a seat for another day, when the User gave no time, ask for it');
     expect(LIBRARY_ANSWER_RULES).toContain('A seat for a day after today');
     expect(LIBRARY_ANSWER_RULES).toContain('When proposeLibraryBooking answers sameDayOnly');
+  });
+});
+
+// On the user's phone (2026-11-27), "거기 몇 층이야?" over the seat card of 8층 정숙 열람실 was answered in three
+// sentences: the library's sector name, the card named, and the press and sign-in words of a card just shown (P05
+// ticket 66).
+describe('The 관정도서관 rules on a card already on screen', () => {
+  it.each(Object.entries(EVERY_APP))(
+    'of the %s app answer only what was asked of it, in one short sentence, with no tool',
+    (_app, rules) => {
+      expect(rules).toContain('A question about a card on screen, as [Cards shown: …] gives it');
+      expect(rules).toContain('in one short sentence of only what was asked, such as "8층이에요."');
+      expect(rules).toContain('Such a reply never names the card, says what pressing does or says to sign in');
+      expect(rules).toContain('- When a tool of this message shows a card, other than');
+      expect(rules).not.toContain('- When a card is shown, other than');
+    },
+  );
+
+  it('of an app that draws answers name a seat space as the app does, and sign in only for a card just shown', () => {
+    expect(LIBRARY_ANSWER_RULES).toContain(
+      "the app's name (8층 정숙 열람실, 7층 7B 노트북존), never by the catalogue's",
+    );
+    expect(LIBRARY_ANSWER_RULES).toContain('with 예약하기 for a card shown in this message, also say');
+    expect(LIBRARY_ANSWER_RULES).not.toContain('7층 7A 열람실 2 구역');
   });
 });

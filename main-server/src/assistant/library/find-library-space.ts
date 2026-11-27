@@ -3,11 +3,13 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { type FoundIds } from '../found-ids.js';
+import { seatNameOf } from './app-names.js';
 import { type Catalogue, type LibrarySpace, type SpaceStatus, statusOf } from './catalogue.js';
 import {
   affiliationFor,
@@ -107,7 +109,7 @@ Only for booking or using a space inside 관정관; a Place near 관정, where a
       if (bookable.length >= 2) {
         const candidates = bookable.map(({ id, space }) => ({
           id,
-          name: space?.name,
+          name: space === undefined ? undefined : (seatNameOf(space) ?? space.name),
           floor: space?.floor,
           purpose: space?.purpose,
         }));
