@@ -28,3 +28,10 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 - [ ] No native file changes; lint, format and types pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 30 minutes, an estimate. One session built this ticket together with P06-33, 28, 30 and 27, from 00:52 to 02:33 KST. This ticket's part is split out by the time spent on it, and the waits for answers are left out.
+- Tokens, this ticket's share of that session, subagents included and split by the same time (so also an estimate):
+  - input 50,147,420: 420 uncached, 49,766,000 cache reads and 381,000 cache writes;
+  - output 87,000.

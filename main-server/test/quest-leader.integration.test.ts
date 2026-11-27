@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -80,8 +81,11 @@ describe('The Leader dropping the Quest', () => {
       holders: [{ id: second.id }, { id: third.id }],
     });
     await vi.waitFor(() => {
-      // Its joining, the third's joining and the drop.
-      expect(watcher.for(second)).toHaveLength(3);
+      // Its joining, the third's joining and the drop, and 알림's word that it leads now (P06 ticket 32).
+      expect(watcher.for(second).map(({ name }) => name)).toEqual(
+        expect.arrayContaining(['quests-changed', 'quests-changed', 'quests-changed', 'notice']),
+      );
+      expect(watcher.for(second)).toHaveLength(4);
     });
   });
 });

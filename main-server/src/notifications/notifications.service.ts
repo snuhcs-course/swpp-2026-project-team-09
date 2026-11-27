@@ -28,6 +28,7 @@ const KINDS: ReadonlySet<string> = new Set<NotificationKind>([
   'party-removed',
   'join-cancelled',
   'invitation-cancelled',
+  'became-leader',
   'leave-by',
   'room-declined',
   'room-agreed',

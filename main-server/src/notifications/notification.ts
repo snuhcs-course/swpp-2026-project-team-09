@@ -14,6 +14,15 @@ import { type Card } from './card-address.js';
 // A 파티 gone by the Leader's doing: ended, told to each other member and to whoever waited on it, or the User removed.
 export type GoneKind = 'party-ended' | 'party-removed' | 'join-cancelled' | 'invitation-cancelled';
 
+// The member who leads a Quest now: the Leader `left` it and they entered earliest, or the Leader `handed` it over.
+export interface NewLeader {
+  kind: 'became-leader';
+  questId: string;
+  questTitle: string;
+  formerName: string;
+  how: 'left' | 'handed';
+}
+
 export interface PartyGone {
   kind: GoneKind;
   questId: string;
@@ -31,6 +40,7 @@ export type Told =
   // The requests to join that wait for the Leader: the newest one's name, and how many wait in all.
   | { kind: 'join-asked'; questId: string; questTitle: string; name: string; waiting: number }
   | PartyGone
+  | NewLeader
   // Given for a Plan taken alone: `toward`, the next item the walk is for, "13:00 수업"; `by`, a way by shuttle.
   | {
       kind: 'leave-by';

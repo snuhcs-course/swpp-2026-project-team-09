@@ -8,6 +8,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -27,11 +28,20 @@ export function joinLabel(post: Pick<PostView, 'joinPolicy'>): string {
 }
 
 // A line with its icon: the clock with the time, the pin with the place.
-export function Line({ icon, children }: { icon: IconName; children: string }): ReactElement {
+// `link`: a line whose press opens something, in the 행사 line's blue (P06 ticket 27).
+export function Line({
+  icon,
+  children,
+  link = false,
+}: {
+  icon: IconName;
+  children: string;
+  link?: boolean;
+}): ReactElement {
   return (
     <View style={styles.line}>
-      <Icon color={color.inkMuted} name={icon} size={16} />
-      <Text numberOfLines={1} style={styles.lineWords}>
+      <Icon color={link ? color.blue600 : color.inkMuted} name={icon} size={16} />
+      <Text numberOfLines={1} style={[styles.lineWords, link && styles.linkWords]}>
         {children}
       </Text>
     </View>
@@ -204,6 +214,7 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   whenWhere: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   lineWords: { flexShrink: 1, fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.inkMuted },
+  linkWords: { color: color.blue600 },
   when: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
   dot: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkSubtle },
   where: { flexShrink: 1, fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
