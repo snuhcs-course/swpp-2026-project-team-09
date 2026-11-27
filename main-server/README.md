@@ -4064,11 +4064,13 @@ words and gives it its address. A feature imports `NotificationsModule` and call
   One that was sent is sent again at `at`.
 - `replace(userId, told, at)` does the same only when one is kept under that identity, and answers whether it did, so
   that a change arriving after a cancel keeps nothing. One that was sent is sent again only when `at` changes.
+- `renew(userId, told, at)` keeps it as `schedule` does, but one kept under the same identity is rewritten without
+  being sent again: it rings once while it is kept.
 - `cancel(userId, kind, card, about?)` forgets it; `about` is the person of a kind kept for each one.
 
 `told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock. After each
 call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing, or a
-`cancel` that forgot nothing, sends none. `schedule` and `replace` refuse, by throwing, a card no address opens. The
+`cancel` that forgot nothing, sends none. `schedule`, `replace` and `renew` refuse, by throwing, a card no address opens. The
 calls throw when the database fails too, so a caller that must not fail catches and logs.
 
 | Kind            | Told to                                       | When                                                                                                                           | Title                                                      | Ahead                          | Line                                                                                | Card                                         | Rings |
@@ -4084,12 +4086,25 @@ calls throw when the database fails too, so a caller that must not fail catches 
 | `step-changed`  | Every other Holder of the Quest               | A Holder adds, edits or cancels a step that has not ended, or the Leader changes the Quest to another Plan (`PUT /plans/{id}`) | `<name>가 일정을 바꿨어요`                                 | None                           | `<HH:MM> <step's title>`, or `'<step's title>' 취소` for a cancelled step           | `party:<questId>`                            | Yes   |
 | `arrived`       | Each other Holder who sees the member exactly | A member sharing with the Quest's Party reaches the shown step's point                                                         | `<name>가 도착했어요`                                      | None                           | The step's place                                                                    | `party:<questId>`                            | Yes   |
 | `late`          | Every other Holder of the Quest               | A Holder reports being late                                                                                                    | `<name>가 <N>분 늦어요`                                    | None                           | `<HH:MM> 도착 · <Quest's title>`, or the Quest's title when no arrival is known     | `party:<questId>`                            | Yes   |
+| `join-accepted` | The User who asked to join                    | The Leader accepts the request                                                                                                 | `참여 신청이 수락됐어요`                                   | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party:<questId>`                            | Yes   |
+| `join-declined` | The User who asked to join                    | The Leader declines the request                                                                                                | `참여 신청이 거절됐어요`                                   | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `find-parties:<questId>`                     | Yes   |
+| `join-asked`    | The Leader                                    | A User asks to join, withdraws, or is answered, while requests wait                                                            | `새 참여 신청 <N>명`                                       | None                           | `<Quest's title> · <name>님`, or `… · <name>님 외 <N-1>명`                          | `party:<questId>`                            | Yes   |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
 `leave-by`, `<Place>까지 걸어서 <N>분이에요.`; for a room request's kinds, the line as a sentence ("모두 동의했어요" adds
 "이제 예약할 수 있어요.", and `room-window` reads `<요일> <start>–<end> 스터디를 이제 예약할 수 있어요.`); and for an
 `interest-new`, `<HH:MM> <Place>이에요.`; for `step-changed` and `late`, the line with a full stop; for `arrived`,
-`<place>에 있어요.` A kind that does not ring has no body.
+`<place>에 있어요.`; for `join-accepted`, `<Quest's title>, 이제 내 파티에서 볼 수 있어요.`; for `join-declined`,
+`<Quest's title>, <Leader's name>님이 신청을 받지 않았어요.`; and for `join-asked`, `<name>님(외 N명)이 <Quest's title>에
+참여를 신청했어요.` A kind that does not ring has no body. A request to join's kinds lead with the answer and name the
+Quest in the line, so that one line, in 알림 or on a folded push, cuts the Quest's title rather than the answer.
+
+`join-accepted` and `join-declined` are kept by `JoinRequestsService` (`src/quests/`) for the User who asked, once the
+answer is stored, without the answer waiting. The Leader keeps one `join-asked` for each Quest while requests to join it
+wait. A request asked while no other waits keeps it with `schedule`, so it rings; any later request, withdrawal or
+answer rewrites it with `renew`, naming the newest request's User and how many wait, so a busy Quest does not ring
+again and again; and once none waits it is cancelled, so the next request rings again. A declined request's card,
+`find-parties:<questId>`, is on no map: the app opens 찾기, for another 파티.
 
 `step-changed`, `arrived` and `late` stand for the words a party's members cannot say to each other, for the room has
 no chat. Each is kept once per member who caused it (`about`), so a later one replaces the earlier and rings again.

@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Party, Quest } from '@/api/types';
@@ -19,6 +20,9 @@ import { cardAddress } from './address';
 const KEPT_KINDS = [
   'accepted',
   'declined',
+  'join-accepted',
+  'join-declined',
+  'join-asked',
   'leave-by',
   'room-declined',
   'room-agreed',
@@ -78,6 +82,8 @@ const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
   'room-ending': 'clock',
   'room-declined': 'user',
   'room-agreed': 'users',
+  'join-accepted': 'users',
+  'join-declined': 'user',
 };
 
 // `ahead` while the time is still to come, as the main server reads no clock.
@@ -102,8 +108,11 @@ function timeOf(at: string, now: Date): string {
   return `${month}월 ${date}일`;
 }
 
+// The Leader's `join-asked` is the push's copy of the row 알림 composes from the requests waiting, which counts them and
+// opens the room that answers them: it is left out, so that no request shows twice.
 function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[] {
   return kept
+    .filter(({ kind }) => kind !== 'join-asked')
     .toSorted((one, other) => Date.parse(other.at) - Date.parse(one.at))
     .map((notification) => ({
       key: `notice-${notification.id}`,
