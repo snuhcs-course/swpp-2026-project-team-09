@@ -8,8 +8,8 @@ import { type LibrarySpace, roomLabelOf } from './catalogue.js';
 
 // The names the app gives 관정관's seat spaces (P05 ticket 66), which the model is given so that its words match what
 // the User sees: "8층 정숙 열람실", never the library's sector name "8A 열람실 1 구역(QUIET ZONE)". This mirrors the
-// short names of SEAT_SPACES in mobile/src/library/cards/seat-rooms.ts, which test/library-app-names.unit.test.ts
-// compares.
+// short names of SEAT_SPACES in mobile/src/library/cards/seat-rooms.ts: both are checked against one fixture,
+// test/fixtures/library/app-seat-names.json here and its copy in mobile/__tests__/fixtures.
 export const APP_SEAT_NAMES: Readonly<Record<string, string>> = {
   '7F-7A-zone2': '7층 열람실',
   '7F-7A-zone1-notebook': '7A 노트북존',

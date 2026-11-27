@@ -18,7 +18,7 @@ Read from the code; nothing was sent to the library or to Production.
 | Fault | Where | Change |
 | --- | --- | --- |
 | Raw name | `[Cards shown: …]` (`run-messages.ts`) | The app's title: "library card for 관정 8층 정숙 열람실, …" |
-| Raw name | The book card's summary, the seats card's summary | The app's name of a seat space, with its floor (`app-names.ts`, a copy of the app's `seat-rooms.ts` that a test compares) |
+| Raw name | The book card's summary, the seats card's summary | The app's name of a seat space, with its floor (`app-names.ts`; it and the app's `seat-rooms.ts` are each checked against one fixture, `test/fixtures/library/app-seat-names.json`, which the app's test holds a byte-for-byte copy of) |
 | Raw name | findLibrarySpace's `found` and `several` names | The app's name for a seat space; any other space keeps the catalogue's |
 | Raw name | Refusals: closed on Sunday, not a seat of the space, no free gap (`booking-rules.ts`, `find-library-free-slots.ts`) | The app's name for a seat space |
 | Raw name | The seat-stay Quest's title, read in `[Ahead: …]` | "관정 8층 정숙 열람실" |
@@ -69,7 +69,7 @@ The eval's text checks gain `maxChars`, the most characters a reply may have.
 - [x] The rules of every app answer a question about a card on screen in one short sentence with no tool, and tie the press and sign-in words to a card shown in this message. The text chat's fixture holds the shared lines. (Unit test, failing before the change.)
 - [x] The answer rules name a seat space as the app does. (Unit test.)
 - [x] `[Cards shown: …]`, the summaries, findLibrarySpace's names, the refusals and the seat-stay title give the app's names. (Integration tests, failing before the change.)
-- [x] The app's names equal those of `mobile/src/library/cards/seat-rooms.ts`. (Unit test.)
+- [x] The server's names and the app's `shortName` each equal the shared fixture. (Unit tests in main-server and mobile.)
 - [x] The meal plan rules answer a question about the plan on screen in one short sentence. (Unit test.)
 - [x] `text.maxChars` fails a longer reply. (Unit test.)
 - [x] Eval cases: five follow-ups on a card and one on a meal plan, and the changed-card case without the sector's name. Written, not run: no model key on this machine.
