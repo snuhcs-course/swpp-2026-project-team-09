@@ -1,7 +1,7 @@
 # 26: A time away from today says its day
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built)
+Status: ready-for-agent
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.

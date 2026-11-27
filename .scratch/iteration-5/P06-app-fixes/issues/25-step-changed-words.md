@@ -1,7 +1,7 @@
 # 25: A changed step says which 파티 and when, and 지금 나서요 is kept again
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built)
+Status: ready-for-agent
 Blocked by: 26 (the date words).
 
 Native files: none. Releases: a main server Release.

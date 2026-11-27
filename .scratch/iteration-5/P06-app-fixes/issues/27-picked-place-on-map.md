@@ -1,7 +1,7 @@
 # 27: A place picked on the map opens a map with its pin
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built)
+Status: ready-for-agent
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

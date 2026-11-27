@@ -1,7 +1,7 @@
 # 23: A removed member leaves the activation, and a 파티 that is gone ends its activation
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built)
+Status: ready-for-agent
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.

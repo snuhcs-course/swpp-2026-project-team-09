@@ -98,7 +98,7 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-27 and built at once: 17. It changes `AppBar`'s tab form (`design-system/app-bar.tsx`) and 행사's search bar (`screens/events/events-bar.tsx`); no open ticket touches them.
 - Added on 2026-11-27 and built at once: 11a, a change to 11 (PR 594). It changes the class form's day buttons (`screens/timetable/class-fields.tsx`, `slot-card.tsx`) and `features/timetable/class-form.ts`; no open ticket touches them.
 - Added on 2026-11-27 and built at once: 18. It changes 내 파티's card and list (`screens/party/mine-card.tsx`, `mine-tab.tsx`) and its view (`features/party/mine.ts`), reusing 찾기's `PostTop` and `InfoLine`; no open ticket touches them.
-- Added on 2026-11-27 as tickets only (`Status: needs-triage`), for the team's review before any is built: 20 to 33. Of an audit's findings, only those the user took up are here; the rest are held (Out of Scope). They are numbered after ticket 19 (PR 688, the room as one page). Order and shared files once taken up:
+- Added on 2026-11-27 and reviewed in PR 692: 20 to 33, set `ready-for-agent` the same day (21 still waits for ticket 19's owner). Of an audit's findings, only those the user took up are here; the rest are held (Out of Scope). They are numbered after ticket 19 (PR 688, the room as one page). Order and shared files once taken up:
   - 20, 21, 22 and 32 each add Notification kinds (`main-server/src/notifications/`, the app's `features/notifications/adapter.ts`): one after another.
   - 26 before 25 (25's words use 26's day words), and 24 shows its time with them.
   - 23 and 22 both change `leader.service.ts`: one after another.

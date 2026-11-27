@@ -1,7 +1,7 @@
 # 33: A full 파티's 모집글 says so on its button
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built)
+Status: ready-for-agent
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

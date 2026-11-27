@@ -1,7 +1,7 @@
 # 30: One count for one thing on every screen
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage (written for the team's review on 2026-11-27; not built)
+Status: ready-for-agent
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
