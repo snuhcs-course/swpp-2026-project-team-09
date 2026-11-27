@@ -25,3 +25,8 @@ The approved board's ④ ("공부할 곳 후보 화면", 2026-11-27): a press on
 - [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 15 minutes of work, an estimate, in one session; the test runs' waiting is not counted.
+- Tokens, estimated as this ticket's share of that session: input 20M, of which 20M cache reads, 0.04M cache writes and under 1k uncached; output 30k.
