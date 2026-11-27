@@ -16,6 +16,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import type { PersonConstraint } from './constraint-types';
@@ -30,7 +31,7 @@ import type { ClosedPlace, DroppedPlace, PlanPart, WithAdding } from './plan-par
 import type { ProposalChange } from './party-change-types';
 import type { ReplyOffer } from './reply-offer-types';
 import type { ReplyStep } from './reply-step-types';
-import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
+import type { WithMark, WithMissing, WithRefusal } from './refusal-types';
 import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
@@ -187,27 +188,7 @@ export function referenceOf(card: ChatCard): CardReference {
 
 // Times are Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
 
-// What the app knows when the User asks, each part null when it does not know it.
-export interface RequestContext extends WithLocationMissing {
-  location: LatLng | null;
-  // The visible map area.
-  viewport: { south: number; west: number; north: number; east: number } | null;
-  tapped: { kind: 'place'; placeId: string } | { kind: 'friend'; userId: string } | null;
-  // The condition chips of the answer on screen.
-  conditions: PlanInput | null;
-  // The plan on screen.
-  planId: string | null;
-  // The plans of the meal answer on screen in its order, which the list and the map number from 1, so that "2번으로
-  // 할게" chooses one of them (P05 ticket 51). Left out without a meal answer on screen that says `choosable`.
-  planIds?: string[];
-  // With steps on screen, for an app that says `answers` (P03 ticket 20): the conditions of every answer of the steps in
-  // their order, and the steps whole as the last reply gave them. Left out otherwise; a main server before P05 ticket 73
-  // and 74 refuses them.
-  answers?: PlanInput[];
-  steps?: ReplyStep[];
-  // The User's Classes the conversation leaves out, as the latest reply gave them (P01 ticket 40). Left out for none.
-  skipped?: LeftOutClass[];
-}
+export type { RequestContext } from './request-context-types';
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
 export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput | StudyInput;
