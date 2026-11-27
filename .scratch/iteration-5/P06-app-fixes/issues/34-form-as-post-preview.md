@@ -220,3 +220,13 @@ Rows of 52, each with an 18 icon, the label (15 Medium) and a line under it.
 - `party-form-fields.tsx` went over the 300-line lint limit, so the toggle and the stepper's buttons are in `small-controls.tsx`.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+Estimates. Agent time is this session's wall clock from start to this entry, about 2 hours (2026-11-27 23:05 to 2026-11-28 01:02, Korea time). About 70 minutes of that were Jest runs, mostly in the background and slowed by a machine load average above 20. No subagents. Tokens are counted up to this entry, so this commit is left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 34 (tests first, the preview, the place sheet, '파티 설정', the marks, the photo and tag removal, the merge of `5.0/Main`, the pull request) | about 2 hours | 74,792,338 | 74,338,954 | 452,942 | 442 | 177,262 |
+
+Without cache reads, the input is 453,384.
