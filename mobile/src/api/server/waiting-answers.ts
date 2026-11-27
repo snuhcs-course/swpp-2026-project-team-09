@@ -7,12 +7,15 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type {
   FriendRequests,
+  InvitationNextSubQuest,
   JoinRequest,
   KeptNotification,
+  MyJoinRequest,
   QuestInvitation,
   QuestRemoval,
   QuestSummary,
@@ -26,6 +29,7 @@ import {
   isHolder,
   isJoinPolicy,
   isNumber,
+  isPlace,
   isTextOrNull,
   isUserSummary,
   listOf,
@@ -62,12 +66,29 @@ export function isQuestSummary(value: unknown): value is QuestSummary {
   );
 }
 
-// An invitation, and a request to join as its User lists it: the same shape.
-export function isQuestWaiting(value: unknown): value is QuestInvitation {
+// A request to join as its User lists it.
+export function isQuestWaiting(value: unknown): value is MyJoinRequest {
   return hasTexts(value, ['id', 'sentAt']) && isQuestSummary(field(value, 'quest'));
 }
 
-export const isQuestInvitations = listOf(isQuestWaiting);
+export const isMyJoinRequests = listOf(isQuestWaiting);
+
+function isInvitationNextSubQuest(value: unknown): value is InvitationNextSubQuest {
+  return (
+    hasTexts(value, ['id', 'title']) &&
+    isTextOrNull(field(value, 'startsAt')) &&
+    isTextOrNull(field(value, 'endsAt')) &&
+    isPlace(field(value, 'place'))
+  );
+}
+
+// An invitation as its User lists it, with when and where its Quest next meets.
+function isQuestInvitation(value: unknown): value is QuestInvitation {
+  const next = field(value, 'nextSubQuest');
+  return isQuestWaiting(value) && (next === null || isInvitationNextSubQuest(next));
+}
+
+export const isQuestInvitations = listOf(isQuestInvitation);
 
 function isJoinRequest(value: unknown): value is JoinRequest {
   const removedBefore = field(value, 'removedBefore');

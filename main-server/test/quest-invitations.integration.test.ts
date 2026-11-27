@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -86,12 +87,47 @@ describe('The Leader inviting a Friend', () => {
           createdAt: ANY_STRING,
         },
         sentAt: ANY_STRING,
+        nextSubQuest: {
+          id: ANY_STRING,
+          attending: false,
+          title: '저녁',
+          startsAt: ANY_STRING,
+          endsAt: null,
+          place: null,
+        },
       },
     ]);
     expect((await getQuest(app, friend, questId)).status).toBe(404);
     await vi.waitFor(() => {
       expect(signalsTo(friend)).toBe(1);
     });
+  });
+});
+
+describe('An invitation as the invited User lists it', () => {
+  it('carries when and where its Quest next meets: the start and the place with its point', async () => {
+    const [leader, friend] = await friends();
+    const startsAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+    const place = { latitude: 37.4602, longitude: 126.9523, label: '301동 앞' };
+    const questId = await ownQuest(app, leader, { subQuest: { title: '저녁', startsAt, place } });
+    await invite(app, leader, questId, friend.id).expect(204);
+
+    const response = await getInvitations(app, friend);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject([
+      { nextSubQuest: { title: '저녁', startsAt, place: { placeId: null, ...place } } },
+    ]);
+  });
+
+  it('carries no start and no place for a Quest that has neither yet', async () => {
+    const [leader, friend] = await friends();
+    const questId = await ownQuest(app, leader, { subQuest: { title: '산책' } });
+    await invite(app, leader, questId, friend.id).expect(204);
+
+    const response = await getInvitations(app, friend);
+
+    expect(response.body).toMatchObject([{ nextSubQuest: { title: '산책', startsAt: null, place: null } }]);
   });
 });
 
