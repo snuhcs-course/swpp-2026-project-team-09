@@ -17,9 +17,11 @@ import { useToast } from '@/design-system';
 import { heldAlone } from './adapter';
 import { leftOnPurpose } from './leaving';
 
+type GoneWay = 'removed' | 'ended' | 'unknown';
+
 // What the main server says of a Quest that left the list: removed, when the Leader's removal of the User is listed;
 // ended, when the Quest is not found otherwise; null when the User still holds it.
-async function goneWay(questId: string): Promise<'removed' | 'ended' | 'unknown' | null> {
+async function goneWay(questId: string): Promise<GoneWay | null> {
   let notFound = false;
   try {
     await apiClient.getQuest(questId);
@@ -35,7 +37,7 @@ async function goneWay(questId: string): Promise<'removed' | 'ended' | 'unknown'
 }
 
 // The toast's words of a 파티 gone, as its Notification says.
-function goneWords(title: string, way: 'removed' | 'ended' | 'unknown'): string {
+function goneWords(title: string, way: GoneWay): string {
   if (way === 'removed') {
     return `${title} 파티에서 내보내졌어요`;
   }

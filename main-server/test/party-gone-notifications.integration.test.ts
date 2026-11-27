@@ -42,11 +42,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// The User's Notifications of the kinds a 파티 gone keeps, leaving out those of the request that made a member.
+const GONE_KINDS = new Set(['party-ended', 'party-removed', 'join-cancelled', 'invitation-cancelled']);
+
+// The User's Notifications of the kinds a 파티 gone keeps.
 async function goneNotices(user: TestUser): Promise<unknown[]> {
   const response = await withAccessToken(request(app.getHttpServer()).get('/notifications'), user.accessToken);
   const notices = z.array(z.looseObject({ kind: z.string() })).parse(response.body);
-  return notices.filter(({ kind }) => !kind.startsWith('join-a'));
+  return notices.filter(({ kind }) => GONE_KINDS.has(kind));
 }
 
 function ringsOf(user: TestUser, kind: string): Promise<{ rings: boolean } | null> {
@@ -87,9 +89,9 @@ describe('The Leader ending a 파티', () => {
         {
           id: `party-ended:party-gone:${questId}`,
           kind: 'party-ended',
-          title: '점심 같이 파티가 없어졌어요',
+          title: '파티가 없어졌어요',
           ahead: null,
-          line: '홍길동님이 파티를 없앴어요',
+          line: '점심 같이 · 홍길동님이 없앴어요',
           at: AT,
           url: `/main?card=party-gone:${questId}`,
         },
@@ -108,14 +110,16 @@ describe('The Leader ending a 파티', () => {
       expect(await goneNotices(asker)).toEqual([
         expect.objectContaining({
           kind: 'join-cancelled',
-          title: '점심 같이 파티가 없어져 신청이 취소됐어요',
+          title: '파티가 없어져 신청이 취소됐어요',
+          line: '점심 같이 · 홍길동님의 파티',
           url: `/main?card=party-gone:${questId}`,
         }),
       ]);
       expect(await goneNotices(invitee)).toEqual([
         expect.objectContaining({
           kind: 'invitation-cancelled',
-          title: '점심 같이 파티가 없어져 초대가 취소됐어요',
+          title: '파티가 없어져 초대가 취소됐어요',
+          line: '점심 같이 · 홍길동님의 파티',
           url: `/main?card=party-gone:${questId}`,
         }),
       ]);
@@ -136,9 +140,9 @@ describe('The Leader removing a member', () => {
         {
           id: `party-removed:party-gone:${questId}`,
           kind: 'party-removed',
-          title: '점심 같이 파티에서 내보내졌어요',
+          title: '파티에서 내보내졌어요',
           ahead: null,
-          line: '홍길동님의 파티',
+          line: '점심 같이 · 홍길동님의 파티',
           at: AT,
           url: `/main?card=party-gone:${questId}`,
         },

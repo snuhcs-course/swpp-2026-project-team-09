@@ -148,12 +148,14 @@ export class LeaderService {
   // The Holder goes as one who dropped the Quest, with their progress. The removal is kept, so that the User comes back
   // only by the Leader's approval (QuestRemoval).
   async remove(userId: string, questId: string, holderId: string): Promise<void> {
-    let questTitle = '';
+    // What the one removed is told, read with the change.
+    const removed: { told?: PartyGone } = {};
     await this.changeAsLeader(
       userId,
       questId,
       async (tx, quest, holderIds) => {
-        questTitle = quest.title;
+        const { name } = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
+        removed.told = { kind: 'party-removed', questId, questTitle: quest.title, leaderName: name };
         if (!holderIds.includes(holderId)) {
           throw notHolder();
         }
@@ -167,8 +169,9 @@ export class LeaderService {
       },
       holderId,
     );
-    const leader = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
-    this.tellGone(holderId, { kind: 'party-removed', questId, questTitle, leaderName: leader?.name ?? '' });
+    if (removed.told !== undefined) {
+      this.tellGone(holderId, removed.told);
+    }
     await this.forgetTimeToLeave(holderId, questId);
     await this.roomRequests.questChanged(questId);
   }

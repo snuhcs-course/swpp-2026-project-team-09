@@ -269,9 +269,9 @@ describe('a row of 알림 of a 파티 gone', () => {
         {
           id: `party-ended:party-gone:${PICNIC.id}`,
           kind: 'party-ended',
-          title: `${PICNIC.title} 파티가 없어졌어요`,
+          title: '파티가 없어졌어요',
           ahead: null,
-          line: '김민준님이 파티를 없앴어요',
+          line: `${PICNIC.title} · 김민준님이 없앴어요`,
           at: '2026-10-06T12:58:00+09:00',
           url: `/main?card=party-gone:${PICNIC.id}`,
         },
@@ -283,7 +283,7 @@ describe('a row of 알림 of a 파티 gone', () => {
     await pass(500);
 
     await user.press(
-      screen.getByRole('button', { name: `${PICNIC.title} 파티가 없어졌어요 · 김민준님이 파티를 없앴어요 · 12:58` }),
+      screen.getByRole('button', { name: `파티가 없어졌어요 · ${PICNIC.title} · 김민준님이 없앴어요 · 12:58` }),
     );
     await pass(500);
 

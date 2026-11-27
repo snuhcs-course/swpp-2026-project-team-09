@@ -181,31 +181,30 @@ function joinWords(told: Of<'join-accepted'> | Of<'join-declined'> | Of<'join-as
   };
 }
 
-// A 파티 gone opens the card `party-gone`, which no map holds: the app says the 파티 is gone. A member's ring; a request
+// A 파티 gone opens the card `party-gone`, which no map holds: the app says the 파티 is gone. Each kind's title says
+// what happened and its line names the 파티, as a request to join's do. A member's ring, with the push's body; a request
 // or an invitation that waited is only in 알림.
-const GONE_TITLES: Record<GoneKind, string> = {
-  'party-ended': '파티가 없어졌어요',
-  'party-removed': '파티에서 내보내졌어요',
-  'join-cancelled': '파티가 없어져 신청이 취소됐어요',
-  'invitation-cancelled': '파티가 없어져 초대가 취소됐어요',
+const GONE: Record<GoneKind, { title: string; line: string; body: string | null }> = {
+  'party-ended': { title: '파티가 없어졌어요', line: '님이 없앴어요', body: '님이 파티를 없앴어요.' },
+  'party-removed': { title: '파티에서 내보내졌어요', line: '님의 파티', body: '님이 파티에서 내보냈어요.' },
+  'join-cancelled': { title: '파티가 없어져 신청이 취소됐어요', line: '님의 파티', body: null },
+  'invitation-cancelled': { title: '파티가 없어져 초대가 취소됐어요', line: '님의 파티', body: null },
 };
 
 function isGone(told: Told): told is PartyGone {
-  return Object.hasOwn(GONE_TITLES, told.kind);
+  return Object.hasOwn(GONE, told.kind);
 }
 
-function goneWords(told: PartyGone): NotificationWords {
-  const ended = told.kind === 'party-ended';
-  const rings = ended || told.kind === 'party-removed';
-  const line = ended ? `${told.leaderName}님이 파티를 없앴어요` : `${told.leaderName}님의 파티`;
+function goneWords({ kind, questId, questTitle, leaderName }: PartyGone): NotificationWords {
+  const { title, line, body } = GONE[kind];
   return {
-    title: `${told.questTitle} ${GONE_TITLES[told.kind]}`,
+    title,
     ahead: null,
-    line,
-    card: { kind: 'party-gone', id: told.questId },
+    line: `${questTitle} · ${leaderName}${line}`,
+    card: { kind: 'party-gone', id: questId },
     about: null,
-    rings,
-    body: rings ? (ended ? `${line}.` : `${told.leaderName}님이 파티에서 내보냈어요.`) : null,
+    rings: body !== null,
+    body: body === null ? null : `${questTitle}, ${leaderName}${body}`,
   };
 }
 

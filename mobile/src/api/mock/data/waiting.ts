@@ -59,9 +59,9 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
   {
     id: 'party-ended:party-gone:post-0',
     kind: 'party-ended',
-    title: '버들골 저녁 러닝 크루 파티가 없어졌어요',
+    title: '파티가 없어졌어요',
     ahead: null,
-    line: '최유나님이 파티를 없앴어요',
+    line: '버들골 저녁 러닝 크루 · 최유나님이 없앴어요',
     at: frameTime('09:30'),
     url: '/main?card=party-gone:post-0',
   },
