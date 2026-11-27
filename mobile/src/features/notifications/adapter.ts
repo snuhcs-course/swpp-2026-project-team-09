@@ -23,6 +23,10 @@ const KEPT_KINDS = [
   'join-accepted',
   'join-declined',
   'join-asked',
+  'party-ended',
+  'party-removed',
+  'join-cancelled',
+  'invitation-cancelled',
   'leave-by',
   'room-declined',
   'room-agreed',
@@ -84,6 +88,10 @@ const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
   'room-agreed': 'users',
   'join-accepted': 'users',
   'join-declined': 'user',
+  'party-ended': 'users',
+  'party-removed': 'user',
+  'join-cancelled': 'users',
+  'invitation-cancelled': 'calendar',
 };
 
 // `ahead` while the time is still to come, as the main server reads no clock.

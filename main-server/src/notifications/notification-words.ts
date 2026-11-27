@@ -14,7 +14,7 @@ import { withCopula, withSubject } from '../assistant/gathering/answer-words.js'
 import { koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
-import { type NotificationWords, type Told } from './notification.js';
+import { type GoneKind, type NotificationWords, type PartyGone, type Told } from './notification.js';
 
 const ANSWERS = { accepted: '수락했어요', declined: '못 온대요' } as const;
 
@@ -181,6 +181,33 @@ function joinWords(told: Of<'join-accepted'> | Of<'join-declined'> | Of<'join-as
   };
 }
 
+// A 파티 gone opens the card `party-gone`, which no map holds: the app says the 파티 is gone. Each kind's title says
+// what happened and its line names the 파티, as a request to join's do. A member's ring, with the push's body; a request
+// or an invitation that waited is only in 알림.
+const GONE: Record<GoneKind, { title: string; line: string; body: string | null }> = {
+  'party-ended': { title: '파티가 없어졌어요', line: '님이 없앴어요', body: '님이 파티를 없앴어요.' },
+  'party-removed': { title: '파티에서 내보내졌어요', line: '님의 파티', body: '님이 파티에서 내보냈어요.' },
+  'join-cancelled': { title: '파티가 없어져 신청이 취소됐어요', line: '님의 파티', body: null },
+  'invitation-cancelled': { title: '파티가 없어져 초대가 취소됐어요', line: '님의 파티', body: null },
+};
+
+function isGone(told: Told): told is PartyGone {
+  return Object.hasOwn(GONE, told.kind);
+}
+
+function goneWords({ kind, questId, questTitle, leaderName }: PartyGone): NotificationWords {
+  const { title, line, body } = GONE[kind];
+  return {
+    title,
+    ahead: null,
+    line: `${questTitle} · ${leaderName}${line}`,
+    card: { kind: 'party-gone', id: questId },
+    about: null,
+    rings: body !== null,
+    body: body === null ? null : `${questTitle}, ${leaderName}${body}`,
+  };
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
@@ -191,6 +218,9 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
   }
   if (told.kind === 'join-accepted' || told.kind === 'join-declined' || told.kind === 'join-asked') {
     return joinWords(told);
+  }
+  if (isGone(told)) {
+    return goneWords(told);
   }
   if (told.kind === 'leave-by') {
     return {
