@@ -10,16 +10,16 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, use, useEffect, useState } from 'react';
+import { type ReactElement, type ReactNode, use, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
-import Reanimated from 'react-native-reanimated';
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import type { AnswerReply, LibrarySpace, Plan } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import type { Lookup } from '@/api/lookup-types';
-import { color, radius, shadow, space } from '@/design-system';
+import { radius, space } from '@/design-system';
 import { windowOf, withoutSkipped } from '@/features/assistant/plan-input';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -41,10 +41,10 @@ import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
-import { Caret, Grip, STRIP_TOP } from './time-card-strip';
+import { CARD_FACE, Caret, Grip, STRIP_TOP } from './time-card-strip';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
-import { foldedTo, shownStop, TopTab } from './top-stops';
+import { restingLift, type TopStops } from './top-stops';
 
 const NO_WINDOW = { from: null, until: null };
 const NO_QUESTS: readonly Quest[] = [];
@@ -110,28 +110,45 @@ function OpenRows(p: {
 // and the rest scrolled to (P04 ticket 61); people are picked in those rows (P04 ticket 64). A time outside that range
 // is asked for in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
 // folded one: open, it lies over the map for a while.
-// The bar of one request folds to the tab at the top's centre (P01 ticket 22); under a steps card the steps card's top
-// draws the stops (`StepsTop`) and the bar only folds into it.
+// Under the bar of several requests it is the top's last card (P01 ticket 22): it folds behind that bar, then takes the
+// bar up to the stage's top, its grip strip showing all the way (`top-stops.tsx`).
 function Bar(props: BarProps): ReactElement {
   const sheet = use(SheetLinkContext);
-  const several = (props.offset ?? 0) > 0;
-  const stops = sheet.top;
-  // One request has no stop 1: a fold left there by several requests stands at 0.
-  useEffect(() => {
-    if (stops !== undefined && !several && stops.stop === 1) {
-      stops.setStop(0);
-    }
-  }, [stops, several]);
-  if (stops !== undefined && !several && shownStop(stops.stop, false) === 0) {
-    return <TopTab onHeight={props.onHeight} several={false} stops={stops} />;
-  }
-  const fold =
-    stops === undefined
-      ? undefined
-      : (long: boolean): void => {
-          stops.setStop(foldedTo(several, long));
-        };
-  return <TimeCard {...props} fold={fold} />;
+  return <TimeCard {...props} under={(props.offset ?? 0) > 0 ? sheet.top : undefined} />;
+}
+
+// Under the bar of several requests the card stands in a frame that starts inside that bar, under its rounded top, and
+// moves with the bar's lift: no part of the card ever shows above the bar, however tall it is (the fault P01 ticket 22
+// removes), and past its place behind the bar it goes up with the bar.
+function UnderFrame({ under, children }: { under: TopStops; children: ReactNode }): ReactElement {
+  const { top } = useSafeAreaInsets();
+  const { lift } = under;
+  const moved = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
+  const rested = { transform: [{ translateY: restingLift(under.stop, barTop(top) + under.stepsHeight) }] };
+  return (
+    <Reanimated.View style={[styles.frame, { top: frameTop(top) }, moved, rested]} testID="time-card-frame">
+      {children}
+    </Reanimated.View>
+  );
+}
+
+// "＋ 같이" at the right of the head's row, which tells its width so that the words leave it room.
+function AddSlot({ add, onWidth }: { add: ReactNode; onWidth: (width: number) => void }): ReactElement {
+  return (
+    <View
+      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        onWidth(Math.ceil(nativeEvent.layout.width));
+      }}
+      style={styles.add}
+      testID="time-bar-add"
+    >
+      {add}
+    </View>
+  );
+}
+
+function frameTop(inset: number): number {
+  return barTop(inset) + radius.xl;
 }
 
 function TimeCard({
@@ -142,8 +159,8 @@ function TimeCard({
   offset = 0,
   caret,
   picking = null,
-  fold,
-}: BarProps & { fold: ((long: boolean) => void) | undefined }): ReactElement {
+  under,
+}: BarProps & { under: TopStops | undefined }): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
   const [rows, setRows] = useState(0);
@@ -151,10 +168,13 @@ function TimeCard({
   const barY = barTop(top) + offset;
   const { startAt, now } = band.band;
   const sheet = use(SheetLinkContext);
-  const grip = useTimeCardGrip({ height, top: barY, rows, sheet, fold });
+  const grip = useTimeCardGrip({ height, top: barY, rows, sheet, under });
   usePickingPlace(picking !== null, grip, sheet.high);
-  return (
-    <Reanimated.View style={[styles.bar, { top: barY }, grip.moved, grip.rested]} testID="time-bar">
+  const card = (
+    <Reanimated.View
+      style={[styles.bar, { top: under === undefined ? barY : barY - frameTop(top) }, grip.moved, grip.rested]}
+      testID="time-bar"
+    >
       {caret === undefined ? null : <Caret at={caret} />}
       <View onLayout={onBand} testID="time-card-head">
         <TimeBand
@@ -165,21 +185,12 @@ function TimeCard({
         />
       </View>
       <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
-      {add === null ? null : (
-        <View
-          onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-            setAddWidth(Math.ceil(nativeEvent.layout.width));
-          }}
-          style={styles.add}
-          testID="time-bar-add"
-        >
-          {add}
-        </View>
-      )}
+      {add === null ? null : <AddSlot add={add} onWidth={setAddWidth} />}
       <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
       {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
     </Reanimated.View>
   );
+  return under === undefined ? card : <UnderFrame under={under}>{card}</UnderFrame>;
 }
 
 interface PlanBarProps {
@@ -307,15 +318,14 @@ function BookingCard(p: {
 }
 
 const styles = StyleSheet.create({
+  frame: { position: 'absolute', right: 0, bottom: 0, left: 0, overflow: 'hidden', pointerEvents: 'box-none' },
   bar: {
     position: 'absolute',
     right: ANSWER_TOP.side,
     left: ANSWER_TOP.side,
     paddingTop: space[3],
     paddingHorizontal: space[4],
-    borderRadius: radius.xl,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
+    ...CARD_FACE,
   },
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
