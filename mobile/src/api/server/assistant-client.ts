@@ -10,12 +10,16 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
   ANSWER_CAPABILITIES,
+  type AnswerReply,
   type AssistantReply,
   type ChatCard,
+  type LeftOutClass,
   MAP_LAYERS,
   type MapLayer,
   type QuestProposal,
@@ -25,6 +29,7 @@ import {
   type TravelBox,
 } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
+import { sentLeftOut } from '@/features/assistant/left-out';
 import { field, hasTexts, isBoard, isJoinPolicy, isNothing, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isGlobalEvent } from './event-client';
 import { isLibraryCardData, withLibraryDefaults } from './library-card-answers';
@@ -164,7 +169,14 @@ function isReplyOffer(value: unknown): value is ReplyOffer {
   }
 }
 
+// An answer of a reply's `answers`, with its request's key (P03 ticket 20).
+function isKeyedAnswer(value: unknown): value is AnswerReply {
+  return isAnswerReply(value) && isText(field(value, 'key'));
+}
+
 function isAssistantReply(value: unknown): value is AssistantReply {
+  const answers = field(value, 'answers');
+  const withdrawn = field(value, 'withdrawn');
   const offers = field(value, 'offers');
   const proposal = field(value, 'proposal');
   const answer = field(value, 'answer');
@@ -178,7 +190,9 @@ function isAssistantReply(value: unknown): value is AssistantReply {
     (answer === undefined || isNothing(answer) || isAnswerReply(answer)) &&
     (lookup === undefined || isNothing(lookup) || isLookup(lookup)) &&
     (refusal === undefined || isNothing(refusal) || isRefusal(refusal)) &&
-    (offers === undefined || listOf(isReplyOffer)(offers))
+    (offers === undefined || listOf(isReplyOffer)(offers)) &&
+    (answers === undefined || listOf(isKeyedAnswer)(answers)) &&
+    (withdrawn === undefined || listOf(isText)(withdrawn))
   );
 }
 
@@ -188,19 +202,29 @@ function knownSteps(steps: unknown): Pick<AssistantReply, 'steps'> {
   return listOf(isReplyStep)(steps) ? { steps } : {};
 }
 
+const isLeftOutClass = (value: unknown): value is LeftOutClass =>
+  isText(field(value, 'date')) && isText(field(value, 'classId'));
+
+// The conversation's Classes left out (P01 ticket 40), kept only as a whole list of their shape.
+function knownSkipped(skipped: unknown): Pick<AssistantReply, 'skipped'> {
+  return listOf(isLeftOutClass)(skipped) ? { skipped } : {};
+}
+
 export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer' | 'answerTap'> = {
   askAssistant: async (messages, context) => {
     const body = { messages, context, clientCapabilities: ANSWER_CAPABILITIES };
-    const { steps, ...reply } = await call('POST', '/assistant/messages', isAssistantReply, { body });
-    return { ...reply, cards: reply.cards.map(filled), ...knownSteps(steps) };
+    const { steps, skipped, ...reply } = await call('POST', '/assistant/messages', isAssistantReply, { body });
+    return { ...reply, cards: reply.cards.map(filled), ...knownSteps(steps), ...knownSkipped(skipped) };
   },
-  // A main server before P02-13 refuses a key it does not know, so the reason is sent only when there is one.
-  recalculateAnswer: (input, location, missing) =>
+  // A main server before P02-13 refuses a key it does not know, so the reason is sent only when there is one, and the
+  // Classes left out only when a reply gave some (P01 ticket 40).
+  recalculateAnswer: (input, location, missing, skipped = []) =>
     call('POST', '/assistant/answers', isAnswerReply, {
       body: {
         input,
         location,
         ...((missing ?? null) === null ? {} : { locationMissing: missing }),
+        ...sentLeftOut(skipped),
         clientCapabilities: ANSWER_CAPABILITIES,
       },
     }),

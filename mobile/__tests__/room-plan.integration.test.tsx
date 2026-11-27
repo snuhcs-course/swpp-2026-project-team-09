@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -79,18 +80,14 @@ describe('일정', () => {
     expect(plan().getByText('일정 없음')).toBeVisible();
   });
 
-  it("marks a Sub Quest done for the User, for any Holder, and shows no Leader's control to another", async () => {
+  it("shows another Holder no Leader's control and no mark of done", async () => {
     answerRoom(server, HIS_PICNIC);
-    server.on(`POST ${STEPS}/${MEET?.id}/done`, { status: 204 });
-    const user = await openRoom(HIS_PICNIC);
+    await openRoom(HIS_PICNIC);
 
-    expect(screen.queryByRole('button', { name: '일정 추가' })).toBeNull();
-    expect(screen.queryByRole('button', { name: '일정 수정' })).toBeNull();
-    expect(screen.queryByRole('button', { name: '일정 삭제' })).toBeNull();
-    await user.press(screen.getAllByRole('button', { name: '완료로 표시' })[0]);
-    await pass(500);
-
-    expect(server.received(`POST ${STEPS}/${MEET?.id}/done`)).toHaveLength(1);
+    expect(screen.getAllByTestId('plan-step')).toHaveLength(2);
+    for (const name of ['일정 추가', '일정 수정', '일정 삭제', '완료로 표시', '완료 취소']) {
+      expect(screen.queryByRole('button', { name })).toBeNull();
+    }
   });
 });
 

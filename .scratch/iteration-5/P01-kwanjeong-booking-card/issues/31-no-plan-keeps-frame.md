@@ -49,7 +49,12 @@ Before, the time card, the people, the Classes left out and the conditions all w
 - [x] A meal's price with no Plan: its ✕, which asks again without it. (Integration test.)
 - [x] A first answer with no Plan and the band the main server sends: the time card. (Integration test.)
 - [x] The frame's band: sent, redrawn, none; the window's bounds; a meal and a meet. (Unit test.)
-- [ ] Pictures of the answer with no Plan for a meal alone and with Friends, at font scale 1.0 and 1.3, before and after.
+- [x] Pictures of the answer with no Plan for a meal alone and with Friends, at font scale 1.0 and 1.3, before and after. (In #678.)
 - [x] Whole lint, format and types.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 35 minutes (an estimate) in the session that finished it: about 20 minutes on the tests a merge of `5.0/Main` outdated (`answer-correct-waiting`, the fixture copies, `study={null}` after `KindChips` took the study chips), the case table and the pull request; about 15 minutes on the before and after pictures on the emulator. The earlier session that built the frame did not record its part.
+- Tokens, in that session's turns shared with P10 tickets 12–14, so a share estimated from its totals: input about 130 uncached, with cache reads about 24.7M and cache writes about 130k; output about 31k. No subagents.

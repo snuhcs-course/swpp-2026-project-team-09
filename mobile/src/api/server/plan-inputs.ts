@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { EventsInput, MealInput, PersonConstraint, PlanInput, PlanPerson } from '@/api/assistant-types';
@@ -23,7 +24,7 @@ export function isOneOf<Value extends string>(values: readonly Value[]): (value:
 }
 
 function isConstraint(value: unknown): value is PersonConstraint {
-  if (!isOneOf(['asker', 'person'])(field(value, 'source'))) {
+  if (!isOneOf(['asker', 'person', 'step'])(field(value, 'source'))) {
     return false;
   }
   switch (field(value, 'kind')) {

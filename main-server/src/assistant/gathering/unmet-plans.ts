@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Hours } from '../../menus/restaurant-hours.js';
@@ -152,7 +153,8 @@ interface Gathered {
 }
 
 // The gathering of a meal, the asker first: with 지금 and no start fixed, only a stretch that starts soon is planned,
-// and nothing fitting it gives the conditions to ease. The asker alone, with nothing fixed, learns of a Class too soon.
+// and nothing fitting it gives the conditions to ease. The asker alone, with nothing fixed, learns of a Class too soon:
+// not a meal after another step of the message, which fixes when the asker is free from (P05 ticket 74).
 export function gatherMeal(
   people: People,
   places: readonly GatheringPlace[],
@@ -173,7 +175,8 @@ export function gatherMeal(
     return { gathering, unmet: { ...unmet, opensAt }, aloneMinutes };
   }
   const { from, until, now: soon = false } = input.window;
-  const alone = people.length === 1 && !soon && from === null && until === null;
+  const fixed = from !== null || until !== null || asker.notBefore !== undefined || asker.leaveBy !== undefined;
+  const alone = people.length === 1 && !soon && !fixed;
   const tooSoon = alone ? tooSoonOf(asker, places, now, travel) : null;
   return { gathering, unmet: { ...NOTHING_UNMET, tooSoon, opensAt }, aloneMinutes };
 }

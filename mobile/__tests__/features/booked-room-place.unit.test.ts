@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Quest } from '@/api/types';
@@ -79,9 +80,13 @@ describe("A booked party's place on its screens", () => {
       declined: [],
       seenFriends: [],
       meId: ME.id,
+      masterOn: true,
+      now: NOW,
     });
 
     expect(view.plan.map(({ place }) => place)).toEqual([PLACE]);
+    // The time and place box above 일정, as the orange step shows it.
+    expect(view.place).toBe(PLACE);
   });
 
   it("leads with the room in its event's list of 파티", () => {

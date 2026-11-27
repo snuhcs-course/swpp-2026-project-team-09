@@ -10,13 +10,13 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
-  Badge,
   Button,
   Chip,
   color,
@@ -24,7 +24,6 @@ import {
   font,
   FullScreenPanel,
   LoadingState,
-  radius,
   space,
   useToastAbove,
 } from '@/design-system';
@@ -32,6 +31,7 @@ import { heldAlone } from '@/features/quests/adapter';
 import type { RoomView } from '@/features/quests/room-adapter';
 import { useRoom } from '@/features/quests/use-room';
 import { useWalkingTimes } from '@/features/quests/use-walking-times';
+import { InfoBox, InfoLine, PostHost } from '../party/post-content';
 import { ActivationBox } from './activation-box';
 import { type Ask, ConfirmSheet } from './confirm-sheet';
 import { InvitationsSection, MembersSection, RequestsSection } from './people-sections';
@@ -51,26 +51,17 @@ function leaveRoom(): void {
   }
 }
 
-// The badges, the title, a Closed Quest's text, and the tags under it.
+// The title, then the 모집글 as 파티 모집글 draws it: the Leader's row without a mark, the text, the tags, and the box
+// of the orange step's time and place with the event's line.
 function Head({ room }: { room: RoomView }): ReactElement {
-  const { text: description, tags } = room;
+  const { quest, host, text: description, tags, time, place } = room;
   return (
     <View style={styles.head}>
-      <View style={styles.badges}>
-        {room.badges.map(({ label, tone, icon }) => (
-          <Badge icon={icon} key={label} tone={tone}>
-            {label}
-          </Badge>
-        ))}
-      </View>
       <Text accessibilityRole="header" style={styles.title}>
-        {room.quest.title}
+        {quest.title}
       </Text>
-      {description === '' ? null : (
-        <View style={styles.quote}>
-          <Text style={styles.quoteWords}>{description}</Text>
-        </View>
-      )}
+      {host === null ? null : <PostHost line={host.line} name={host.name} />}
+      {description === '' ? null : <Text style={styles.description}>{description}</Text>}
       {tags.length === 0 ? null : (
         <View accessibilityLabel="태그" style={styles.tags}>
           {tags.map((tag) => (
@@ -78,37 +69,32 @@ function Head({ room }: { room: RoomView }): ReactElement {
           ))}
         </View>
       )}
+      <InfoBox>
+        <InfoLine icon="clock">{time}</InfoLine>
+        <InfoLine icon="pin">{place}</InfoLine>
+        {quest.globalEvent === null ? null : <RoomEvent event={quest.globalEvent} />}
+      </InfoBox>
     </View>
   );
 }
 
-// The app bar's `모집글 보기` for an Open or Approval Quest, never for a Closed one, and `수정` for its Leader, but not
-// for a Quest taken alone, which gathers nobody and keeps its settings.
-function RecruitingActions({ room }: { room: RoomView }): ReactElement {
-  const { quest, leads, hasPost } = room;
+// The app bar's `수정` for the Quest's Leader, but not for a Quest taken alone, which gathers nobody and keeps its
+// settings. `centred` keeps it on the title's line: a button otherwise stands at the top of the bar's row.
+function EditAction({ room }: { room: RoomView }): ReactElement | null {
+  const { quest, leads } = room;
+  if (!leads || heldAlone(quest)) {
+    return null;
+  }
   return (
-    <View style={styles.actions}>
-      {hasPost ? (
-        <Button
-          onPress={() => {
-            router.push(`/post/${quest.id}`);
-          }}
-          variant="secondary"
-        >
-          모집글 보기
-        </Button>
-      ) : null}
-      {leads && !heldAlone(quest) ? (
-        <Button
-          onPress={() => {
-            router.push({ pathname: '/party-form', params: { questId: quest.id } });
-          }}
-          variant="ghost"
-        >
-          수정
-        </Button>
-      ) : null}
-    </View>
+    <Button
+      centred
+      onPress={() => {
+        router.push({ pathname: '/party-form', params: { questId: quest.id } });
+      }}
+      variant="ghost"
+    >
+      수정
+    </Button>
   );
 }
 
@@ -186,8 +172,8 @@ interface BodyProps {
   open: boolean;
 }
 
-// The frame's order: the head, the activation, the event card, 일정, 신청, 멤버 and 초대 중. A Quest taken alone has no
-// Party to switch on, which would show it to Friends, and no 멤버, as the User is its one Holder.
+// The frame's order: the head, the activation, 일정, 신청, 멤버 and 초대 중. A Quest taken alone has no Party to switch
+// on, which would show it to Friends, and no 멤버, as the User is its one Holder.
 function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
   const walks = useWalkingTimes(room, open);
   const party = !heldAlone(room.quest);
@@ -195,7 +181,6 @@ function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
     <View style={styles.body}>
       <Head room={room} />
       {party ? <ActivationBox actions={actions} onAsk={onAsk} room={room} /> : null}
-      {room.quest.globalEvent === null ? null : <RoomEvent event={room.quest.globalEvent} />}
       <PlanSection actions={actions} room={room} />
       <RequestsSection actions={actions} room={room} />
       {party ? <MembersSection actions={actions} room={room} walks={walks} /> : null}
@@ -235,7 +220,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
           />
         )
       }
-      actions={room === undefined ? undefined : <RecruitingActions room={room} />}
+      actions={room === undefined ? undefined : <EditAction room={room} />}
       footerHidesForKeyboard
       leave={{ kind: 'back', onPress: leaveRoom }}
       title={room === undefined ? '' : titleOf(room)}
@@ -256,18 +241,8 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
 
 const styles = StyleSheet.create({
   body: { gap: space[6], paddingTop: space[5], paddingHorizontal: space[4], paddingBottom: space[6] },
-  head: { gap: space[2] },
-  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  head: { gap: space[3] },
   title: { fontFamily: font.bold, fontSize: 22, lineHeight: 30, letterSpacing: -0.33, color: color.ink },
-  quote: {
-    paddingVertical: space[3],
-    paddingHorizontal: 14,
-    borderLeftWidth: 3,
-    borderLeftColor: color.border,
-    borderRadius: radius.sm,
-    backgroundColor: color.surfaceSubtle,
-  },
-  quoteWords: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.ink },
+  description: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.ink },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
 });

@@ -114,11 +114,14 @@ export interface PlanPerson {
   constraints: PersonConstraint[];
 }
 
-// `source` says who set it: the asker (words, a tap, a drag) or the person it is about.
+// `source` says who set it: the asker (words, a tap, a drag), the person it is about, or, for an app that says `answers`,
+// the step before it in the same steps, which the server sets again whenever that step changes (P05 ticket 74).
+export type ConstraintSource = 'asker' | 'person' | 'step';
+
 export type PersonConstraint =
-  | { kind: 'from'; placeId: string; source: 'asker' | 'person' }
-  | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
-  | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
+  | { kind: 'from'; placeId: string; source: ConstraintSource }
+  | { kind: 'notBefore'; time: string; source: ConstraintSource }
+  | { kind: 'leaveBy'; time: string; source: ConstraintSource };
 
 // The most people of a plan, and the most constraints on each.
 const PEOPLE_MAX = 8;
@@ -134,7 +137,7 @@ const TITLE_MAX = 50;
 // A meal's price ceiling, in won: far above any meal on the campus.
 export const MAX_PRICE = 100_000;
 
-const constraintSource = z.enum(['asker', 'person']);
+const constraintSource = z.enum(['asker', 'person', 'step']);
 
 const personConstraintSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('from'), placeId: z.uuid(), source: constraintSource }),

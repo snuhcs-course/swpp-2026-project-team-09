@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { KeptNotification, QuestInvitation } from '@/api/waiting-types';
@@ -16,7 +17,7 @@ import { frameTime } from './frame';
 
 const TAE_O = { id: 'f8', name: '윤태오', department: '물리천문학부' };
 
-export const QUEST_INVITATIONS: Omit<QuestInvitation, 'nextSubQuest'>[] = [
+export const QUEST_INVITATIONS: Omit<QuestInvitation, 'nextSubQuest' | 'invitedBy'>[] = [
   {
     id: 'qi-1',
     quest: {
@@ -42,6 +43,7 @@ export function questInvitationsAt(now: Date): QuestInvitation[] {
     id,
     quest,
     sentAt,
+    invitedBy: quest.leader,
     nextSubQuest: {
       id: `sq-${quest.id}`,
       title: quest.title,

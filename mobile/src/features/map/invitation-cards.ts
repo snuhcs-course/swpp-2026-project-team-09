@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { QuestInvitation } from '@/api/waiting-types';
@@ -15,12 +16,12 @@ const CAMPUS_CENTRE = centreOf(CAMPUS_BOUNDS);
 
 // One card for each invitation the User received, which the everyday map draws no marker for.
 export function invitationCards(invitations: readonly QuestInvitation[]): CardView[] {
-  return invitations.map(({ id, quest }) => ({
+  return invitations.map(({ id, quest, invitedBy }) => ({
     id: cardId.invitation(id),
     kind: 'invitation',
     mark: { type: 'place', place: 'party' },
     marker: { name: `파티 초대 · ${quest.title}`, short: shortTitle(quest.title), count: 0, minutesOld: null },
-    subLabel: `${quest.leader.name}의 파티 초대`,
+    subLabel: `${invitedBy.name}의 파티 초대`,
     title: quest.title,
     lines: [],
     primary: null,

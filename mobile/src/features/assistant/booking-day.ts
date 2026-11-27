@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Quest } from '@/api/types';
@@ -14,6 +15,8 @@ import { koreaDateKey, koreaMinutes } from '@/korea-time';
 
 // A Class or a Quest of the date: from its start to its end, and the words that name it ("302동 수업", "저녁 약속").
 export interface FixedThing {
+  // Its Sub Quest's id: a Class's is the id of that Class time, which the conversation leaves out by (P01 ticket 40).
+  id: string;
   start: number;
   end: number;
   words: string;
@@ -42,14 +45,15 @@ function wordsOf(quest: Quest, place: string): string {
 export function fixedOnDay(quests: readonly Quest[], date: string, own: Span): FixedThing[] {
   return quests
     .flatMap((quest) =>
-      quest.subQuests.flatMap(({ startsAt, endsAt, cancelled, place }) => {
+      quest.subQuests.flatMap(({ id, startsAt, endsAt, cancelled, place }) => {
         if (startsAt === null || endsAt === null || cancelled || dateOf(startsAt) !== date) {
           return [];
         }
         const start = minutesOf(startsAt);
         const end = dateOf(endsAt) === date ? minutesOf(endsAt) : 24 * 60;
         const booking = quest.takenAlone === true && start === own.start && end === own.end;
-        return booking ? [] : [{ start, end, words: wordsOf(quest, place?.label ?? ''), isClass: quest.classQuest }];
+        const words = wordsOf(quest, place?.label ?? '');
+        return booking ? [] : [{ id, start, end, words, isClass: quest.classQuest }];
       }),
     )
     .toSorted((one, other) => one.start - other.start);

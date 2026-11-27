@@ -6,6 +6,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -20,7 +21,7 @@ import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerParty, MY_HIKE } from './support/party';
-import { toast } from './support/room';
+import { toast, toastIcon } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
 // The Proposal card of the Assistant's answers and its 만들기, in the answer frame's card, against the fake main server.
@@ -223,6 +224,7 @@ describe('만들기', () => {
       subQuest: { title: LUNCH.title, startsAt: LUNCH.startsAt },
     });
     expect(toast()).toHaveTextContent('파티를 올렸어요');
+    expect(toastIcon()).toBe('check');
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 
@@ -234,6 +236,7 @@ describe('만들기', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent('게시판을 골라 주세요');
+    expect(toastIcon()).toBe('alert');
     expect(screen.getByTestId('answer-card')).toBeVisible();
     expect(make()).toBeEnabled();
   });

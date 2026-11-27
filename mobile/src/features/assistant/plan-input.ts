@@ -103,11 +103,13 @@ export function withOrigin(input: PlanInput, placeId: string): PlanInput {
   return { ...input, people: [{ ...asker, constraints }, ...others] };
 }
 
-// A meal's conditions with that Class back in the plan (P04 ticket 93): without the field once none is left out, so
-// that a main server before the field is sent nothing new. Other conditions, or a Class not left out, are unchanged.
+// The conditions to recalculate with that Class back in the plan, of any kind (P04 ticket 93, P01 ticket 40): the
+// conversation's list, which the recalculation sends, no longer holds it, and a meal's own field loses it too, without
+// the field once none is left out, so that a main server before the field is sent nothing new. Always new conditions,
+// so that the recalculation is asked.
 export function withoutSkipped(input: PlanInput, classId: string): PlanInput {
   if (input.kind !== 'meal' || !(input.skipped ?? []).includes(classId)) {
-    return input;
+    return { ...input };
   }
   const { skipped = [], ...rest } = input;
   const left = skipped.filter((id) => id !== classId);

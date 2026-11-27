@@ -13,6 +13,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -180,6 +181,7 @@ export const INVITATION: QuestInvitation = {
     createdAt: '2026-10-06T03:20:00.000Z',
   },
   sentAt: '2026-10-06T03:30:00.000Z',
+  invitedBy: TAE_O,
   // Tomorrow, Wednesday 7 October, at 19:00 in Korea, at a point picked on the map.
   nextSubQuest: {
     id: 'sq-report',

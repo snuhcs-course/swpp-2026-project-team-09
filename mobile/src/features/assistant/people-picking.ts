@@ -3,11 +3,13 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput, TimeBand } from '@/api/assistant-types';
 import type { BandLane } from '@/api/time-band-types';
 import { hasPeople, peopleOf } from './plan-input';
+import { lengthWords } from '@/library/cards/slot-band';
 import { clockAt, msOf, onBandDay } from './time-band';
 
 // People picked in the time card (P04 ticket 64): after "＋ 같이" the User checks and unchecks Friends, the combined
@@ -221,9 +223,30 @@ export function walkGuessOf(metres: number | null): number | null {
   return metres === null ? null : Math.max(1, Math.ceil(metres / WALK_METRES_A_MINUTE));
 }
 
+// A band's length after its span: "식사 41분", "2시간", "1시간 30분".
+const LENGTH = /(?:\d+시간(?: \d+분)?|\d+분)$/u;
+
+// The words of a previewed span: its times, then its length in the words the band said it in. A band that said what
+// its span runs into ("14:00 수업과 겹쳐요", a seat card's) says the length once the span moved, for the preview leaves
+// every checked person's busy stretch (P10 ticket 15).
+function previewWords(text: string, span: { from: string; until: string; minutes: number }, moved: boolean): string {
+  const times = `${span.from}–${span.until}`;
+  const at = text.indexOf(' · ');
+  if (at < 0) {
+    return text.replace(/^\d\d:\d\d–\d\d:\d\d/u, times);
+  }
+  const after = text.slice(at + ' · '.length);
+  const said = LENGTH.exec(after)?.[0];
+  if (said === undefined) {
+    return moved ? `${times} · ${lengthWords(span.minutes)}` : text;
+  }
+  const length = said.includes('시간') ? lengthWords(span.minutes) : `${String(span.minutes)}분`;
+  return `${times} · ${after.slice(0, after.length - said.length)}${length}`;
+}
+
 // The span the combined bar previews while picking: as long as the Plan's, from its start or the end of the checked
 // people's busy stretch it falls in, until the next busy stretch of anyone checked; its words say the new times and
-// minutes ("18:15–18:56 · 식사 41분"). A preview only: the answer to 완료 brings the Plan's own (P04 ticket 64).
+// length ("18:15–18:56 · 식사 41분"). A preview only: the answer to 완료 brings the Plan's own (P04 ticket 64).
 export function previewOf(band: TimeBand, lanes: readonly BandLane[]): Pick<TimeBand, 'startAt' | 'endAt' | 'text'> {
   const busy = lanes.flatMap((lane) => lane.busy).map(({ startAt, endAt }) => [msOf(startAt), msOf(endAt)] as const);
   const length = msOf(band.endAt) - msOf(band.startAt);
@@ -244,8 +267,7 @@ export function previewOf(band: TimeBand, lanes: readonly BandLane[]): Pick<Time
   }
   const [from, until] = [clockAt(start), clockAt(end)];
   const minutes = Math.round((end - start) / 60_000);
-  const text = band.text
-    .replace(/^\d\d:\d\d–\d\d:\d\d/u, `${from}–${until}`)
-    .replace(/\d+분$/u, `${String(minutes)}분`);
+  const moved = start !== msOf(band.startAt) || end !== msOf(band.endAt);
+  const text = previewWords(band.text, { from, until, minutes }, moved);
   return { startAt: onBandDay(from, band), endAt: onBandDay(until, band), text };
 }
