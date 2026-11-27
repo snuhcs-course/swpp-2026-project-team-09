@@ -20,7 +20,7 @@ import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery } from '@/a
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { Friend, GlobalEvent } from '@/api/types';
 import type { PickedPlace } from '@/features/places/picked-place';
-import { usePlaceToSend } from '@/features/places/typed-place';
+import { sameSentPlace, usePlaceToSend } from '@/features/places/typed-place';
 import {
   emptyForm,
   type FormEvent,
@@ -140,7 +140,7 @@ function useWhere(
   });
   const [words, setWords] = useState(start.words);
   const [picked, setPicked] = useState(start.picked);
-  return { words, setWords, picked, setPicked, changed: words !== start.words || picked !== start.picked };
+  return { words, setWords, picked, setPicked, changed: !sameSentPlace({ words, picked }, start) };
 }
 
 type Where = ReturnType<typeof useWhere>;
@@ -159,7 +159,9 @@ function useSubmit(
     void placeToSend(where.words, where.picked)
       .then((place) => {
         const sent = { ...form, place };
-        return send(sent, friends, quest === null ? null : planChangeOf(quest, sent, where.changed));
+        // A new 파티 for an event at a place of the User's own meets there.
+        const elsewhere = quest === null && form.event !== null && !sameSentPlace(where, eventWhere(form.event));
+        return send(sent, friends, quest === null ? null : planChangeOf(quest, sent, where.changed), elsewhere);
       })
       .then((sending) => {
         setSaving(false);

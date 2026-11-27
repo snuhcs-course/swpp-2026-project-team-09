@@ -8,6 +8,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { QuestProposal } from '@/api/assistant-types';
@@ -230,9 +231,10 @@ export function recruitingOf(attended: Quest, form: PartyForm): QuestChange {
   return title === attended.title ? { ...change, capacity } : { title, ...change, capacity };
 }
 
-// The Sub Quest `모이기`, when `언제` moved from the event's start to a meeting before it.
-export function meetingOf(form: PartyForm): SubQuestContent | null {
-  if (form.event === null || form.startsAt === null || form.startsAt === form.event.startsAt) {
+// The Sub Quest `모이기`, when `언제` moved from the event's start to a meeting before it, or when the User set a place of
+// their own (`elsewhere`), which the attended Quest would otherwise lose: the event's own step keeps the event's.
+export function meetingOf(form: PartyForm, elsewhere = false): SubQuestContent | null {
+  if (form.event === null || form.startsAt === null || (form.startsAt === form.event.startsAt && !elsewhere)) {
     return null;
   }
   return { title: '모이기', startsAt: form.startsAt, ...(form.place === undefined ? {} : { place: form.place }) };
@@ -244,11 +246,12 @@ export interface PlanChange {
   content: SubQuestContent;
 }
 
-// What editing `언제` and `어디서` changes, or null when neither changed or there is no time to give. A Quest whose
-// only step is its event gets `모이기` before it, as making one does: the event's own time is the main server's.
+// What editing `언제` and `어디서` changes, or null when neither changed. A step with no time keeps none: a place added
+// to it is sent alone (the phone check of 2026-11-28). A Quest whose only step is its event gets `모이기` before it, as
+// making one does: the event's own time is the main server's.
 export function planChangeOf(quest: Quest, form: PartyForm, placeChanged: boolean): PlanChange | null {
   const shown = shownSubQuest(quest);
-  if (form.startsAt === null || (form.startsAt === (shown?.startsAt ?? null) && !placeChanged)) {
+  if (form.startsAt === (shown?.startsAt ?? null) && !placeChanged) {
     return null;
   }
   const edited = editedSubQuest(quest);

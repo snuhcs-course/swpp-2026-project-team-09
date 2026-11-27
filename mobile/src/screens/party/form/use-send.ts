@@ -11,6 +11,7 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -83,9 +84,9 @@ async function change(quest: ShownQuest, form: PartyForm, plan: PlanChange | nul
 
 // With an event, the Quest is the one attending it gives, which the form then changes: the recruiting, and `모이기`
 // when the User meets before the event.
-async function recruitFor(attended: Quest, form: PartyForm): Promise<void> {
+async function recruitFor(attended: Quest, form: PartyForm, elsewhere: boolean): Promise<void> {
   await apiClient.changeQuest(attended.id, recruitingOf(attended, form));
-  const meeting = meetingOf(form);
+  const meeting = meetingOf(form, elsewhere);
   if (meeting !== null) {
     await apiClient.addSubQuest(attended.id, meeting, newIdempotencyKey());
   }
@@ -117,7 +118,7 @@ export function sendingIcon(sending: Sending): IconName {
 // shows nothing and goes nowhere.
 export function useSendParty(
   quest: ShownQuest | null,
-): (form: PartyForm, friends: readonly string[], plan: PlanChange | null) => Promise<Sending> {
+): (form: PartyForm, friends: readonly string[], plan: PlanChange | null, elsewhere?: boolean) => Promise<Sending> {
   const queryClient = useQueryClient();
   const askForPush = useAskForPush();
   const refetch = (): void => {
@@ -125,7 +126,7 @@ export function useSendParty(
       void queryClient.invalidateQueries({ queryKey });
     }
   };
-  return async (form, friends, plan) => {
+  return async (form, friends, plan, elsewhere = false) => {
     let questId: string;
     let attended: Quest | null = null;
     try {
@@ -144,7 +145,7 @@ export function useSendParty(
     }
     if (attended !== null) {
       try {
-        await recruitFor(attended, form);
+        await recruitFor(attended, form, elsewhere);
       } catch (error) {
         refetch();
         return { sent: 'room', questId, toast: refusalWords(error, {}, NOT_SAVED) };
@@ -164,11 +165,11 @@ export function useSendParty(
 // The form's sending: its toast, and the room when the Quest stays after a failed step.
 export function useSend(
   quest: ShownQuest | null,
-): (form: PartyForm, friends: string[], plan: PlanChange | null) => Promise<Sending> {
+): (form: PartyForm, friends: string[], plan: PlanChange | null, elsewhere: boolean) => Promise<Sending> {
   const sendParty = useSendParty(quest);
   const showToast = useToast();
-  return async (form, friends, plan) => {
-    const sending = await sendParty(form, friends, plan);
+  return async (form, friends, plan, elsewhere) => {
+    const sending = await sendParty(form, friends, plan, elsewhere);
     showToast(sending.toast, undefined, sendingIcon(sending));
     if (sending.sent === 'room') {
       router.replace(`/room/${sending.questId}`);

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -58,7 +59,9 @@ export function movedRows({ step }: ProposalChange, kept: SubQuest | null): stri
   if (kept === null) {
     return [];
   }
-  const sameTime = kept.startsAt !== null && Date.parse(step.startsAt) === Date.parse(kept.startsAt);
+  const sameTime =
+    step.startsAt === kept.startsAt ||
+    (step.startsAt !== null && kept.startsAt !== null && Date.parse(step.startsAt) === Date.parse(kept.startsAt));
   return [...(sameTime ? [] : ['언제']), ...(samePlace(step.place, kept.place) ? [] : ['어디서'])];
 }
 

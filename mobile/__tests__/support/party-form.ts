@@ -10,7 +10,7 @@
 import type { userEvent } from '@testing-library/react-native';
 import type { ListedGlobalEvent } from '@/api/types';
 import type { FakeServer } from './fake-server';
-import { screen } from './app';
+import { pass, screen } from './app';
 import { BOOK_TALK, CAREER, MAJOR } from './events';
 import { answerParty, MY_HIKE } from './party';
 
@@ -62,6 +62,23 @@ export async function invite(user: User, names: readonly string[]): Promise<void
   await user.press(
     screen.getByRole('button', { name: names.length === 0 ? '완료' : `${String(names.length)}명 초대` }),
   );
+}
+
+// The place sheet opened from the box, with the words typed into its search, which opens on the place's words so far,
+// once the search has answered.
+export async function searchPlace(user: User, words: string): Promise<void> {
+  await user.press(screen.getByRole('button', { name: /^어디서 /u }));
+  await user.clear(screen.getByLabelText('장소 검색'));
+  await user.type(screen.getByLabelText('장소 검색'), words);
+  await pass(500);
+  await pass(500);
+}
+
+// Sets the place to a row of the sheet: a building found for the words, by its name, or the words kept as typed.
+export async function setPlace(user: User, words: string, row = `‘${words}’ 이름만 쓰기`): Promise<void> {
+  await searchPlace(user, words);
+  await user.press(screen.getByRole('button', { name: row }));
+  await user.press(screen.getByRole('button', { name: '이 장소로 정하기' }));
 }
 
 // Presses a button again and again, each press after the one before.

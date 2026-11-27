@@ -249,20 +249,41 @@ The user checked the pull request on 2026-11-28 and approved these changes. The 
 
    Also passing: `party-form`, `party-form-preview`, `party-form-edit`, `events-party-form`, `room-activation` and `room-done`.
 
+## 휴대폰 확인 후 수정 (2026-11-28)
+
+The user's phone check of a40e3b30 found one bug. A sweep of the place and edit paths, by reading the code and running tests only, found two more. Each has a test in the new `party-form-place-saving.integration` that failed on a40e3b30 and passes now.
+
+1. **A place added in an edit was not saved** (the reported bug). On a 파티 whose step had no time, `planChangeOf` returned nothing, so a place added alone was dropped. A step with a time but no place already saved it.
+   - `planChangeOf` now sends a change of the place or the time even when the step has no time, keeping `startsAt: null`. The server's step edit accepts it (`subQuestContentSchema` defaults `startsAt` to null).
+   - `SubQuestContent.startsAt` is now `string | null`, as the server's is. The one reader that needed it, `movedRows` in `screens/main/party-change.ts`, compares a null time.
+2. **Undoing a place change left 수정 완료 on.** The place counted as changed by object identity. Picking the same Place again, whose words read '학생회관 63동' where the server's label is '학생회관 (63동)', still counted. The edit now compares what would be sent (`sameSentPlace` in `features/places/typed-place.ts`), so the same Place greys 수정 완료 again and sends no step change.
+3. **A new 파티 for an event lost a place the User set at the event's own time.** `meetingOf` made a `모이기` only when the time moved. The form now passes `elsewhere` when the place differs from the event's (`meetingOf(form, elsewhere)`), and the 파티 meets there with `모이기`. The chat's Proposal card passes nothing and works as before. An edit already did this.
+
+The sweep found nothing else. These cases pass before and after:
+- a place added to a step with a time;
+- replacing a set place (building → words, words → a building by its exact name or from the list);
+- the sheet closed without 이 장소로 정하기, which leaves the place, and opened again on its words with nothing chosen;
+- an edit changing only the time, only 인원 or only the Friends, each turning 수정 완료 on and saved alone;
+- 공개 → 비공개 → 공개, which greys 수정 완료 again;
+- an edit with a locked event changing only the place, which meets with `모이기`.
+
+The new 파티's place none → building / point / words, words → building by typing a building's name, and point → building by a map pick inside a building are in `party-form-place-sheet.integration`. The time set and changed are in `party-form`, `party-form-edit` and `events-party-form`.
+
 ## Comments
 
 ### Agent usage (2026-11-28)
 
-Estimates. Agent time is this session's working time from 2026-11-27 23:05 to 2026-11-28 03:54 (Korea time), with every pause of more than 15 minutes left out as waiting for another session or the user: about 4 hours 15 minutes. It covers:
+Estimates. Agent time is this session's working time from 2026-11-27 23:05 to 2026-11-28 04:50 (Korea time), with every pause of more than 15 minutes left out as waiting for another session or the user: about 5 hours 15 minutes. It covers:
 - the build and the pull request (about 2 hours, of which some 70 minutes were Jest runs slowed by a load average above 20);
 - the nightly-level CI run and its triage;
 - four merges of `5.0/Main`;
-- the changes after the user's review.
+- the changes after the user's review;
+- the bugs found after the phone check.
 
 No subagents. Tokens are counted up to this entry, so this commit is left out.
 
 | Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
-| Ticket 34 (tests first, the preview, the place sheet, '파티 설정', the marks, the photo and tag removal, the pull request, CI triage, four merges of `5.0/Main`, the changes after review) | about 4 hours 15 minutes | 159,798,632 | 159,161,866 | 636,016 | 750 | 279,094 |
+| Ticket 34 (tests first, the preview, the place sheet, '파티 설정', the marks, the photo and tag removal, the pull request, CI triage, four merges of `5.0/Main`, the changes after review, the bugs after the phone check) | about 5 hours 15 minutes | 196,776,417 | 196,075,328 | 700,231 | 858 | 323,127 |
 
-Without cache reads, the input is 636,766.
+Without cache reads, the input is 701,089.
