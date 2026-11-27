@@ -14,6 +14,7 @@ import {
   mayChooseStep,
   stepIdOf,
   stepPartsOf,
+  stepShowsCard,
 } from '@/features/assistant/step-choice';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 
@@ -128,5 +129,23 @@ describe('A Lookup the steps came with', () => {
       lookupTakesTheMap({ lookup, steps: [SEAT, { ...SEAT, title: '스터디룸', kind: 'room', shows: null }] }),
     ).toBe(false);
     expect(lookupTakesTheMap({ lookup: null, steps: STEPS })).toBe(false);
+  });
+});
+
+// A booking on the map stands as it does alone (its band on the bar, its card the ticket) with no steps, or with its own
+// card's step chosen. Partitions: no steps; the seat's step chosen; another step chosen; a room's step, whose booking the
+// map does not draw, so its card keeps its band as a room card alone does.
+describe('A booking on the map among steps', () => {
+  const seatKey = SEAT.shows?.kind === 'card' ? SEAT.shows.key : '';
+  const steps = { bubbleId: 1, steps: STEPS };
+
+  it('stands as alone with no steps, and with its own step chosen', () => {
+    expect(stepShowsCard(null, 0, seatKey)).toBe(true);
+    expect(stepShowsCard(steps, 0, seatKey)).toBe(true);
+  });
+
+  it("does not while another step is chosen, nor for another card's step", () => {
+    expect(stepShowsCard(steps, 1, seatKey)).toBe(false);
+    expect(stepShowsCard(steps, 0, 'room-1')).toBe(false);
   });
 });

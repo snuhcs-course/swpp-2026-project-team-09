@@ -22,6 +22,7 @@ import { useIsFocused } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
+import { stepShowsCard } from '@/features/assistant/step-choice';
 import { turnOf } from '@/features/assistant/turn';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
@@ -119,10 +120,11 @@ function slotHeld({ chat }: ChatSheetControl): boolean {
 }
 
 // A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
-// booked (P01 ticket 03); a seat card that is one of several requests shows as its step does (P03 ticket 23), and a
-// study answer's 관정관 opened its reply's words, which hold the ticket (P10 ticket 27).
-function dockedBubble({ booking, steps }: ChatSheetControl): number | null {
-  return booking !== null && steps === null && booking.inPlan !== true ? booking.bubbleId : null;
+// booked (P01 ticket 03), and so does a seat card of several requests while its step is chosen (P03 ticket 23); a study
+// answer's 관정관 opened its reply's words, which hold the ticket (P10 ticket 27).
+function dockedBubble({ booking, steps, activeStep }: ChatSheetControl): number | null {
+  const alone = booking !== null && stepShowsCard(steps, activeStep, booking.card.key);
+  return alone && booking.inPlan !== true ? booking.bubbleId : null;
 }
 
 // The open card's content: the turn's bubbles, each under its steps, and the dots with 그만 while a reply is on its way.

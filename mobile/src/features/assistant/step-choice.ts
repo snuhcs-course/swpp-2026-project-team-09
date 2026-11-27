@@ -62,6 +62,13 @@ export const lookupTakesTheMap = (reply: Pick<ChatBubble, 'lookup' | 'steps'> | 
   (reply?.lookup ?? null) !== null &&
   (reply?.steps ?? []).some(({ shows }) => shows?.kind === 'answer' && shows.key !== undefined);
 
+// Whether a booking on the map stands as it does alone: with no steps, or with its own card's step chosen. Its band is
+// then on the bar and its card holds the ticket alone, as since P10 ticket 27, never a second time axis (P03 ticket 23).
+export function stepShowsCard(steps: ShownSteps | null, active: number, cardKey: string): boolean {
+  const shows = steps?.steps[active]?.shows;
+  return steps === null || (shows?.kind === 'card' && shows.key === cardKey);
+}
+
 // What of a reply of several requests the card shows: the chosen step's own answer, as it shows alone (P03 ticket 23).
 // A seat's or a room's step, the reply's sentence and that step's own card, its ticket; an answer step, its answer's
 // card, which holds the sentence, and no ticket. A step refused, or a reply whose steps are not on the map, as it is.

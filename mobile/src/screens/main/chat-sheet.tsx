@@ -36,7 +36,7 @@ import { type ShownBooking, shownBookingOf, studyBookingOf } from '@/features/as
 import { type ShownCards, shownCardsOf } from '@/features/assistant/cards-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
 import type { ConversationAnswers } from '@/features/assistant/conversation-answers';
-import { mayChooseStep } from '@/features/assistant/step-choice';
+import { mayChooseStep, stepShowsCard } from '@/features/assistant/step-choice';
 import { liveStepsOf, type ShownSteps, shownStepsOf, type StepsNow } from '@/features/assistant/steps-scene';
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
@@ -257,11 +257,12 @@ function useStudyBooking(
 function useBookingLeaving(
   onMap: Pick<ChatSheetControl, 'booking' | 'steps'>,
   { tell, walk }: BookingStage,
+  active: number,
 ): NonNullable<CardLeaving['booking']> {
   const place = onMap.booking?.place ?? null;
-  const steps = onMap.steps !== null;
+  const alone = onMap.booking !== null && stepShowsCard(onMap.steps, active, onMap.booking.card.key);
   const point = onMap.booking?.point ?? null;
-  return useMemo(() => ({ place, tell, steps, point, walk }), [place, tell, steps, point, walk]);
+  return useMemo(() => ({ place, tell, alone, point, walk }), [place, tell, alone, point, walk]);
 }
 
 // The conversation, every request of which carries the context at `where` the User is, and what the answer frame
@@ -285,7 +286,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const card = useCardRaise(kept.framed);
   const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow, chat, stepAnswer);
   const shown = { ...onMap, booking: useStudyBooking(onMap.booking, onScreen.answer, scene, chat) };
-  const booking = useBookingLeaving(shown, bookingStage);
+  const booking = useBookingLeaving(shown, bookingStage, stepAnswer.activeStep);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const steps = useStepsShown(shown, { stepAnswer, shown: onScreen.answer, stepsNow }, chat, sceneBubbles);
   const pick = usePicking(chat);

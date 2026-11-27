@@ -127,6 +127,11 @@ describe("the chosen step's card under the map", () => {
     const ticket = `library-book-${card?.kind === 'library' ? card.library.key : ''}`;
     expect(screen.getByTestId(ticket, ALL)).toBeTruthy();
     expect(screen.queryByTestId('meal-list', ALL)).toBeNull();
+    // As a seat answer alone since P10 ticket 27: one time axis, the time card's on the bar; in the card the ticket with
+    // no band of its own and no 예약 안 함; 예약하기 beside the input. Before, the card drew a second band.
+    expect(screen.queryByTestId('slot-band', ALL)).toBeNull();
+    expect(screen.queryByText('예약 안 함', ALL)).toBeNull();
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: /^2번/u }));
     await pass(50);

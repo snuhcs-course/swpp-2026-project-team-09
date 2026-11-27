@@ -129,11 +129,11 @@ describe('A reply to a seat and then dinner', () => {
     expect(screen.getByTestId('step-span-1')).toBeVisible();
     expect(screen.getByTestId('step-span-2')).toBeVisible();
     expect(inFrame().queryByTestId('reply-steps')).toBeNull();
-    // PR 462's review: the seat step's card keeps its own band. The meal's other candidates and their stepper are its
-    // own step's card, shown when ② is chosen (P03 ticket 23).
-    expect(
-      within(inFrame().getByTestId(`library-book-${SEAT_CARD.library.key}`)).getByTestId('slot-band'),
-    ).toBeVisible();
+    // The seat's step shows as a seat answer alone: its band is its time card's on the bar, and its card the ticket with
+    // no second band. The meal's other candidates and their stepper are its own step's card, shown when ② is chosen
+    // (P03 ticket 23).
+    expect(inFrame().getByTestId(`library-book-${SEAT_CARD.library.key}`)).toBeVisible();
+    expect(inFrame().queryByTestId('slot-band')).toBeNull();
     expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
     expect(library.writes()).toEqual([]);
   });
