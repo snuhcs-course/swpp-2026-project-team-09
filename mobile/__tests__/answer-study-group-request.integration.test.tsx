@@ -10,6 +10,8 @@ import { forgetPartyRequests } from '@/screens/main/library/room-party';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
+import { drag } from './support/answer-correct';
+import { layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { inDock, inFrame, sendFromBar, startLibraryChat } from './support/library-chat';
@@ -201,5 +203,22 @@ describe('Sending and taking back the consent requests', () => {
     await pass(3500);
 
     expect(inFrame().getByText('동의 2/2 · 친구를 더 불러 주세요')).toBeVisible();
+  });
+});
+
+// The time card's title of the answer to send.
+const TIME_CARD = '내일(목) 15:00–17:00 · 2시간';
+
+// Partitions, from #656's review: a handle dragged on a sent answer. Expected values: the answer's rule.
+describe("A sent answer's time card", () => {
+  it('keeps its handles where they are, asking nothing', async () => {
+    await sent();
+    await layTrack(300);
+    expect(screen.getByText(TIME_CARD)).toBeVisible();
+
+    await drag('until', 60);
+
+    expect(screen.getByText(TIME_CARD)).toBeVisible();
+    expect(server.received('POST /assistant/answers')).toEqual([]);
   });
 });
