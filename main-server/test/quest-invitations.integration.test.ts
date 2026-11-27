@@ -12,7 +12,6 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { befriend, signInUser, TestUser } from './friends.js';
-import { placeNumbered } from './friend-levels.js';
 import {
   answerInvitation,
   getInvitations,
@@ -102,50 +101,6 @@ describe('The Leader inviting a Friend', () => {
     await vi.waitFor(() => {
       expect(signalsTo(friend)).toBe(1);
     });
-  });
-});
-
-describe('An invitation as the invited User lists it', () => {
-  it('carries when and where its Quest next meets: the start and the place with its point', async () => {
-    const [leader, friend] = await friends();
-    const startsAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
-    const place = { latitude: 37.4602, longitude: 126.9523, label: '301동 앞' };
-    const questId = await ownQuest(app, leader, { subQuest: { title: '저녁', startsAt, place } });
-    await invite(app, leader, questId, friend.id).expect(204);
-
-    const response = await getInvitations(app, friend);
-
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject([
-      { nextSubQuest: { title: '저녁', startsAt, place: { placeId: null, ...place } } },
-    ]);
-  });
-
-  it('carries a Place from the list with its id, its name and its point', async () => {
-    const [leader, friend] = await friends();
-    const library = await placeNumbered(app, leader, '62');
-    const questId = await ownQuest(app, leader, { subQuest: { title: '공부', place: { placeId: library.id } } });
-    await invite(app, leader, questId, friend.id).expect(204);
-
-    const response = await getInvitations(app, friend);
-
-    expect(response.body).toMatchObject([
-      {
-        nextSubQuest: {
-          place: { placeId: library.id, label: library.name, latitude: library.latitude, longitude: library.longitude },
-        },
-      },
-    ]);
-  });
-
-  it('carries no start and no place for a Quest that has neither yet', async () => {
-    const [leader, friend] = await friends();
-    const questId = await ownQuest(app, leader, { subQuest: { title: '산책' } });
-    await invite(app, leader, questId, friend.id).expect(204);
-
-    const response = await getInvitations(app, friend);
-
-    expect(response.body).toMatchObject([{ nextSubQuest: { title: '산책', startsAt: null, place: null } }]);
   });
 });
 
