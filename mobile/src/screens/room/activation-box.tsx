@@ -12,15 +12,14 @@
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, cardStyles, color, font, Icon, shadow, space } from '@/design-system';
-import { useMasterSwitch } from '@/features/sharing/use-master-switch';
-import type { ActivationView, OtherParty, PartyPerson, RoomView } from '@/features/quests/room-adapter';
+import type { ActivationView, PartyPerson, RoomView } from '@/features/quests/room-adapter';
 import { opensParty } from '@/features/quests/rules';
 import { myUserId } from '@/auth/sign-in';
-import { LocationExplanation } from '../main/location-explanation';
-import { type SharingSwitch, useSharingSwitch } from '../me/use-sharing-switch';
 import { LiveDot } from '../party/live-dot';
 import type { Ask } from './confirm-sheet';
 import { ACTIVATION_HELP, HelpButton } from './help-bubble';
+import { leaveAsk } from './party-asks';
+import { type PartyEntry, usePartyEntry } from './use-party-entry';
 import type { RoomActions } from './use-room-actions';
 
 interface ActivationBoxProps {
@@ -29,124 +28,8 @@ interface ActivationBoxProps {
   onAsk: (ask: Ask) => void;
 }
 
-// The question before leaving the 활성화, also asked from the map for a Party tied to no Quest.
-export function leaveAsk(onConfirm: () => void): Ask {
-  return {
-    title: '활성화에서 나갈까요?',
-    body: '내 위치 공유가 멈추고 멤버 위치도 볼 수 없어요.\n파티에는 그대로 남아요.',
-    confirm: '나가기',
-    danger: true,
-    onConfirm,
-  };
-}
-
-// The frame's words for the other Party: the User leaves it, or ends the one the User switched on (leads).
-function switchLine(otherParty: OtherParty | null): string {
-  if (otherParty === null) {
-    return '';
-  }
-  const { title, leads } = otherParty;
-  return `\n한 번에 한 파티에만 참여할 수 있어요. ${
-    leads ? `내가 켠 ‘${title}’ 활성화는 꺼져요.` : `지금 참여 중인 ‘${title}’ 활성화에서는 나가게 돼요.`
-  }`;
-}
-
-// How the User gets out of the other Party first: `end` for one the User leads, as the sheet says.
-export function leavingOf(otherParty: OtherParty | null): boolean | 'end' {
-  if (otherParty === null) {
-    return false;
-  }
-  return otherParty.leads ? 'end' : true;
-}
-
-// The question before entering a Party while the User is in another, also asked from 내 파티, which names the other
-// Party by its title alone.
-export function joinAsk(title: string, other: string | OtherParty, onConfirm: () => void): Ask {
-  const otherParty = typeof other === 'string' ? { title: other, leads: false } : other;
-  return {
-    title: `‘${title}’ 활성화에 참여할까요?`,
-    body: `참여한 멤버끼리 서로 위치를 볼 수 있어요.${switchLine(otherParty)}`,
-    confirm: '나가고 참여',
-    danger: false,
-    onConfirm,
-  };
-}
-
-// The question before opening the Quest's Party, `others` being its other Holders, also asked from the time to leave.
-// Opening sends no push: the others see it in their 알림 list.
-export function openAsk(others: number, otherParty: OtherParty | null, onConfirm: () => void): Ask {
-  const notice = others > 0 ? '다른 멤버의 알림 목록에 떠요. ' : '';
-  return {
-    title: '파티를 활성화할까요?',
-    body: `${notice}수락한 멤버끼리만 서로 위치를 볼 수 있어요.${switchLine(otherParty)}`,
-    confirm: '활성화',
-    danger: false,
-    onConfirm,
-  };
-}
-
-// The one question before opening or entering while the Master Switch is off, nobody seeing the User until it is on.
-// Its confirm turns it on and goes on at once.
-function masterAsk(opening: boolean, otherParty: OtherParty | null, onConfirm: () => void): Ask {
-  return {
-    title: '전체 위치 공유를 켤까요?',
-    body: `전체 위치 공유가 꺼져 있으면 활성화에 참여해도 서로의 위치가 보이지 않아요. 켜면 바로 활성화에 참여해요.${switchLine(otherParty)}`,
-    confirm: opening ? '켜고 활성화' : '켜고 참여',
-    danger: false,
-    onConfirm,
-  };
-}
-
 interface Steps extends ActivationBoxProps {
-  sharing: SharingSwitch;
-  masterOff: boolean;
-}
-
-// `파티 활성화`: the Master Switch's question first while it is off, else the opening's own.
-function openParty({ room, actions, onAsk, sharing, masterOff }: Steps): void {
-  const { quest, otherParty } = room;
-  const open = (): void => void actions.openParty(quest, leavingOf(otherParty));
-  if (masterOff) {
-    onAsk(
-      masterAsk(true, otherParty, () => {
-        sharing.change(true, open);
-      }),
-    );
-  } else {
-    onAsk(openAsk(quest.holders.length - 1, otherParty, open));
-  }
-}
-
-// `나도 참여`: the Master Switch's question first while it is off, else at once, or after the question of leaving the
-// other Party.
-function joinParty({ room, actions, onAsk, sharing, masterOff }: Steps, partyId: string, title: string): void {
-  const { otherParty } = room;
-  const join = (): void => void actions.joinParty(partyId, leavingOf(otherParty));
-  if (masterOff) {
-    onAsk(
-      masterAsk(false, otherParty, () => {
-        sharing.change(true, join);
-      }),
-    );
-  } else if (otherParty === null) {
-    join();
-  } else {
-    onAsk(joinAsk(title, otherParty, join));
-  }
-}
-
-// `위치 공유 켜고 참여` of a member nobody sees: turns on whichever switch is off, the Master Switch first.
-function shareAgain({ actions, sharing, masterOff }: Steps, switchOn: boolean): void {
-  const partySwitch = (): void => {
-    if (!switchOn) {
-      void actions.setSharing(true);
-    }
-  };
-  if (masterOff) {
-    sharing.change(true, partySwitch);
-  } else {
-    partySwitch();
-  }
+  entry: PartyEntry;
 }
 
 // The Leader of the Party ends it for everyone; a member leaves it.
@@ -209,7 +92,7 @@ function cardButton(props: Steps & { activation: Running }): ReactElement {
       <Button
         full
         onPress={() => {
-          shareAgain(props, switchOn);
+          props.entry.shareAgain(switchOn);
         }}
       >
         위치 공유 켜고 참여
@@ -221,7 +104,7 @@ function cardButton(props: Steps & { activation: Running }): ReactElement {
     <Button
       full
       onPress={() => {
-        joinParty(props, partyId, title);
+        props.entry.join(partyId, title, props.room.otherParty);
       }}
     >
       나도 참여
@@ -258,9 +141,8 @@ function LiveCard(props: Steps & { activation: Running }): ReactElement {
 // The room's 활성화: `파티 활성화` with its ? while no Party runs for the Quest, else the card of the running one.
 export function ActivationBox(props: ActivationBoxProps): ReactElement | null {
   const { room } = props;
-  const sharing = useSharingSwitch();
-  const masterOff = useMasterSwitch().off;
-  const steps: Steps = { ...props, sharing, masterOff };
+  const entry = usePartyEntry(props.onAsk);
+  const steps: Steps = { ...props, entry };
   const { activation } = room;
   if (activation.state === 'none' && !opensParty(room.quest, myUserId())) {
     return null;
@@ -274,7 +156,7 @@ export function ActivationBox(props: ActivationBoxProps): ReactElement | null {
               full
               icon="pin"
               onPress={() => {
-                openParty(steps);
+                entry.open(room.quest, room.otherParty, true);
               }}
             >
               파티 활성화
@@ -285,12 +167,7 @@ export function ActivationBox(props: ActivationBoxProps): ReactElement | null {
       ) : (
         <LiveCard {...steps} activation={activation} />
       )}
-      <LocationExplanation
-        blocked={sharing.blocked}
-        onAllow={sharing.allow}
-        onLater={sharing.later}
-        visible={sharing.explaining}
-      />
+      {entry.explanation}
     </View>
   );
 }

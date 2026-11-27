@@ -13,40 +13,33 @@ import { myUserId } from '@/auth/sign-in';
 import { Button } from '@/design-system';
 import { heldAlone } from '@/features/quests/adapter';
 import { otherPartyOf } from '@/features/quests/room-adapter';
-import { leavingOf, openAsk } from '../room/activation-box';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
-import { useRoomActions } from '../room/use-room-actions';
+import { usePartyEntry } from '../room/use-party-entry';
 
-// `파티 켜기` on the time to leave: opens the Quest's Party as the room's `파티 활성화` does, at once, or after the
-// room's question when the User must leave another Party for it. None while the User is in the Quest's Party, while
-// that is not known, or for a Quest taken alone, whose Party would show it to Friends.
+// `파티 켜기` on the time to leave: opens the Quest's Party as the room's `파티 활성화` does (`usePartyEntry`): at once,
+// after the room's question when the User must leave another Party for it, or after '전체 위치 공유를 켤까요?' while the
+// Master Switch is off. None while the User is in the Quest's Party, while that is not known, or for a Quest taken
+// alone, whose Party would show it to Friends.
 export function PartyOnButton({ questId }: { questId: string }): ReactElement | null {
   const myParty = useQuery(myPartyQuery).data;
   const quest = useQuery(questsQuery).data?.find(({ id }) => id === questId);
-  const actions = useRoomActions();
   const [ask, setAsk] = useState<Ask | null>(null);
+  const entry = usePartyEntry(setAsk);
   if (myParty === undefined || quest === undefined || heldAlone(quest) || myParty?.quest?.id === questId) {
     return null;
   }
-  const others = quest.holders.length - 1;
   const otherParty = otherPartyOf(myParty, false, myUserId());
-  const open = (): void => {
-    void actions.openParty(quest, leavingOf(otherParty));
-  };
   return (
     <>
       <Button
         onPress={() => {
-          if (otherParty === null) {
-            open();
-          } else {
-            setAsk(openAsk(others, otherParty, open));
-          }
+          entry.open(quest, otherParty, false);
         }}
         variant="secondary"
       >
         파티 켜기
       </Button>
+      {entry.explanation}
       <ConfirmSheet
         ask={ask}
         label="확인"

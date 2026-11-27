@@ -14,9 +14,10 @@ import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answer, answerMyParty, DINNER_PARTY_MINE, myPicnicParty, toast } from './support/room';
-import { answerMainScreen, askMainServer, DINNER, DINNER_PARTY, LEAVE_BY, MIN_JUN } from './support/server';
+import { answerMainScreen, askMainServer, DINNER, DINNER_PARTY, LEAVE_BY, LOBBY, MIN_JUN } from './support/server';
 
-// `파티 켜기` on the time to leave in 알림, which turns the Quest's Party on as the room's 파티 활성화 does.
+// `파티 켜기` on the time to leave in 알림, which turns the Quest's Party on as the room's 파티 활성화 does. The Master
+// Switch is on, but where a case turns it off.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -44,6 +45,7 @@ beforeEach(async () => {
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
+  server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
   server.on('GET /notifications', { status: 200, body: [LEAVE_BY] });
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
@@ -133,6 +135,25 @@ describe('a press on 파티 켜기 while the User is in another Party', () => {
     expect(asked.indexOf('POST /parties/mine/leave')).toBeGreaterThan(-1);
     expect(asked.indexOf('POST /parties/mine/leave')).toBeLessThan(asked.indexOf('POST /parties'));
     expect(server.received('POST /parties').map(({ body }) => body)).toEqual([OPENING]);
+  });
+});
+
+describe('a press on 파티 켜기 while the Master Switch is off', () => {
+  it('asks to turn it on, as the room asks, then turns it on and opens with no second question', async () => {
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: false } });
+    server.on('PUT /users/me/master-switch', { status: 204 });
+    server.on('POST /parties', { status: 201, body: DINNER_PARTY_MINE });
+    const user = await openNotifications();
+
+    await user.press(screen.getByRole('button', { name: '파티 켜기' }));
+    expect(screen.getByRole('header', { name: '전체 위치 공유를 켤까요?' })).toBeVisible();
+    expect(server.received('POST /parties')).toHaveLength(0);
+    await answer(user, '켜고 활성화');
+
+    const asked = server.received().map(({ method, path }) => `${method} ${path}`);
+    expect(asked.indexOf('PUT /users/me/master-switch')).toBeLessThan(asked.indexOf('POST /parties'));
+    expect(server.received('POST /parties').map(({ body }) => body)).toEqual([OPENING]);
+    expect(screen.queryByRole('header', { name: '파티를 활성화할까요?' })).toBeNull();
   });
 });
 

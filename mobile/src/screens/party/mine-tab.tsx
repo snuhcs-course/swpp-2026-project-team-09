@@ -17,8 +17,8 @@ import { myPartyQuery } from '@/api/queries';
 import { ChipRow, EmptyState, ErrorState, LoadingState, SectionHeader, space } from '@/design-system';
 import { filterMine, groupMine, LIVE_GROUP, type MineCardView, type MineFilter } from '@/features/party/mine';
 import { useMineCards } from '@/features/party/use-party';
-import { joinAsk } from '../room/activation-box';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
+import { type PartyEntry, usePartyEntry } from '../room/use-party-entry';
 import { useRoomActions } from '../room/use-room-actions';
 import { LiveDot } from './live-dot';
 import { MineCard } from './mine-card';
@@ -41,20 +41,31 @@ function MineEmpty({ filter }: { filter: MineFilter }): ReactElement {
   );
 }
 
-// The strip's `참여` enters as the room's does: at once, or after asking when the User must leave another Party.
-function useEnter(onAsk: (ask: Ask) => void): (card: MineCardView) => void {
+// The strip's `참여` enters through the room's `usePartyEntry`: at once, after asking when the User must leave
+// another Party, which it leaves, or after '전체 위치 공유를 켤까요?' while the Master Switch is off.
+function useEnter(entry: PartyEntry): (card: MineCardView) => void {
   const myParty = useQuery(myPartyQuery).data ?? null;
-  const actions = useRoomActions();
   return ({ strip }) => {
-    if (strip === null) {
-      return;
-    }
-    if (myParty === null) {
-      void actions.joinParty(strip.partyId, false);
-    } else {
-      onAsk(joinAsk(strip.title, myParty.title, () => void actions.joinParty(strip.partyId, true)));
+    if (strip !== null) {
+      entry.join(strip.partyId, strip.title, myParty === null ? null : { title: myParty.title, leads: false });
     }
   };
+}
+
+interface EnterSheetsProps {
+  ask: Ask | null;
+  explanation: ReactElement;
+  onClose: () => void;
+}
+
+// What comes before entering: the question, and the location explanation before turning 전체 위치 공유 on.
+function EnterSheets({ ask, explanation, onClose }: EnterSheetsProps): ReactElement {
+  return (
+    <>
+      <ConfirmSheet ask={ask} label="확인" onClose={onClose} />
+      {explanation}
+    </>
+  );
 }
 
 // A group's header; "활성화 중", the User's running 파티, after the red light.
@@ -77,12 +88,13 @@ interface MineList {
 }
 
 // 내 파티's parts, for the frame that scrolls them: the chips that stay on top, the cards that scroll, and the sheet
-// that asks before entering. The 파티 tab shows them, and so does 참여 중인 파티 above the tabs.
+// and the location explanation that come before entering. The 파티 tab shows them, and so does 참여 중인 파티 above the tabs.
 export function useMineList(): MineList {
   const { data: cards, isPending, refetch } = useMineCards();
   const [filter, setFilter] = useState<MineFilter>('all');
   const [ask, setAsk] = useState<Ask | null>(null);
-  const enter = useEnter(setAsk);
+  const entry = usePartyEntry(setAsk);
+  const enter = useEnter(entry);
   const { declineParty } = useRoomActions();
   const all = cards ?? [];
   const shown = filterMine(all, filter);
@@ -116,9 +128,9 @@ export function useMineList(): MineList {
       </View>
     ),
     sheet: (
-      <ConfirmSheet
+      <EnterSheets
         ask={ask}
-        label="확인"
+        explanation={entry.explanation}
         onClose={() => {
           setAsk(null);
         }}

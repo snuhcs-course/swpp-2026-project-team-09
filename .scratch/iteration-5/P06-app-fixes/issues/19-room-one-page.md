@@ -219,6 +219,10 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
 - **The help bubbles** open over the screen in the app's `Overlay`, with the arrow under the ?. A press anywhere closes them.
 - **The 모집글's Leader row and grey box** are now `PostHost` and `InfoBox` in `screens/party/post-content.tsx`, shared by the 모집글 (with "모집자") and the room (without).
 - **수정 in the app bar** (fix after the user's phone check): the bare ghost `Button` stood at the top of the bar's row, as a button that is not `full` takes `alignSelf: 'flex-start'`. The old `RecruitingActions` had wrapped it in a centred View. `EditAction` now passes `centred`, which puts 수정 on the title's line; `AppBar` itself is unchanged.
+- **One way into an activation** (fyoon46's review): the room, 알림's 파티 켜기 and 내 파티's strip 참여 all open and enter through `usePartyEntry` (`screens/room/use-party-entry.tsx`). It holds `openParty` / `joinParty`, the Master Switch sheet, the sharing switch and the location explanation. With the Master Switch off, all three ask '전체 위치 공유를 켤까요?' (켜고 활성화 / 켜고 참여, with the other-Party line), then go on with no second question. With it on, each behaves as before:
+  - the room always asks `openAsk`, while 파티 켜기 asks only beside another Party;
+  - 내 파티's strip still leaves the other Party rather than ending one the User leads, as its sheet says.
+  - The questions moved from `activation-box.tsx` to `screens/room/party-asks.ts`.
 - **The library's booked room** (PR 684, merged during the build) stays on the step `shownSubQuest` shows, as the lists show it. The head's box takes the orange step's place line as 일정 draws it, so it carries the room whenever the orange step is that step.
 - **Tests:**
   - `answerRoom` now answers the Lobby with the Master Switch on, as the room's flows need. The Master-Switch-off flows are in `room-activation-master`.

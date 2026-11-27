@@ -25,7 +25,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMyParty, DINNER_PARTY_MINE, myPicnicParty, PICNIC, toast } from './support/room';
 import { answerParty, MY_HIKE, openAt } from './support/party';
-import { askMainServer, DINNER, DINNER_PARTY, PHONE_NOW } from './support/server';
+import { askMainServer, DINNER, DINNER_PARTY, LOBBY, PHONE_NOW } from './support/server';
 
 // 내 파티, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea. 초대 is in
 // `party-invites.integration.test.tsx`, a card's status and activation strip in
@@ -156,6 +156,7 @@ describe('내 파티 without a Quest', () => {
 
 describe('a card of 내 파티', () => {
   it('shows the strip of a Party running without the User, whose 참여 enters it', async () => {
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
     server.on('GET /parties', { status: 200, body: [DINNER_PARTY] });
     server.on(`POST /parties/${DINNER_PARTY.id}/join`, { status: 201, body: DINNER_PARTY_MINE });
     const user = await openAt('/party?tab=mine');
