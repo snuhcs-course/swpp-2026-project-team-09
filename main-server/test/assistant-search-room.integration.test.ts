@@ -4,13 +4,16 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { GlobalEvent, PrismaClient } from '../src/generated/prisma/client.js';
+import { newFriendId } from '../src/users/friend-id.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
 import { askToJoin } from './quest-recruiting.js';
@@ -159,9 +162,22 @@ function sooner(body: object, day: string): Promise<string[]> {
   return Promise.all(Array.from({ length: 31 }, () => questAt(`${day}T09:00:00`, body)));
 }
 
-// As many full Quests, each with a second Holder of its own.
-function soonerFull(day: string): Promise<string[]> {
-  return Promise.all(Array.from({ length: 31 }, async () => fullAt(`${day}T09:00:00`, await signInUser(app))));
+// As many full Quests of two, each with a second Holder of its own. The Holders are stored, not signed in: 31 sign-ins
+// and joins took the test past its timeout on a busy runner.
+async function soonerFull(day: string): Promise<string[]> {
+  const quests = await sooner({ capacity: 2 }, day);
+  await Promise.all(
+    quests.map((questId) => {
+      const subject = randomUUID();
+      return prisma.questHolder.create({
+        data: {
+          quest: { connect: { id: questId } },
+          user: { create: { googleSubject: subject, email: `${subject}@snu.ac.kr`, friendId: newFriendId() } },
+        },
+      });
+    }),
+  );
+  return quests;
 }
 
 describe('searchRecruitingQuests, before the list is cut', () => {
