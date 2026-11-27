@@ -12,6 +12,7 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
+import { fromCardReplyOf } from '@/features/assistant/app-turn';
 import { modelWordsOf } from '@/features/assistant/model-words';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import { turnsOf } from '@/features/assistant/turn';
@@ -214,6 +215,7 @@ export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): Reac
   }
   const leftAlone = invitation.left !== null && invitation.made === null && invitation.changed === null;
   // An answer with no Plan keeps the time card it was asked in (P01 ticket 31).
+  const fromCard = fromCardReplyOf(control.chat.bubbles, shown.source);
   return shown.answer === null || shown.frame === null || leftAlone ? null : (
     <PlanBar
       answer={shown.answer}
@@ -223,6 +225,13 @@ export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): Reac
       onHeight={onHeight}
       plan={shown.frame}
       shown={shown}
+      toCard={
+        fromCard === null
+          ? null
+          : () => {
+              control.chat.takeBackTurn(fromCard);
+            }
+      }
     />
   );
 }
