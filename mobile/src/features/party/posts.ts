@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -67,9 +68,11 @@ export function whenOf(instant: string): string {
   return `${koreaDay(instant, now())} ${koreaClock(instant)}`;
 }
 
-function timeOf(next: Next): string {
+// When and where a Quest next meets, as its post and an invitation's card say it: "내일 19:30" or "시간 미정", and
+// "버들골 (100동) 입구" or "장소 미정".
+export function planWords(next: Next): { time: string; place: string } {
   const start = next?.startsAt ?? null;
-  return start === null ? '시간 미정' : whenOf(start);
+  return { time: start === null ? '시간 미정' : whenOf(start), place: next?.place?.label ?? '장소 미정' };
 }
 
 function membersOf(leader: string, holders: number, friends: number): string {
@@ -99,8 +102,7 @@ function postOf({ next, ...head }: Head): PostView {
     ...head,
     fill: `${String(head.holders)}/${String(head.capacity)}명`,
     startsAt: next?.startsAt ?? null,
-    time: timeOf(next),
-    place: next?.place?.label ?? '장소 미정',
+    ...planWords(next),
     members: membersOf(head.leader.name, head.holders, head.friends.length),
   };
 }

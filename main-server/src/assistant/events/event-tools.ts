@@ -9,6 +9,7 @@
 import { z } from 'zod';
 import { EVENT_IDS_MAX, type EventsInput, type Plan } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
@@ -64,9 +65,7 @@ export function planEvents(plans: EventsPlanService): Tool {
       const planInput: EventsInput = { kind: 'events', date, eventIds: eventIds ?? null };
       const at = { now, location: context.location, skipped: skip.skipped };
       const { answer, planning } = await plans.planned(userId, planInput, at);
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       if (answer.noPlan !== null) {
         return {
           ...noneFound('No event of that day can be attended between the User’s Classes and Quests.'),

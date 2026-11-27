@@ -7,12 +7,14 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { closureNotices } from '../../menus/open-rule.js';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
+import { presentAnswer, presentLookup } from '../presented.js';
 import { mealByClock, mealWindow } from '../free-time/meal-fit.js';
 import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { dayWordsFrom, koreaTime } from '../korea-time.js';
@@ -122,14 +124,11 @@ export function findMenu(menus: Pick<MenuLookupService, 'named' | 'at' | 'find'>
       }
       const key = chosen.candidate.name;
       const found = await menus.find(userId, { date, meal, key }, planningAt({ now, context, capabilities }));
-      presented.mapButtons.length = 0;
       if (found.result === 'none') {
-        presented.lookup = found.lookup;
-        presented.answer = null;
+        presentLookup(presented, found.lookup);
         return { ...noneFound(reasonOf(found, key, { date, meal, now })), lines: menuLines(found.lines) };
       }
-      presented.answer = found.answer;
-      presented.lookup = null;
+      presentAnswer(presented, found.answer);
       const { collectedAt, lines, plan } = found;
       const [mine] = plan.parts;
       return {

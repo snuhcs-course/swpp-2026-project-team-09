@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -138,10 +139,13 @@ describe("an invitation's time and place, and the past Quests", () => {
   it("gives in the mock build the frame's time and place: two days ahead at 14:00, at the library", async () => {
     const [invitation] = await answered(apiClient.listQuestInvitations());
 
-    expect(invitation).toMatchObject({ startsAt: '2026-10-03T05:00:00.000Z', place: '중앙도서관 (62동)' });
+    expect(invitation?.nextSubQuest).toMatchObject({
+      startsAt: '2026-10-03T05:00:00.000Z',
+      place: { placeId: null, label: '중앙도서관 (62동)' },
+    });
   });
 
-  it('leaves out the time, the place and the companions in the build that asks the main server', async () => {
+  it("carries the main server's time and place, and leaves out the companions, in the build that asks it", async () => {
     const server = await askMainServer({ signedIn: true });
     server.on('GET /quest-invitations', {
       status: 200,
@@ -150,7 +154,7 @@ describe("an invitation's time and place, and the past Quests", () => {
 
     const [invitation] = await apiClient.listQuestInvitations();
 
-    expect(invitation).toMatchObject({ startsAt: null, place: null });
+    expect(invitation?.nextSubQuest).toEqual(INVITATION.nextSubQuest);
     expect(invitation?.quest.faces).toEqual([{ name: '윤태오', photo: null }]);
   });
 

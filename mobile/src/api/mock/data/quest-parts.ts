@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -37,31 +38,3 @@ export const FRAMED_COMPANIONS: Readonly<Record<string, MemberFace[]>> = {
   'post-2': [face('박소율'), face('정우진')],
   'q-report': [],
 };
-
-// When an invitation's Quest meets: days after today, and a time of Korea's clock.
-export interface InvitationTimeParts {
-  daysAhead: number;
-  hour: number;
-  minute: number;
-}
-
-// The `PartyInvites` frame's plan for the invitation of `./waiting.ts`: 토 14:00 at the library, two days after the
-// frame's Thursday.
-export const FRAMED_INVITATION_TIMES: Readonly<Record<string, InvitationTimeParts>> = {
-  'q-report': { daysAhead: 2, hour: 14, minute: 0 },
-};
-export const FRAMED_INVITATION_PLACES: Readonly<Record<string, string>> = { 'q-report': '중앙도서관 (62동)' };
-
-// The sets any other invitation's time and place are picked from, by its Quest's id.
-export const INVITATION_TIME_SET: readonly InvitationTimeParts[] = [
-  { daysAhead: 1, hour: 12, minute: 10 },
-  { daysAhead: 2, hour: 14, minute: 0 },
-  { daysAhead: 3, hour: 19, minute: 0 },
-  { daysAhead: 5, hour: 18, minute: 30 },
-];
-export const INVITATION_PLACE_SET: readonly string[] = [
-  '학생회관 (63동) 식당',
-  '중앙도서관 (62동)',
-  '301동 앞',
-  '버들골 (100동) 입구',
-];

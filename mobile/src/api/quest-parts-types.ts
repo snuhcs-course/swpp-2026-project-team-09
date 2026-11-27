@@ -7,6 +7,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -82,16 +83,9 @@ export type ShownRecruitingQuest = RecruitingQuest & QuestParts;
 export type ShownQuestCard = Omit<QuestCard, 'quest'> & { quest: ShownRecruitingQuest };
 export type ShownChatCard = GlobalEventCard | ShownQuestCard | RestaurantCard | LibraryCard;
 export type ShownAssistantReply = Omit<AssistantReply, 'cards'> & { cards: ShownChatCard[] };
-// What an invitation's card says of the plan besides its Quest, which the main server's invitation does not carry yet:
-// when the Quest's next Sub Quest starts and where. Null where the build leaves it out (the server build, always).
-export interface InvitationPlan {
-  startsAt: string | null;
-  place: string | null;
-}
-
 export type ShownQuestInvitation = Omit<QuestInvitation, 'quest'> & {
   quest: QuestSummary & QuestParts;
-} & InvitationPlan;
+};
 
 // A request to join with the note its User wrote, which the Leader reads in the room; null where none is known.
 export type ShownJoinRequest = JoinRequest & { note: string | null };

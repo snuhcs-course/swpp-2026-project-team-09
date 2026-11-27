@@ -20,6 +20,7 @@ import { placeLabelOf } from '../gathering/place-naming.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { type LibrarySpace } from '../library/catalogue.js';
 import { type LibraryCard } from '../library/library-card.js';
+import { reviseAnswer } from '../presented.js';
 
 // The steps of a message that asked for several things (P03): each library book card, each booking a library tool
 // refused, and the answer drawn on the map, in time order. A meal planned after another step sets out from that step's
@@ -220,7 +221,8 @@ export async function presentSteps(context: ToolContext, services: StepsServices
     const chained = afterEarlierSteps(answer.input, others);
     if (chained !== answer.input) {
       // A replan that fails keeps the meal as the model planned it, so the rest of the reply still reaches the User.
-      presented.answer = await services.replanMeal(chained, context).catch(() => answer);
+      const replanned = await services.replanMeal(chained, context).catch(() => answer);
+      reviseAnswer(presented, () => replanned);
     }
   }
   const all = presented.answer === null ? others : [...others, answerStep(presented.answer)];

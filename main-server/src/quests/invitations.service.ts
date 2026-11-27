@@ -12,6 +12,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -28,11 +29,13 @@ import { UsageService } from '../usage/usage.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { QuestDto, subQuestsAheadWhere } from './dto/quest.dto.js';
 import {
+  RECEIVED_INVITATION_INCLUDE,
+  ReceivedInvitationDto,
+  toReceivedInvitationDto,
   toWaitingDto,
   toWaitingUserDto,
   WAITING_INCLUDE,
   WAITING_USER_INCLUDE,
-  WaitingDto,
   WaitingUserDto,
 } from './dto/waiting.dto.js';
 import { LeaderService } from './leader.service.js';
@@ -104,13 +107,14 @@ export class InvitationsService {
   }
 
   // The User's invitations, the newest first.
-  async list(userId: string): Promise<WaitingDto[]> {
+  async list(userId: string): Promise<ReceivedInvitationDto[]> {
+    const now = this.clock.now();
     const invitations = await this.prisma.questInvitation.findMany({
-      where: { userId, quest: subQuestsAheadWhere(this.clock.now()) },
-      include: WAITING_INCLUDE,
+      where: { userId, quest: subQuestsAheadWhere(now) },
+      include: RECEIVED_INVITATION_INCLUDE,
       orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
     });
-    return invitations.map((invitation) => toWaitingDto(invitation));
+    return invitations.map((invitation) => toReceivedInvitationDto(invitation, now));
   }
 
   // The Quest's waiting invitations, the newest first.

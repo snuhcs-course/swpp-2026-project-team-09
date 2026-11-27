@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -22,8 +23,6 @@ import { freshWrapper, settle } from './support/queries';
 const LISTED: ShownQuestInvitation = {
   ...RECEIVED,
   quest: { ...RECEIVED.quest, faces: [] },
-  startsAt: null,
-  place: null,
 };
 
 beforeEach(() => {

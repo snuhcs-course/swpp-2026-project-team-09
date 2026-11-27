@@ -10,6 +10,7 @@
 import { z } from 'zod';
 import { type AnswerReply, type MeetInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Tool } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { onDay } from '../free-time/free-time.js';
 import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
@@ -137,9 +138,7 @@ export function planMeet(plans: MeetPlanService): Tool {
       if (held?.result === 'one' && !held.meeting.kept.mine) {
         return { result: 'set-by-friend', meeting: plans.wordsOf(held.meeting.kept) };
       }
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       if (answer.noPlan !== null) {
         return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason], ...skip.said };
       }
