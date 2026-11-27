@@ -49,7 +49,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   if (!framed || answer === null || plan === null || invitation.made !== null) {
     return null;
   }
-  if (!planShown(control.chat.bubbles, onScreenOf(control))) {
+  // A study answer's group study room tells its own main button, as a booking ticket does (P10 ticket 11).
+  if (!planShown(control.chat.bubbles, onScreenOf(control)) || plan.study?.group !== undefined) {
     return null;
   }
   const { kind } = answer.input;

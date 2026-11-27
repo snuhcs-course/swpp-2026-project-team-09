@@ -19,12 +19,18 @@ import { windowOf } from './plan-conditions.js';
 
 export type BandRows = Pick<TimeBand, 'lanes' | 'others' | 'skipped'>;
 
-// Everyone's lanes over the window asked, from now when it has begun, and the window as the band's stretch.
-export function windowBand(window: Interval, now: Date, rowsOf: (from: Date, until: Date) => BandRows): TimeBand {
+// Everyone's lanes over the window asked, from now when it has begun, and the window as the band's stretch. `reach`,
+// when later than the window's end, carries the range on to it, such as over the item that ends the window.
+export function windowBand(
+  window: Interval,
+  now: Date,
+  rowsOf: (from: Date, until: Date) => BandRows,
+  reach?: Date,
+): TimeBand {
   const minute = new Date(Math.ceil(now.getTime() / MINUTE_MS) * MINUTE_MS);
   const start = window.start < minute && minute < window.end ? minute : window.start;
   const end = window.end > start ? window.end : start;
-  const { from, until } = halfHoursAround(start.getTime(), end.getTime());
+  const { from, until } = halfHoursAround(start.getTime(), Math.max(end.getTime(), reach?.getTime() ?? 0));
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),

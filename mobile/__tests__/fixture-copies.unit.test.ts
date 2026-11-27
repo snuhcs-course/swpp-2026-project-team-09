@@ -19,6 +19,7 @@ const ROOT = join(__dirname, '..', '..');
 
 const COPIES: readonly (readonly [string, string])[] = [
   ['main-server/test/fixtures/library/app-seat-names.json', 'mobile/__tests__/fixtures/library-seat-names.json'],
+  ['main-server/test/fixtures/study/kwanjeong-book.json', 'mobile/__tests__/fixtures/study-kwanjeong-book.json'],
 ];
 
 describe('The fixtures the app and the main server share', () => {
