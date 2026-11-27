@@ -48,7 +48,8 @@ Only the card's face is new.
 - **The booking:** `bookRoom` (`book-room-card.tsx`) is today's booking, lifted out of the room card so that both use it; the room card's `sendBooking` calls it.
   - The group card books through `useWrite` with the card's confirmed press (M4).
   - Its done message is added to the chat (`cardActions.library.addOwn`), as a room card's is.
-  - After the booking, the answer frame shows that done message, P01 ticket 15's booked ticket with its "예약 취소 ›". No booked face of its own is drawn on the group card.
+  - After the booking, the done message is a room's, as #646 keeps it: "G405 예약되었어요!" over the rows 장소, 방, 시간 and 예약 번호 (a seat's done message is P01 ticket 15's booked ticket; a room's is not).
+  - The group card, once the request is booked, stays as while waiting: its ticket locked with the room booked, and no line of its own, no 사용 용도, no 요청 취소, no 동의 요청 보내기. The answer stays held.
 - **The room and the words** (`use-group-booking.ts`, `study-group-booking.ts`):
   - the kind's rooms are read again when the card shows;
   - `roomOnReady` keeps the room sent while it is free, else takes the kind's first free one and says so;
@@ -61,6 +62,11 @@ Only the card's face is new.
   - a request booked from this phone (`bookedHere`, from the bookings the phone keeps) shows "예약했어요" dimmed, though the server may still say ready, so no second room is booked;
   - "로그인하고 예약" books once the login closes and the kind's rooms are read again.
 - **Left for a follow-up (#657's review, non-blocking):** the room chosen on the ticket once everyone has consented, and the room sent kept across a card shown again; the booking window's wait once the window has opened (`inRoomWindow`, as `isWaitingCard`); and a note with a retry when the kind's rooms could not be read.
+- **From #657's emulator pictures:**
+  - once the server said booked, the card read the request as never sent (`isOut` is false for 'booked') and drew its look before sending: kind and room cells to choose, the 사용 용도 line, the answer let go. `isBooked` now holds it as sent, the room shown is the one booked, and the test "keeps its ticket locked … under the done message" fails without it.
+  - a request sent before a 사용 용도 is chosen can never be booked: once everyone has consented 예약하기 stays dimmed and the card no longer shows the use. Which screen rule fixes it (the use line kept under the request line, or 동의 요청 보내기 needing a use first) waits for the user; its rule-neutral failing test is kept ready.
+  - The sweep of the readers of `isOut` / `out === null` as "not sent", each checked: the card's lock on the answer (changed: booked keeps it); the ticket's lock, the choosers, the use and request lines and the one-more picker (changed: booked draws none of them); the login note and the main button (changed: booked is "예약했어요", dimmed); the room shown (changed: the one booked, never one chosen or read afresh); the booking itself and asking again at the next free time (unchanged: neither runs once booked); the people shown (unchanged); `room-party.tsx`'s send (unchanged: a booked request is neither out nor ended, so nothing is sent again).
+- **For later (the user's look):** a room's done message as P01 ticket 15's booked ticket with "예약 취소 ›", in place of the rows; it would change the room card's done message too.
 - **The booked room's number on another phone** comes with ticket 13, which rebuilds the answer from the request.
 
 ## Acceptance criteria
@@ -70,7 +76,8 @@ Only the card's face is new.
 - [x] No room free: the sentence and the nearer time's button. (Unit tests of `noRoomOf` and `mainOf`; the asking again is the card's.)
 - [x] Logged out: the line says the login ended and the button is "로그인하고 예약". (Unit tests; the login then the booking is the button's press.)
 - [x] A `:wait` key: the window's sentence and the dimmed action. (Unit tests.)
-- [x] Booked: the done message, P01 ticket 15's booked ticket, "G405 예약되었어요!". (Integration test.)
+- [x] Booked: the room's done message "G405 예약되었어요!"; with the server saying booked, the group card's ticket locked on G405, no 사용 용도, 요청 취소 or 동의 요청 보내기. (Integration test.)
+- [ ] A request sent with no 사용 용도 can be booked once everyone has consented, by the rule the user picks. (Integration test, kept ready.)
 - [ ] The booked room's number comes from the kept booking, else from the library's list by date, start and kind; with neither, "방" stands alone. (Integration test.)
 - [ ] Pictures at 1.0 and 1.3 of the ready, booked and declined cards before merge.
 - [x] Whole lint, format and types.

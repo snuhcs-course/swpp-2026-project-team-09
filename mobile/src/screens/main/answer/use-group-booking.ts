@@ -25,6 +25,7 @@ import {
   type Write,
 } from '../library/use-library-call';
 import { againWords, noRoomOf, readyLineOf, roomOnReady, waitWords } from './study-group-booking';
+import { isBooked } from './study-group-request';
 
 // The room of the study answer together, read from the library, and its booking once everyone has consented (P10
 // ticket 14): today's booking (`bookRoom`) with the card's confirmed press, its done message added to the chat as a
@@ -116,14 +117,18 @@ function useBooking(
 ): {
   write: Write<RoomWrite>;
   booked: boolean;
+  // The room this phone booked, which the ticket keeps whatever the rooms read since say.
+  bookedRoom: string | null;
   onLoggedIn: () => void;
 } {
   const { group, slot, library, out } = of;
   const { booked, markBooked } = useBooked(out);
+  const [bookedRoom, setBookedRoom] = useState<string | null>(null);
   const write = useWrite<RoomWrite>(async (args, press) => {
     const space = group.room.space;
     const failed = await bookRoom({ space, notes: [], addOwn: library?.addOwn ?? ignore }, slot, args, press);
     if (failed === null) {
+      setBookedRoom(args.room.NAME);
       markBooked();
     } else {
       reload();
@@ -140,6 +145,7 @@ function useBooking(
   return {
     write,
     booked,
+    bookedRoom,
     onLoggedIn: () => {
       setAfterLogIn(true);
     },
@@ -152,14 +158,17 @@ export function useGroupBooking(of: GroupBookingOf): GroupBooking {
   const free = all === null ? null : freeRooms(all, group.room.space.seatNos, slot);
   const ready = out?.status === 'ready';
   const placed = roomOnReady(of.sent, free ?? []);
-  const room = ready ? placed.room : (of.chosen ?? free?.[0]?.NAME ?? null);
+  // Booked, the room is the one booked, or the one sent: never one chosen or read afresh (#657, booked card).
+  const done = isBooked(party.request);
+  const kept = ready || done ? placed.room : (of.chosen ?? free?.[0]?.NAME ?? null);
   const noRoom = ready && free !== null && free.length === 0 ? noRoomOf(group, all ?? [], slot) : null;
   const nextFree = noRoom?.again ?? null;
-  const times = free?.find(({ NAME }) => NAME === room) ?? null;
+  const times = free?.find(({ NAME }) => NAME === kept) ?? null;
   const useDesc = out?.useDesc ?? of.use;
   const toBook =
     loggedIn && times !== null && useDesc !== null && out !== null ? { room: times, useDesc, request: out } : null;
-  const { write, booked, onLoggedIn } = useBooking(of, toBook, reload);
+  const { write, booked, bookedRoom, onLoggedIn } = useBooking(of, toBook, reload);
+  const room = bookedRoom ?? (done ? (of.sent ?? kept) : kept);
   const [againAt, setAgainAt] = useState<string | null>(null);
   const { change, locked } = shown;
   useEffect(() => {

@@ -10,7 +10,7 @@ import { useLibrarySession } from '@/library/library-session';
 import type { TellAct } from '../library/act-stage';
 import type { PartyRequest } from '../library/room-party';
 import { isWaiting } from './study-group-booking';
-import { isOut } from './study-group-request';
+import { isBooked, isOut } from './study-group-request';
 
 // The study answer together's main button beside the input (P10 tickets 11 and 12), told as a booking ticket's is:
 // - before the request: "+ 같이" while people are missing, 로그인 while logged out of the library, else "동의 요청 보내기";
@@ -56,6 +56,9 @@ export function mainOf(
   booked = false,
 ): Seen {
   const { request } = party;
+  if (isBooked(request)) {
+    return { main: 'booked', words: '예약했어요', disabled: true };
+  }
   if (isOut(request)) {
     if ((request.moreNeeded ?? 0) > 0) {
       return { main: 'askMore', words: '+ 같이 한 명 더', disabled: false };
