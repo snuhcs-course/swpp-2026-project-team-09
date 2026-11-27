@@ -8,7 +8,7 @@ import type { ReplyStep } from '@/api/assistant-types';
 import { isReplyStep } from '@/api/server/step-answers';
 
 // The steps of a reply that answered several requests (P03): every kind a step may have, which the main server takes
-// from the answer's input (`plan-steps.ts`), is read. A study answer's step is "study" (P10 ticket 16), and one step
+// from the answer's input (`plan-steps.ts`), is read. A study answer's step is "study" (P10 ticket 26), and one step
 // the app refuses drops all of them.
 
 const STEP: ReplyStep = {
