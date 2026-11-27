@@ -17,6 +17,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -39,6 +40,7 @@ import { MISSING_RULES, whyNotListed } from '../gathering/missing-tools.js';
 import { CHOOSE_PLAN_RULES, choosePlan } from '../gathering/choose-plan.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
+import { bareHourRule } from '../bare-hours.js';
 import { koreaNow } from '../korea-time.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
@@ -124,9 +126,10 @@ function instructionsOf(freeTimeRules: readonly string[], libraryRules: string, 
 }
 
 // The system prompt's lines of a request made at `now`, sent after the rest: the time in Korea, which the rules' "now"
-// means.
+// means, and what an hour said bare means at it, for every answer kind (P05 ticket 75).
 function requestInstructionsOf(now: Date): string {
-  return `Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.`;
+  return `Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
+${bareHourRule(now)}`;
 }
 
 // In the chat of an app that draws answers, an earlier reply that drew an answer comes back as the words the User saw
