@@ -14,6 +14,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -85,6 +86,11 @@ export interface ChatBubble {
   fromCard?: true;
   // The plan the reply chose in words, of the answer on screen or of its own (P05 ticket 51). Not sent back.
   select?: string;
+  // To an app that says `answers` (P03 ticket 20): the answers the reply drew or changed by their keys, the keys of the
+  // requests withdrawn, and the request whose answer holds the plan chosen. Not sent back.
+  answers?: readonly AnswerReply[];
+  withdrawn?: readonly string[];
+  selectKey?: string;
   // The answer on screen leaves with this reply, which draws nothing in its place (P05 ticket 55). Not sent back.
   clears?: true;
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.

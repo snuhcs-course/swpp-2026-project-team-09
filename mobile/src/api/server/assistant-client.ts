@@ -11,10 +11,12 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
   ANSWER_CAPABILITIES,
+  type AnswerReply,
   type AssistantReply,
   type ChatCard,
   type LeftOutClass,
@@ -167,7 +169,14 @@ function isReplyOffer(value: unknown): value is ReplyOffer {
   }
 }
 
+// An answer of a reply's `answers`, with its request's key (P03 ticket 20).
+function isKeyedAnswer(value: unknown): value is AnswerReply {
+  return isAnswerReply(value) && isText(field(value, 'key'));
+}
+
 function isAssistantReply(value: unknown): value is AssistantReply {
+  const answers = field(value, 'answers');
+  const withdrawn = field(value, 'withdrawn');
   const offers = field(value, 'offers');
   const proposal = field(value, 'proposal');
   const answer = field(value, 'answer');
@@ -181,7 +190,9 @@ function isAssistantReply(value: unknown): value is AssistantReply {
     (answer === undefined || isNothing(answer) || isAnswerReply(answer)) &&
     (lookup === undefined || isNothing(lookup) || isLookup(lookup)) &&
     (refusal === undefined || isNothing(refusal) || isRefusal(refusal)) &&
-    (offers === undefined || listOf(isReplyOffer)(offers))
+    (offers === undefined || listOf(isReplyOffer)(offers)) &&
+    (answers === undefined || listOf(isKeyedAnswer)(answers)) &&
+    (withdrawn === undefined || listOf(isText)(withdrawn))
   );
 }
 

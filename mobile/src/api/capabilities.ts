@@ -28,3 +28,7 @@ export const ANSWER_CAPABILITIES = [
   'study-plan',
   'study-group',
 ] as const;
+
+// Whether the app tells the main server it keeps a reply's answers by key (`answers`, P03 ticket 20): it then sends the
+// steps on screen and their answers' conditions. Not yet: a main server before P05 tickets 73 and 74 refuses them.
+export const saysAnswers = (ANSWER_CAPABILITIES as readonly string[]).includes('answers');
