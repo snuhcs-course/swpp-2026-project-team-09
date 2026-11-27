@@ -8,21 +8,25 @@ import { type ReactElement, type ReactNode, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BottomSheet, color, font, Icon, radius, space } from '@/design-system';
 import type { PointOnMap } from '@/features/places/point-on-map';
-import { CAMPUS_CAMERA, Map, type MapHandle, useMarkerImages } from '@/map';
+import { CAMPUS_CAMERA, Map, type MapHandle, type MarkerLook, useMarkerImages } from '@/map';
 
 // A place picked on the map, shown where a 파티 is (P06 ticket 27): a small map with the 파티's pin at the point, and
 // its words under it.
 
 const ZOOM = 17;
+// The 파티's pin, as the main map draws a 파티's place.
+const PIN_LOOK: readonly MarkerLook[] = [{ kind: 'party', form: 'pin' }];
 const MAP_HEIGHT = 220;
 const ROUND = 40;
 
 function PinMap({ point }: { point: PointOnMap }): ReactElement {
-  const [image] = useMarkerImages([{ kind: 'party', form: 'pin' }]);
+  const [image] = useMarkerImages(PIN_LOOK);
   const map = useRef<MapHandle>(null);
   const opened = useRef(false);
   const markers =
-    image === undefined ? [] : [{ id: 'place', name: `장소 · ${point.label}`, position: point.position, image }];
+    image === undefined
+      ? []
+      : [{ id: 'place', name: `장소 · ${point.label}`, position: point.position, image, passive: true }];
   return (
     <View style={styles.map}>
       <Map
