@@ -1551,15 +1551,22 @@ without the User's own:
     "joinPolicy": "approval",
     "quest": { "id": "…", "title": "지능형통신 연합전공 설명회", "globalEvent": { "id": "…", "title": "…" } },
     "leader": { "id": "…", "name": "홍길동" },
-    "holdsQuest": false,
-    "friends": [{ "id": "…", "name": "김철수", "department": "경영학과" }]
+    "holdsQuest": true,
+    "friends": [{ "id": "…", "name": "김철수", "department": "경영학과" }],
+    "members": [
+      { "id": "…", "name": "홍길동" },
+      { "id": "…", "name": "김철수" }
+    ]
   }
 ]
 ```
 
 `leader` is the Party's Leader now, its opener until the role passes. `holdsQuest` says whether the reading User holds
-the Party's Quest, and `friends` are the reading User's Friends among the members, in the order they entered. No
-position is in the list.
+the Party's Quest, and `friends` are the reading User's Friends among the members, in the order they entered.
+`members?: { id, name }[]` names every member, in the order they entered. It is present only when the reading User
+holds the Party's Quest, and left out otherwise, so a Friend who does not hold it learns no names beyond `friends`. The
+`party` of `GET /party-join-requests` and `GET /party-invitations` has the same shape (`toVisiblePartyDto`), so it
+carries `members` on the same terms. No position is in the list.
 
 **Who enters.**
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions, per check of a Party, class, Place or walking route: the documented shape, and each checked field left
@@ -77,6 +78,7 @@ describe('isParties', () => {
       ['no Party', []],
       ['a Party tied to no Quest', [{ ...PARTY, quest: null }]],
       ['a Party whose Quest has no Global Event', [{ ...PARTY, quest: { ...PARTY_QUEST, globalEvent: null } }]],
+      ['a Party of a held Quest with its members named', [{ ...PARTY, members: [{ id: 'u1', name: '홍길동' }] }]],
     ],
     inList(PARTY, [
       ...wrongFields(
@@ -96,6 +98,8 @@ describe('isParties', () => {
       ['no Leader', omit(PARTY, 'leader')],
       ['leader null', { ...PARTY, leader: null }],
       ['a Leader without a name', { ...PARTY, leader: { id: 'u1' } }],
+      ['members null', { ...PARTY, members: null }],
+      ['a member without a name', { ...PARTY, members: [{ id: 'u1' }] }],
       ...inside(
         PARTY,
         'quest',
