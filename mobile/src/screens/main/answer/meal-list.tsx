@@ -183,7 +183,7 @@ export function listOrderWords(answer: AnswerReply): string {
 
 interface MealListProps {
   answer: AnswerReply;
-  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'show' | 'chooseKind' | 'change'>;
+  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'chooseKind' | 'change'>;
   // A Plan is being sent or is made, or a recalculation is on its way: nothing is chosen, as on the map.
   busy: boolean;
 }
@@ -203,14 +203,14 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
   const rows = candidateRowsOf(answer, kind);
 
   const closed = answer.closed ?? [];
-  // A study place's own view is ticket 19's: until then a press chooses it, as a press on its round does.
+  // A press opens the place: a Restaurant's menu, or a study place's spaces (P10 ticket 19).
   const row = (one: CandidateRow): ReactElement => (
     <Row
       chosen={one.planId === chosen}
       disabled={busy}
       key={one.planId}
       onPress={() => {
-        (study ? shown.show : shown.openMenu)(one.planId);
+        shown.openMenu(one.planId);
       }}
       row={one}
       study={study}

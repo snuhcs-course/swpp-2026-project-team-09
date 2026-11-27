@@ -68,13 +68,13 @@ describe("a study answer's list", () => {
     });
   });
 
-  it('chooses a place at a press, its view being another ticket’s', async () => {
+  it('opens a place at a press, as a meal answer’s row opens its Restaurant (P10 ticket 19)', async () => {
     const shown = await list();
 
     await fireEvent.press(screen.getByTestId('meal-row-3'));
 
-    expect(shown.show).toHaveBeenCalledWith(STUDY_PLAN_ANSWER.plans[2]?.id);
-    expect(shown.openMenu).not.toHaveBeenCalled();
+    expect(shown.openMenu).toHaveBeenCalledWith(STUDY_PLAN_ANSWER.plans[2]?.id);
+    expect(shown.show).not.toHaveBeenCalled();
   });
 });
 

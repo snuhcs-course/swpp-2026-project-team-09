@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { travelWords } from '@/features/assistant/answer-walks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { MEAL_NAMES, won } from '@/features/dining/adapter';
 import { koreaClock, koreaDayWord } from '@/korea-time';
+import { StudySpaces, studyLineOf } from './study-spaces';
 
 // A restaurant's menu in the raised card (board E4): back to the list, the place, the meals of its day, and the menu in
 // corners. It scrolls with the card. A menu question's answer shows the same (P04 ticket 72): opened at its Restaurant's
@@ -129,16 +131,19 @@ function Head({
   name,
   line,
   why,
+  study = false,
 }: {
   number: number | null;
   name: string;
   line: string;
   why: boolean;
+  // A study place's number is in the study colour (P10 ticket 19).
+  study?: boolean;
 }): ReactElement {
   return (
     <View style={styles.head}>
       {number === null ? null : (
-        <View style={styles.badge} testID="meal-menu-number">
+        <View style={[styles.badge, study && styles.studyBadge]} testID="meal-menu-number">
           <RoundNumber inside={BADGE} number={number} style={styles.number} />
         </View>
       )}
@@ -195,10 +200,12 @@ interface MealMenuProps {
 }
 
 // The Plan's restaurant: "‹ N곳 목록" with the day and meal, its number, name and time, the meals of its day, and the
-// chosen meal's menu in corners. Without the day's menus, the Plan's own menu.
+// chosen meal's menu in corners. Without the day's menus, the Plan's own menu. A study place opens the same view, with
+// its walk and stay as its line and its spaces and their hours in the place of a menu (P10 ticket 19).
 export function MealMenu({ answer, plan, shown }: MealMenuProps): ReactElement {
   const date = answer.input.kind === 'meal' ? answer.input.date : '';
   const asked: Meal = answer.input.kind === 'meal' ? answer.input.meal : 'lunch';
+  const study = plan.study;
   return (
     <View style={styles.menu} testID="meal-menu">
       <View style={styles.top}>
@@ -207,14 +214,24 @@ export function MealMenu({ answer, plan, shown }: MealMenuProps): ReactElement {
         </Pressable>
         <Text style={styles.day}>{dayAndMeal(answer)}</Text>
       </View>
-      <Head line={whenOf(plan)} name={plan.place.label} number={shown.index + 1} why={false} />
-      <MenuTable
-        asked={asked}
-        date={date}
-        empty="이날 메뉴를 아직 몰라요"
-        fallback={plan.menu === undefined ? [] : [planCorner(plan.menu)]}
-        find={(menus) => restaurantOf(menus, plan)}
+      <Head
+        line={study === undefined ? whenOf(plan) : studyLineOf(plan)}
+        name={plan.place.label}
+        number={shown.index + 1}
+        study={study !== undefined}
+        why={false}
       />
+      {study === undefined ? (
+        <MenuTable
+          asked={asked}
+          date={date}
+          empty="이날 메뉴를 아직 몰라요"
+          fallback={plan.menu === undefined ? [] : [planCorner(plan.menu)]}
+          find={(menus) => restaurantOf(menus, plan)}
+        />
+      ) : (
+        <StudySpaces spaces={study.spaces} />
+      )}
     </View>
   );
 }
@@ -259,6 +276,7 @@ const styles = StyleSheet.create({
     // The opened Restaurant is the one chosen: coral, as on the map and in the list (P04 ticket 85).
     backgroundColor: color.meal,
   },
+  studyBadge: { backgroundColor: color.svcStudy },
   number: { ...text.label, fontFamily: font.bold, color: color.onPrimary },
   names: { flex: 1, gap: 2 },
   name: { ...text.title, color: color.ink },
