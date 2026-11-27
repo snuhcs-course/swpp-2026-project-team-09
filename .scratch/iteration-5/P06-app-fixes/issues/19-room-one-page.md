@@ -231,7 +231,11 @@ Positions are as of `origin/5.0/Main` 5cb8d369, under `mobile/src/` unless the p
 
 ### Agent usage (2026-11-27)
 
-- Agent time: about 1 h 15 min (an estimate). One session, in this worktree: the build, 20:41 to 21:46 KST, and the 수정 fix after the phone check, about 10 min from 22:05. About half of it was spent waiting on the room's integration tests, which take about 30 s per test on this machine. No subagents.
+- Agent time: about 1 h 20 min (an estimate). One session, in this worktree:
+  - the build, 20:41 to 21:46 KST;
+  - the 수정 fix after the phone check, about 10 min from 22:05;
+  - the review's README fix and a merge of `5.0/Main`, about 5 min from 22:25.
+  - About half of it was spent waiting on the room's integration tests, which take about 30 s per test on this machine. No subagents.
 - Tokens:
-  - Input: about 101.0M in all. That is 0.0006M uncached, 100.5M cache reads and 0.50M cache writes.
+  - Input: about 107.1M in all. That is 0.0006M uncached, 106.6M cache reads and 0.52M cache writes.
   - Output: about 0.21M.
