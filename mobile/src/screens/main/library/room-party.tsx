@@ -3,13 +3,16 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useRef, useState } from 'react';
 import type { LibraryCardData } from '@/api/assistant-types';
+import { apiClient } from '@/api/client';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import { ROOM_REQUEST_KEY, type RoomRequest, roomRequests } from '@/api/room-requests';
+import type { StudyInput } from '@/api/study-plan-types';
 import { type CompanionsView, companionsView } from '@/library/cards/room-companions';
 import type { RoomMember } from '@/library/client';
 import { library } from '@/library/library';
@@ -26,6 +29,7 @@ export const SEND_ASK = '동의 요청 보내기';
 export const ALL_CONSENTED = '모두 동의했어요';
 export const WAITING = '친구들의 동의를 기다리고 있어요';
 export const MORE_FRIENDS = '친구를 더 불러 주세요';
+export const SEND_FAILED = '동의 요청을 보내지 못했어요. 다시 해 주세요.';
 
 const POLL_MS = 3000;
 
@@ -37,6 +41,12 @@ const requestOfKey = new Map<string, string>();
 
 export function bindPartyRequest(cardKey: string, requestId: string): void {
   requestOfKey.set(cardKey, requestId);
+}
+
+// A request taken back: neither the card's place nor its key holds it any more.
+function forgetRequest(place: string, cardKey: string): void {
+  requestOfCard.delete(place);
+  requestOfKey.delete(cardKey);
 }
 
 // For the tests: no card has a request.
@@ -54,26 +64,55 @@ export interface PartyRequest {
   ready: boolean;
   // Shows the request as a change answered it, before the next poll.
   update: (request: RoomRequest) => void;
+  // Takes the request back as today: its booking party ends, and the card is as before it was sent (P10 ticket 12).
+  // Null without a request still gathering or ready.
+  cancel: (() => void) | null;
 }
 
-function makingOf(card: LibraryCardData, useDesc: string | null): Parameters<typeof roomRequests.make>[0] {
-  const extra = useDesc === null ? {} : { useDesc };
+// What a request is made from: a book card's key and its Friends or Quest; a study answer together gives the same, with
+// the study input it was made from (P10 ticket 12).
+export type PartyCard = Pick<LibraryCardData, 'key' | 'questId' | 'companions'> & { input?: StudyInput };
+
+function makingOf(card: PartyCard, useDesc: string | null): Parameters<typeof roomRequests.make>[0] {
+  const extra = {
+    ...(useDesc === null ? {} : { useDesc }),
+    ...(card.input === undefined ? {} : { input: card.input }),
+  };
   return card.questId === null
     ? { key: card.key, friendIds: card.companions.map(({ friendId }) => friendId), ...extra }
     : { key: card.key, questId: card.questId, ...extra };
 }
 
-export function usePartyRequest(
-  card: LibraryCardData,
-  place: string,
-  useDesc: string | null,
-  onMade?: (made: RoomRequest) => void,
-): PartyRequest {
-  const [id, setId] = useState<string | null>(requestOfCard.get(place) ?? requestOfKey.get(card.key) ?? null);
-  const [sending, setSending] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [key] = useState(newIdempotencyKey);
-  const queryClient = useQueryClient();
+// A request that ended on the server: the card may send another.
+function hasEnded(request: RoomRequest | null): boolean {
+  return request?.status === 'dissolved' || request?.status === 'expired' || request?.status === 'cancelled';
+}
+
+// Takes back a request still gathering or ready that was made for booking: its booking party ends, then `forget` leaves
+// the card without it. A press while one is on its way does nothing, and a request that only asked the Holders of a
+// Quest is not taken back here, which would end that Quest for all of them (#656's review).
+function useCancel(request: RoomRequest | null, forget: () => void): (() => void) | null {
+  const ending = useRef(false);
+  if (request === null || !request.madeForBooking || (request.status !== 'gathering' && request.status !== 'ready')) {
+    return null;
+  }
+  return () => {
+    if (ending.current) {
+      return;
+    }
+    ending.current = true;
+    void apiClient
+      .endQuest(request.questId)
+      .then(forget)
+      .catch(() => null)
+      .finally(() => {
+        ending.current = false;
+      });
+  };
+}
+
+// The request as last read, read again while it gathers or is ready.
+function usePolled(id: string | null): RoomRequest | null {
   const asked = useQuery({
     queryKey: [...ROOM_REQUEST_KEY, id],
     queryFn: () => roomRequests.get(id ?? ''),
@@ -83,11 +122,35 @@ export function usePartyRequest(
       return status === undefined || status === 'gathering' || status === 'ready' ? POLL_MS : false;
     },
   });
+  return id === null ? null : (asked.data ?? null);
+}
+
+export function usePartyRequest(
+  card: PartyCard,
+  place: string,
+  useDesc: string | null,
+  onMade?: (made: RoomRequest) => void,
+): PartyRequest {
+  const [id, setId] = useState<string | null>(requestOfCard.get(place) ?? requestOfKey.get(card.key) ?? null);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  // Kept for a send tried again, and new for each request: one taken back or ended is not the next.
+  const [key, setKey] = useState(newIdempotencyKey);
+  const queryClient = useQueryClient();
+  const request = usePolled(id);
+  const ended = hasEnded(request);
+  const cancel = useCancel(request, () => {
+    forgetRequest(place, card.key);
+    setId(null);
+    setKey(newIdempotencyKey());
+  });
   const send = async (): Promise<void> => {
     setSending(true);
     setFailed(false);
+    const used = ended ? newIdempotencyKey() : key;
+    setKey(used);
     try {
-      const made = await roomRequests.make(makingOf(card, useDesc), key);
+      const made = await roomRequests.make(makingOf(card, useDesc), used);
       requestOfCard.set(place, made.id);
       setId(made.id);
       onMade?.(made);
@@ -97,16 +160,16 @@ export function usePartyRequest(
       setSending(false);
     }
   };
-  const request = id === null ? null : (asked.data ?? null);
   return {
     request,
-    send: id === null && !sending ? () => void send() : null,
+    send: (id === null || ended) && !sending ? () => void send() : null,
     sending,
     failed,
     ready: request?.status === 'ready',
     update: (next) => {
       queryClient.setQueryData([...ROOM_REQUEST_KEY, id], next);
     },
+    cancel,
   };
 }
 
@@ -142,9 +205,13 @@ export function PartyStatus({ party }: { party: PartyRequest }): ReactElement {
     const view = companionsView(request);
     return (
       <>
-        <Said tone={ended ? 'danger' : 'plain'}>{statusWords(request, view)}</Said>
+        <Said byButton tone={ended ? 'danger' : 'plain'}>
+          {statusWords(request, view)}
+        </Said>
         {view?.lines.map((line) => (
-          <Said key={line}>{line}</Said>
+          <Said byButton key={line}>
+            {line}
+          </Said>
         ))}
         {view?.canAskOneMore === true ? <AskOneMore onAsked={party.update} request={request} /> : null}
       </>
@@ -152,8 +219,8 @@ export function PartyStatus({ party }: { party: PartyRequest }): ReactElement {
   }
   return (
     <>
-      {failed ? <Said tone="danger">동의 요청을 보내지 못했어요. 다시 해 주세요.</Said> : null}
-      {sending ? <Said>동의 요청을 보내는 중이에요</Said> : null}
+      {failed ? <Said tone="danger">{SEND_FAILED}</Said> : null}
+      {sending ? <Said byButton>동의 요청을 보내는 중이에요</Said> : null}
       <Pills>
         <Pill disabled={send === null} label={SEND_ASK} onPress={send ?? (() => null)} primary />
       </Pills>

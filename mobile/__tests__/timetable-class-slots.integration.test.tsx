@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -89,7 +90,7 @@ async function addTwoSlotClass(user: User): Promise<void> {
 }
 
 describe('a class with a slot per set of hours', () => {
-  it('shows the hint with one slot, and with two names each, greys out the other’s days and drops the hint', async () => {
+  it('shows the hint with one slot, and with two names each, leaves the other’s days free and drops the hint', async () => {
     const user = await openTimetable();
     await user.press(screen.getByRole('button', { name: '수업 추가' }));
     await pass(500);
@@ -102,9 +103,7 @@ describe('a class with a slot per set of hours', () => {
     expect(screen.getByRole('button', { name: '월 삭제' })).toBeVisible();
     expect(screen.getByRole('button', { name: '두 번째 수업 삭제' })).toBeVisible();
     const second = slot('두 번째 수업');
-    expect(second.getByRole('togglebutton', { name: '월' }).props).toMatchObject({
-      accessibilityState: { checked: false, disabled: true },
-    });
+    expect(second.getByRole('togglebutton', { name: '월' })).toBeEnabled();
     expect(second.getByRole('button', { name: '두 번째 수업 장소 선택' })).toBeVisible();
   });
 
@@ -121,6 +120,29 @@ describe('a class with a slot per set of hours', () => {
     const added = within(screen.getByRole('button', { name: '선형대수 수정' }));
     expect(added.getByText('월 13:00–14:30, 수 15:30–16:45')).toBeVisible();
     expect(added.getByText('제2공학관 302동')).toBeVisible();
+  });
+});
+
+describe('two slots on one day', () => {
+  it('saves a second set of hours on a day the first holds, and lists both (P06 ticket 11a)', async () => {
+    const user = await openTimetable();
+    await user.press(screen.getByRole('button', { name: '수업 추가' }));
+    await pass(500);
+    await user.type(screen.getByLabelText('과목명'), '선형대수');
+    await user.press(screen.getByRole('togglebutton', { name: '수' }));
+    await hours(user, screen, ['15', '30'], ['16', '45']);
+    await user.press(screen.getByRole('button', { name: '다른 시간대 추가' }));
+
+    await hours(user, slot('두 번째 수업'), ['19', '00'], ['20', '45']);
+    await user.press(slot('두 번째 수업').getByRole('togglebutton', { name: '수' }));
+    expect(screen.queryByText('같은 요일의 다른 시간대와 시간이 겹쳐요')).toBeNull();
+    await user.press(screen.getByRole('button', { name: '저장' }));
+    await pass(1000);
+
+    expect(screen.getByTestId('toast-layer')).toHaveTextContent('수업을 추가했어요');
+    expect(
+      within(screen.getByRole('button', { name: '선형대수 수정' })).getByText('수 15:30–16:45, 수 19:00–20:45'),
+    ).toBeVisible();
   });
 });
 

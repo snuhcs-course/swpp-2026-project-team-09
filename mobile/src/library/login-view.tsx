@@ -14,8 +14,9 @@ import { WebView } from 'react-native-webview';
 import { AppBar, color, font, radius, space, text } from '@/design-system';
 import { seeThrough } from '@/design-system/see-through';
 import type { LoginOutcome } from './client';
-import { alertWords, LOGIN_PAGE_SCRIPT } from './login-alert';
+import { alertWords, LOGIN_PAGE_SCRIPT, WRONG_LOGIN_WORDS } from './login-alert';
 import { isLoginDone, LIBRARY_MAIN_URL } from './site';
+import { FailureNote } from '@/screens/main/library/library-parts';
 
 // How long the User has to log in before the view closes by itself.
 export const LOGIN_LIMIT_MS = 5 * 60 * 1000;
@@ -144,19 +145,28 @@ function useSaid(visible: boolean, returning: boolean): { said: string | null; s
   return { said, say };
 }
 
-function SaidLine({ said }: { said: string | null }): ReactElement | null {
-  return said === null ? null : (
-    <Text numberOfLines={1} style={styles.said} testID="library-login-said">
-      {said}
-    </Text>
+// The line in the app's own row under the notice, over the library's page and never on it (P01 ticket 34): red words,
+// as a card's failure is said (`FailureNote`), with no pill. While nothing is said the row keeps the room of the wrong
+// password's line, unseen, so that the page does not move when the line comes.
+function SaidRow({ said }: { said: string | null }): ReactElement {
+  return (
+    <View style={styles.saidRow} testID="library-login-said-row">
+      {said === null ? (
+        <View aria-hidden style={styles.unsaid}>
+          <FailureNote failure={null} message={WRONG_LOGIN_WORDS} onLogIn={null} />
+        </View>
+      ) : (
+        <View testID="library-login-said">
+          <FailureNote failure={null} message={said} onLogIn={null} />
+        </View>
+      )}
+    </View>
   );
 }
 
-// The library's page in the web view, the cover over it while the view comes back from the school's login, and the
-// line of a page's alert.
+// The library's page in the web view, and the cover over it while the view comes back from the school's login.
 function LoginPage({
   covered,
-  said,
   went,
   onAlert,
   onTouched,
@@ -164,7 +174,6 @@ function LoginPage({
   onLeft,
 }: Pick<LibraryLoginProps, 'onLanded' | 'onLeft'> & {
   covered: boolean;
-  said: string | null;
   went: (url: string, loading: boolean) => void;
   onAlert: (words: string) => void;
   onTouched: () => void;
@@ -200,7 +209,6 @@ function LoginPage({
           </Text>
         </View>
       ) : null}
-      <SaidLine said={said} />
     </View>
   );
 }
@@ -239,6 +247,7 @@ export function LibraryLogin({ visible, onDone, onLanded, onLeft, checking }: Li
           title="관정도서관 로그인"
         />
         <Text style={styles.note}>아이디와 비밀번호는 도서관 로그인 페이지로만 전달돼요</Text>
+        <SaidRow said={said} />
         {visible ? (
           <LoginPage
             covered={covered}
@@ -251,7 +260,6 @@ export function LibraryLogin({ visible, onDone, onLanded, onLeft, checking }: Li
             onTouched={() => {
               say(null);
             }}
-            said={said}
             went={back.went}
           />
         ) : null}
@@ -283,15 +291,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   coverWords: { ...PILL, backgroundColor: seeThrough(color.ink, 0.62) },
-  // Just under the notice, over the page's top, letting touches through to the page. The danger colour is less
-  // see-through than a hint's ink, so that the white words stay readable on it.
-  said: {
-    ...PILL,
-    position: 'absolute',
-    top: space[2],
-    alignSelf: 'center',
-    maxWidth: '92%',
-    pointerEvents: 'none',
-    backgroundColor: seeThrough(color.danger, 0.88),
-  },
+  // Under the notice, in the app's own area; the web view starts under it.
+  saidRow: { paddingHorizontal: space[5], paddingBottom: space[2] },
+  unsaid: { opacity: 0 },
 });

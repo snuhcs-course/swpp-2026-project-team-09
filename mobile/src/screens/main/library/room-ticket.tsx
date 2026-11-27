@@ -25,6 +25,8 @@ export interface RoomTicketOf {
   open: 'kind' | 'room' | null;
   // The request is sent: the room and the time are kept.
   locked: boolean;
+  // Everyone has consented (P10 ticket 14): the kind and the time are kept, the room may still change.
+  kindHeld?: boolean;
   loggedIn: boolean;
   onKind: () => void;
   onRoom: () => void;
@@ -41,10 +43,12 @@ function kindValue(group: StudyGroup): string {
   return listed?.reason ?? `${String(group.room.capacity.min)}명부터`;
 }
 
-export function RoomTicket({ group, room, open, locked, loggedIn, onKind, onRoom }: RoomTicketOf): ReactElement {
+export function RoomTicket(props: RoomTicketOf): ReactElement {
+  const { group, room, open, locked, loggedIn, onKind, onRoom, kindHeld = false } = props;
   const short = group.moreNeeded > 0;
   const people = `${String(group.people)}명`;
-  const value = kindValue(group);
+  // Once sent the kind is held: a Friend out dims the ticket but leaves the kind's name (group-study-resume 3 가).
+  const value = locked || kindHeld ? kindWords(group.room) : kindValue(group);
   const shown = loggedIn ? room : null;
   return (
     <TicketFrame dimmed={short} testID="room-ticket">
@@ -52,7 +56,7 @@ export function RoomTicket({ group, room, open, locked, loggedIn, onKind, onRoom
         danger={short}
         emphasis={people}
         label="그룹스터디룸"
-        onPress={locked || short ? null : onKind}
+        onPress={locked || kindHeld || short ? null : onKind}
         open={open === 'kind'}
         said={{ label: `그룹스터디룸: ${value}`, value: people }}
         testID="room-ticket-kind"

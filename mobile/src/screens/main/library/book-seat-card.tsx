@@ -100,7 +100,7 @@ function StudyLine({
 }): ReactElement | null {
   const when = `${slot.start}부터 ${lengthWords(slot.minutes)}`;
   if (busy) {
-    return <Said>예약하는 중이에요</Said>;
+    return <Said byButton>예약하는 중이에요</Said>;
   }
   if (free === null) {
     // Over a ticket the seat and the count fill in where they stand, and no sentence says they are read.

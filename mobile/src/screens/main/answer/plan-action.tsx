@@ -24,6 +24,8 @@ import { lookupMainOf, useLookupMain } from './lookup-card';
 import { RoomOfferButton, roomOfferOn } from './room-offer';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
 import { lookupDocks } from './words-rest';
+import type { StepBack } from '../library/act-stage';
+import { ConfirmRow } from './confirm-row';
 
 // The main button of the Plan on screen, beside the input: it says what it does.
 export interface PlanAction {
@@ -34,6 +36,8 @@ export interface PlanAction {
   secondary?: Choice;
   // Drawn in red: a booking's 예약 취소 (P01 ticket 15).
   danger?: boolean;
+  // An armed step: the round ✕ at the left that un-arms it without acting (P01 ticket 21).
+  back?: StepBack;
 }
 
 // "만들고 초대 보내기" for a Plan with a Friend, as "이대로 초대" made it into a Quest and invited them; "일정에 넣기" for a meal's Plan
@@ -110,6 +114,9 @@ function setQuestAction(set: SetQuest, { invitation, answer }: ChatSheetControl,
 }
 
 export function PlanActionButton({ action }: { action: PlanAction }): ReactElement {
+  if (action.back !== undefined) {
+    return <ConfirmRow action={action} back={action.back} />;
+  }
   if (action.secondary !== undefined) {
     return <ChoiceRow main={action} secondary={action.secondary} />;
   }
@@ -186,7 +193,8 @@ export function libraryActOf({ framed, chat, libraryAct }: ChatSheetControl): Pl
   if (!framed || seen === null || chat.bubbles.at(-1)?.id !== seen.bubbleId) {
     return null;
   }
-  return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting, danger: seen.danger };
+  const back = seen.back === null ? {} : { back: { label: seen.back, onPress: libraryAct.stepBack } };
+  return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting, danger: seen.danger, ...back };
 }
 
 // Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's.

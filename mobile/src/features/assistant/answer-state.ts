@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
+import { type Frame, frameOfPlan } from './answer-frame';
 import { offeredAnswer } from './meal-offered';
 import { openedIndex } from './opened-menu';
 import { newestOf, openedIfArrived } from './picking-on-arrival';
@@ -34,6 +36,9 @@ export interface AnswerState extends Shown {
   asked: readonly string[] | null;
   // What was shown before a drag whose answer has no Plan, which leaves no band to drag back (P04 ticket 86).
   kept: Shown | null;
+  // The last Plan shown, whose time card an answer with no Plan after it keeps when the main server sends none
+  // (P01 ticket 31); null while a Plan is on screen and for a new reply.
+  framed: Frame | null;
   recalculating: boolean;
   pendingAdd: string | null;
   moving: Stretch | null;
@@ -66,6 +71,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     pickOrder: null,
     asked: null,
     kept: null,
+    framed: null,
     recalculating: false,
     pendingAdd: null,
     moving: null,
@@ -93,6 +99,8 @@ export function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | u
         )
       : 0;
   const kept = by === undefined || next.plans.length > 0 ? null : { answer: last.answer, index: last.index };
+  const shownPlan = last.answer?.plans[last.index];
+  const framed = next.plans.length > 0 ? null : shownPlan === undefined ? last.framed : frameOfPlan(shownPlan);
   const adding = last.adding && last.pendingAdd === null;
   // Picking ends with the list of Friends (P04 ticket 64), so that 취소, back, and the main button stay in step with it.
   const picking = adding ? { picked: last.picked, pickOrder: last.pickOrder } : { picked: null, pickOrder: null };
@@ -105,6 +113,7 @@ export function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | u
     adding,
     ...picking,
     kept,
+    framed,
     ...settled,
   };
 }

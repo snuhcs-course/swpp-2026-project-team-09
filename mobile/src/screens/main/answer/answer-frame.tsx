@@ -35,6 +35,7 @@ import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
 import { useAnswerRaising } from './card-state';
 import { KeptCards } from './kept-scene';
+import { drawsWords, SlotHeld } from './sentence-slot';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
@@ -93,7 +94,6 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       hold={waiting}
       testID="answer-card"
     >
-      {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
@@ -101,21 +101,28 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       ) : (
         <OpenAnswer {...props} room={contentMax === null ? null : contentMax - CONTENT_TOP} />
       )}
+      {typing || list.open ? null : (
+        // Under the turn's words: the sentence slot comes first, then the kept card's ticket (P01 ticket 20).
+        <SlotHeld value={slotHeld(control)}>
+          <KeptCards cardActions={props.cardActions} control={control} />
+        </SlotHeld>
+      )}
     </FrameCard>
   );
 }
 
-// A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
-// booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review).
-function dockedBubble(control: AnswerCardProps['control']): number | null {
-  return control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
+// Whether the slot holds the latest turn's words or the waiting dots (P01 ticket 20).
+function slotHeld({ chat }: ChatSheetControl): boolean {
+  return chat.waiting || (turnOf(chat.bubbles)?.after.some(({ text }) => text !== '') ?? false);
 }
 
 // The open card's content: the turn's bubbles, each under its steps, and the dots with 그만 while a reply is on its way.
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
   const { control, cardActions, focus, onClose, room } = props;
   const { bubbles, waiting, retry } = control.chat;
-  const docked = dockedBubble(control);
+  // A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
+  // booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review).
+  const docked = control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
   const turn = turnOf(bubbles);
   const parts = shownParts(turn?.after ?? []);
   const last = bubbles.at(-1);
@@ -137,10 +144,9 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
             onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
             onShowLayer={control.leaving.showLayer}
             words={
-              bubble.id === docked || speaksForItself(bubble) ? null : (
+              bubble.id === docked || speaksForItself(bubble) || !drawsWords(bubble, turn?.after ?? []) ? null : (
                 <Words
-                  act={control.libraryAct.tell}
-                  library={cardActions.library}
+                  group={{ act: control.libraryAct.tell, library: cardActions.library }}
                   addRecalculated={control.chat.addRecalculated}
                   bubble={bubble}
                   focus={focus}

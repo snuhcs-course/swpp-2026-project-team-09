@@ -17,7 +17,7 @@ import { useRowFourActions } from '../answer/row-four-actions';
 import { type ActTold, useTellAct } from './act-stage';
 import { BookedTicket, TicketLine, TicketWithLine } from './booked-ticket';
 import { FailureNote, Pill, Pills, Said } from './library-parts';
-import { ACT_WORDS, type Acted, ENDED_WORDS, useConfirming } from './use-confirming';
+import { ACT_WORDS, type Acted, BACK_WORDS, ENDED_WORDS, useConfirming } from './use-confirming';
 import type { LibraryCardActions, Write } from './use-library-call';
 
 // The done message of a booking (the MainChatLibReserved frame). A seat's is its ticket, booked, with one faint line:
@@ -39,8 +39,15 @@ function ignore(): void {
 
 type Walk = ReturnType<NonNullable<LibraryCardActions['bookingWalk']>>;
 
-// The main button the done message tells, if any.
-function useDoneAct(cancelling: boolean, write: Write<Acted>, bseqno: string, walk: Walk): ActTold | null {
+// The main button the done message tells, if any. Armed by "예약 취소 ›", it stands with the ✕ that steps back without
+// cancelling (P01 ticket 21), until the cancel is on its way.
+function useDoneAct(
+  cancelling: boolean,
+  write: Write<Acted>,
+  bseqno: string,
+  walk: Walk,
+  back: () => void,
+): ActTold | null {
   const { guide, cannotGuide } = useRowFourActions();
   if (cancelling) {
     return {
@@ -50,6 +57,7 @@ function useDoneAct(cancelling: boolean, write: Write<Acted>, bseqno: string, wa
       },
       disabled: write.busy,
       danger: true,
+      ...(write.busy ? {} : { back: { label: BACK_WORDS.cancel, onPress: back } }),
     };
   }
   if (walk === null || cannotGuide !== null) {
@@ -83,12 +91,14 @@ function BookedDone({
   });
   const gone = outcome === 'done' || (place !== undefined && actions.outcomeOf(place)?.kind === 'cancelled');
   const walk = actions.bookingWalk?.() ?? null;
-  const told = useDoneAct(cancelling, write, done.bseqno, walk);
+  const told = useDoneAct(cancelling, write, done.bseqno, walk, () => {
+    setCancelling(false);
+  });
   useTellAct(actions.act ?? null, bubbleId, gone ? null : told);
   if (gone) {
     return (
       <View style={styles.done} testID="library-done">
-        <Said>{ACT_WORDS.cancel.done}</Said>
+        <Said byButton>{ACT_WORDS.cancel.done}</Said>
         <BookedTicket ticket={{ ...ticket, state: 'ended', word: ENDED_WORDS.cancel }} />
       </View>
     );
