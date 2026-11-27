@@ -7,6 +7,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
@@ -70,10 +71,10 @@ export function whenOf(instant: string): string {
 }
 
 // When and where a Quest next meets, as its post and an invitation's card say it: "내일 19:30" or "시간 미정", and
-// "버들골 (100동) 입구" or "장소 미정".
-export function planWords(next: Next): { time: string; place: string } {
+// "버들골 (100동) 입구" or "장소 미정". `when` words the start: the post's own words unless given.
+export function planWords(next: Next, when: (start: string) => string = whenOf): { time: string; place: string } {
   const start = next?.startsAt ?? null;
-  return { time: start === null ? '시간 미정' : whenOf(start), place: next?.place?.label ?? '장소 미정' };
+  return { time: start === null ? '시간 미정' : when(start), place: next?.place?.label ?? '장소 미정' };
 }
 
 function membersOf(leader: string, holders: number, friends: number): string {

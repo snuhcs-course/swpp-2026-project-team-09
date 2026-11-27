@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Times are shown in Korea's time wherever the phone is: the campus is there. Korea is nine hours ahead of UTC all
@@ -115,6 +116,22 @@ export function koreaWeekdayName(instant: Date): string {
 export function koreaShortDate(instant: Date): string {
   const korea = inKorea(instant);
   return `${twoDigits(korea.getUTCMonth() + 1)}/${twoDigits(korea.getUTCDate())} (${WEEKDAYS[korea.getUTCDay()]})`;
+}
+
+// A time with its day, as a 파티's times and the main server's Notifications say it: "오늘 14:00", "내일 14:00", else
+// "11/28(금) 14:00", with no year (P06 ticket 26; the main server's is dayAndClock in main-server
+// src/assistant/korea-time.ts).
+export function dayAndClock(instant: string, now: Date): string {
+  const at = new Date(instant);
+  const days = koreaDaysAfter(now, at);
+  const korea = inKorea(at);
+  const day =
+    days === 0
+      ? '오늘'
+      : days === 1
+        ? '내일'
+        : `${String(korea.getUTCMonth() + 1)}/${String(korea.getUTCDate())}(${koreaWeekdayName(at)})`;
+  return `${day} ${koreaClock(instant)}`;
 }
 
 // The day of an answer's time beside its clock: nothing today, "내일(수)", "모레(목)", "어제(월)", else "11/23(월)".

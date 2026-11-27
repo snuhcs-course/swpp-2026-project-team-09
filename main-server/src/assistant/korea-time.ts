@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Asia/Seoul keeps +09:00 all year.
@@ -53,6 +54,17 @@ export function dayWordsFrom(date: string, now: Date): string {
   const [, month, day] = date.split('-').map(Number);
   const weekday = WEEKDAY_WORDS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
   return `${NEAR_DAYS[days] ?? `${month}/${day}`}(${weekday})`;
+}
+
+// A time in Korea with its day, as a Notification and the app say it: "오늘 14:00", "내일 14:00", else "11/28(금) 14:00",
+// with no year (P06 ticket 26; the app's is dayAndClock in mobile/src/korea-time.ts). The day counts from `now`.
+export function dayAndClock(at: Date, now: Date): string {
+  const date = koreaDate(at);
+  const days = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${koreaDate(now)}T00:00:00Z`)) / DAY_MS);
+  const [, month, day] = date.split('-').map(Number);
+  const weekday = WEEKDAY_WORDS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
+  const words = days === 0 ? '오늘' : days === 1 ? '내일' : `${String(month)}/${String(day)}(${weekday})`;
+  return `${words} ${koreaClock(at).toISOString().slice(11, 16)}`;
 }
 
 // A time in Korea with its day before it when that is not today: "18:00", "내일(수) 18:00", "11/24(화) 09:00". A time

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -9,7 +10,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { clockOf } from '../src/assistant/free-time/free-time.js';
+import { dayAndClock } from '../src/assistant/korea-time.js';
 import { befriend, signInUser, TestUser } from './friends.js';
 import { expectStatus, ON_CAMPUS, setMasterSwitch, uploadPosition } from './location-sharing.js';
 import { joinParty, openParty } from './parties.js';
@@ -126,7 +127,7 @@ describe('A Holder changing a step', () => {
         expect.objectContaining({
           id: `step-changed:party:${questId}:${minsu.id}`,
           title: '민수가 일정을 바꿨어요',
-          line: `${clockOf(new Date(step.startsAt))} 정문 앞에서 만나기`,
+          line: `${dayAndClock(new Date(step.startsAt), new Date())} 정문 앞에서 만나기`,
           url: `/main?card=party:${questId}`,
         }),
       ]);

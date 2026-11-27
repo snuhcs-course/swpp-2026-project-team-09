@@ -11,6 +11,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -215,7 +216,7 @@ describe('the cards of people and Parties', () => {
       marker: { name: '파티 · AI 커리어 설명회 같이 가요', short: 'AI 커리어', count: 4 },
       subLabel: '파티 · 4/6명',
       title: 'AI 커리어 설명회 같이 가요',
-      lines: [{ icon: 'clock', text: '17:40 301동 앞에서 출발' }],
+      lines: [{ icon: 'clock', text: '오늘 17:40 301동 앞에서 출발' }],
       primary: { label: '파티 열기', action: 'room', questId: 'q-ai' },
     });
     expect(cards.find(({ id }) => id === 'party:q-dinner')).toMatchObject({

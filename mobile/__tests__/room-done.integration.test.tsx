@@ -3,6 +3,7 @@
  *
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -76,8 +77,8 @@ describe("일정's grey and orange", () => {
 
     const [first, second] = steps();
     expect(screen.getAllByTestId('plan-step')[0]).not.toHaveStyle({ opacity: 0.45 });
-    expect(first?.getByText('17:40')).toHaveStyle({ color: color.party });
-    expect(second?.getByText('18:00–20:00')).not.toHaveStyle({ color: color.party });
+    expect(first?.getByText('오늘 17:40')).toHaveStyle({ color: color.party });
+    expect(second?.getByText('오늘 18:00–20:00')).not.toHaveStyle({ color: color.party });
     expect(screen.queryByRole('button', { name: '완료로 표시' })).toBeNull();
     expect(screen.queryByRole('button', { name: '완료 취소' })).toBeNull();
 
@@ -97,10 +98,11 @@ describe("일정's grey and orange", () => {
 
     const [first, second] = steps();
     expect(screen.getAllByTestId('plan-step')[0]).toHaveStyle({ opacity: 0.45 });
-    expect(first?.getByText('17:40')).not.toHaveStyle({ color: color.party });
-    expect(second?.getByText('18:00–20:00')).toHaveStyle({ color: color.party });
+    expect(first?.getByText('오늘 17:40')).not.toHaveStyle({ color: color.party });
+    expect(second?.getByText('오늘 18:00–20:00')).toHaveStyle({ color: color.party });
     expect(screen.getByText('오늘 18:00')).toBeVisible();
-    expect(screen.queryByText('오늘 17:40')).toBeNull();
+    // The greyed step keeps its own time; the box no longer says it.
+    expect(screen.getAllByText('오늘 17:40')).toHaveLength(1);
   });
 
   it('has the 파티 form edit the orange step', async () => {
