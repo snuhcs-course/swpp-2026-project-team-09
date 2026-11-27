@@ -1,7 +1,7 @@
 # 17: The tab bars of 파티, 행사 and 내 정보, and the friend panel's: a larger title, closer to its line
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -65,12 +65,23 @@ Positions are as of `origin/5.0/Main` 6edb1b61, under `mobile/src/`.
 
 ## Acceptance criteria
 
-- [ ] A tab bar's title is 25 Bold with line height 32, and its row is 50 high with 4 on top. (Test, which fails before the change.)
-- [ ] A sub-screen bar keeps its 20 Bold title and its 56-high row. (Test.)
-- [ ] The friend panel's title takes the tab form's size. (Test, which fails before the change.)
-- [ ] 행사's search bar is as high as its tab bar, so the filters do not move when it opens. (Test, which fails before the change.)
-- [ ] `text.titleLg` and `size.appBar` keep their values. (Test or review.)
+- [x] A tab bar's title is 25 Bold with line height 32, and its row is 50 high with 4 on top. (Test, which fails before the change.)
+- [x] A sub-screen bar keeps its 20 Bold title and its 56-high row. (Test.)
+- [x] The friend panel's title takes the tab form's size. (Test, which fails before the change.)
+- [x] 행사's search bar is as high as its tab bar, so the filters do not move when it opens. (Test, which fails before the change.)
+- [x] `text.titleLg` and `size.appBar` keep their values. (Test or review.)
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- The tab form's row is one exported value, `TAB_BAR_ROW` (`design-system/app-bar.tsx`, 50 high, `paddingTop` 4), which 행사's `SearchBar` spreads into its row, so the two bars cannot drift apart. `size` and `text` in `tokens.ts` are untouched; the tab title's 25 / 32 / -0.4 sits in `AppBar`'s own styles, as the sub-screen title's already did.
+- The row's content box is 46 (50 less the 4 on top), so a 48 icon button (🔍, the bell, ✕) reaches 1 into the top padding and 1 onto the line under the bar. Its size stays 48 and it stays centred with the title; nothing clips the 1 that reaches past the row.
+- Tests: `app-bar.unit` checks the tab form (25 Bold, line height 32, letter spacing -0.4; row 50 with 4 on top; icon button 48) and the sub-screen form (20 Bold; row 56, no top padding). `friend-panel.integration` checks "친구 12" in the tab form's size and row. `events-tab.integration` has a new block, "the search's bar", that checks the tab bar's row and then the search bar's row at 50 with 4 on top. The new checks failed before the change (22 for 25, 56 for 50). `text.titleLg` and `size.appBar` are checked by review: `tokens.ts` is not in the diff.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 20 minutes, in one implementation session (an estimate). Most of it was waiting on the integration tests.
+- Tokens: input 4.15M, of which 4.03M cache reads, 0.11M cache writes and under 0.1K uncached; output 21K. These are this session's measured figures when the ticket was updated; the commit and the pull request came after and add little. No subagents.
