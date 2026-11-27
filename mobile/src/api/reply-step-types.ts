@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlacePoint, PlanInput } from './assistant-types';
@@ -21,6 +22,7 @@ export interface ReplyStep {
   // `shown`: its card or its answer is in the reply. `not-done`: it could not be done, for `reason`.
   status: 'shown' | 'not-done';
   reason: string | null;
-  // Where the reply shows it: the library card of that key, or the answer.
-  shows: { kind: 'card'; key: string } | { kind: 'answer' } | null;
+  // Where the reply shows it: the library card of that key, or the answer, by its request's key to an app that says
+  // `answers` (P03 ticket 20).
+  shows: { kind: 'card'; key: string } | { kind: 'answer'; key?: string } | null;
 }

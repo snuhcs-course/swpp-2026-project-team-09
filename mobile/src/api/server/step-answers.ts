@@ -3,10 +3,11 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReplyStep } from '@/api/assistant-types';
-import { field, hasTexts, isNothing, isTextOrNull } from './answers';
+import { field, hasTexts, isNothing, isText, isTextOrNull } from './answers';
 import { isPlacePoint } from './plan-answers';
 
 // Every kind of `ReplyStep`: the main server takes a Plan's from its answer's input, a study answer's "study" too.
@@ -21,7 +22,8 @@ function isShows(value: unknown): boolean {
     return true;
   }
   const kind = field(value, 'kind');
-  return kind === 'answer' || (kind === 'card' && hasTexts(value, ['key']));
+  const key = field(value, 'key');
+  return (kind === 'answer' && (key === undefined || isText(key))) || (kind === 'card' && hasTexts(value, ['key']));
 }
 
 // A step of a reply that answered several requests (P03).

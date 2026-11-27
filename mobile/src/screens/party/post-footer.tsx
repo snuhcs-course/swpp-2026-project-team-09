@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +15,7 @@ import type { MyParty } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { Button, color, Dialog, font, space, text } from '@/design-system';
 import { objectParticle } from '@/features/map/short-name';
-import type { PostView } from '@/features/party/posts';
+import { hasRoom, type PostView } from '@/features/party/posts';
 import { REMOVED_CAPTION } from '@/features/quests/refusals';
 import type { Ask } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
@@ -66,8 +67,17 @@ function OwnButtons({ questId, onEnd }: { questId: string; onEnd: () => void }):
   );
 }
 
+// The join button's words: a full 파티 takes no one, whichever way it is entered.
+function joinWords(post: PostView): string {
+  if (!hasRoom(post)) {
+    return '정원이 다 찼어요';
+  }
+  return post.joinPolicy === 'approval' ? '참여 신청' : '참여하기';
+}
+
 // What the reader can do: join or ask, or hide another's post with `관심 없음`; wait on a request; end or edit the
-// post; or nothing.
+// post; or nothing. A full 파티 shows `정원이 다 찼어요`, disabled, in place of joining; a Holder or a waiting request
+// shows its own state first.
 function Footer({ post, onJoin, onHide, onWithdraw, onEnd }: FooterProps): ReactElement {
   const { role } = post;
   if (role.kind === 'holder') {
@@ -99,8 +109,8 @@ function Footer({ post, onJoin, onHide, onWithdraw, onEnd }: FooterProps): React
           관심 없음
         </Button>
         <View style={styles.button}>
-          <Button full onPress={onJoin} size="lg">
-            {role.kind === 'approval' ? '참여 신청' : '참여하기'}
+          <Button disabled={!hasRoom(post)} full onPress={onJoin} size="lg">
+            {joinWords(post)}
           </Button>
         </View>
       </View>

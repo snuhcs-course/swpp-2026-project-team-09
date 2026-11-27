@@ -14,6 +14,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ import {
   type AnswerReply,
   CHAT_HISTORY_MAX,
   type ChatMessage,
+  type LeftOutClass,
   lengthOf,
   type LibrarySpace,
   type MapLayer,
@@ -40,9 +42,10 @@ import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { TicketView } from '@/library/cards/bookings';
 import type { LibraryDone } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
-import { useAskApp } from './app-turn';
+import { useAppTurn } from './app-turn';
 import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
+import { useLeftOut } from './left-out-hook';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
 import { shownText } from './shown-text';
@@ -78,12 +81,22 @@ export interface ChatBubble {
   offers?: ReplyOffer[];
   // Each request of the message, in time order, when it asked for two or more (P03). They are not sent back.
   steps?: ReplyStep[];
+  // An answer the app asked from a card (P10 ticket 15): taking every Friend out of it takes its turn back, which shows
+  // that card again. Not sent back.
+  fromCard?: true;
   // The plan the reply chose in words, of the answer on screen or of its own (P05 ticket 51). Not sent back.
   select?: string;
+  // To an app that says `answers` (P03 ticket 20): the answers the reply drew or changed by their keys, the keys of the
+  // requests withdrawn, and the request whose answer holds the plan chosen. Not sent back.
+  answers?: readonly AnswerReply[];
+  withdrawn?: readonly string[];
+  selectKey?: string;
   // The answer on screen leaves with this reply, which draws nothing in its place (P05 ticket 55). Not sent back.
   clears?: true;
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.
   area?: RequestContext['viewport'];
+  // The conversation's Classes left out as this reply gave them (P01 ticket 40), which later requests send.
+  skipped?: readonly LeftOutClass[];
   // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a
   // reply on screen, and never sent to the Assistant.
   recalculated?: boolean;
@@ -167,8 +180,15 @@ export interface Chat {
   addRecalculated: (asked: string, answer: AnswerReply) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
   // User's words and `reply`'s answer as the Assistant's. `forgotten` when the conversation was forgotten meanwhile;
-  // a failure takes the turn back.
-  askApp: (asked: string, reply: () => Promise<AnswerReply>) => Promise<'shown' | 'forgotten' | 'failed'>;
+  // a failure takes the turn back. `fromCard` marks an answer asked from a card, which can go back to it.
+  askApp: (
+    asked: string,
+    reply: () => Promise<AnswerReply>,
+    fromCard?: boolean,
+  ) => Promise<'shown' | 'forgotten' | 'failed'>;
+  // Takes back a turn the app asked, its words and that reply, and nothing else: the conversation goes on from before
+  // it, such as the card an answer was asked from (P10 ticket 15).
+  takeBackTurn: (replyId: number) => void;
   // How each library card of the conversation ended, by the card's place: its bubble and its key.
   outcomes: ReadonlyMap<string, CardOutcome>;
   finish: (card: string, outcome: CardOutcome) => void;
@@ -179,6 +199,10 @@ export interface Chat {
   showRoom: (card: string, room: CardRoom | null) => void;
   // The Proposal of that bubble was made into that Quest: it goes back with the Quest's id (P04 ticket 19).
   proposalMade: (bubbleId: number, questId: string) => void;
+  // The conversation's Classes left out, as the next request sends them, and one put back by a time card's ✕ (P01
+  // ticket 40).
+  leftOut: () => readonly LeftOutClass[];
+  putBack: (classId: string) => void;
 }
 
 function textLength(messages: readonly ChatMessage[]): number {
@@ -363,9 +387,9 @@ export function useChat(readContext: () => RequestContext): Chat {
     ask();
   }, [ask, said, show]);
 
-  const own = useAddOwn(add, takeBack);
-  const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
+  const own = { ...useAddOwn(add, takeBack), ...useLeftOut(said, show) };
+  const appTurn = useAppTurn({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, askApp, ...cardsKept, proposalMade };
+  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, ...appTurn, ...cardsKept, proposalMade };
 }

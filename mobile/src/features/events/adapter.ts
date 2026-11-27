@@ -9,6 +9,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { GlobalEvent, Quest } from '@/api/types';
@@ -210,4 +211,19 @@ export function toRecruitRows(
 // The Quest the User holds with others for the event: its 파티, which `+ 파티 모집` leads to.
 export function sharedQuestFor(quests: readonly Quest[], eventId: string): Quest | null {
   return quests.find(({ globalEvent, holders }) => globalEvent?.id === eventId && holders.length > 1) ?? null;
+}
+
+// The 파티 the User holds alone for the event: the main server ends it when they join another of the event, and
+// `+ 파티 모집` edits it. Not a Quest taken alone ("여기로"), which is never a 파티 and which the main server lets no
+// one edit.
+export function partyHeldAloneFor(quests: readonly Quest[], eventId: string | null): Quest | null {
+  if (eventId === null) {
+    return null;
+  }
+  return (
+    quests.find(
+      ({ globalEvent, holders, takenAlone }) =>
+        globalEvent?.id === eventId && holders.length === 1 && takenAlone !== true,
+    ) ?? null
+  );
 }

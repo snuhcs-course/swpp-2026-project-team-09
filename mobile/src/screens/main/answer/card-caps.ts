@@ -6,6 +6,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { use } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space, text } from '@/design-system';
@@ -17,6 +18,8 @@ import { useSteady } from './steady';
 import { skippedLineOf } from './skipped-classes';
 import { LANE_HEIGHT } from './time-band';
 import { TUCK_STRIP } from './time-card-grip';
+import { SheetLinkContext } from './sheet-link';
+import { topRoomOf } from './top-stops';
 
 // The answer sheet's steps as heights (moved out of `open-card.tsx` for its length, P04 ticket 61). Low has one top
 // edge for every answer and for the list of questions: the meal answer's, its header, two lines of words, the main
@@ -83,7 +86,16 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   // while an answer loaded, before its time card, high covered the whole screen). Only the bar of several requests,
   // with a Plan's bar under it, reaches lower, and high stands under it then. The stage runs from under the status bar,
   // `top` high, to the screen's bottom. Where that place reaches lower than middle, middle is high.
-  const pillRoom = listsTop(top) + Math.max(foldedTimeCardOf(fontScale, props.skippedLine), stepsTop) + space[2];
+  // Under the bar of several requests, how far the top is folded moves the edge (P01 ticket 22): under the grip strip
+  // at the stage's top at stop 0, under the steps card and the strip under it at 1, and at 2 as above. Each stop's edge
+  // stays where it is while an answer loads. An answer to one request keeps the one edge.
+  const folded = Math.max(foldedTimeCardOf(fontScale, props.skippedLine), stepsTop);
+  const topStops = use(SheetLinkContext).top;
+  const topRoom =
+    topStops === undefined || stepsTop === 0
+      ? folded
+      : topRoomOf(topStops.stop, { stepsHeight: topStops.stepsHeight, folded, lists: listsTop(top) });
+  const pillRoom = listsTop(top) + topRoom + space[2];
   const under = stageHeight - pillRoom - barRoom - above;
   const mid = Math.max(LEAST_CONTENT, Math.min(under, (stageHeight + top) * MID_SHARE - barRoom - above));
   const high = Math.max(mid, under);
