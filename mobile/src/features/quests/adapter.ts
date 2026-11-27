@@ -17,6 +17,7 @@
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
 import { koreaClock, koreaDate, koreaDay, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
+import { placeWithRoom } from './booked-room';
 import { requestFlagOf, requestLine, requestShortLine } from './room-request-flag';
 
 // What a row of the Quest list is drawn as, which gives its colour, by the Quest's own Join Policy: a class; `open`, a
@@ -214,8 +215,8 @@ function sharedKicker(quest: Quest, switchedOn: boolean, meId: string): string {
 
 // "14:00 · 학생회관", with its day when it is not today ("내일 14:00 · 학생회관"): the main screen's list has no day
 // headers, and a Party tomorrow read as today's was gone to a day early.
-function meta(subQuest: SubQuest | null, now: Date): string {
-  const label = subQuest?.place?.label ?? '';
+function meta(subQuest: SubQuest | null, now: Date, bookedRoom: string | null | undefined): string {
+  const label = placeWithRoom(subQuest?.place?.label ?? '', bookedRoom);
   const start = subQuest?.startsAt ?? null;
   const day = start === null || koreaDaysAfter(now, new Date(start)) === 0 ? '' : `${koreaDay(start, now)} `;
   return [start === null ? '' : `${day}${koreaClock(start)}`, label].filter((part) => part !== '').join(' · ');
@@ -283,8 +284,8 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
       label: kindLabel(tone, quest, meId),
       title: quest.title,
       // The map's list says no day for today, as `meta` does, and only the request's fact: its row is narrow.
-      meta: request === null ? meta(subQuest, now) : requestShortLine(request, !today(start, now)),
-      place: subQuest?.place?.label ?? '',
+      meta: request === null ? meta(subQuest, now, quest.bookedRoom) : requestShortLine(request, !today(start, now)),
+      place: placeWithRoom(subQuest?.place?.label ?? '', quest.bookedRoom),
       time: start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),
       ended: subQuest === null && quest.subQuests.length > 0,

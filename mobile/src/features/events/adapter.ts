@@ -8,11 +8,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { heldAlone, shownSubQuest } from '@/features/quests/adapter';
+import { placeWithRoom } from '@/features/quests/booked-room';
 import { koreaCalendar, koreaClock, koreaDay, koreaDaysAfter, koreaWeekday, WEEKDAYS } from '@/korea-time';
 
 // What the 행사 tab and its sheet show of the Global Events.
@@ -184,7 +186,7 @@ export function toRecruitRows(
     .map((quest): RecruitRowView => {
       const next = shownSubQuest(quest);
       const leads = quest.leader?.id === meId;
-      const where = [whenWords(next?.startsAt ?? null, now), next?.place?.label ?? ''];
+      const where = [whenWords(next?.startsAt ?? null, now), placeWithRoom(next?.place?.label ?? '', quest.bookedRoom)];
       return {
         questId: quest.id,
         title: quest.title,

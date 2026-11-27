@@ -110,11 +110,13 @@ describe('a room card with friends on 예약하기', () => {
     expect(library.writes()[0]?.body).toMatchObject({
       sMemberJsInfo: '김새내,202600001,김민준,202600002,서지우,202600003',
     });
+    // The report names the room the library booked, for the party to see (P05 ticket 68); nothing else of the
+    // library's goes to the server.
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/result`).map(({ body }) => body)).toEqual([
-      { ok: true },
+      { ok: true, room: 'G412' },
     ]);
     expect(inFrame().getByText('G412 예약되었어요!')).toBeVisible();
-    expectNothingOfTheLibrarySent(server, ['G412', '2000001', FAKE_ROOM_FORM.tmpUserNames]);
+    expectNothingOfTheLibrarySent(server, ['2000001', FAKE_ROOM_FORM.tmpUserNames]);
   });
 });
 
