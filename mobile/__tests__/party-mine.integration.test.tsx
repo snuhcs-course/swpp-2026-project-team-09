@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -28,7 +29,7 @@ import { askMainServer, DINNER, DINNER_PARTY, PHONE_NOW } from './support/server
 
 // 내 파티, against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea. 초대 is in
 // `party-invites.integration.test.tsx`, a card's status and activation strip in
-// `party-mine-activation.integration.test.tsx`.
+// `party-mine-activation.integration.test.tsx`, its tag, crown and lines in `party-mine-cards.integration.test.tsx`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -117,10 +118,11 @@ describe('내 파티', () => {
     ]);
     expect(card(DINNER.title).getByText('비공개')).toBeVisible();
     expect(card(DINNER.title).getByText('2명')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('공개')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('취미 게시판')).toBeVisible();
     expect(card(MY_HIKE.title).getByText('1/6명')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('20:10 · 7시간 후 · 학생회관 (63동)')).toBeVisible();
-    expect(card('내일 점심').getByText(/^내일 12:00 · /u)).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('20:10 · 7시간 후')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('학생회관 (63동)')).toBeVisible();
+    expect(card('내일 점심').getByText('내일 12:00')).toBeVisible();
   });
 
   it('counts the Quests in the chips and filters by them', async () => {
@@ -226,7 +228,7 @@ describe('지난 일정 in the build that asks the main server', () => {
     await pass(500);
 
     expect(groups()).toEqual(['오늘']);
-    expect(card('어제 시작한 여행').getByText(/^10월 5일 \(월\) 19:00 · /u)).toBeVisible();
+    expect(card('어제 시작한 여행').getByText('10월 5일 (월) 19:00')).toBeVisible();
   });
 });
 

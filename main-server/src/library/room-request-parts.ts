@@ -146,6 +146,7 @@ export async function toRoomRequestDto(
     moreNeeded: ACTIVE.includes(request.status)
       ? moreNeededOf(catalogue.byId.get(request.spaceId), request.consents.filter(isIn).length)
       : 0,
+    bookedRoom: request.bookedRoom,
   };
 }
 

@@ -1222,6 +1222,9 @@ A Quest reads:
   in, how many consented and how many were asked; once booked, both are the party's other Holders. It is `null` for
   every other Quest, an existing Quest a request asks the Holders of too. It is read as stored, without applying the
   room requests' deadlines or expiries, which the next read of a room request applies.
+- `bookedRoom` is the room the library booked for the Quest's latest booked room request, as the booker's phone
+  reported it (`"G412"`), a booking party's or an existing Quest's; `null` for every other Quest and for a booking
+  reported without it. Only Holders are shown a Quest, so only the party sees it.
 
 The refusals each have a `code`:
 
@@ -2300,7 +2303,8 @@ kind does not accept gets 400 with `COMPLETION_NOT_ACCEPTED`.
 ## Group study room requests
 
 A 관정 group study room is booked with companions through a room request (`src/library/`). The routes are the app's,
-never the Assistant's tools, and the phone alone talks to the library: the server never sees a library reply.
+never the Assistant's tools, and the phone alone talks to the library: the server never sees a library reply. The one
+fact of the library it is told is the room a booking got, which the booker's phone reports with it.
 
 - `POST /library/room-requests` with `{ key, friendIds }` or `{ key, questId }`, and `useDesc` when the card chose it,
   takes an `Idempotency-Key`. `input`, optional, is the study input of the study answer the request is sent from (P10),
@@ -2349,8 +2353,12 @@ never the Assistant's tools, and the phone alone talks to the library: the serve
 - `GET …/:id/companions` answers `[{ userId, registeredName, studentNumber }]` with `Cache-Control: no-store`, only to
   the requester (else 403) and only while `ready` (else 409), for the current Holders who consented, read when the
   reply is built. It is the only reply with a 학번 or a registered name.
-- `POST …/:id/result` with `{ ok, failedUserId? }`: `ok` books it, a `failedUserId` sends it back to `gathering` for
-  that companion, who is asked to check their 내 정보, and neither leaves it `ready`.
+- `POST …/:id/result` with `{ ok, failedUserId?, room? }`: `ok` books it, a `failedUserId` sends it back to
+  `gathering` for that companion, who is asked to check their 내 정보, and neither leaves it `ready`. `room`, with `ok`
+  only (else 400), is the room the library booked as it names it (`"G412"`, 1–40 characters, trimmed), kept as
+  `booked_room`: `GET …/:id` gives it to the requester as `bookedRoom`, and the Quest replies give it to the Holders of
+  the request's Quest. A repeat of `ok` with a `room` sets it, and the booked time is the request's own. The
+  companions' notice then names it, "… 예약을 마쳤어요 · G412", the room cut to 12 characters with "…" past that.
 - `POST …/:id/cancelled`, with no body, is the requester's only while `booked`, and safe to repeat. A booking party
   made for the request is deleted with its Sub Quest, so it no longer blocks its members' Free Time.
 
@@ -2582,13 +2590,15 @@ Anthropic API as the AI's key says
   reveals no more than a picked person's lane and the words of where they set out from. `walkMinutes` is `null` when
   neither is known, or when the walking table has no row for that Place. An app that does not know `others` or
   `after` ignores them (`src/assistant/gathering/other-friends.ts`).
-  An answer of a meal, a meet, a study together or a new party with no plan keeps its time card: its `noPlan.band` has
-  the shape of a Plan's band, everyone's lanes and, but for a new party, the asker's other Friends over the window
-  asked. That is the meal's window narrowed by the window the User set, the day's 09:00–22:00 narrowed the same way for
-  a meet, the group study rooms' hours on the date asked for a study together, and the time asked for a new party;
-  `startAt` is now, rounded up to the minute, once the window has begun. A meal's band also lists its skipped Classes,
-  and `others` have `walkMinutes` `null` but for a study together's, whose walk is to 관정관. An app that does not know
-  `band` ignores it (`src/assistant/gathering/no-plan-band.ts`).
+  An answer of a meal, a meet, a study alone, a study together or a new party with no plan keeps its time card: its
+  `noPlan.band` has the shape of a Plan's band, everyone's lanes and, but for a new party, the asker's other Friends
+  over the window asked. That is the meal's window narrowed by the window the User set, the day's 09:00–22:00 narrowed
+  the same way for a meet, the group study rooms' hours on the date asked for a study together, and the time asked for
+  a new party. A study alone's runs from when the User is ready to the end they set, else their next item, else three
+  hours on, and its range reaches over that next item (P05 ticket 67). `startAt` is now, rounded up to the minute, once
+  the window has begun. A meal's band also lists its skipped Classes, and `others` have `walkMinutes` `null` but for a
+  study together's, whose walk is to 관정관. An app that does not know `band` ignores it
+  (`src/assistant/gathering/no-plan-band.ts`).
   A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
@@ -2983,6 +2993,11 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       - The model chooses a plan of a study answer on screen with `choosePlan`, by number or by building, as for a
         meal (P10 ticket 05). With 관정관's plan shown alone, the study line gives `book` (7F-7A-zone2 for a quiet place
         or any), and "예약해 줘" books it through the library tools; 관정관's plan alone carries the same `study.book`.
+        It is `{ spaceId, card }`, `card` being the book card `proposeLibraryBooking` shows for that space at the plan's
+        day, start and length, the start moved up and the length down onto the space's steps, which the app opens in
+        the plan (P10 ticket 21, `lookup/study-book.ts`). A recalculation that moves the time builds it again.
+      - Each plan's time card says the stay and its length, in the group room card's words ("13:20–15:50 · 2시간
+        30분", P10 ticket 21).
       - A reply with no words of the model's says the first plan and why ("열려 있는 곳 중 가장 가까운 공대
         신양학술정보관을 추천해요.", `lookup/study-plan-words.ts`).
     - `planStudyGroup(friendIds?, date?, firstDay? + lastDay?, from?, until?, minutes?)` and `STUDY_GROUP_RULES` join
