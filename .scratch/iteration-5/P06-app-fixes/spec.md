@@ -26,7 +26,22 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 17. **The tabs' bars.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "파티, 행사, 내정보의 최상단 각 글씨 크기를 살짝 키우고, 글씨랑 바로 아래 선 사이 간격을 좀 줄이는건 어떤가?" Settled on 2026-11-27 with the friend panel's bar too (`references/17-1-tab-bar-wireframe.webp`).
 18. **내 파티's cards.** Added by the user on 2026-11-26, from their notes on the 파티 tab: "파티/내 파티 시간, 장소, 행사태그 이런거 한줄로 이어지게 적혀있는거 같은데, 나누는게 좋지 않을까? … 내가 방장인 파티는 간단하게라도 표시해서 식별되도록 하는건 어떤가." Settled on 2026-11-27 (`references/18-1-mine-wireframe.webp`, with the options in `18-2` and `18-3`).
 
-Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27: none was fixed then.
+19. **A request to join, answered.** Added by the user on 2026-11-27, after a read-only audit of the code for what users of 파티 and 행사 cannot know: the one who asked hears nothing when the Leader accepts or declines, and the Leader gets no push for a new request. "'참여 신청이 거절되었을 때' 인 앱 알림 종모양 거기에 숫자 하나 더하고 알림 띄워주는 건 쉽지? … 푸시 알림으로 거절된 거나 새 신청 이거 오게 하는 거 어려운가?"
+20. **Activation's ask says members are told; they are not.** From the same audit.
+21. **A 파티 gone, or the User removed, told apart.** From the same audit: one toast for both, only while the app runs.
+22. **A removed member stays in the activation.** From the same audit: they keep sharing their position.
+23. **An invitation without a time or a place.** From the same audit: the server build's card says only "N명 참여 중".
+24. **A changed step.** From the same audit: its words name no 파티 and no day, and every 지금 나서요 is forgotten and never kept again.
+25. **A time without its day.** From the same audit: "년도는 괜찮음", the day is wanted.
+26. **A place picked on the map.** The user's own example: "지도에서 정한 위치 … 사용자는 그 위치가 어딘지 알 수가 없거든?" Wanted: "그냥 지도에서 어딜 찍었나 그런 것만 알 수 있게".
+27. **Two 파티 of one event.** From the same audit: joining another deletes the User's own held alone without a word, and `+ 파티 모집` overwrites it.
+28. **The map's event card.** From the same audit: "같이 갈 파티 2개 모집 중이면 2개 보여주고 누르면 파티 모집글로 연결되게".
+29. **One thing, different counts.** From the same audit.
+30. **An invitation's inviter and a full 파티.** "초대한 사람 이름으로 나오게 … '초대하는 시점'에 다 차있으면 다 차서 초대할 수 없다고 문구 … '1/8' 상황에서 10명 초대하는 건 가능."
+31. **A new Leader.** From the same audit: a hand-over is told to nobody.
+32. **A full 파티's 모집글.** "참여하기 대신 '정원 초과' 등의 문구로 … 비활성화 느낌의 버튼."
+
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 19 to 32 against 331adc64 on 2026-11-27: none was fixed then.
 
 ## Solution
 
@@ -52,6 +67,21 @@ One ticket per item, numbered as the items:
 17. [17: The tab bars of 파티, 행사 and 내 정보, and the friend panel's: a larger title, closer to its line](issues/17-tab-bar-title.md)
 18. [18: 내 파티's cards like 찾기's: a board or 비공개 tag, a crown for the 파티 the User leads, the time, the place and the event on their own lines, and tighter groups](issues/18-mine-cards-like-find.md)
 
+19. [19: A request to join is answered in 알림 and by a push, and a new one reaches the Leader by a push](issues/19-join-request-notices.md)
+20. [20: Activating a 파티 rings its members, as its ask says](issues/20-activation-push.md)
+21. [21: A 파티 that ends and a member who is removed are told apart, by a push and in 알림](issues/21-party-gone-notices.md)
+22. [22: A removed member leaves the activation, and a 파티 that is gone ends its activation](issues/22-removed-leave-activation.md)
+23. [23: An invitation card says when and where the 파티 meets](issues/23-invitation-time-place.md)
+24. [24: A changed step says which 파티 and when, and 지금 나서요 is kept again](issues/24-step-changed-words.md)
+25. [25: A time away from today says its day](issues/25-dates-with-times.md)
+26. [26: A place picked on the map opens a map with its pin](issues/26-picked-place-on-map.md)
+27. [27: Joining another 파티 of an event says the User's own goes, and + 파티 모집 opens the one held alone](issues/27-same-event-parties.md)
+28. [28: The map's event card leads to the 파티 recruiting for it](issues/28-event-card-parties.md)
+29. [29: One count for one thing on every screen](issues/29-same-counts.md)
+30. [30: An invitation names who invited, and a full 파티 cannot invite](issues/30-inviter-and-full.md)
+31. [31: The member who becomes Leader is told, in 알림](issues/31-new-leader-notice.md)
+32. [32: A full 파티's 모집글 says so on its button](issues/32-full-post-button.md)
+
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
 - Now: 06, then 07. 06 is a fault (an ended 파티's invitation never leaves, and a failure toast carries ✓); 07 stops a wrong state (an open 파티 nobody can enter, listed on a Board). Both change the 파티 form's send path (`screens/party/form/use-send.ts`), so 07 follows 06.
@@ -70,6 +100,11 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-27 and built at once: 17. It changes `AppBar`'s tab form (`design-system/app-bar.tsx`) and 행사's search bar (`screens/events/events-bar.tsx`); no open ticket touches them.
 - Added on 2026-11-27 and built at once: 11a, a change to 11 (PR 594). It changes the class form's day buttons (`screens/timetable/class-fields.tsx`, `slot-card.tsx`) and `features/timetable/class-form.ts`; no open ticket touches them.
 - Added on 2026-11-27 and built at once: 18. It changes 내 파티's card and list (`screens/party/mine-card.tsx`, `mine-tab.tsx`) and its view (`features/party/mine.ts`), reusing 찾기's `PostTop` and `InfoLine`; no open ticket touches them.
+- Added on 2026-11-27 as tickets only (`Status: needs-triage`), for the team's review before any is built: 19 to 32. Of an audit's findings, only those the user took up are here; the rest are held (Out of Scope). Order and shared files once taken up:
+  - 19, 20, 21 and 31 each add Notification kinds (`main-server/src/notifications/`, the app's `features/notifications/adapter.ts`): one after another.
+  - 25 before 24 (24's words use 25's day words), and 23 shows its time with them.
+  - 22 and 21 both change `leader.service.ts`: one after another.
+  - 26, 27, 28, 29 and 32 are app only and can run beside the server ones.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -112,6 +147,22 @@ When the held tickets are taken up, tickets touching the same files never run at
 31. As a User looking through 내 파티, I want its cards to read like 찾기's, with the 파티 I lead marked, so that I can tell at a glance what each is, when and where it is, and which ones I run.
 32. As a User whose class meets twice on one day, I want to give that day to two time slots, at hours that do not cross.
 
+33. As a User who asked to join a 파티, I want to be told when the Leader accepts or declines, even with the app closed.
+34. As a Leader, I want a push when someone asks to join my 파티.
+35. As a member, I want a push when my 파티 is activated, as its ask promises.
+36. As a member, I want to know whether my 파티 ended or I was removed, even if it happened while the app was closed.
+37. As a removed member, I want my position no longer shared with that 파티.
+38. As an invited User, I want to see when and where the 파티 meets before I accept.
+39. As a member, I want a changed step to say which 파티 and which day, and still be told when to set out.
+40. As a User, I want every time not today to say its day.
+41. As a User reading a 파티 whose place was picked on the map, I want to see that spot on a map.
+42. As a User joining a second 파티 of an event, I want to be told my own 파티 of it goes; and `+ 파티 모집` to open the one I already made.
+43. As a User on the map, I want the event card's "같이 갈 파티" to lead to those 파티.
+44. As a User, I want one number for one thing on every screen.
+45. As an invited User, I want to see who invited me; as a Leader, to be stopped from inviting into a full 파티.
+46. As a member who becomes Leader, I want to be told.
+47. As a User opening a full 파티, I want its button to say it is full.
+
 ## Implementation Decisions
 
 Decided on 2026-11-22:
@@ -134,6 +185,17 @@ Decided on 2026-11-22:
 - 16 (2026-11-27): the picker loses its 진로 / 이벤트 / 축제 tabs and lists every event by date with its search. Its rows follow the 행사 list's: two-line titles, time and place lines with icons, padding 12. A press opens `EventDetailSheet` with 원문 보기 and 이 행사 추가, or a disabled 선택됨 for the event already chosen. The kind rules (`event-kinds.ts`: regular expressions over an event's words, a stopgap) are deleted with their uses: the tabs, the chosen box's kind line and the tags added on picking. Nothing else reads them.
 - 17 (2026-11-27): `AppBar`'s tab form (파티, 행사, 내 정보 and the friend panel) has its title in 25 Bold (line height 32) and its row 50 high with 4 on top, so the title is 7 from its line (was 13). The sub-screen form and the shared `text.titleLg` and `size.appBar` stay. 행사's search bar follows the new height so the filters do not move. 파티's bar keeps ticket 12's centred `+ 만들기` and no magnifier; the ? help stays on hold.
 - 18 (2026-11-27): 내 파티's cards lose the kind column and follow 찾기's card: a board tag, or "비공개" in the same tag; the count at the right with a crown before it on a Quest the User leads (option C); the title on up to two lines; the time, the place and the event (blue, opening nothing) on their own lines. The strip, the live outline and the waiting circle stay. A group's last card is 20 from the next header (was 32). The map entry is option D, the room's place row, and waits with the event link; the card gets none.
+
+Decided on 2026-11-27 (19 to 32):
+
+- Push or 알림 only: a push goes for what happened to the User that they must act on or that is pressing (a request answered or received, being removed, a 파티 gone, an activation, a changed step); 알림 alone for what is only good to know (a new Leader, a request or invitation cancelled because its 파티 went). Today's pushes stay: a 파티 invitation, 지금 나서요, a member's 일정 변경 / 도착 / 늦어요, an interest's new match and the 스터디룸 kinds.
+- A new kind is a kept Notification (`NotificationsService.schedule`); `rings` decides the push. One per 파티 is replaced while unread where it could ring again and again (19's new request, 20's activation).
+- 21: one whose request or invitation waited is told in 알림 only.
+- 24: 지금 나서요 is kept again by the Timetable rule an accepted invitation uses, not by the live position.
+- 26: only a place with a position and no Place opens a map; the 근처 rule stays; typed words stay words.
+- 27: `+ 파티 모집` with a 파티 held alone opens its edit form, not a warning.
+- 29: an event's count is the 파티 the User could enter; a 파티's size is Holders over the Quest's capacity; a sharing count includes the User.
+- 30: inviting is refused only into a 파티 full at that moment; 30 adds one database migration, the exception to the rule below. 19 to 25, 30 and 31 need a main server Release.
 
 For all tickets:
 
@@ -160,6 +222,8 @@ For all tickets:
 - Deleting ended invitations and requests from the database; they are left out of the lists.
 - Open Quests stored with a capacity of 1 before ticket 07: left as they are.
 
+- The audit of 2026-11-27's other findings, held and not to be built for now: 파티 with no end time never ending; others' 파티 tags and photos coming from the mock in both builds; a 행사's source post changed or cancelled after it is stored; a 행사 cancelled or moved by an Administrator not told to its 파티; 위치 꺼짐 / 응답 대기 standing for several reasons; a push that opens nothing; a period 행사 without its start; one post's sessions as identical 행사; ☆ unexplained; an interest's topics read at most twice; 파티 without a time left out of the map screen's Quest list (kept as designed: its marker still shows); a 행사 with a position and no place name; day-boundary words.
+
 ## Further Notes
 
 Every item received and where it went:
@@ -185,6 +249,7 @@ Every item received and where it went:
 | 16 관련 행사 고르기의 UI, 누르면 팝업과 추가 버튼, 진로/이벤트/축제 (added 2026-11-26) | Ticket 16, with the kind rules deleted (added 2026-11-27) |
 | 17 파티·행사·내 정보 상단 제목 크기와 아래 선 간격 (added 2026-11-26) | Ticket 17, with the friend panel's bar (added 2026-11-27). The ? help beside the titles is on hold |
 | 18 내 파티 카드의 시간/장소/행사 줄, 방장 표시, 지도에서 위치 보기 (added 2026-11-26) | Ticket 18, with the board or 비공개 tag and tighter groups (added 2026-11-27). The map entry waits for the room, with the event link |
+| 19–32 파티·행사에서 사용자가 알 수 없는 것 (code audit, 2026-11-27) | Tickets 19 to 32, those the user took up; the rest held (Out of Scope) |
 
 Notes for the tickets:
 
