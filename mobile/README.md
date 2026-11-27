@@ -1082,7 +1082,7 @@ starts with "N분 늦어요". The Leader's answer to the User's request to join 
 round), whose address `/main?card=find-parties:<questId>` ends at 파티's 찾기. Each leads with the answer, "참여 신청이
 수락됐어요", and names the 파티 in its line, so that a long title of the 파티 is what the row cuts. The Leader's own Notification of the requests
 waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신청 {n}명" below. A 파티 gone is kept on
-the navy round, with the same order of words: ended (`party-ended`, a group), the User removed (`party-removed`, a
+the muted grey round, as a declined request is, with the same order of words: ended (`party-ended`, a group), the User removed (`party-removed`, a
 person), a request that waited on it (`join-cancelled`, a group) and an invitation that waited on it
 (`invitation-cancelled`, a calendar). Their address, `/main?card=party-gone:<questId>`, is on no map, and pressing it
 says "이미 없는 파티예요". A kind
