@@ -46,7 +46,8 @@ function membersOf({ quest }: ShownQuestInvitation): string {
 }
 
 // When and where the 파티 next meets, under the title, since a 비공개 파티's post cannot be read before entering: the
-// clock with its time, then the pin with its place, each on a line of its own.
+// clock with its time and day ("오늘 14:00", "11/28(금) 14:00"), then the pin with its place, each on a line of its
+// own.
 function InvitationPlan({ next }: { next: ShownQuestInvitation['nextSubQuest'] }): ReactElement {
   const { time, place } = planWords(next);
   return (
