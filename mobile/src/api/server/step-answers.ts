@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReplyStep } from '@/api/assistant-types';
 import { field, hasTexts, isNothing, isTextOrNull } from './answers';
 import { isPlacePoint } from './plan-answers';
 
-const KINDS = new Set<unknown>(['seat', 'room', 'meal', 'meet', 'events', 'quests', 'new-quest']);
+// Every kind of `ReplyStep`: the main server takes a Plan's from its answer's input, a study answer's "study" too.
+const KINDS = new Set<unknown>(['seat', 'room', 'meal', 'meet', 'events', 'quests', 'new-quest', 'study']);
 
 function isPlaceOrNull(value: unknown): boolean {
   return isNothing(value) || isPlacePoint(value);
