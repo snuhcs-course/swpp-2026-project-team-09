@@ -5,7 +5,6 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply } from '@/api/assistant-types';
@@ -19,7 +18,7 @@ import { StyleSheet, type ViewStyle } from 'react-native';
 import { screen } from './support/app';
 import { askOnMap, card, timeBar as bar } from './support/answer-map';
 import { grip as sheetGrip, raiseCard } from './support/card-grip';
-import { barShift, layFolded, layRows, stepGrip } from './support/time-card';
+import { barShift, barTopOf, layFolded, layRows, stepGrip } from './support/time-card';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { layStage } from './support/lists';
@@ -159,19 +158,23 @@ describe("the bar's head", () => {
 });
 
 // P04 ticket 61 (boards k1–k4). Partitions: tucked and back, by the grip's steps for a screen reader. Expected values:
-// the hairline over the strip parts it from the card's content.
-describe("the time bar's fold", () => {
-  // P01 ticket 22: the tucked strip is gone; folded, an answer to one request leaves one tab at the top's centre.
-  it('folds by its grip to the tab at the top, and the tab brings it back with its hairline', async () => {
+// a bar laid out 100 high under a stage top of 0 leaves a strip of 20; the hairline over the strip parts it from the
+// card's content, and with the strip alone in sight there is none.
+describe("the time bar's tuck", () => {
+  it('slides up by its grip until a strip shows without its hairline, and comes back down', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await layFolded(100);
+    const top = barTopOf();
     expect(screen.getByTestId('time-card-rule')).toHaveStyle({ height: StyleSheet.hairlineWidth });
 
     await stepGrip('tuck');
-    expect(screen.queryByTestId('time-bar')).toBeNull();
-    expect(screen.getByTestId('top-tab')).toBeOnTheScreen();
+    expect(barShift()).toBe(-(top + 100 - 20));
+    expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityActions', [
+      { name: 'untuck', label: '시간 카드 펴기' },
+    ]);
+    expect(screen.queryByTestId('time-card-rule')).toBeNull();
 
-    await fireEvent.press(screen.getByTestId('top-tab'));
+    await stepGrip('untuck');
     expect(barShift()).toBe(0);
     expect(screen.getByTestId('time-card-rule')).toBeOnTheScreen();
   });

@@ -2,21 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
- * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap } from './support/answer-map';
-import { screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
-import { layFolded, layRows, stepGrip } from './support/time-card';
+import { barShift, barTopOf, layFolded, layRows, stepGrip } from './support/time-card';
 
 // The height the time card tells, which the answer sheet's high is measured from (P04 ticket 64), against the fake
 // main server over the stored answer to "배고파, 민수랑 같이".
@@ -55,7 +53,7 @@ afterEach(() => {
 
 // The user's phone (2026-11-26): after picking and raising the sheet, its high went over the time card. Partitions:
 // the rows open, then laid out shut ahead of React, as the sheet shuts them on the UI thread at high. Expected
-// values: a card 100 high folded, whose rows are 64, folds whole to the top's tab.
+// values: a card 100 high folded, whose rows are 64, keeps telling 100, so that tucked it leaves its strip of 20.
 describe("the time bar's folded height", () => {
   it('stays its folded parts’ height when the rows are laid out shut while React still holds them open', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -65,8 +63,6 @@ describe("the time bar's folded height", () => {
 
     await stepGrip('tuck');
 
-    // P01 ticket 22: folding leaves the tab at the top, not a strip, wherever the rows were laid.
-    expect(screen.queryByTestId('time-bar')).toBeNull();
-    expect(screen.getByTestId('top-tab')).toBeOnTheScreen();
+    expect(barShift()).toBe(-(barTopOf() + 100 - 20));
   });
 });

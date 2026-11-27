@@ -6,8 +6,9 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, use, useEffect, useRef, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, use, useCallback, useEffect, useState } from 'react';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReplyStep } from '@/api/assistant-types';
 import { now } from '@/clock';
@@ -19,7 +20,9 @@ import type { ChatSheetControl } from '../chat-sheet';
 import { barTop, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 import { SheetLinkContext } from './sheet-link';
-import { FoldTab, pressedTo, pulledTo, TAB, type TopStop, type TopStops, TopTab } from './top-stops';
+import { StepsStrip } from './steps-strip';
+import { TUCK_STRIP } from './time-card-grip';
+import { restingLift, type TopStop, type TopStops } from './top-stops';
 
 const MINUTE = 60_000;
 // The bar's ends stand this far before the first step and after the last.
@@ -99,13 +102,27 @@ interface StepsBarProps {
   active: number;
   onStep: (index: number) => void;
   onHeight: (height: number) => void;
+  // The top's stops, whose lift takes the bar up past stop 1 (P01 ticket 22).
+  stops?: TopStops;
+}
+
+// Where the bar stands as the top folds: moved on the UI thread by the lift, resting where its stop puts it.
+function useLifted(
+  stops: TopStops | undefined,
+  top: number,
+): { moved: ReturnType<typeof useAnimatedStyle<ViewStyle>>; rested: ViewStyle } {
+  const lift = stops?.lift;
+  const moved = useAnimatedStyle<ViewStyle>(() => ({ transform: [{ translateY: lift?.value ?? 0 }] }));
+  const at = stops === undefined ? 0 : restingLift(stops.stop, barTop(top) + stops.stepsHeight);
+  return { moved, rested: { transform: [{ translateY: at }] } };
 }
 
 // The bar of several requests (P04 ticket 09, board 12): one span a step with a time, numbered as its flag, and the
 // steps' words over them; a press on a step's words or span makes it the step shown. A step not done is faint. Its
 // time is changed on the step's own card.
-export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): ReactElement | null {
+export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarProps): ReactElement | null {
   const { top } = useSafeAreaInsets();
+  const lifted = useLifted(stops, top);
   const spans = spansOf(steps);
   const [first] = spans;
   if (first === undefined) {
@@ -116,11 +133,11 @@ export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): Re
   const share = (at: number): number => ((at - from) / (to - from)) * 100;
   const day = koreaDayWord(first.step.startAt ?? '', now());
   return (
-    <View
+    <Reanimated.View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, { top: barTop(top) }]}
+      style={[styles.bar, { top: barTop(top) }, lifted.moved, lifted.rested]}
       testID="time-bar"
     >
       <View style={styles.words}>
@@ -142,7 +159,7 @@ export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): Re
       </View>
       <Track active={active} share={share} spans={spans} />
       {day === '' ? null : <Text style={styles.day}>{day}</Text>}
-    </View>
+    </Reanimated.View>
   );
 }
 
@@ -192,87 +209,38 @@ interface StepsTopProps {
 
 // The bar of several requests, and under it, while the step shown is the reply's Plan, that Plan's bar with its
 // handles and its meal's tick, as on a reply to one request (PR 462's review). The height told is what stands at the top.
-// The top folds in stops (P01 ticket 22, `top-stops.tsx`): 2, both cards; 1, the steps card with a tab under it, the
-// Plan's bar behind it; 0, one tab at the top's centre. A step with no Plan's bar (a seat or a room) shows its steps
-// card with the tab, which folds to 0 and opens nothing downward. The sheet rising to high folds 2 to 1.
+// The top folds in stops (P01 ticket 22, `top-stops.tsx`): the Plan's bar folds behind the steps card to its grip
+// strip, then takes the steps card up with it to the stage's top; both stay mounted, moved on the UI thread. A step with
+// no Plan's bar (a seat or a room) has a strip of its own in that place (`steps-strip.tsx`), which folds the same way
+// and opens nothing downward.
 export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): ReactElement | null {
-  const [heights, setHeights] = useState({ steps: 0, plan: 0 });
-  const sheet = use(SheetLinkContext);
-  const stops = sheet.top;
-  const stop = stops?.stop ?? 2;
+  const stops = use(SheetLinkContext).top;
+  const { heights, onSteps, onPlan } = useHeights(stops?.setStepsHeight);
   const { steps, activeStep, setActiveStep, answer: shown, invitation } = control;
   const { answer, plan } = shown;
   const withPlan = planStepShown(control) && answer !== null && plan !== null;
-  const timeCard = stop === 2 && withPlan;
-  const told = toldOf(stop, heights, timeCard);
-  useEffect(() => {
-    onHeight(told);
-  }, [told, onHeight]);
-  useFoldOnHigh(sheet.high, stops);
+  useTold(toldOf(stops?.stop ?? 2, heights, withPlan), onHeight);
   if (steps === null) {
     return null;
   }
-  if (stop === 0 && stops !== undefined) {
-    return <TopTab several stops={stops} />;
-  }
   return (
     <>
-      <StepsBar
-        active={activeStep}
-        onHeight={(height) => {
-          setHeights((last) => ({ ...last, steps: height }));
-          stops?.setStepsHeight(height);
-        }}
-        onStep={setActiveStep}
-        steps={steps.steps}
-      />
-      {timeCard ? (
+      <StepsBar active={activeStep} onHeight={onSteps} onStep={setActiveStep} steps={steps.steps} stops={stops} />
+      {withPlan ? (
         <PlanBar
           answer={answer}
           focus={focus}
           invitation={invitation}
           offset={heights.steps + space[2]}
           onClose={onClose}
-          onHeight={(height) => {
-            setHeights((last) => ({ ...last, plan: height }));
-          }}
+          onHeight={onPlan}
           plan={plan}
           shown={shown}
         />
-      ) : (
-        <StepsTab opens={withPlan} stepsHeight={heights.steps} stops={stops} />
+      ) : stops === undefined ? null : (
+        <StepsStrip stops={stops} />
       )}
     </>
-  );
-}
-
-// The tab under the steps card's bottom centre: a press or a pull down brings the time card out, where the step has one;
-// a pull up folds the steps card too.
-function StepsTab({
-  stops,
-  opens,
-  stepsHeight,
-}: {
-  stops: TopStops | undefined;
-  opens: boolean;
-  stepsHeight: number;
-}): ReactElement {
-  const { top } = useSafeAreaInsets();
-  return (
-    <FoldTab
-      onPress={() => {
-        if (opens) {
-          stops?.setStop(pressedTo(1, true));
-        }
-      }}
-      onPull={(dy) => {
-        if (dy < 0 || opens) {
-          stops?.setStop(pulledTo(1, dy, true));
-        }
-      }}
-      testID="steps-tab"
-      top={barTop(top) + stepsHeight}
-    />
   );
 }
 
@@ -282,22 +250,39 @@ function planStepShown({ steps, activeStep }: ChatSheetControl): boolean {
   return step !== undefined && step.status === 'shown' && step.kind !== 'seat' && step.kind !== 'room';
 }
 
-// What stands at the top, told: the tab at 0; the steps card with its tab, or with the Plan's bar under it.
-function toldOf(stop: TopStop, heights: { steps: number; plan: number }, timeCard: boolean): number {
+// What stands at the top, told: the strip alone at 0; the steps card with the Plan's bar under it at 2, else with the
+// strip under it.
+function toldOf(stop: TopStop, heights: { steps: number; plan: number }, withPlan: boolean): number {
   if (stop === 0) {
-    return TAB.height;
+    return TUCK_STRIP;
   }
-  return heights.steps + (timeCard ? heights.plan + space[2] : TAB.height);
+  return heights.steps + (stop === 2 && withPlan ? heights.plan + space[2] : TUCK_STRIP);
 }
 
-// The sheet rising to high folds the time card behind the steps card (the approved page, section 2 ④); lowering it
-// leaves the fold, and a stop already folded further stays.
-function useFoldOnHigh(high: boolean, stops: TopStops | undefined): void {
-  const was = useRef(high);
+// The two cards' heights as laid out, kept by callbacks that stay the same from render to render and keep the same
+// state for the same height: the Plan's bar tells its height in an effect whenever its callback changes
+// (`folded-height.ts`), so a new callback or a new state each render told it again without end.
+function useHeights(setStepsHeight?: (height: number) => void): {
+  heights: { steps: number; plan: number };
+  onSteps: (height: number) => void;
+  onPlan: (height: number) => void;
+} {
+  const [heights, setHeights] = useState({ steps: 0, plan: 0 });
+  const onSteps = useCallback(
+    (height: number): void => {
+      setHeights((last) => (last.steps === height ? last : { ...last, steps: height }));
+      setStepsHeight?.(height);
+    },
+    [setStepsHeight],
+  );
+  const onPlan = useCallback((height: number): void => {
+    setHeights((last) => (last.plan === height ? last : { ...last, plan: height }));
+  }, []);
+  return { heights, onSteps, onPlan };
+}
+
+function useTold(told: number, onHeight: (height: number) => void): void {
   useEffect(() => {
-    if (high && !was.current && stops?.stop === 2) {
-      stops.setStop(1);
-    }
-    was.current = high;
-  }, [high, stops]);
+    onHeight(told);
+  }, [told, onHeight]);
 }

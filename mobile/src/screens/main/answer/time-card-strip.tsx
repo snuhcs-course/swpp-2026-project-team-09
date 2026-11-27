@@ -8,13 +8,22 @@
 import type { ReactElement } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
-import { color, radius, space } from '@/design-system';
+import { color, radius, shadow, space } from '@/design-system';
 import { STRIP_SLOP, type TimeCardGrip } from './time-card-grip';
 
-// The time card's grip and its strip (moved out of `time-bar.tsx` for its length).
+// The time card's grip and its strip (moved out of `time-bar.tsx` for its length), and the parts the strip of a step
+// with no time card shares with it (`steps-strip.tsx`, P01 ticket 22).
 
 // The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
 export const STRIP_TOP = space[1];
+
+// The card's face: its corners, its white and its shadow.
+export const CARD_FACE = { borderRadius: radius.xl, backgroundColor: color.surface, boxShadow: shadow.float } as const;
+
+// The grip's line in the middle of a strip.
+export function GripLine(): ReactElement {
+  return <View style={styles.grip} />;
+}
 
 // The bar's grip in its strip, the card's whole width at its bottom (the user's phone check), under a hairline that
 // parts it from the card's content as the answer sheet's header is parted, left out when the card is tucked to the
@@ -42,8 +51,10 @@ export function Grip(p: {
         style={styles.strip}
         testID="time-card-grip"
       >
-        {grip.place === 'tucked' ? null : <View style={styles.rule} testID="time-card-rule" />}
-        <View style={styles.grip} />
+        {grip.place === 'tucked' || grip.place === 'behind' ? null : (
+          <View style={styles.rule} testID="time-card-rule" />
+        )}
+        <GripLine />
       </Pressable>
     </GestureDetector>
   );
