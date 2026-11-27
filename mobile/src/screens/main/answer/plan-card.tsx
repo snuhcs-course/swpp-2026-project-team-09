@@ -34,6 +34,7 @@ import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { StudyGroupBody } from './study-group-body';
 import type { TellAct } from '../library/act-stage';
+import type { LibraryCardActions } from '../library/use-library-call';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
 
 interface CardProps {
@@ -146,6 +147,7 @@ interface PlanCardProps extends CardProps {
   // Where a study answer's group study room tells its main button, and the bubble it tells it for (P10 ticket 11).
   act?: TellAct;
   bubbleId?: number;
+  library?: LibraryCardActions;
 }
 
 // The answer on screen in the answer frame's card, with no text of its own by default: "＋ 같이" while the Plan can
@@ -221,6 +223,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
           act={props.act}
           answer={answer}
           bubbleId={props.bubbleId}
+          library={props.library}
           busy={busy || settled(invitation)}
           group={group}
           onAdd={fix.toggleAdding}

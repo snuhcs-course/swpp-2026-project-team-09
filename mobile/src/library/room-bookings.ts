@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -40,6 +41,11 @@ async function readMap(): Promise<Record<string, string>> {
   } catch {
     return {};
   }
+}
+
+// Whether this phone booked a room for the request: the server may not know yet (P10 ticket 14, #657's review).
+export async function bookedHere(requestId: string): Promise<boolean> {
+  return Object.values(await readMap()).includes(requestId);
 }
 
 export async function keepRoomBooking(bseqno: number, requestId: string): Promise<void> {

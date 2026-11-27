@@ -135,7 +135,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
             words={
               bubble.id === docked || speaksForItself(bubble) ? null : (
                 <Words
-                  act={control.libraryAct.tell}
+                  group={{ act: control.libraryAct.tell, library: cardActions.library }}
                   addRecalculated={control.chat.addRecalculated}
                   bubble={bubble}
                   focus={focus}

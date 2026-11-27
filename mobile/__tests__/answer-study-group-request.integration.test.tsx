@@ -6,8 +6,6 @@
 
 import { within } from '@testing-library/react-native';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
-import { STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
-import type { RoomRequest } from '@/api/room-requests';
 import { forgetPartyRequests } from '@/screens/main/library/room-party';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -17,7 +15,7 @@ import { layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { inDock, inFrame, sendFromBar, startLibraryChat } from './support/library-chat';
-import { ASKED_AT, askTogether } from './support/study-group';
+import { ASKED_AT, FRIENDS, QUEST_ID, REQUEST_ID, requestOf, sendTogether, type User } from './support/study-group';
 
 // Sending the consent requests of the study answer together and waiting for them (P10 ticket 12; design
 // group-study-design 나, group-study-resume 2 and 3 가): today's room request run behind the group answer's card, against
@@ -37,41 +35,6 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const REQUEST_ID = 'dddddddd-0000-4000-8000-000000000001';
-const QUEST_ID = 'eeeeeeee-0000-4000-8000-000000000001';
-const FRIENDS = [
-  { userId: 'a3f1c2d4-0000-4000-8000-0000000000a1', name: '박민수' },
-  { userId: 'a3f1c2d4-0000-4000-8000-0000000000a2', name: '이서연' },
-  { userId: 'a3f1c2d4-0000-4000-8000-0000000000a3', name: '김지은' },
-];
-
-type State = 'asked' | 'consented' | 'declined';
-
-function requestOf(states: readonly State[], moreNeeded = 0): RoomRequest {
-  const companions = FRIENDS.map((friend, index) => ({ ...friend, state: states[index] ?? 'asked' }));
-  return {
-    id: REQUEST_ID,
-    status: 'gathering',
-    questId: QUEST_ID,
-    madeForBooking: true,
-    requester: { userId: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d', name: '나' },
-    space: { id: '4F-group-6', name: '그룹스터디룸 6인실' },
-    date: '2026-11-05',
-    start: '15:00',
-    minutes: 120,
-    useDesc: '과제',
-    reason: null,
-    failed: null,
-    consents: companions.map(({ userId, name, state }) => ({
-      userId,
-      name,
-      consented: state === 'asked' ? null : state === 'consented',
-    })),
-    companions,
-    moreNeeded,
-  };
-}
-
 let server: FakeServer;
 let library: FakeLibrary;
 
@@ -87,16 +50,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-type User = Awaited<ReturnType<typeof askTogether>>['user'];
-
-async function sent(): Promise<User> {
-  const { user } = await askTogether({ server, library }, STUDY_GROUP_TO_SEND);
-  await pass(500);
-  await user.press(screen.getByTestId('room-use-line'));
-  await user.press(inFrame().getByRole('button', { name: '과제' }));
-  await user.press(inDock().getByRole('button', { name: '동의 요청 보내기' }));
-  await pass(500);
-  return user;
+function sent(): Promise<User> {
+  return sendTogether({ server, library });
 }
 
 // Partitions: the press, right after it, one consent in, and a Friend out. Expected values: the design and today's
