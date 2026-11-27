@@ -43,7 +43,7 @@ All in `BottomSheet` and what it offers, so that every sheet gets it at once.
 4. **A swipe down from anywhere on the sheet closes it:**
    - on the handle, a header, the text, the footer's buttons, or inside a list (rule 5);
    - the sheet follows the finger down while it moves (never up past its place);
-   - on release it slides down and closes when it went past a threshold, about a quarter of its height or 120 points, whichever is less, or when the release is a downward flick. Otherwise it springs back.
+   - on release it goes the way the finger was moving: moving down, it slides down and closes; moving up, it springs back and stays open, however far it went. Released at rest, it closes past about a quarter of its height or 120 points, whichever is less, and otherwise springs back (changed after the phone check, below).
    - A press stays a press: buttons and rows inside still take taps, and a drag starts only past about 8 points.
    - A mostly sideways move gives way to what scrolls sideways (the days row of 날짜·시간, chip rows).
 5. **Lists inside: decided where the finger lands, for the whole gesture.**
@@ -85,17 +85,18 @@ All in `BottomSheet` and what it offers, so that every sheet gets it at once.
 
 - [x] A closing sheet slides down with its last content still in it, also when the caller drops its content on close. (App integration test, which fails before the change.)
 - [x] A tap on the handle bar closes the sheet, and so does a tap on the scrim. (App integration test; the handle tap fails before the change.)
-- [x] A swipe down past the threshold, or a flick, from the sheet's text or footer closes it. A short one springs back. A press on a button inside is still a press. (App integration or gesture unit test, which fails before the change.)
+- [x] A swipe down from the sheet's text or footer closes it when the finger lets go moving down, or at rest past the threshold. Let go moving up, it springs back, however far it went; it never closes while the finger is down. A press on a button inside is still a press. (Gesture unit test; the let-go by direction fails before the phone check's change.)
+- [x] A list in a sheet takes no touch of its own scroll view; the list's swipe scrolls it and tells the moments a native scroll tells, so the time wheel still stops on a row. (Gesture unit test, which fails before the phone check's change.)
 - [x] Inside a list scrolled away from its top, a swipe down scrolls the list and never closes the sheet, even when the list reaches its top during that swipe. A new swipe from the top closes. (Test, which fails before the change.)
 - [ ] Checked on the user's phone with the pull request's release build.
 - [x] No native file changes; lint, format and types pass on the changed files.
 
 ## Decided while building
 
-- **Lists keep native scrolling.** `SheetScrollView` (`design-system/sheet-scroll-view.tsx`) wraps its scroll view in a `GestureDetector`. That detector runs a `Gesture.Native()` and the list's own pull pan together. The sheet's own pan waits for that pull (`blocksExternalGesture` through a ref), so it never acts on a touch that lands in a list. The pull reads the list's offset in `onBegin`, at touch-down, and that decides the whole gesture. The answer card does it the other way: its content takes no touch and the drag scrolls it. That would have meant rebuilding the time wheel's snapping and momentum.
+- **Lists in sheets scroll by their swipe, not natively** (since the phone check, below). `SheetScrollView` sets its scroll view's `scrollEnabled={false}` and puts the list's own pan on it (`design-system/sheet-list-pan.ts`). The sheet's own pan waits for that pan (`blocksExternalGesture` through a ref), so it never acts on a touch that lands in a list. The list's pan reads the list's offset in `onBegin`, at touch-down, and that decides the whole gesture: it pulls the sheet, or it scrolls the list with Reanimated's `scrollTo`, and a let-go runs the list on (`withDecay`), as the answer card's drag scrolls its content.
 - **A swipe from a list at its top pulls the sheet only when the finger first goes down.** Going up first scrolls the list for the whole gesture. Outside lists the sheet follows the finger either way, never above its place.
-- **Numbers.** It closes past a quarter of its height or 120, whichever is less. A flick is faster than 500 points a second, the answer card's `FLING_SPEED`. A drag starts at 8 points and gives way sideways at 16. The spring back is the answer card's settle spring (stiffness 400, damping 40, no overshoot).
-- **Lists in sheets do not bounce or stretch past their ends** (`bounces={false}`, `overScrollMode="never"`), so the top stays still while the sheet is pulled. While a pull moves the sheet, the list it started in is held at its top.
+- **Numbers.** A let-go faster than 100 points a second up or down goes that way (`MOVING`); slower is at rest, where it closes past a quarter of its height or 120, whichever is less. A drag starts at 8 points and gives way sideways at 16. The spring back is the answer card's settle spring (stiffness 400, damping 40, no overshoot).
+- **Lists in sheets do not bounce or stretch past their ends** (`bounces={false}`, `overScrollMode="never"`). A list the swipe does not scroll stays where it is, so a pull from its top leaves it at its top.
 - **The pull is a Reanimated translation on a view around the sheet**, on top of `useSlide`'s slide, which is unchanged. A swipe close slides on from where the finger let go. The scrim fades as the sheet is pulled down.
 - **While it slides out the sheet takes no touches**, so a second tap cannot call `onClose` again, and the screen under it can be used at once.
 - **A sheet whose caller keeps it open springs back after a swipe.** 시간표 읽기 does this, and so does the tutorial while it checks 관정.
@@ -103,8 +104,21 @@ All in `BottomSheet` and what it offers, so that every sheet gets it at once.
 - **The old handle drag is gone:** 48 from the handle row, measured when the touch ended. Its unit test now taps the handle. The swipe tests are in `bottom-sheet-swipe.unit`.
 - **시간 고르기 stays mounted so that it can slide.** `PickTimeSheet` takes `offer | null`. It moved from `ReplyPicks` to the end of `OpenAnswer` in `answer-frame.tsx`, outside the turn's bubbles, so it also slides down when a picked time is sent.
 - **In the tests the slide's animation ends within a few frames.** So the integration test checks the closing sheet right after the tap (the 모집글 was already empty there before the change), then that it is gone.
-- **Not covered by tests:** how the gestures share a touch on a phone (the relations, the real offsets, holding the list at its top). Only the phone check shows it.
+- **A list in a sheet may not take a screen reader's scroll actions**, as with the answer card's content, since its scroll view is not scrollable by touch. Not checked with TalkBack.
+- **Not covered by tests:** Android's touch dispatch. The tests send the gesture handler's events straight to the gestures, so they cannot show a native view taking the touch; they check instead that no scroll view in a sheet can (`scrollEnabled` false). Only the phone check shows the touch itself.
 - **Ticket 34's sheets** (장소, 친구 초대) should use `SheetScrollView` for their lists when they merge `5.0/Main`.
+
+## Changed after the phone check (2026-11-28)
+
+The user checked the release build of fbc41534 on their phone. Two things changed, in new commits on the pull request.
+
+1. **A swipe on the body did not close the sheet.** The handle's swipe followed the finger, but a swipe that started on the text did nothing.
+   - The cause, from the code: the sheets the user tried keep their text in a `SheetScrollView`. On Android, a native scroll view that starts its scroll asks its parents not to take the touch (`requestDisallowInterceptTouchEvent`), and the gesture handler's root then cancels every running gesture. The answer card's drag (`card-drag.ts`) and the seat picture (P01 ticket 11) met the same thing on this phone and stopped letting their scroll views take the touch.
+   - `Gesture.Native()` around the scroll view, with the list's pull beside it, should have kept the scroll inside the gesture handler, and the tests passed. But they send the handler's events straight to the gestures, past Android's touch dispatch, so they could not show it. It was not proven on a device, and whether the native gesture or the list's pull went missing there is not known.
+   - The fix takes the native scroll out of the touch: a list in a sheet sets `scrollEnabled={false}`, and its own swipe scrolls it (`sheet-list-pan.ts`), as the answer card's drag does. That swipe also tells `onScrollBeginDrag`, `onScrollEndDrag` and `onMomentumScrollEnd` as a native scroll tells them, and runs a list with `snapToInterval` to the row its speed points to, so 시간 고르기's wheel still stops on a row and its button still waits. `Gesture.Native()` is gone.
+   - The sheet's own swipe now stands on a Reanimated view that it moves, as the answer card's does, instead of on React Native's `Animated.View` inside a moved view. The slide stays on `useSlide`, on the view around it.
+2. **The let-go goes the way the finger moves.** A pull down and back up still closed, because a let-go past the threshold closed whichever way the finger was going. Now, let go moving up (faster than 100 points a second), the sheet springs back and stays open, however far it went; moving down, it closes; at rest, the old threshold decides. Nothing closes the sheet while the finger is down; that was so before too.
+3. **Checks.** The four new gesture unit tests fail on fbc41534's sheet sources and pass now. `bottom-sheet-swipe.unit` and `bottom-sheet.unit` pass, 18 tests. Ten integration files that open the changed sheets were run, 86 tests: `sheet-slide-down`, `event-detail-sheet`, `events-recruiting`, `party-find-sheet`, `party-post`, `answer-pick`, `answer-picking-sheet`, `tutorial-sheet`, `party-form-edit` and `events-party-form`. All pass but one: `events-recruiting`'s "opens the edit form of the Quest the User holds alone for the event" does not find the header 모집글 수정. It fails the same way on fbc41534's sources, run alone, so it is not this change's. Whole-app `tsc` and `oxlint --type-aware` pass.
 
 ## Comments
 
@@ -121,3 +135,13 @@ Estimates. Agent time is this session's wall clock from its start to this entry,
 | Ticket 35 (tests first, `sheet-pull`, `SheetScrollView`, `BottomSheet`, the six scrolling sheets, two merges of `5.0/Main`, checks, the nightly CI run and its failures on `5.0/Main`) | about 3 hours | 57,995,901 | 57,645,559 | 349,934 | 408 | 168,931 |
 
 Without cache reads, the input is 350,342.
+
+### Agent usage (2026-11-28, after the first entry)
+
+Estimates, in the same session, counted from the first entry (17:18 UTC) to this one, so this commit's push and the pull request's edit are left out. About 15 minutes went to the third merge of `5.0/Main` and its checks, and about 45 minutes to the phone check's two changes, their tests and these notes: about 1 hour of agent time. The time spent waiting for ticket 34's Jest and for the phone check is not counted. No subagents.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 35, the third merge and the phone check's changes (the list's swipe in `sheet-list-pan`, the let-go by direction, tests, ticket and pull request) | about 1 hour | 33,962,200 | 33,611,668 | 350,306 | 226 | 188,073 |
+
+Without cache reads, the input is 350,532. With the first entry, the ticket took about 4 hours of agent time and 91,958,101 input tokens (700,874 without cache reads), with 357,004 output tokens.
