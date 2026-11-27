@@ -1149,7 +1149,9 @@ mark the Quest while they run, are not told; what happened before the app starte
 - `신청 {n}` and `초대 중 {n}` for the Leader, and `멤버 {n}` with what the User sees of each Holder while in the
   Party, and a press that shows a seen member on the map. Another member's row has icons of 40 in a line: 친구 추가
   (`usersPlus`; dimmed once a request is sent, the words "수락" when the member sent one, none for a Friend) and,
-  for the Leader, 파티장 넘기기 (`crown`) and 내보내기 (`userMinus`, red). Each asks first in a dialog with "취소";
+  for the Leader, 파티장 넘기기 (`crown`) and 내보내기 (`userMinus`, red). Each asks first in a dialog with "취소".
+  내보내기 is `DELETE /quests/:questId/holders/:userId` alone: the main server takes the Holder out of the Quest's
+  activation in the same change;
 - the footer's "나가기" (`DELETE /quests/:questId`, after leaving the Party when it is the Quest's) or, for the Leader,
   "파티 없애기" (`POST /quests/:questId/end`, after ending or leaving the Party).
 
