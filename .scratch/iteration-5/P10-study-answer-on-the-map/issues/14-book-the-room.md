@@ -71,3 +71,8 @@ Only the card's face is new.
 - [x] Whole lint, format and types.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 16 minutes in the p04-58 session, from 23:04 to 23:20 UTC on 11-26, an estimate. Restacking it on ticket 11's later fixes is counted under ticket 11. No subagents.
+- Tokens: input 60 uncached, with cache reads 23,441,544 and cache writes 60,555; output 45,709.
