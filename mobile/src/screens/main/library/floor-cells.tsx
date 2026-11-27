@@ -126,7 +126,7 @@ export const cellStyles = StyleSheet.create({
   },
   chosen: { borderWidth: 1.5, borderColor: color.svcStudy },
   pressed: { opacity: 0.6 },
-  name: { flexShrink: 1, fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.ink },
+  name: { flexShrink: 1, ...text.label, color: color.ink },
 });
 
 const styles = StyleSheet.create({

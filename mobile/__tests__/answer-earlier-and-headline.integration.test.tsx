@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -182,9 +183,9 @@ describe('the card while the keyboard is up', () => {
 });
 
 // Partitions: a reply that asks, with an example; a long reply that asks; a sentence (the rule of 2026-11-22: above the
-// keyboard only what the User answers, never cut, in the docked line's type).
+// keyboard only what the User answers, never cut, in the answer's sentence's type).
 describe("the reply's words above the keyboard", () => {
-  it('show a question whole in the docked type, its example as the placeholder, without the rows', async () => {
+  it("show a question whole in the sentence's type, its example as the placeholder, without the rows", async () => {
     await talk([['내일 관정 예약해 줘', textReply(BOOKING_ASK)]]);
 
     await showKeyboard(KEYBOARD);
@@ -192,7 +193,8 @@ describe("the reply's words above the keyboard", () => {
     const words = screen.getByTestId('typing-words');
     expect(words).toHaveTextContent(BOOKING_QUESTION, { exact: true });
     expect(words).toHaveProp('numberOfLines', 3);
-    expect(words).toHaveStyle({ fontFamily: type.body.fontFamily, fontSize: type.body.fontSize });
+    // The answer's sentence's type (P01 ticket 19).
+    expect(words).toHaveStyle({ fontFamily: type.bodyLg.fontFamily, fontSize: type.bodyLg.fontSize });
     expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '예: 14:00부터 16:00');
     expect(screen.queryByTestId('question-list')).toBeNull();
   });

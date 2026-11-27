@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -206,6 +207,8 @@ describe("a building's card before its answer", () => {
     await pass(3000);
 
     expect(buildingCard().getByText('답을 가져오지 못했어요')).toBeVisible();
+    // In red, as every failure line is (P01 ticket 19).
+    expect(buildingCard().getByText('답을 가져오지 못했어요')).toHaveStyle({ color: color.danger });
     server.on('POST /assistant/taps', { status: 200, body: TAP_LOOKUPS.a1 });
     await user.press(buildingCard().getByRole('button', { name: '다시 시도' }));
     await pass(500);

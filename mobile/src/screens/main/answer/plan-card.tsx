@@ -16,7 +16,7 @@
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
-import { color, space, text } from '@/design-system';
+import { space } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -36,6 +36,7 @@ import { StudyGroupBody } from './study-group-body';
 import type { TellAct } from '../library/act-stage';
 import type { LibraryCardActions } from '../library/use-library-call';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
+import { SENTENCE } from './line-types';
 
 interface CardProps {
   shown: ShownAnswer;
@@ -93,13 +94,22 @@ export function linesOf(
 
 // The line, which a press opens to the reply's whole words under it and closes again; without words to open, it
 // takes no press.
-function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): ReactElement | null {
+function Said({
+  lines,
+  refusal,
+  said,
+}: {
+  lines: readonly AnswerLine[];
+  // How many of the lines are a refusal's, which lead them.
+  refusal: number;
+  said: string;
+}): ReactElement | null {
   const [open, setOpen] = useState(false);
   if (lines.length === 0) {
     return null;
   }
   if (said === '') {
-    return <AnswerLines lines={lines} />;
+    return <AnswerLines lines={lines} refusal={refusal} />;
   }
   return (
     <Pressable
@@ -111,7 +121,7 @@ function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): 
       }}
       style={styles.said}
     >
-      <AnswerLines lines={lines} />
+      <AnswerLines lines={lines} refusal={refusal} />
       {open ? <ChatMarkdown style={styles.words} text={said} /> : null}
     </Pressable>
   );
@@ -222,7 +232,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const group = shown.plan?.study?.group;
   return (
     <View style={styles.plan}>
-      <Said lines={linesOf(shown, answer, over)} said={meal || group !== undefined ? '' : said} />
+      <Said lines={linesOf(shown, answer, over)} refusal={over.length} said={meal || group !== undefined ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} /> : null}
       {/* A meal with no Plan keeps its conditions, each with its ✕ (P01 ticket 31). */}
       {shown.plan === null && answer.input.kind === 'meal' ? (
@@ -258,5 +268,6 @@ export function PlanCard(props: PlanCardProps): ReactElement {
 const styles = StyleSheet.create({
   plan: { gap: space[3] },
   said: { gap: space[2] },
-  words: { ...text.body, color: color.ink },
+  // The model's words over a meal's list, as every answer's sentence (P01 ticket 19).
+  words: SENTENCE,
 });
