@@ -53,6 +53,7 @@ describe("A booking party's card on the map", () => {
       time: '15:00',
       day: '내일',
       state: '동의 1/3 · 기다리는 중',
+      fact: '동의 1/3',
     });
     expect(card.marker.name).toBe('관정 그룹스터디룸 내일 15:00 · 동의 1/3 · 기다리는 중');
   });
@@ -95,7 +96,13 @@ describe("A booking party's card on the map", () => {
 
 describe("A request's look on the map", () => {
   it('is the flag of a Quest made from a Plan: its room and time in the time colour over its day and state', () => {
-    const flag = { title: '관정 그룹스터디룸', time: '15:00', day: '내일', state: '모두 동의 · 예약하기' };
+    const flag = {
+      title: '관정 그룹스터디룸',
+      time: '15:00',
+      day: '내일',
+      state: '모두 동의 · 예약하기',
+      fact: '모두 동의',
+    };
     expect(requestLook(flag)).toEqual({
       kind: 'answer',
       symbol: { type: 'dot', role: 'pick', number: null },
@@ -151,17 +158,25 @@ describe("A booking party's card on the 파티 tab", () => {
 });
 
 describe("A booking party's row in the Quest lists", () => {
-  it("says the time and the consents with no day word in the map's Quest list today, and opens the answer again", () => {
+  // From #662's pictures: the map's list row is narrow, so it keeps the fact and drops the state word, which the flag
+  // beside it says.
+  it("says the time and the consents with no day or state word in the map's Quest list today, and opens the answer again", () => {
     const [row] = rows(bookingParty(GATHERING, '2026-10-06T15:00:00+09:00'));
 
-    expect(row?.meta).toBe('15:00 · 동의 1/3 · 기다리는 중');
+    expect(row?.meta).toBe('15:00 · 동의 1/3');
     expect(row?.reopens).toBe(true);
   });
 
   it("says its day in the map's Quest list on another day, as the list's other rows do", () => {
     const [row] = rows(bookingParty(GATHERING));
 
-    expect(row?.meta).toBe('내일 15:00 · 동의 1/3 · 기다리는 중');
+    expect(row?.meta).toBe('내일 15:00 · 동의 1/3');
+  });
+
+  it("says 모두 동의 in the map's Quest list once every Friend has consented", () => {
+    const [row] = rows(bookingParty({ ...GATHERING, status: 'ready', consented: 3 }, '2026-10-06T15:00:00+09:00'));
+
+    expect(row?.meta).toBe('15:00 · 모두 동의');
   });
 
   it('gives the Quest list screen, whose rows sit under day headings, its line with no day word', () => {

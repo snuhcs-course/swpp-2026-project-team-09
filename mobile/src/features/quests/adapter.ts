@@ -17,7 +17,7 @@
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
 import { koreaClock, koreaDate, koreaDay, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
-import { requestFlagOf, requestLine } from './room-request-flag';
+import { requestFlagOf, requestLine, requestShortLine } from './room-request-flag';
 
 // What a row of the Quest list is drawn as, which gives its colour, by the Quest's own Join Policy: a class; `open`, a
 // 공개 파티, an Open or an Approval Quest; `closed`, a 비공개 파티, a Closed Quest. Whether its Party is switched on
@@ -282,8 +282,8 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
         : sharedKicker(quest, partyOf(quest, myParty, parties) !== null, meId),
       label: kindLabel(tone, quest, meId),
       title: quest.title,
-      // The map's list says no day for today, as `meta` does.
-      meta: request === null ? meta(subQuest, now) : requestLine(request, !today(start, now)),
+      // The map's list says no day for today, as `meta` does, and only the request's fact: its row is narrow.
+      meta: request === null ? meta(subQuest, now) : requestShortLine(request, !today(start, now)),
       place: subQuest?.place?.label ?? '',
       time: start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),

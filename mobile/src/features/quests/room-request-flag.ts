@@ -23,6 +23,8 @@ export interface RequestFlag {
   day: string;
   // "동의 1/3 · 기다리는 중", or "모두 동의 · 예약하기".
   state: string;
+  // The state's fact alone, for a row too narrow for the whole state: "동의 1/3", or "모두 동의".
+  fact: string;
 }
 
 // The request the Quest is flagged for: one still gathering or ready. A booked or ended one is an ordinary Quest.
@@ -38,11 +40,13 @@ export function requestFlagOf(quest: Pick<Quest, 'roomRequest'>, start: string |
     return null;
   }
   const { status, consented, asked } = request;
+  const fact = status === 'ready' ? '모두 동의' : `동의 ${String(consented)}/${String(asked)}`;
   return {
     title: '관정 그룹스터디룸',
     time: koreaClock(start),
     day: koreaDay(start, now),
-    state: status === 'ready' ? '모두 동의 · 예약하기' : `동의 ${String(consented)}/${String(asked)} · 기다리는 중`,
+    state: status === 'ready' ? `${fact} · 예약하기` : `${fact} · 기다리는 중`,
+    fact,
   };
 }
 
@@ -55,6 +59,12 @@ export function requestWords({ title, day, time }: RequestFlag): string {
 // the list already says the day (#662's pictures).
 export function requestLine({ day, time, state }: RequestFlag, withDay = true): string {
   return withDay ? `${day} ${time} · ${state}` : `${time} · ${state}`;
+}
+
+// The map's Quest list row, too narrow for the whole line (#662's pictures): "15:00 · 동의 1/3", its day when not today.
+// The flag beside it says the state word.
+export function requestShortLine({ day, time, fact }: RequestFlag, withDay: boolean): string {
+  return withDay ? `${day} ${time} · ${fact}` : `${time} · ${fact}`;
 }
 
 // "관정 그룹스터디룸 15:00" over "내일 · 동의 1/3 · 기다리는 중".
