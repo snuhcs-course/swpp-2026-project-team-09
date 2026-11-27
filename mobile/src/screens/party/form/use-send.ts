@@ -20,7 +20,7 @@ import { newIdempotencyKey } from '@/api/idempotency-key';
 import { QUESTS_KEY, RECRUITING_KEY, SENT_INVITATIONS_KEY } from '@/api/queries';
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { Quest } from '@/api/types';
-import { useToast } from '@/design-system';
+import { type IconName, useToast } from '@/design-system';
 import {
   attendingTitleOf,
   changeOf,
@@ -107,6 +107,12 @@ export type Sending =
   | { sent: 'refused'; toast: string }
   | { sent: 'taken' | 'room'; questId: string; toast: string; invitesRefused?: boolean };
 
+// The icon of a sending's toast, for every one who shows it: ✓ only for a Quest made or changed with every Friend
+// invited; a refusal, a step left to the room and a Friend left uninvited are failures, with the alert icon.
+export function sendingIcon(sending: Sending): IconName {
+  return sending.sent === 'taken' && sending.invitesRefused !== true ? 'check' : 'alert';
+}
+
 // Sends the form: makes the Quest, for an event by attending it, or changes it, then invites the chosen Friends. The
 // photo and the tags go with it, and the phone keeps them. It shows nothing and goes nowhere.
 export function useSendParty(
@@ -166,9 +172,7 @@ export function useSend(
   const showToast = useToast();
   return async (form, friends, plan) => {
     const sending = await sendParty(form, friends, plan);
-    // A Quest that was made or changed is done; a Friend left uninvited is a failure, with the alert icon.
-    const done = sending.sent === 'taken' && sending.invitesRefused !== true;
-    showToast(sending.toast, undefined, done ? 'check' : 'alert');
+    showToast(sending.toast, undefined, sendingIcon(sending));
     if (sending.sent === 'room') {
       router.replace(`/room/${sending.questId}`);
     }
