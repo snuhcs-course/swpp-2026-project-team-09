@@ -77,3 +77,8 @@ One file, `answer/line-types.ts`, gives the three kinds of line one type each: `
 - [ ] Before and after pictures at 1.0 and 1.3 of each kind that changed.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 15 min in the session that finished it (an estimate: active time with gaps over 5 minutes left out). The earlier work (the code, the first tests and the first review round), in a session of the account used before 2026-11-27 16:23, is not counted, as its transcript is not read here. Tokens are this session's, split by time across tickets 19, 20 and 21; pictures not yet taken.
+- Tokens: input 80 uncached, with 57,600 cache writes and 7,010,000 cache reads; output 17,300. No subagents.
