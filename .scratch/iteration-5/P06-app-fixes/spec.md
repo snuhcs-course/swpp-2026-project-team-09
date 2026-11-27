@@ -66,7 +66,7 @@ One ticket per item, numbered as the items:
 17. [17: The tab bars of 파티, 행사 and 내 정보, and the friend panel's: a larger title, closer to its line](issues/17-tab-bar-title.md)
 18. [18: 내 파티's cards like 찾기's: a board or 비공개 tag, a crown for the 파티 the User leads, the time, the place and the event on their own lines, and tighter groups](issues/18-mine-cards-like-find.md)
 20. [20: A request to join is answered in 알림 and by a push, and a new one reaches the Leader by a push](issues/20-join-request-notices.md)
-21. [21: Activating a 파티 rings its members, as its ask says](issues/21-activation-push.md)
+21. [21: Activating a 파티 rings its members (a change to ticket 19's decision)](issues/21-activation-push.md)
 22. [22: A 파티 that ends and a member who is removed are told apart, by a push and in 알림](issues/22-party-gone-notices.md)
 23. [23: A removed member leaves the activation, and a 파티 that is gone ends its activation](issues/23-removed-leave-activation.md)
 24. [24: An invitation card says when and where the 파티 meets](issues/24-invitation-time-place.md)
