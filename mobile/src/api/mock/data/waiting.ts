@@ -4,9 +4,11 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { QuestInvitation } from '@/api/waiting-types';
+import type { KeptNotification, QuestInvitation } from '@/api/waiting-types';
+import { koreaInstant } from '@/korea-time';
 import { frameTime } from './frame';
 
 // What waits for the User in the `Profile` frame's 알림 besides the Friend Requests, which `../friendships.ts` keeps:
@@ -14,7 +16,7 @@ import { frameTime } from './frame';
 
 const TAE_O = { id: 'f8', name: '윤태오', department: '물리천문학부' };
 
-export const QUEST_INVITATIONS: QuestInvitation[] = [
+export const QUEST_INVITATIONS: Omit<QuestInvitation, 'nextSubQuest'>[] = [
   {
     id: 'qi-1',
     quest: {
@@ -30,5 +32,55 @@ export const QUEST_INVITATIONS: QuestInvitation[] = [
       createdAt: frameTime('10:10'),
     },
     sentAt: frameTime('10:15'),
+  },
+];
+
+// The invitations as the main server lists them, with the `PartyInvites` frame's plan: 토 14:00 at the library, two days
+// after the frame's Thursday, counted from `now`.
+export function questInvitationsAt(now: Date): QuestInvitation[] {
+  return QUEST_INVITATIONS.map(({ id, quest, sentAt }) => ({
+    id,
+    quest,
+    sentAt,
+    nextSubQuest: {
+      id: `sq-${quest.id}`,
+      title: quest.title,
+      startsAt: koreaInstant(now, 2, 14, 0).toISOString(),
+      endsAt: null,
+      place: { placeId: null, label: '중앙도서관 (62동)', latitude: null, longitude: null },
+    },
+  }));
+}
+
+// The Notifications the main server keeps for the User: 김민준's answers to the User's requests to join, one accepted
+// into the AI 커리어 설명회 party the User holds and one declined from the board's 알고리즘 코테 스터디; and a 파티 its
+// Leader 최유나 ended, whose row says it is gone when pressed.
+export const KEPT_NOTIFICATIONS: KeptNotification[] = [
+  {
+    id: 'join-accepted:party:q-ai',
+    kind: 'join-accepted',
+    title: '참여 신청이 수락됐어요',
+    ahead: null,
+    line: 'AI 커리어 설명회 · 김민준님의 파티',
+    at: frameTime('11:20'),
+    url: '/main?card=party:q-ai',
+  },
+  {
+    id: 'join-declined:find-parties:post-1',
+    kind: 'join-declined',
+    title: '참여 신청이 거절됐어요',
+    ahead: null,
+    line: '알고리즘 코테 스터디 · 김민준님의 파티',
+    at: frameTime('10:40'),
+    url: '/main?card=find-parties:post-1',
+  },
+  {
+    id: 'party-ended:party-gone:post-0',
+    kind: 'party-ended',
+    title: '파티가 없어졌어요',
+    ahead: null,
+    line: '버들골 저녁 러닝 크루 · 최유나님이 없앴어요',
+    at: frameTime('09:30'),
+    url: '/main?card=party-gone:post-0',
   },
 ];

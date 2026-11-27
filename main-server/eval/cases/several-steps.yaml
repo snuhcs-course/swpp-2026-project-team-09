@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-27  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # One message with two requests (P03): a 관정 seat, then dinner from 관정. The P4 world asked from an app that draws
@@ -23,6 +24,27 @@
     tools:
       required: [findLibrarySpace, proposeLibraryBooking, planMeal]
       forbidden: [findMealRestaurants, showRestaurants, proposeQuest]
+    cards:
+      - kind: library
+        action: book
+    steps:
+      - { kind: seat, status: shown }
+      - { kind: meal, status: shown, from: 62-1동 }
+
+# The same two requests from the app that says `study-plan` (`capabilities: study-app`, P10 ticket 28), with 관정 named
+# as the place to study and no space: still a seat for the library tools, never planStudy, so the steps hold the seat.
+- id: steps-kwanjeong-study-then-dinner-study-app
+  category: several-steps
+  world: p4-answer
+  capabilities: study-app
+  now: '2026-11-02T13:00:00+09:00'
+  turns:
+    - user: 17시 반에 관정에서 공부하다가 19시쯤 저녁 먹을래
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking, planMeal]
+      forbidden: [planStudy, findMealRestaurants, showRestaurants, proposeQuest]
     cards:
       - kind: library
         action: book

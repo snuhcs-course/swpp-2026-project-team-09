@@ -15,6 +15,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -226,6 +227,8 @@ export const noticeTone = {
   navy: { ink: color.snuBlue, ground: color.blue50 },
   invitation: { ink: color.quest, ground: '#FFF4D6' },
   request: { ink: color.party, ground: color.partySoft },
+  // What did not go the User's way, such as a declined request to join: told without a colour of its own.
+  muted: { ink: color.inkMuted, ground: color.surfaceSunken },
 } as const;
 
 // On a fill of the key colour, as the `Main` frame draws "활성 파티": the dot that says the Party is live, the ring

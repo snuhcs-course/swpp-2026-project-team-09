@@ -224,11 +224,11 @@ interface GivenTool {
 
 const schemaWithProperties = z.looseObject({ properties: z.record(z.string(), z.unknown()) });
 
-// A tool's input schema without its askedToBook property, which must be there.
-function withoutAskedToBook(schema: unknown): unknown {
+// A seat tool's input schema without the properties only an app that draws answers is given, which must be there.
+function withoutAnsweringOnly(schema: unknown): unknown {
   const { properties, ...rest } = schemaWithProperties.parse(schema);
-  const { askedToBook, ...others } = properties;
-  expect(askedToBook).toBeDefined();
+  const { askedToBook, skipClasses, attendClasses, ...others } = properties;
+  expect([askedToBook, skipClasses, attendClasses]).not.toContain(undefined);
   return { ...rest, properties: others };
 }
 
@@ -267,8 +267,9 @@ describe('An app that does not draw answers', () => {
     expect(shared).toContain('proposeLibraryBooking');
     for (const name of shared) {
       const schema = answering.get(name)?.inputSchema;
-      // proposeLibraryBooking also takes askedToBook, when the User asks the Assistant to book it.
-      expect(name === 'proposeLibraryBooking' ? withoutAskedToBook(schema) : schema).toEqual(
+      // proposeLibraryBooking also takes askedToBook, when the User asks the Assistant to book it, and the Classes
+      // left out of a seat for today without a start, which only such an app is given (P05 ticket 70).
+      expect(name === 'proposeLibraryBooking' ? withoutAnsweringOnly(schema) : schema).toEqual(
         today.get(name)?.inputSchema,
       );
       if (name !== 'proposeLibraryBooking' && name !== 'findLibrarySpace') {
