@@ -17,9 +17,24 @@ import { metresBetween } from './answer-drawing';
 import { fixedAfter, routeLineId, startOf } from './answer-walks';
 import { NO_WAYS, shuttleLines, shuttleRouteLines, stopDrafts, type Ways } from './shuttle-legs';
 
-// Whether an answer is drawn as a meal answer of the redesign: a meal whose Plans have menus.
+// Whether an answer is drawn as a meal answer of the redesign: a meal whose Plans have menus, or a study answer alone,
+// whose places are candidates as a meal's (P10 ticket 17). A study answer together is the group study room's.
 export function drawsMeal({ input, plans }: AnswerReply): boolean {
+  if (input.kind === 'study') {
+    return studyAlone({ input, plans });
+  }
   return input.kind === 'meal' && plans.some(({ menu }) => menu !== undefined);
+}
+
+// A study answer of places to study alone: not together, no Friend added, and no Plan with a group study room.
+export function studyAlone({ input, plans }: Pick<AnswerReply, 'input' | 'plans'>): boolean {
+  return (
+    input.kind === 'study' &&
+    !input.together &&
+    input.people.length === 1 &&
+    plans.length > 0 &&
+    plans.every(({ study }) => study !== undefined && study.group === undefined)
+  );
 }
 
 // A meal answer's route on the map (the answer screen's redesign, board E1; P04 ticket 76): the way to the chosen place

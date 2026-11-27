@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ClassSave, ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
@@ -94,7 +95,7 @@ function slotReady(slot: SlotDraft): boolean {
 }
 
 // Whether slot `index` shares a day with another slot and their hours cross there: the main server refuses a class
-// whose own times cross. Only a class read from a screenshot opens so, with two times on one day.
+// whose own times cross. Two slots may share a day at hours that do not cross (P06 ticket 11a).
 export function slotCrossesAnother(draft: ClassDraft, index: number): boolean {
   const slot = draft.slots[index];
   if (slot === undefined || !slotReady(slot)) {
@@ -126,11 +127,6 @@ export function slotName(slot: SlotDraft, index: number): string {
   }
   const hours = slot.start !== '' && slot.end !== '' && !endNotAfterStart(slot) ? ` ${slot.start}–${slot.end}` : '';
   return `${dayText(slot.days)}${hours}`;
-}
-
-// The days other slots hold, which this slot cannot take.
-export function takenDays(draft: ClassDraft, index: number): number[] {
-  return draft.slots.flatMap((slot, other) => (other === index ? [] : slot.days));
 }
 
 // The draft without slot `index`. When the first goes, a slot that took its Place and room keeps them as its own,

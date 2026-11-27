@@ -5,14 +5,16 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Cuisine, Plan } from '@/api/assistant-types';
-import { color, font, MEAL_NUMBER, radius, RoundNumber, space, text } from '@/design-system';
+import { color, space, text } from '@/design-system';
 import { addedWalk, fadedPlan, travelWords } from '@/features/assistant/answer-walks';
 import { kindShown, serves } from '@/features/assistant/meal-kinds';
+import { studyAlone } from '@/features/assistant/meal-marks';
 import { dishWords, priceWords } from '@/features/assistant/meal-menus';
 import {
   fitDishWords,
@@ -24,8 +26,10 @@ import {
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { withParticle } from '@/features/map/short-name';
 import { koreaClock } from '@/korea-time';
+import { ClosedRow, Heading, Row } from './candidate-rows';
 import { KindChips } from './kind-chips';
 import { OverPriceRows } from './over-price-rows';
+import { droppedRowsOf, hasKind, STUDY_ORDER_WORDS, type StudyKind, studyRowOf } from './study-rows';
 
 // The raised card of a meal answer (board E3): every candidate as a row, the kinds of food over them as the filter.
 
@@ -35,8 +39,9 @@ export interface CandidateRow {
   planId: string;
   name: string;
   // The way this choice adds to the User's day, "걸음 16분", or "이동 16분 · 셔틀" with a leg by shuttle, or when the User
-  // is there, "11:53 도착", when where they start is not known.
-  when: string;
+  // is there, "11:53 도착", when where they start is not known. Null for a study answer's place, whose way is at the
+  // right (`price`) and whose space and hours are under its name (`dishes`, P10 ticket 18).
+  when: string | null;
   // `when` is a clock time ("11:53 도착"), drawn in the time's gold; the way's words are ink (P04 ticket 85).
   clock: boolean;
   // In minutes, null when not known.
@@ -70,9 +75,24 @@ function rowOf(plan: Plan, index: number, kind: Cuisine | null, fitDish: boolean
   };
 }
 
-// A meal answer with a Plan, whose raised card is the list, though it holds one place.
+// A meal answer with a Plan, whose raised card is the list, though it holds one place; or a study answer alone, whose
+// places are listed as a meal's (P10 ticket 18).
 export function mealCard(answer: AnswerReply | null): boolean {
-  return answer?.input.kind === 'meal' && answer.plans.length > 0;
+  if (answer === null) {
+    return false;
+  }
+  return (answer.input.kind === 'meal' && answer.plans.length > 0) || studyAlone(answer);
+}
+
+// A study answer's rows, of the kind of space chosen on the phone, in the main server's order.
+function studyRowsOf(answer: AnswerReply, kind: StudyKind | null): CandidateRow[] {
+  return answer.plans.flatMap((plan, index) => {
+    if (kind !== null && !hasKind(plan, kind)) {
+      return [];
+    }
+    const { detail, side, ...rest } = studyRowOf(plan, index);
+    return [{ ...rest, when: null, clock: false, dishes: detail, price: side }];
+  });
 }
 
 // The places the list offers ("8곳 목록"), as its first line and "전체" count them: the candidates, which the answer
@@ -99,9 +119,12 @@ export function friendNamesOf(answer: AnswerReply): string[] {
 // The candidates of a meal answer with more than one, those of the kind on screen alone when one is chosen, the least
 // walking first, then the earliest there, then the map's order; without any walking, in the main server's order. None
 // for any other answer.
-export function candidateRowsOf(answer: AnswerReply | null): CandidateRow[] {
+export function candidateRowsOf(answer: AnswerReply | null, studyKind: StudyKind | null = null): CandidateRow[] {
   if (answer === null || !mealCard(answer)) {
     return [];
+  }
+  if (answer.input.kind === 'study') {
+    return studyRowsOf(answer, studyKind);
   }
   const kind = kindShown(answer);
   const fitDish = showsFitDish(answer);
@@ -146,6 +169,9 @@ function byWalking(answer: AnswerReply): boolean {
 // being unknown, the main server's order of its pick first ("추천 순"); by price as the main server ordered it ("싼 순",
 // P04 ticket 92).
 export function listOrderWords(answer: AnswerReply): string {
+  if (answer.input.kind === 'study') {
+    return STUDY_ORDER_WORDS;
+  }
   if (pricedOrder(answer)) {
     return PRICED_ORDER_WORDS;
   }
@@ -155,115 +181,9 @@ export function listOrderWords(answer: AnswerReply): string {
   return walksKnown(answer) ? '추천 순' : '일찍 여는 순';
 }
 
-const BADGE = 22;
-const BADGE_RIM = 1.5;
-
-// A row's number, as the map numbers it: soft coral with a coral rim, the chosen one solid coral (P04 ticket 85).
-function RowNumber({ number, chosen }: { number: number; chosen: boolean }): ReactElement {
-  return (
-    <View style={[styles.badge, chosen && styles.chosenBadge]}>
-      <RoundNumber
-        inside={BADGE - 2 * BADGE_RIM}
-        number={number}
-        style={[styles.number, chosen && styles.chosenNumber]}
-      />
-    </View>
-  );
-}
-
-// A row's way in ink, or the clock time when the User is there in gold (P04 ticket 85).
-function WayLine({ row }: { row: CandidateRow }): ReactElement {
-  return (
-    <Text
-      numberOfLines={1}
-      style={[styles.when, row.clock && styles.clock]}
-      testID={`meal-row-${String(row.number)}-when`}
-    >
-      {row.when}
-    </Text>
-  );
-}
-
-function Row({
-  row,
-  chosen,
-  disabled,
-  onPress,
-}: {
-  row: CandidateRow;
-  chosen: boolean;
-  disabled: boolean;
-  onPress: () => void;
-}): ReactElement {
-  const { number, name, when, dishes, price } = row;
-  const said = [`${String(number)} ${name}`, when, dishes, price, chosen ? '고른 곳' : null]
-    .filter((words) => words !== null)
-    .join(' · ');
-  return (
-    <Pressable
-      accessibilityLabel={said}
-      accessibilityRole="button"
-      accessibilityState={{ selected: chosen, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        chosen && styles.chosen,
-        row.faded && !chosen && styles.faded,
-        pressed && styles.pressed,
-      ]}
-      testID={`meal-row-${String(number)}`}
-    >
-      <RowNumber chosen={chosen} number={number} />
-      <View style={styles.middle}>
-        <Text numberOfLines={1} style={styles.name}>
-          {name}
-        </Text>
-        <WayLine row={row} />
-        {dishes === null ? null : (
-          <Text numberOfLines={1} style={styles.dishes}>
-            {dishes}
-          </Text>
-        )}
-      </View>
-      {price === null ? null : <Text style={styles.price}>{price}</Text>}
-    </Pressable>
-  );
-}
-
-// A Restaurant closed for the meal: its name and its notice, grey, not numbered, and no press.
-function ClosedRow({ name, notice }: { name: string; notice: string }): ReactElement {
-  return (
-    <View
-      accessibilityLabel={`${name} · ${notice}`}
-      accessible
-      style={[styles.row, styles.faded]}
-      testID="meal-closed-row"
-    >
-      <View style={[styles.badge, styles.closedBadge]} />
-      <View style={styles.middle}>
-        <Text numberOfLines={1} style={styles.name}>
-          {name}
-        </Text>
-        <Text numberOfLines={2} style={styles.dishes}>
-          {notice}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function Heading({ words }: { words: string }): ReactElement {
-  return (
-    <Text accessibilityRole="header" style={styles.heading}>
-      {words}
-    </Text>
-  );
-}
-
 interface MealListProps {
   answer: AnswerReply;
-  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'chooseKind' | 'change'>;
+  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'show' | 'chooseKind' | 'change'>;
   // A Plan is being sent or is made, or a recalculation is on its way: nothing is chosen, as on the map.
   busy: boolean;
 }
@@ -273,22 +193,27 @@ interface MealListProps {
 // meal end the list under "쉬는 곳". A press on a row chooses that place,
 // as a press on its tag does, and opens its menu (board E4).
 export function MealList({ answer, shown, busy }: MealListProps): ReactElement | null {
+  // A study answer's kind of space, chosen on the phone alone (P10 ticket 18).
+  const [kind, setKind] = useState<StudyKind | null>(null);
   if (!mealCard(answer)) {
     return null;
   }
+  const study = answer.input.kind === 'study';
   const chosen = answer.plans[shown.index]?.id;
-  const rows = candidateRowsOf(answer);
+  const rows = candidateRowsOf(answer, kind);
 
   const closed = answer.closed ?? [];
+  // A study place's own view is ticket 19's: until then a press chooses it, as a press on its round does.
   const row = (one: CandidateRow): ReactElement => (
     <Row
       chosen={one.planId === chosen}
       disabled={busy}
       key={one.planId}
       onPress={() => {
-        shown.openMenu(one.planId);
+        (study ? shown.show : shown.openMenu)(one.planId);
       }}
       row={one}
+      study={study}
     />
   );
   return (
@@ -296,57 +221,30 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
       <Text numberOfLines={1} style={styles.order} testID="meal-list-order">
         {orderLineOf(answer, rows.length)}
       </Text>
-      <KindChips answer={answer} change={shown.change} disabled={busy} onChoose={shown.chooseKind} />
+      <KindChips
+        answer={answer}
+        change={shown.change}
+        disabled={busy}
+        onChoose={shown.chooseKind}
+        study={study ? { chosen: kind, onChoose: setKind } : null}
+      />
       {rows.map((one) => row(one))}
       <OverPriceRows answer={answer} />
       {closed.length === 0 ? null : <Heading words={CLOSED_HEADING} />}
       {closed.map(({ place, notices }) => (
         <ClosedRow key={`${place.placeId}:${place.label}`} name={place.label} notice={notices.join(' ')} />
       ))}
+      {study
+        ? droppedRowsOf(answer).map(({ key, name, reason }) => (
+            <ClosedRow key={key} name={name} notice={reason} testID="meal-dropped-row" />
+          ))
+        : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   list: { gap: space[1] },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space[3],
-    paddingVertical: space[2],
-    paddingHorizontal: space[2],
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  // The chosen Restaurant and the numbers in a meal answer's coral (P04 ticket 85), as on the map; times keep gold.
-  chosen: { borderColor: color.meal, backgroundColor: color.mealSoft },
-  pressed: { opacity: 0.6 },
-  faded: { opacity: 0.45 },
-  badge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: BADGE,
-    height: BADGE,
-    marginTop: 2,
-    borderRadius: radius.full,
-    borderWidth: BADGE_RIM,
-    borderColor: color.meal,
-    backgroundColor: color.mealSoft,
-  },
-  chosenBadge: { backgroundColor: color.meal },
-  chosenNumber: { color: color.onPrimary },
-  closedBadge: { borderColor: color.inkSubtle, backgroundColor: color.inkSubtle },
-  heading: { ...text.caption, marginTop: space[2], color: color.inkMuted },
   // On the list's left edge, above the kinds.
   order: { ...text.caption, color: color.inkMuted },
-  // The map's round's number, so that the two read as the same mark (P04 ticket 91).
-  number: { fontFamily: font.bold, fontSize: MEAL_NUMBER, color: color.meal },
-  middle: { flex: 1, gap: 2 },
-  name: { ...text.body, fontFamily: font.bold, color: color.ink },
-  // The way this choice adds in ink, as the name; gold is for clock times alone (P04 ticket 85).
-  when: { ...text.caption, fontFamily: font.semiBold, color: color.ink },
-  clock: { color: color.quest },
-  dishes: { ...text.caption, color: color.inkMuted },
-  price: { ...text.caption, color: color.inkMuted },
 });
