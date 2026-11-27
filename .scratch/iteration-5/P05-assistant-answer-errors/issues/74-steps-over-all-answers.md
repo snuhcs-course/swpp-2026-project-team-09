@@ -19,6 +19,9 @@ Native files: none. Releases: the main server. The app draws the steps by key in
 - **Every step whose conditions change is planned again** through the planner of `POST /assistant/answers`, including one on screen that this message did not name. The reply gives that answer again by its key; unchanged ones are not resent. A step that could not be planned again stays as it was, `not-done`, with "앞 일정이 바뀌었는데 다시 짜지 못했어요".
 - **The keys on screen are paired with their conditions by order.** A recalculation may change an answer's conditions into another request (a Friend added, the bar's other meal); ticket 73 answers it with its new key. The server never rebuilds an on-screen answer's key from its conditions: it pairs `context.answers` with the answer steps by order. It names this message's answer of the same request, and a request withdrawn, by the key on screen, so an app that kept an old key still works.
 - The steps sent back are counted once each; an answer's step without a key is left out.
+- **A step a follow-up adds between two on screen** (a seat from 15:00 between lunch and dinner) takes its place among them by time, so it is the step before the later one, which then sets out from it.
+- **The steps given fit what the app may send back:** at most 32 steps (and as many answers), titles and labels of at most 200 characters, reasons of at most 500 (an event's title is a collected post's own).
+- `main-server/README.md` documents the steps, `context.steps`, `shows.key`, `source: 'step'`, and the fixes every app gets.
 - **A step at a fixed time** (events, Quests, a new 파티) never moves. When it starts before a step before it ends, it stays a step, `not-done`, with "앞 일정이 HH:MM에 끝나 제때 갈 수 없어요", and a step on screen is judged again. Only the steps done keep the User busy: a refused seat or an event out of reach holds no time.
 - **While the model plans a meal** (`planMeal`), it already sets out from the step before it: a meal on screen's step before there, or else the step a meal follows (A2 below).
 - **Which kinds move** is one table, `STEP_KINDS` in `steps/all-steps.ts`. A new kind is added there, where the compiler asks for it, and to `Movable` when it moves.
@@ -64,6 +67,7 @@ These were decided by the orchestrating session, or here where noted, and may be
 - [x] The step before, a Class between and left out, the User's own start, a moved step, a chain without its step, both sources, the step a meal follows by time, a study place's ready time, and the steps on screen sent back with nothing changed. (Unit test, `all-steps`.)
 - [x] The booking steps' de-duplication, the order of a plan-less step, a changed plan and the sentence added for it. (Unit test, `steps-of-a-message`.)
 - [x] A study place recalculated into one together keeps its key and is planned again, never doubled; a request withdrawn beside one kept; a refused seat holds no time and an event out of reach blocks nothing after it; a step not planned again is not done; steps sent twice or without a key; an answer changed into another request stays in its place. (Unit test, `steps-follow-ups`, failing before.)
+- [x] A seat a follow-up adds between lunch and dinner on screen is the step before dinner, and the same steps sent back with nothing changed plan nothing again; the steps given fit the request's limits. (Unit test, `steps-added-between`, failing before.)
 - [x] The seat + meal steps of today are unchanged. (`assistant-plan-steps.integration`, untouched.)
 
 ## Comments

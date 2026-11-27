@@ -10,6 +10,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlanStudy } from './study-plan.dto.js';
@@ -21,7 +22,7 @@ import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
 import { type PlanInput, planInputSchema } from './plan-input.dto.js';
-import { replyStepsSchema } from './reply-step.dto.js';
+import { replyStepsSchema, STEPS_MAX } from './reply-step.dto.js';
 
 // The contract of an answer drawn on the map, declared with the same shape in the app's Assistant types. Times are
 // Korea time with the offset, clock times are HH:MM, and walks are whole minutes.
@@ -362,8 +363,8 @@ const tappedSchema = z.discriminatedUnion('kind', [
 const MENTIONS_MAX = 20;
 const NAME_MAX = 100;
 const mentionSchema = z.strictObject({ userId: z.uuid(), name: z.string().trim().min(1).max(NAME_MAX) });
-// More answers on screen than one message asks for is a wrong request.
-const ANSWERS_MAX = 8;
+// As many answers on screen as steps.
+const ANSWERS_MAX = STEPS_MAX;
 // More than a conversation leaves out over its days is a wrong request.
 const LEFT_OUT_MAX = 24;
 

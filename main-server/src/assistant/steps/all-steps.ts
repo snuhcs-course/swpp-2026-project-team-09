@@ -14,6 +14,7 @@ import {
   type ReplyStep,
   type StudyInput,
 } from '../dto/answer.dto.js';
+import { fittedStep, STEPS_MAX } from '../dto/reply-step.dto.js';
 import { type Presented, type ToolContext } from '../feature.js';
 import { type DayItem, onDay } from '../free-time/free-time.js';
 import { idsOn, leftOutNow } from '../free-time/left-out-classes.js';
@@ -119,14 +120,24 @@ function bookingsOf(presented: Presented, kwanjeong: () => PlaceDto | null): Rep
   return bookingSteps(presented, place === null ? null : pointOf(place));
 }
 
+// The slots by when their steps start, a step without a time last; slots at the same time stay as they came.
+const inSlotOrder = (slots: readonly Slot[]): Slot[] =>
+  slots.toSorted(
+    (a, b) =>
+      (a.step.startAt === null ? Number.POSITIVE_INFINITY : startOf(a.step)) -
+      (b.step.startAt === null ? Number.POSITIVE_INFINITY : startOf(b.step)),
+  );
+
 // The slots with one of this message in the place of the slot on screen it replaces, or after them.
 function placed(slots: readonly Slot[], slot: Slot, replaces: (other: Slot) => boolean): Slot[] {
   const at = slots.findIndex((other) => other.onScreen && !other.fresh && replaces(other));
   return at === -1 ? [...slots, slot] : slots.with(at, { ...slot, onScreen: true });
 }
 
-// The conversation's steps: those on screen the message did not withdraw, then this message's bookings in the place of
-// one of the same unit that day, and its answers in the place of the one of the same request, under its key.
+// The conversation's steps in time order: those on screen the message did not withdraw, with this message's bookings in
+// the place of one of the same unit that day, its answers in the place of the one of the same request, under its key,
+// and its new ones among them by when they start, so that a step a follow-up adds between two on screen is the step
+// before the later one.
 function slotsOf({ context, presented }: Asking, kwanjeong: () => PlaceDto | null): Slot[] {
   const screen = onScreen(context);
   const withdrawn = new Set((presented.withdrawn ?? []).map((key) => screen.keys.get(key) ?? key));
@@ -147,12 +158,13 @@ function slotsOf({ context, presented }: Asking, kwanjeong: () => PlaceDto | nul
       ),
     shown,
   );
-  return (presented.answers ?? []).reduce((slots, answer) => {
+  const drawn = (presented.answers ?? []).reduce((slots, answer) => {
     const key = keyFor(screen, answer.input);
     const input = isMovable(answer.input) ? answer.input : null;
     const slot = { step: answerStep(answer, key), key, input, answer, onScreen: false, fresh: true };
     return placed(slots, slot, (other) => other.key === key);
   }, booked);
+  return inSlotOrder(drawn);
 }
 
 const usableOn =
@@ -163,8 +175,8 @@ const usableOn =
 const latestOf = (slots: readonly Slot[]): ReplyStep | null =>
   slots.toSorted((a, b) => startOf(a.step) - startOf(b.step)).at(-1)?.step ?? null;
 
-// The step a slot follows: for one on screen, the step before it there with a place on its day; for a new one, the
-// latest other step with a place on its day that starts no later than it does.
+// The step a slot follows: for one on screen, the step before it with a place on its day; for a new one, the latest
+// other step with a place on its day that starts no later than it does.
 function stepBeforeSlot(slots: readonly Slot[], at: number): ReplyStep | null {
   const slot = slots[at];
   if (slot?.input === null || slot === undefined) {
@@ -288,22 +300,10 @@ async function settled(
   return { slots: slots.with(at, next), moved: moved ? [slot.key] : [] };
 }
 
-// The order the steps that can move are settled in: those on screen in their order, then the new ones by when they
-// start, so that the step before one is settled first.
-function settleOrder(slots: readonly Slot[]): number[] {
-  const startOfSlot = ({ input, step }: Slot): number =>
-    step.startAt === null
-      ? ((input === null ? null : askedStart(input))?.getTime() ?? Number.POSITIVE_INFINITY)
-      : startOf(step);
-  const movable = slots.flatMap((slot, at) => (slot.input === null ? [] : [{ slot, at }]));
-  return [
-    ...movable.filter(({ slot }) => slot.onScreen).map(({ at }) => at),
-    ...movable
-      .filter(({ slot }) => !slot.onScreen)
-      .toSorted((a, b) => startOfSlot(a.slot) - startOfSlot(b.slot))
-      .map(({ at }) => at),
-  ];
-}
+// The order the steps that can move are settled in: the order of the steps, so that the step before one is settled
+// first.
+const settleOrder = (slots: readonly Slot[]): number[] =>
+  slots.flatMap((slot, at) => (slot.input === null ? [] : [at]));
 
 // A step at a fixed time that starts before a step before it ends cannot be reached: it stays, not done, with why. Only
 // the steps done keep the User busy: a refused seat or an event out of reach holds no time. A step on screen once out
@@ -345,7 +345,9 @@ export async function presentAllSteps(context: ToolContext, services: AllStepsSe
       },
       Promise.resolve({ slots, moved: [] }),
     );
-    presented.steps = withReach(stepOrder(done.slots.map(({ step }) => step)));
+    presented.steps = withReach(stepOrder(done.slots.map(({ step }) => step)))
+      .slice(-STEPS_MAX)
+      .map((step) => fittedStep(step));
     const added = presented.steps.filter((step) => done.moved.includes(keyOf(step) ?? ''));
     if (added.length > 0) {
       presented.addedWords = added.map((step) => movedStepSentence(step, context.now)).join(' ');
