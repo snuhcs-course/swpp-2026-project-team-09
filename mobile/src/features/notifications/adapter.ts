@@ -68,7 +68,7 @@ export interface NoticeView {
 export interface NoticeSources {
   parties: readonly Party[] | null;
   friendRequests: FriendRequests | null;
-  invitations: readonly QuestInvitation[] | null;
+  invitations: readonly NoticedInvitation[] | null;
   // Each Quest the User leads that others ask to join, with its requests.
   joinRequests: readonly { quest: Quest; requests: readonly JoinRequest[] }[] | null;
   kept: readonly KeptNotification[] | null;
@@ -168,12 +168,15 @@ function friendRequestNotices({ received }: FriendRequests): NoticeView[] {
   }));
 }
 
-function invitationNotices(invitations: readonly QuestInvitation[]): NoticeView[] {
-  return invitations.map(({ id, quest }) => ({
+// What an invitation's row reads: it names the Leader who sent it.
+type NoticedInvitation = Pick<QuestInvitation, 'id' | 'quest' | 'invitedBy'>;
+
+function invitationNotices(invitations: readonly NoticedInvitation[]): NoticeView[] {
+  return invitations.map(({ id, quest, invitedBy }) => ({
     key: `invitation-${id}`,
     kind: 'invitation',
     icon: 'calendar',
-    title: `${quest.leader.name}님의 파티 초대`,
+    title: `${invitedBy.name}님의 파티 초대`,
     sub: quest.title,
     questId: null,
     address: cardAddress('invitation', id),

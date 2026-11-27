@@ -6,6 +6,8 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -64,6 +66,8 @@ describe('초대', () => {
     const invitation = within(screen.getByLabelText(INVITATION.quest.title));
     expect(invitation.getByText('윤태오님이 비공개 파티에 초대했어요')).toBeVisible();
     expect(invitation.getByText('30분 전')).toBeVisible();
+    expect(invitation.getByText('내일 19:00')).toBeVisible();
+    expect(invitation.getByText('301동 앞')).toBeVisible();
     expect(invitation.getByText(INVITATION.quest.description)).toBeVisible();
     expect(invitation.getByText('1명 참여 중')).toBeVisible();
     await user.press(invitation.getByRole('button', { name: '수락' }));
@@ -87,6 +91,27 @@ describe('초대', () => {
   });
 });
 
+describe('an invitation sent by a Leader who no longer leads the 파티', () => {
+  it('names the one who invited, not the Leader now', async () => {
+    const inviter = { id: '6d1c3f5e-4444-4a5b-8c9d-000000000009', name: '한도경', department: '산업공학과' };
+    setAnswers({ invitations: [{ ...INVITATION, invitedBy: inviter }] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('한도경님이 비공개 파티에 초대했어요')).toBeVisible();
+    expect(invitation.queryByText(/윤태오/u)).toBeNull();
+  });
+
+  it('names the Leader for an invitation from a main server that sends no sender', async () => {
+    const { invitedBy: _sender, ...before } = INVITATION;
+    server.on('GET /quest-invitations', { status: 200, body: [before] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('윤태오님이 비공개 파티에 초대했어요')).toBeVisible();
+  });
+});
+
 describe('a refused acceptance', () => {
   it.each([
     [refusal(404, 'QUEST_INVITATION_NOT_FOUND'), '이미 끝난 초대예요'],
@@ -107,13 +132,35 @@ describe('a refused acceptance', () => {
 });
 
 describe('an invitation in the build that asks the main server', () => {
-  it('leaves out the mocked time, place and companions, and counts the Holders', async () => {
+  it('says the main server’s time and place, leaves out the mocked companions, and counts the Holders', async () => {
     setAnswers({ invitations: [{ ...INVITATION, quest: { ...INVITATION.quest, holderCount: 3 } }] });
     await openAt('/party?tab=invites');
 
     const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('내일 19:00')).toBeVisible();
+    expect(invitation.getByText('301동 앞')).toBeVisible();
     expect(invitation.getByText('3명 참여 중')).toBeVisible();
-    expect(invitation.queryByText(/함께|·/u)).toBeNull();
+    expect(invitation.queryByText(/함께/u)).toBeNull();
+  });
+
+  it('says 시간 미정 and 장소 미정 for an invitation from a main server that sends no next Sub Quest', async () => {
+    const { nextSubQuest: _next, ...before } = INVITATION;
+    server.on('GET /quest-invitations', { status: 200, body: [before] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('시간 미정')).toBeVisible();
+    expect(invitation.getByText('장소 미정')).toBeVisible();
+  });
+
+  it('says 시간 미정 and 장소 미정 for a next Sub Quest with neither', async () => {
+    const next = { id: 'sq-walk', title: '산책', startsAt: null, endsAt: null, place: null };
+    setAnswers({ invitations: [{ ...INVITATION, nextSubQuest: next }] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('시간 미정')).toBeVisible();
+    expect(invitation.getByText('장소 미정')).toBeVisible();
   });
 });
 

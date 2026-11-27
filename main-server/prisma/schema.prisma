@@ -32,6 +32,7 @@
 // 2026-11-21  Opus 5.5   prompted by fyoon46
 // 2026-11-26  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-27  Opus 5.5   prompted by fyoon46
+// 2026-11-28  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -88,6 +89,7 @@ model User {
   ledQuests         Quest[]
   questJoinRequests QuestJoinRequest[]
   questInvitations  QuestInvitation[]
+  sentInvitations   QuestInvitation[]  @relation("QuestInvitationInviter")
   questDeclines     QuestDecline[]
   questRemovals     QuestRemoval[]
   meetupsProposed   Meetup[]           @relation("MeetupProposer")
@@ -724,13 +726,17 @@ model QuestJoinRequest {
 }
 
 // The Leader's invitation of a Friend into a Quest, which waits for the Friend's answer (README.md: Quests).
+// `invitedBy` is the Leader who sent it, kept past a hand-over of the Quest; null for one sent before it was kept, or
+// once that User is gone, which names the Quest's Leader instead.
 model QuestInvitation {
-  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  questId String   @map("quest_id") @db.Uuid
-  quest   Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
-  userId  String   @map("user_id") @db.Uuid
-  user    User     @relation(fields: [userId], references: [id])
-  sentAt  DateTime @default(now()) @map("sent_at")
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId     String   @map("quest_id") @db.Uuid
+  quest       Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId      String   @map("user_id") @db.Uuid
+  user        User     @relation(fields: [userId], references: [id])
+  invitedById String?  @map("invited_by_id") @db.Uuid
+  invitedBy   User?    @relation("QuestInvitationInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+  sentAt      DateTime @default(now()) @map("sent_at")
 
   @@unique([questId, userId])
   @@index([userId])

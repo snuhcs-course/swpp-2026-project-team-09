@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -79,7 +80,7 @@ describe('the band moved whole', () => {
 
     await letGo(held, () => FROM_1225);
 
-    expect(recalculate).toHaveBeenCalledWith(FROM_1225, expect.anything(), null);
+    expect(recalculate).toHaveBeenCalledWith(FROM_1225, expect.anything(), null, []);
     expect(held.shown().recalculating).toBe(true);
     expect(held.shown().moving).toEqual(MOVED);
   });

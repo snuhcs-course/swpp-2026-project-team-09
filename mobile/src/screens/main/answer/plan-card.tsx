@@ -11,6 +11,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -37,6 +38,7 @@ import type { TellAct } from '../library/act-stage';
 import type { LibraryCardActions } from '../library/use-library-call';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
 import { SENTENCE } from './line-types';
+import { useSlotHeld } from './sentence-slot';
 
 interface CardProps {
   shown: ShownAnswer;
@@ -173,9 +175,10 @@ function settled({ made, changed, left }: PlanInvitation): boolean {
 }
 
 // The words over a meal answer's list (`mealWordsOf`); none over a restaurant's menu, nor under a refusal's lines over
-// the Plan, which already say them. They come first, so that the low sheet shows them (P04 ticket 61).
+// the Plan, which already say them, nor while a later bubble holds the card's sentence slot (P10 ticket 29). They come
+// first, so that the low sheet shows them (P04 ticket 61).
 function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): ReactElement | null {
-  const words = mealWordsOf(said, shown);
+  const words = useSlotHeld() ? '' : mealWordsOf(said, shown);
   return words === '' || shown.menuFor !== null ? null : (
     <View testID="meal-words">
       <ChatMarkdown style={styles.words} text={words} />
