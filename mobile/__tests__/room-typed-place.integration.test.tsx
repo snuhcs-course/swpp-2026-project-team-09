@@ -4,6 +4,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -175,7 +176,9 @@ describe('the place of a Sub Quest in 일정', () => {
     answerRoom(server, PICNIC);
     const user = await openRoom(PICNIC);
     // Only the picked point shows the ›: 자하연 is a Place of the list.
-    expect(within(screen.getByLabelText('일정')).getAllByTestId('place-chevron')).toHaveLength(1);
+    expect(
+      within(screen.getByLabelText('일정')).getAllByTestId('place-chevron', { includeHiddenElements: true }),
+    ).toHaveLength(1);
 
     await user.press(within(screen.getByLabelText('일정')).getByRole('button', { name: '301동 앞' }));
     await pass(500);
@@ -192,6 +195,6 @@ describe('the place of a Sub Quest in 일정', () => {
     expect(plan.queryByRole('button', { name: '서울대입구역' })).toBeNull();
     expect(plan.getByText('자하연')).toBeVisible();
     expect(plan.queryByRole('button', { name: '자하연' })).toBeNull();
-    expect(plan.queryByTestId('place-chevron')).toBeNull();
+    expect(plan.queryByTestId('place-chevron', { includeHiddenElements: true })).toBeNull();
   });
 });

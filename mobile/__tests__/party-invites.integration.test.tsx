@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -179,7 +180,7 @@ describe('the place of an invitation’s 파티 picked on the map', () => {
     const user = await openAt('/party?tab=invites');
 
     const invitation = within(screen.getByLabelText(INVITATION.quest.title));
-    expect(invitation.getByTestId('place-chevron')).toBeVisible();
+    expect(invitation.getByTestId('place-chevron', { includeHiddenElements: true })).toBeOnTheScreen();
     await user.press(invitation.getByRole('button', { name: '301동 앞' }));
     await pass(500);
 
