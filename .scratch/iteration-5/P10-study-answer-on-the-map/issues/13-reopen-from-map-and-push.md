@@ -37,3 +37,9 @@ Native files: none. Releases: with ticket 16.
 - [x] Whole lint, format and types.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 59 minutes in the p04-58 session, between 00:01 and 03:55 UTC, an estimate counted over ticket 13's own stretches. Those cover the reopen path, the flag and the lists' rows, the flag's two lines (①), the flags above the Friends' pins, and the final pictures. The stretches on tickets 12, 14 and P01-30 in between are not counted, nor the waits for the orchestrator and #658's merge. No subagents.
+- Tokens: input 584 uncached, with cache reads 138,193,430 and cache writes 1,038,701; output 202,073.
+
