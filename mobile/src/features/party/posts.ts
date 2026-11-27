@@ -7,6 +7,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
@@ -37,6 +38,8 @@ export interface PostView {
   description: string;
   leader: Person;
   event: string | null;
+  // The Global Event's id, which the join sheet asks about the User's own Quest of it.
+  eventId: string | null;
   board: Board | null;
   // How the User enters: Approval also for an Open Quest the Leader removed them from.
   joinPolicy: JoinPolicy;
@@ -87,6 +90,7 @@ interface Head {
   description: string;
   leader: Person;
   event: string | null;
+  eventId: string | null;
   board: Board | null;
   joinPolicy: JoinPolicy;
   holders: number;
@@ -135,6 +139,7 @@ export function entryPost(
     description: entry.description,
     leader: entry.leader,
     event: entry.globalEvent?.title ?? null,
+    eventId: entry.globalEvent?.id ?? null,
     board: entry.board,
     joinPolicy: asks ? 'approval' : entry.joinPolicy,
     holders: entry.holderCount,
@@ -163,6 +168,7 @@ export function questPost(quest: ShownQuest, meId: string, friends: readonly Kno
     description: quest.description,
     leader,
     event: quest.globalEvent?.title ?? null,
+    eventId: quest.globalEvent?.id ?? null,
     board: quest.board,
     joinPolicy: quest.joinPolicy,
     holders: quest.holders.length,

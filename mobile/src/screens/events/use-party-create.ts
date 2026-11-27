@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -9,17 +10,21 @@ import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { questsQuery } from '@/api/queries';
 import { useToast } from '@/design-system';
-import { sharedQuestFor } from '@/features/events/adapter';
+import { sharedQuestFor, soloQuestFor } from '@/features/events/adapter';
 
 // Opens 파티 만들기 with a Global Event chosen (`/party-form?eventId=…`). A User who already holds the event's 파티 with
-// others is led to its room instead.
+// others is led to its room instead, and one who holds it alone to its edit form, since sending a new one would only
+// change that Quest.
 export function useOpenPartyCreate(): (eventId: string) => void {
   const quests = useQuery(questsQuery).data ?? [];
   const showToast = useToast();
   return useCallback(
     (eventId: string) => {
       const shared = sharedQuestFor(quests, eventId);
-      if (shared === null) {
+      const solo = soloQuestFor(quests, eventId);
+      if (solo !== null) {
+        router.push({ pathname: '/party-form', params: { questId: solo.id } });
+      } else if (shared === null) {
         router.push({ pathname: '/party-form', params: { eventId } });
       } else {
         router.push(`/room/${shared.id}`);

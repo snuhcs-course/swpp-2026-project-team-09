@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -170,6 +171,27 @@ describe('joining from the sheet', () => {
   });
 });
 
+describe('joining another Quest of the event while holding one alone', () => {
+  it('says before joining that the User’s own Quest of the event goes', async () => {
+    answerEvents(server, { quests: [DINNER, MY_CAREER] });
+    const user = await openPostOf(/^이서연/u);
+
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
+
+    expect(screen.getByText(`이 행사로 올린 내 파티 ‘${MY_CAREER.title}’는 없어져요`)).toBeVisible();
+  });
+
+  it('says nothing of it without a Quest of the event', async () => {
+    answerEvents(server);
+    const user = await openPostOf(/^이서연/u);
+
+    await user.press(screen.getByRole('button', { name: '참여하기' }));
+
+    expect(screen.getByRole('header', { name: `‘${SEO_YEON_GOING.title}’에 참여할까요?` })).toBeVisible();
+    expect(screen.queryByText(/^이 행사로 올린 내 파티/u)).toBeNull();
+  });
+});
+
 describe('a refusal on the post', () => {
   it.each([
     ['QUEST_FULL', '자리가 다 찼어요'],
@@ -190,8 +212,8 @@ describe('a refusal on the post', () => {
 });
 
 describe('+ 파티 모집', () => {
-  it('opens 파티 만들기 with the event chosen', async () => {
-    answerEvents(server, { quests: [DINNER, MY_CAREER] });
+  it('opens 파티 만들기 with the event chosen, without a Quest of the event', async () => {
+    answerEvents(server, { quests: [DINNER] });
     const user = await openEvents();
     await openSheet(user);
 
@@ -201,6 +223,20 @@ describe('+ 파티 모집', () => {
     expect(shownAddress()).toBe(`/party-form?eventId=${CAREER.id}`);
     expect(screen.getByTestId('chosen-event')).toHaveTextContent(CAREER.title, { exact: false });
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(`${CAREER.title} 같이 가요`);
+  });
+
+  it('opens the edit form of the Quest the User holds alone for the event', async () => {
+    answerEvents(server, { quests: [DINNER, MY_CAREER] });
+    server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
+    const user = await openEvents();
+    await openSheet(user);
+
+    await user.press(screen.getByRole('button', { name: '파티 모집' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe(`/party-form?questId=${MY_CAREER.id}`);
+    expect(screen.getByRole('header', { name: '모집글 수정' })).toBeVisible();
+    expect(screen.getByDisplayValue(MY_CAREER.title)).toBeVisible();
   });
 
   it('opens the room of the Quest the User already shares for the event', async () => {
