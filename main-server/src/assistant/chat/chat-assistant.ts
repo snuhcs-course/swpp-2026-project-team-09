@@ -17,6 +17,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -30,6 +31,7 @@ import { CAMPUS_TERMS_RULES } from '../campus-terms.js';
 import { EVENT_RULES, planEvents } from '../events/event-tools.js';
 import { type Feature, type Tool, type ToolContext } from '../feature.js';
 import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-rules.js';
+import { withLeftOut } from '../free-time/left-out-tools.js';
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
@@ -38,6 +40,7 @@ import { MISSING_RULES, whyNotListed } from '../gathering/missing-tools.js';
 import { CHOOSE_PLAN_RULES, choosePlan } from '../gathering/choose-plan.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
+import { bareHourRule } from '../bare-hours.js';
 import { koreaNow } from '../korea-time.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
@@ -54,9 +57,9 @@ import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-orde
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { DELIMITER } from '../others-text.js';
 import { withRefusals } from '../refusals/refusal-tools.js';
-import { bookingSteps, pointOf, presentSteps, STEPS_RULES } from '../steps/plan-steps.js';
-import { type PlacePoint, type ReplyStep } from '../dto/answer.dto.js';
-import { KWANJEONG_PLACE_NUMBER } from '../library/catalogue.js';
+import { STEPS_RULES } from '../steps/plan-steps.js';
+import { type MealInput } from '../dto/answer.dto.js';
+import { mealStartAfter, stepsAfterRun } from './chat-steps.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
@@ -123,9 +126,10 @@ function instructionsOf(freeTimeRules: readonly string[], libraryRules: string, 
 }
 
 // The system prompt's lines of a request made at `now`, sent after the rest: the time in Korea, which the rules' "now"
-// means.
+// means, and what an hour said bare means at it, for every answer kind (P05 ticket 75).
 function requestInstructionsOf(now: Date): string {
-  return `Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.`;
+  return `Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
+${bareHourRule(now)}`;
 }
 
 // In the chat of an app that draws answers, an earlier reply that drew an answer comes back as the words the User saw
@@ -193,12 +197,10 @@ function plannedOnMap(
   if (options?.drawsAnswers !== true) {
     return { rules: [FREE_TIME_RULES], tools: cards };
   }
-  const kwanjeong = (): PlacePoint | null => {
-    const place = freeTime.places.numbered(KWANJEONG_PLACE_NUMBER);
-    return place === null ? null : pointOf(place);
-  };
-  const earlier = ({ presented }: ToolContext): ReplyStep[] => bookingSteps(presented, kwanjeong());
-  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier, freeTime.days);
+  const planned = withLeftOut(
+    mealsAndEvents(plans, options.drawsEvents === true, mealStartAfter(freeTime), freeTime.days),
+    freeTime.days,
+  );
   if (options.drawsMeets !== true) {
     return planned;
   }
@@ -208,20 +210,20 @@ function plannedOnMap(
 function mealsAndEvents(
   plans: PlanAnswersService,
   drawsEvents: boolean,
-  earlier: (context: ToolContext) => ReplyStep[],
+  startAfterSteps: (input: MealInput, context: ToolContext) => Promise<MealInput>,
   days: FreeTimeServices['days'],
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
     return {
       rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES],
-      tools: { planMeal: planMeal(meals, earlier), choosePlan: choosePlan() },
+      tools: { planMeal: planMeal(meals, startAfterSteps), choosePlan: choosePlan() },
     };
   }
   return {
     rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
     tools: {
-      planMeal: planMeal(meals, earlier),
+      planMeal: planMeal(meals, startAfterSteps),
       choosePlan: choosePlan(),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
@@ -277,16 +279,6 @@ function withInterests(
     return planned;
   }
   return { rules: [...planned.rules, INTEREST_RULES], tools: { ...planned.tools, ...interestTools(interests) } };
-}
-
-// The steps of a message that asked for several things, a meal planned again from the step before it (P03).
-function stepsAfterRun({ freeTime, plans }: ChatAssistantServices): (context: ToolContext) => Promise<void> {
-  return (context) =>
-    presentSteps(context, {
-      kwanjeong: () => freeTime.places.numbered(KWANJEONG_PLACE_NUMBER),
-      replanMeal: (input, { userId, now, context: { location, locationMissing } }) =>
-        plans.meals.plan(userId, input, { now, location, locationMissing }),
-    });
 }
 
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.

@@ -11,7 +11,7 @@
 import { screen, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
-import { color, radius, space } from '@/design-system';
+import { color, radius, space, text } from '@/design-system';
 import { CHIP_HEIGHT } from '@/screens/main/answer/card-header';
 import { BAR_ADD_HEIGHT } from '@/screens/main/answer/condition-chips';
 import { AI_FIELD } from '@/screens/main/ai-input';
@@ -106,6 +106,9 @@ describe('a long sentence', () => {
     await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, text: LONG });
 
     expect(screen.getByTestId('meal-words')).toHaveTextContent(LONG);
+    // The model's words over the list in the answer's sentence's type (P01 ticket 19).
+    const [drawn] = within(screen.getByTestId('meal-words')).getAllByText(LONG, { exact: false });
+    expect(drawn?.parent).toHaveStyle({ ...text.bodyLg, color: color.ink });
     expect(screen.queryByText('더 보기')).toBeNull();
     expect(screen.getByTestId('meal-list')).toBeOnTheScreen();
   });

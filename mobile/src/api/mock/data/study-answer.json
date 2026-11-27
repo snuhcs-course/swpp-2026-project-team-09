@@ -263,7 +263,49 @@
           }
         ],
         "book": {
-          "spaceId": "7F-7A-zone2"
+          "spaceId": "7F-7A-zone2",
+          "card": {
+            "space": {
+              "id": "7F-7A-zone2",
+              "name": "7A 열람실 2 구역",
+              "floor": 7,
+              "kind": "reading-room",
+              "placeNumber": "62-1",
+              "unit": "seat",
+              "roomNo": 172,
+              "sectorNo": 17202,
+              "seatNos": [],
+              "mapImage": {
+                "width": 2529,
+                "height": 1198
+              },
+              "hours": {
+                "open": "07:00",
+                "close": "23:00"
+              },
+              "minMinutes": 30,
+              "maxMinutes": 360,
+              "stepMinutes": 30
+            },
+            "date": "2026-11-04",
+            "start": "19:30",
+            "minutes": 210,
+            "seat": null,
+            "useDesc": null,
+            "useDescOptions": null,
+            "pledge": null,
+            "companions": [],
+            "questId": null,
+            "notes": [
+              "예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해야 해요. 확인하지 않으면 자동으로 반납돼요.",
+              "확인하지 않거나 반납하지 않은 일이 한 달에 5번이면 10일 동안 예약할 수 없어요.",
+              "사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!"
+            ],
+            "until": null,
+            "target": null,
+            "key": "book:7F-7A-zone2:2026-11-04:1930:210",
+            "action": "book"
+          }
         },
         "liveSeats": "kwanjeong"
       }

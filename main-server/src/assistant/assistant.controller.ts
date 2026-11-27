@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -41,6 +42,7 @@ import { FriendLookupService } from './lookup/friend.service.js';
 import { PlaceCardService } from './lookup/place.service.js';
 import { studyCapabilityOf, studyOutOfReach } from './lookup/study-group.js';
 import { PlanAnswersService } from './plan-answers.service.js';
+import { requestKey } from './presented.js';
 
 @Controller('assistant')
 export class AssistantController {
@@ -73,9 +75,10 @@ export class AssistantController {
   // A plan recalculated from its changed input, without the model and without counting the User's messages.
   @Post('answers')
   @HttpCode(HttpStatus.OK)
-  recalculate(
+  async recalculate(
     @CurrentUser() user: SignedInUser,
-    @Body({ schema: recalculationSchema }) { input, location, locationMissing, clientCapabilities }: Recalculation,
+    @Body({ schema: recalculationSchema })
+    { input, location, locationMissing, clientCapabilities, skipped = [] }: Recalculation,
   ): Promise<AnswerReply> {
     const now = this.clock.now();
     // Recruiting Quests are each on the day of their own step.
@@ -89,7 +92,11 @@ export class AssistantController {
       throw new UnprocessableEntityException(`Only an app that says ${studyCapabilityOf(input)} draws this answer`);
     }
     const setsAside = clientCapabilities.includes('plan-set');
-    return this.answers.plan(user.id, input, { now, location, locationMissing, setsAside });
+    const answer = await this.answers.plan(user.id, input, { now, location, locationMissing, setsAside, skipped });
+    // An app that says `answers` is told which request the answer now answers (P05 ticket 73): a changed condition may
+    // make it another (a Friend added makes a study place one together, the bar's other meal makes lunch dinner), and
+    // the app keeps the answer under this key from then on.
+    return clientCapabilities.includes('answers') ? { ...answer, key: requestKey(answer.input) } : answer;
   }
 
   // The card of a pressed building or Friend's face, without the model and without counting the User's messages.

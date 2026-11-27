@@ -14,10 +14,17 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type AnswerReply, type Lookup, type ReplyStep, type RequestContext } from './dto/answer.dto.js';
+import {
+  type AnswerReply,
+  type LeftOutClass,
+  type Lookup,
+  type ReplyStep,
+  type RequestContext,
+} from './dto/answer.dto.js';
 import { type ReplyOffer } from './dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
@@ -101,6 +108,9 @@ export const CLIENT_CAPABILITIES = [
   // Draws the study answer together, a 관정 group study room at everyone's free time, with 동의 요청 보내기 (P10 ticket
   // 07). Without it the group study path is proposeStudyRoom's card.
   'study-group',
+  // Draws every answer of a message that asked for several (`answers`), each step choosing its own (P05 ticket 73).
+  // Without it a reply draws `answer` alone, as before.
+  'answers',
 ] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
@@ -120,8 +130,13 @@ export interface Presented {
   // At most one Proposal: the last that passed proposeQuest.
   proposal: QuestProposal | null;
   // At most one answer drawn on the map: the last a tool put there. A tool that puts a Plan there clears the Lookup, and
-  // one that puts a Lookup there clears the answer.
+  // one that puts a Lookup there clears the answer. Only `presented.ts` writes it.
   answer: AnswerReply | null;
+  // One answer per request of the message, in the order first presented (P05 ticket 73); a Lookup leaves them. Absent
+  // until a tool presents one.
+  answers?: AnswerReply[];
+  // The requests of the message that ended with no answer, by their key (P05 ticket 73).
+  withdrawn?: string[];
   lookup: Lookup | null;
   // What refuse wrote; the reply keeps it only without an answer or a Lookup.
   refusal: Refusal | null;
@@ -131,11 +146,16 @@ export interface Presented {
   notDone?: NotDone[];
   // The requests of the message in time order, when it asked for two or more (P03).
   steps?: ReplyStep[];
+  // What the reply adds to the model's words for the steps the server planned into another plan than the one the model
+  // worded, one short sentence each (P05 ticket 74). The model's words stay whole.
+  addedWords?: string;
   // The plan of the meal answer on screen the User chose in words (choosePlan).
   select?: string;
   // A request for another plan, or another request, ended with nothing drawn: the plan on screen leaves it (P05 ticket
   // 55). Left out when the reply may be about the plan on screen.
   clears?: true;
+  // The conversation's Classes left out, once a tool of the run left one out or put one back (P05 ticket 70).
+  leftOut?: LeftOutClass[];
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.

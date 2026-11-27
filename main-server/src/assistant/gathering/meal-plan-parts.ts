@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type HeldMeal } from '../../quests/held-meal.js';
@@ -22,17 +23,6 @@ export interface BusyItem {
   isClass: boolean;
   start: string;
   end: string;
-}
-
-// The asker's items of the day without the Classes the input leaves out (P05 ticket 54), which are free for the
-// meal, and those Classes in time order; an id that is none of them is dropped.
-export function skippedOut(
-  items: readonly DayItem[],
-  ids: readonly string[] = [],
-): { items: readonly DayItem[]; skipped?: readonly DayItem[] } {
-  const wanted = new Set(ids);
-  const skipped = items.filter(({ id, isClass }) => isClass && wanted.has(id)).toSorted(byStart);
-  return skipped.length === 0 ? { items } : { items: items.filter((item) => !skipped.includes(item)), skipped };
 }
 
 // The input with only the Classes left out that are the asker's that day, and without the field for none.

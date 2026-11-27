@@ -11,12 +11,20 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer } from '../feature.js';
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
-import { type AnswerReply, type Lookup, NO_CONTEXT, type ReplyStep, requestContextSchema } from './answer.dto.js';
+import {
+  type AnswerReply,
+  type LeftOutClass,
+  type Lookup,
+  NO_CONTEXT,
+  type ReplyStep,
+  requestContextSchema,
+} from './answer.dto.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 import { type Refusal, type RefusalOffer } from '../refusals/refusal.dto.js';
 
@@ -93,6 +101,13 @@ export interface AssistantReplyDto {
   cards: Card[];
   proposal: QuestProposal | null;
   answer: AnswerReply | null;
+  // For an app that says `answers` (P05 ticket 73), left out for any other: the answers this reply draws or changes, one
+  // per request, each with its `key`, in the order first drawn. An answer on screen that the reply does not name stays
+  // as it is. `answer` is still the one an app without it draws.
+  answers?: AnswerReply[];
+  // For an app that says `answers`: the keys of the requests that ended with no answer, whose answers leave the screen.
+  // Left out when none.
+  withdrawn?: string[];
   lookup: Lookup | null;
   refusal: Refusal | null;
   // Buttons under the text of a reply that draws nothing; left out when there are none.
@@ -100,11 +115,16 @@ export interface AssistantReplyDto {
   // Each request of a message that asked for two or more, in time order; left out otherwise (P03).
   steps?: ReplyStep[];
   // The plan of the meal answer on screen the User chose in words, which the app shows, keeping the answer and its
-  // numbers (P05 ticket 51); left out otherwise, and by a reply that draws an answer of its own.
-  select?: { planId: string };
+  // numbers (P05 ticket 51); left out otherwise, and by a reply that draws an answer of its own. `key`: for an app that
+  // says `answers`, the request whose answer holds the plan, when one of `answers` does.
+  select?: { planId: string; key?: string };
   // The answer on screen leaves the map with its time card and button: the User asked for another plan, or something
   // else, and nothing could be drawn for it (P05 ticket 55). Left out otherwise, and by a reply that draws its own.
   clears?: true;
+  // The asker's Classes the conversation leaves out after this message, which the app keeps for the conversation and
+  // sends back as `context.skipped` (P05 ticket 70). Given while the request sent some or a tool left one out or put one
+  // back, empty once none is left; left out otherwise, when the app keeps what it has.
+  skipped?: LeftOutClass[];
 }
 
 // A button that opens a 파티's room at its 수정 (P05 ticket 30), sent only to an app that says `party-change`.

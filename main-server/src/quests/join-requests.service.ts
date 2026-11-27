@@ -9,13 +9,16 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
-import { JoinPolicy, QuestJoinRequest } from '../generated/prisma/client.js';
+import { JoinPolicy, type Prisma } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { type Told } from '../notifications/notification.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsageService } from '../usage/usage.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
@@ -36,6 +39,11 @@ import { RecruitingService } from './recruiting.service.js';
 import { alreadyHolder, conflict, notFound, notLeader, notRecruiting, sharedQuestHeld } from './refusals.js';
 import { wasRemoved } from './removals.js';
 
+// What the one who asked is told of the Leader's answer.
+const ANSWERED_INCLUDE = { quest: { select: { title: true, leader: { select: { name: true } } } } } as const;
+
+type Answered = Prisma.QuestJoinRequestGetPayload<{ include: typeof ANSWERED_INCLUDE }>;
+
 const joinRequestNotFound = (): NotFoundException =>
   notFound('QUEST_JOIN_REQUEST_NOT_FOUND', 'No such request to join waits for this answer from this User.');
 
@@ -43,8 +51,12 @@ const joinRequestNotFound = (): NotFoundException =>
 // until the User withdraws it or the Leader answers it, and ends with the Quest and when the User enters it in any way
 // (RecruitingService.enter). Withdrawing and answering lock the User who asked first, so that one request gets one of
 // them. One to a Quest with no Sub Quest ahead stays stored but is listed nowhere: accepting it would be refused.
+// The Leader keeps one Notification of a Quest's waiting requests, which rings when the first of them is asked and is
+// rewritten as they change; the one who asked keeps one of the answer.
 @Injectable()
 export class JoinRequestsService {
+  private readonly logger = new Logger(JoinRequestsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
@@ -56,6 +68,7 @@ export class JoinRequestsService {
     private readonly roomRequests: RoomRequestSync,
     @Inject(CLOCK) private readonly clock: Clock,
     private readonly usage: UsageService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // A Closed Quest is answered as unknown, as joining it is. A User who holds the Quest alone for its Global Event may
@@ -89,6 +102,7 @@ export class JoinRequestsService {
       };
     });
     this.signals.send([leaderId], 'quests-changed');
+    this.tellLeader(leaderId, questId, 'asked');
     return toWaitingDto(request);
   }
 
@@ -103,7 +117,7 @@ export class JoinRequestsService {
   }
 
   async withdraw(userId: string, requestId: string): Promise<void> {
-    const leaderId = await this.prisma.$transaction(async (tx) => {
+    const { leaderId, questId } = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(userId, tx);
       const request = await tx.questJoinRequest.findFirst({
         where: { id: requestId, userId },
@@ -112,9 +126,10 @@ export class JoinRequestsService {
       if (request === null || (await tx.questJoinRequest.deleteMany({ where: { id: requestId } })).count === 0) {
         throw joinRequestNotFound();
       }
-      return request.quest.leaderId;
+      return { leaderId: request.quest.leaderId, questId: request.questId };
     });
     this.signals.send([leaderId], 'quests-changed');
+    this.tellLeader(leaderId, questId, 'changed');
   }
 
   // The Quests the Leader removed the User from since the User last entered each, the latest first.
@@ -161,6 +176,8 @@ export class JoinRequestsService {
     this.signals.send(holderIds, 'quests-changed');
     // For the User who asked, not the Leader who pressed.
     this.usage.sent(request.userId, 'party_join_completed', { how: 'request_accepted' });
+    this.tellAnswer(request, 'join-accepted');
+    this.tellLeader(leaderId, questId, 'changed');
     await this.roomRequests.questChanged(questId);
   }
 
@@ -175,15 +192,56 @@ export class JoinRequestsService {
     });
     // The Leader's count of waiting requests changed too.
     this.signals.send([request.userId, leaderId], 'quests-changed');
+    this.tellAnswer(request, 'join-declined');
+    this.tellLeader(leaderId, questId, 'changed');
   }
 
   // The request to the Quest the User leads, read without a lock to learn whom to lock.
-  private async find(leaderId: string, questId: string, requestId: string): Promise<QuestJoinRequest> {
+  private async find(leaderId: string, questId: string, requestId: string): Promise<Answered> {
     await this.leader.ledBy(questId, leaderId);
-    const request = await this.prisma.questJoinRequest.findFirst({ where: { id: requestId, questId } });
+    const request = await this.prisma.questJoinRequest.findFirst({
+      where: { id: requestId, questId },
+      include: ANSWERED_INCLUDE,
+    });
     if (request === null) {
       throw joinRequestNotFound();
     }
     return request;
+  }
+
+  // Not awaited: a Notification never fails the answer.
+  private tellAnswer({ userId, questId, quest }: Answered, kind: 'join-accepted' | 'join-declined'): void {
+    const told: Told = { kind, questId, questTitle: quest.title, leaderName: quest.leader.name };
+    this.notifications.schedule(userId, told, this.clock.now()).catch((error: unknown) => {
+      this.logger.warn(`The one who asked was not told of the answer: ${String(error)}`);
+    });
+  }
+
+  // Not awaited, as `tellAnswer`. A request `asked` while none other waits rings; any other change rewrites it without
+  // ringing again, and none left forgets it, so that the next request rings again.
+  private tellLeader(leaderId: string, questId: string, change: 'asked' | 'changed'): void {
+    this.keepWaitingNotice(leaderId, questId, change).catch((error: unknown) => {
+      this.logger.warn(`The Leader was not told of the requests to join: ${String(error)}`);
+    });
+  }
+
+  private async keepWaitingNotice(leaderId: string, questId: string, change: 'asked' | 'changed'): Promise<void> {
+    const quest = await this.prisma.quest.findUnique({
+      where: { id: questId },
+      select: {
+        title: true,
+        joinRequests: { orderBy: [{ sentAt: 'desc' }, { id: 'desc' }], select: { user: { select: { name: true } } } },
+      },
+    });
+    const newest = quest?.joinRequests[0];
+    if (quest === null || newest === undefined) {
+      await this.notifications.cancel(leaderId, 'join-asked', { kind: 'party', id: questId });
+      return;
+    }
+    const waiting = quest.joinRequests.length;
+    const told: Told = { kind: 'join-asked', questId, questTitle: quest.title, name: newest.user.name, waiting };
+    await (change === 'asked' && waiting === 1
+      ? this.notifications.schedule(leaderId, told, this.clock.now())
+      : this.notifications.renew(leaderId, told, this.clock.now()));
   }
 }

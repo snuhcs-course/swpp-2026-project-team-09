@@ -7,6 +7,8 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Party, Quest } from '@/api/types';
@@ -19,6 +21,13 @@ import { cardAddress } from './address';
 const KEPT_KINDS = [
   'accepted',
   'declined',
+  'join-accepted',
+  'join-declined',
+  'join-asked',
+  'party-ended',
+  'party-removed',
+  'join-cancelled',
+  'invitation-cancelled',
   'leave-by',
   'room-declined',
   'room-agreed',
@@ -57,7 +66,7 @@ export interface NoticeView {
 export interface NoticeSources {
   parties: readonly Party[] | null;
   friendRequests: FriendRequests | null;
-  invitations: readonly QuestInvitation[] | null;
+  invitations: readonly NoticedInvitation[] | null;
   // Each Quest the User leads that others ask to join, with its requests.
   joinRequests: readonly { quest: Quest; requests: readonly JoinRequest[] }[] | null;
   kept: readonly KeptNotification[] | null;
@@ -78,6 +87,12 @@ const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
   'room-ending': 'clock',
   'room-declined': 'user',
   'room-agreed': 'users',
+  'join-accepted': 'users',
+  'join-declined': 'user',
+  'party-ended': 'users',
+  'party-removed': 'user',
+  'join-cancelled': 'users',
+  'invitation-cancelled': 'calendar',
 };
 
 // `ahead` while the time is still to come, as the main server reads no clock.
@@ -102,8 +117,11 @@ function timeOf(at: string, now: Date): string {
   return `${month}월 ${date}일`;
 }
 
+// The Leader's `join-asked` is the push's copy of the row 알림 composes from the requests waiting, which counts them and
+// opens the room that answers them: it is left out, so that no request shows twice.
 function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[] {
   return kept
+    .filter(({ kind }) => kind !== 'join-asked')
     .toSorted((one, other) => Date.parse(other.at) - Date.parse(one.at))
     .map((notification) => ({
       key: `notice-${notification.id}`,
@@ -146,12 +164,15 @@ function friendRequestNotices({ received }: FriendRequests): NoticeView[] {
   }));
 }
 
-function invitationNotices(invitations: readonly QuestInvitation[]): NoticeView[] {
-  return invitations.map(({ id, quest }) => ({
+// What an invitation's row reads: it names the Leader who sent it.
+type NoticedInvitation = Pick<QuestInvitation, 'id' | 'quest' | 'invitedBy'>;
+
+function invitationNotices(invitations: readonly NoticedInvitation[]): NoticeView[] {
+  return invitations.map(({ id, quest, invitedBy }) => ({
     key: `invitation-${id}`,
     kind: 'invitation',
     icon: 'calendar',
-    title: `${quest.leader.name}님의 파티 초대`,
+    title: `${invitedBy.name}님의 파티 초대`,
     sub: quest.title,
     questId: null,
     address: cardAddress('invitation', id),

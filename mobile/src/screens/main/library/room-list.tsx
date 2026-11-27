@@ -17,6 +17,7 @@ import { LOG_IN_FOR_SEATS } from '../study-rows';
 import { type FloorCell, FloorCells } from './floor-cells';
 import type { RoomCounting } from './room-counting';
 import { type Rooms, useRooms } from './use-room-counts';
+import { FAILURE } from '../answer/line-types';
 
 // The seat card's room list, under its ticket (P01 ticket 09, board 다): the time the free seats are for, then one row
 // per floor of equal cells, each one line with the kind of room and the free seats of the seat space a tap fills.
@@ -87,7 +88,7 @@ export function RoomList({
     <View style={styles.list}>
       <Text style={styles.basis}>{`${rangeWords(slot.start, slot.minutes)}에 빈 자리`}</Text>
       {rooms.state === 'listed' && rooms.counts === null ? <Text style={styles.basis}>{LOG_IN_FOR_SEATS}</Text> : null}
-      {rooms.state === 'unlisted' ? <Text style={styles.basis}>열람실 목록을 불러오지 못했어요</Text> : null}
+      {rooms.state === 'unlisted' ? <Text style={styles.failed}>열람실 목록을 불러오지 못했어요</Text> : null}
       {rooms.state === 'listed' ? <Floors inUse={inUse} onPick={onPick} rooms={rooms} /> : null}
     </View>
   );
@@ -120,4 +121,6 @@ function Floors({
 const styles = StyleSheet.create({
   list: { gap: space[2] },
   basis: { ...text.caption, color: color.inkMuted },
+  // A failure, as every failure line is (P01 ticket 19).
+  failed: FAILURE,
 });

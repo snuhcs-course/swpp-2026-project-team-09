@@ -5,10 +5,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { clockOf } from '../free-time/free-time.js';
 import { clockTime } from '../free-time/tool-parts.js';
 import { QUEST_FIELD, QUEST_NONE_REASONS, questsNamed } from './quest-way-tools.js';
@@ -26,7 +29,7 @@ const NONE_REASONS: Record<Extract<WayAnswer, { result: 'none' }>['reason'], str
     'Where the User sets out from is not known: where they are could not be matched to a Place, and no item of theirs has ended earlier today.',
   'no-next': 'The User has no item with a Place later today.',
   'past-by':
-    'The time given as by is not later than now. Give it as 24-hour HH:MM (2시 in the afternoon is 14:00); if the time the User named has passed today, say so.',
+    'The time given as by is not later than now. Give it as 24-hour HH:MM (오후 2시 is 14:00, and a bare 2시 is read by the Bare hours line); if the time the User named has passed today, say so.',
 };
 
 export const STARTS: Record<Way['start']['basis'], string> = {
@@ -52,7 +55,7 @@ const input = z.object({
   by: clockTime
     .optional()
     .describe(
-      'The time the User must be there by, as 24-hour HH:MM, when they named one (2시까지 in the afternoon is 14:00). Left out otherwise.',
+      'The time the User must be there by, as 24-hour HH:MM, when they named one (오후 2시까지 is 14:00, and a bare 2시까지 is read by the Bare hours line). Left out otherwise.',
     ),
   date: z.iso
     .date()
@@ -113,9 +116,7 @@ function shownWay(
   { way, lookup, labels }: Extract<WayAnswer, { result: 'found' }>,
   presented: ToolContext['presented'],
 ): object {
-  presented.lookup = lookup;
-  presented.answer = null;
-  presented.mapButtons.length = 0;
+  presentLookup(presented, lookup);
   return {
     result: 'found',
     ...labels,
@@ -149,9 +150,7 @@ export function findWay(ways: WayService, tutorial: TutorialOrderService): Tool 
         if (reached.result === 'none') {
           return noneFound(QUEST_NONE_REASONS[reached.reason]);
         }
-        presented.lookup = reached.lookup;
-        presented.answer = null;
-        presented.mapButtons.length = 0;
+        presentLookup(presented, reached.lookup);
         return { result: 'found', fromIs: STARTS[reached.way.start.basis], ...reached.words };
       }
       const ask = { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about };

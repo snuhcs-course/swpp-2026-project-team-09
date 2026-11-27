@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { type FriendLookupService } from './friend.service.js';
 
@@ -30,9 +32,7 @@ export function findFriend(friends: FriendLookupService): Tool {
       if (answer === null) {
         return noneFound('That User is not a Friend of the User.');
       }
-      presented.lookup = answer.lookup;
-      presented.answer = null;
-      presented.mapButtons.length = 0;
+      presentLookup(presented, answer.lookup);
       return { result: 'found', ...answer.words };
     },
   });

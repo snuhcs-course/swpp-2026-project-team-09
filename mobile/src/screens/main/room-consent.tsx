@@ -15,6 +15,7 @@ import type { Profile } from '@/api/types';
 import { retryRoomReports } from '@/library/room-bookings';
 import { ConsentedNotice, whenOf } from './room-consented';
 import { Button, color, font, radius, shadow, space, text, TextField, useToast } from '@/design-system';
+import { FAILURE } from './answer/line-types';
 
 // What the room requests ask of the User on the main screen: each companion's consent, every time, with the
 // registered name and 학번 that will be sent; and the one-time notices, such as "파티 구성원이 제안을 거절했습니다". The
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
   title: { ...text.title, fontFamily: font.bold, color: color.ink },
   body: { ...text.body, color: color.inkMuted },
   detail: { ...text.body, fontFamily: font.semiBold, color: color.ink },
-  failed: { ...text.body, color: color.danger },
+  failed: FAILURE,
   actions: { flexDirection: 'row', gap: space[2], marginTop: space[2] },
   action: { flex: 1 },
 });
