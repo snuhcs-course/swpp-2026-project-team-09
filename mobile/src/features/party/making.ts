@@ -10,6 +10,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { QuestProposal } from '@/api/assistant-types';
@@ -174,10 +175,14 @@ export function isReady(form: PartyForm): boolean {
   return missingOf(form).length === 0;
 }
 
-// Whether the form makes, or keeps, a Quest taken alone: 비공개 with nobody invited and no event, for a new Quest or
-// one already taken alone (`canBeAlone`). Its one Holder needs no 인원 (P06 ticket 67, the user on 2026-11-28).
-export function staysAlone(form: PartyForm, friends: number, canBeAlone: boolean): boolean {
-  return canBeAlone && form.visibility === 'private' && friends === 0 && form.event === null;
+// Whether the form makes, or keeps, a Quest taken alone, whose one Holder needs no 인원 (P06 ticket 67, the user on
+// 2026-11-28): a new one under 비공개 with nobody invited and no event, which attending would make a 파티; an edited one
+// already taken alone, its event too ("여기로" on an events Plan), until a Friend is invited or 공개 chosen.
+export function staysAlone(form: PartyForm, friends: number, quest: Quest | null): boolean {
+  if (form.visibility !== 'private' || friends > 0) {
+    return false;
+  }
+  return quest === null ? form.event === null : heldAlone(quest);
 }
 
 // The Quest the form asks for; `alone`, a Quest taken alone, Closed and for one (`staysAlone`).

@@ -12,6 +12,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -39,7 +40,6 @@ import {
   withEvent,
 } from '@/features/party/making';
 import { pickedOf } from '../../room/plan-form';
-import { heldAlone } from '@/features/quests/adapter';
 import { showMade } from '../use-party-actions';
 import { eventWhere, type ProposalStart, type WhereStart } from './proposal-start';
 import { useSend } from './use-send';
@@ -283,7 +283,7 @@ export function useFormState(props: FormProps): FormState {
     pickEvent,
     eventLocked: (quest?.globalEvent ?? null) !== null,
     editing,
-    alone: staysAlone(form, shownChosen.length, quest === null || heldAlone(quest)),
+    alone: staysAlone(form, shownChosen.length, quest),
     changed: shownChosen.length > 0 || where.changed || JSON.stringify(sentOf(form)) !== JSON.stringify(sentOf(opened)),
   };
 }

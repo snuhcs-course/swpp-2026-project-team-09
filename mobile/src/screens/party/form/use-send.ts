@@ -13,6 +13,7 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -34,7 +35,6 @@ import {
   recruitingOf,
   staysAlone,
 } from '@/features/party/making';
-import { heldAlone } from '@/features/quests/adapter';
 import { refusalWords } from '@/features/quests/refusals';
 import { useAskForPush } from '@/push/push-ask-host';
 import { trackAction } from '@/telemetry';
@@ -136,7 +136,7 @@ export function useSendParty(
     }
   };
   return async (form, friends, plan, elsewhere = false) => {
-    const alone = staysAlone(form, friends.length, quest === null || heldAlone(quest));
+    const alone = staysAlone(form, friends.length, quest);
     let questId: string;
     let attended: Quest | null = null;
     try {
