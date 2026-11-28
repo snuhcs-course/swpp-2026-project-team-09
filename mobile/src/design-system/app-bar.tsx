@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -17,18 +18,22 @@ interface IconButtonProps {
   // What a screen reader says, such as "닫기".
   label: string;
   onPress: () => void;
+  // For a button that turns something on and off: on, its icon is filled in navy, as a Favorite Event's ★ is, and a
+  // screen reader hears it selected.
+  on?: boolean;
 }
 
 // An icon alone in a touch area of 48, as on an app bar.
-export function IconButton({ icon, label, onPress }: IconButtonProps): ReactElement {
+export function IconButton({ icon, label, onPress, on }: IconButtonProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityState={on === undefined ? undefined : { selected: on }}
       onPress={onPress}
       style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
     >
-      <Icon color={color.ink} name={icon} size={22} />
+      <Icon color={on === true ? color.snuBlue : color.ink} filled={on === true} name={icon} size={22} />
     </Pressable>
   );
 }

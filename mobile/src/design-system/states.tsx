@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-24  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,17 +18,20 @@ import { color, font, space } from './tokens';
 interface EmptyStateProps {
   // The caller's words: "결과 없음", "퀘스트가 없어요", "준비 중이에요".
   words: string;
+  // One faint line under the words, such as how to fill the list.
+  line?: string;
   icon?: IconName;
   // One first thing to do, under the words, for an empty screen that says what it is for (HE H7).
   action?: { label: string; onPress: () => void };
 }
 
 // Nothing to show: faint words in the middle, and the first thing to do under them when the caller gives one.
-export function EmptyState({ words, icon, action }: EmptyStateProps): ReactElement {
+export function EmptyState({ words, line, icon, action }: EmptyStateProps): ReactElement {
   return (
     <View style={styles.state}>
       {icon === undefined ? null : <Icon color={color.inkFaint} name={icon} size={28} />}
       <Text style={styles.words}>{words}</Text>
+      {line === undefined ? null : <Text style={styles.line}>{line}</Text>}
       {action === undefined ? null : (
         <Button centred onPress={action.onPress} variant="secondary">
           {action.label}
@@ -61,5 +65,14 @@ export function ErrorState({ onRetry }: { onRetry: () => void }): ReactElement {
 const styles = StyleSheet.create({
   state: { alignItems: 'center', justifyContent: 'center', gap: space[3], paddingVertical: space[10] },
   words: { fontFamily: font.medium, fontSize: 14, lineHeight: 20, textAlign: 'center', color: color.inkFaint },
+  // 4 under the words, though the state spaces its parts 12 apart.
+  line: {
+    marginTop: -space[2],
+    fontFamily: font.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    color: color.inkFaint,
+  },
   failed: { fontFamily: font.medium, fontSize: 14, lineHeight: 20, textAlign: 'center', color: color.inkMuted },
 });
