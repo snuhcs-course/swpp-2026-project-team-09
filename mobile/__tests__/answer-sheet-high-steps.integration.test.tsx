@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -66,7 +67,7 @@ describe('high under the bar of several requests', () => {
     const user = await openMain();
     await layStage(390, 760);
     await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
-    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await user.press(screen.getByTestId('step-word-2'));
     await pass(50);
     const underTheLine = highHeight();
     const [steps] = screen.getAllByTestId('time-bar');

@@ -73,14 +73,19 @@ async function ask(): Promise<User> {
   return user;
 }
 
-async function pressFlag(user: User, number: number): Promise<void> {
-  const flag = mapThings().find((thing) => thing.startsWith(`${String(number)} `));
+// The other step's mark on the map, by its flag's title: the seat's beside dinner shown, dinner's beside the seat (P03
+// ticket 26: a step's mark carries no number).
+const SEAT_FLAG = '관정 7층 열람실 ›';
+const DINNER_FLAG = '학생회관식당 ›';
+
+async function pressFlag(user: User, title: string): Promise<void> {
+  const flag = mapThings().find((thing) => thing.startsWith(title));
   await pressMarker(user, flag ?? '');
   await pass(100);
 }
 
 function wordsOf(number: number): ReturnType<typeof screen.getByText> {
-  return within(screen.getByRole('button', { name: new RegExp(`^${String(number)}번`, 'u') })).getByText(/./u);
+  return within(screen.getByTestId(`step-word-${String(number)}`)).getByText(/./u);
 }
 
 // The caret's place across the track, in percent.
@@ -95,7 +100,7 @@ function caretAt(): number {
 describe('the chosen step on the bar of several requests', () => {
   it('stands in gold, its words and its span, and the other step not', async () => {
     const user = await ask();
-    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await user.press(screen.getByTestId('step-word-2'));
     await pass(50);
 
     expect(screen.getByTestId('step-span-2')).toHaveStyle(GOLD);
@@ -106,7 +111,7 @@ describe('the chosen step on the bar of several requests', () => {
 
   it('is pointed at by a caret on the time card, under the middle of its span', async () => {
     const user = await ask();
-    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await user.press(screen.getByTestId('step-word-2'));
     await pass(50);
 
     expect(screen.getAllByTestId('time-card-caret')).toHaveLength(1);
@@ -123,16 +128,16 @@ describe('the chosen step on the bar of several requests', () => {
 
   it("moves with a press on a flag: the seat in gold with the caret on its booking's time card, and back", async () => {
     const user = await ask();
-    await pressFlag(user, 2);
+    await pressFlag(user, DINNER_FLAG);
     expect(caretAt()).toBeCloseTo(DINNER_MIDDLE, 6);
 
-    await pressFlag(user, 1);
+    await pressFlag(user, SEAT_FLAG);
 
     expect(screen.getByTestId('step-span-1')).toHaveStyle(GOLD);
     expect(screen.getByTestId('step-span-2')).not.toHaveStyle({ borderColor: color.quest });
     expect(caretAt()).toBeCloseTo(SEAT_MIDDLE, 6);
 
-    await pressFlag(user, 2);
+    await pressFlag(user, DINNER_FLAG);
 
     expect(screen.getByTestId('step-span-2')).toHaveStyle(GOLD);
     expect(caretAt()).toBeCloseTo(DINNER_MIDDLE, 6);

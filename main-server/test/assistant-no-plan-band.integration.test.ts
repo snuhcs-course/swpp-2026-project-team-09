@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -56,15 +57,16 @@ async function minsuFrom(date: string, clock: string): Promise<Named> {
 
 const MEET_WINDOW = { from: '14:30', until: '15:30' };
 
-// Both lanes over 14:30–15:30, 민수 in his Class all of it.
+// The window 14:30–15:30, 민수 in his Class all of it, both lanes over the range from now to the end of a meeting's day
+// hours (P01 ticket 43).
 function meetBand(date: string, minsu: Named): object {
   const at = timeOn(date);
   return {
-    range: { startAt: at('14:30'), endAt: at('15:30') },
+    range: { startAt: at('13:00'), endAt: at('22:00') },
     now: at('13:00'),
     lanes: [
       { userId: stage.asker.id, name: '나', busy: [] },
-      { userId: minsu.id, name: '민수', busy: [{ startAt: at('14:30'), endAt: at('15:30'), label: '302동 수업' }] },
+      { userId: minsu.id, name: '민수', busy: [{ startAt: at('14:00'), endAt: at('16:00'), label: '302동 수업' }] },
     ],
     others: [],
     startAt: at('14:30'),
@@ -97,11 +99,12 @@ async function askerInClass(date: string): Promise<Named> {
   return stage.friend('민수');
 }
 
+// The window 15:00–17:00, over the range from now to the group rooms' closing, 23:00 (P01 ticket 43).
 function studyBand(date: string, minsu: Named): object {
   const at = timeOn(date);
-  const inClass = [{ startAt: at('15:00'), endAt: at('17:00'), label: '301동 수업' }];
+  const inClass = [{ startAt: at('14:00'), endAt: at('17:30'), label: '301동 수업' }];
   return {
-    range: { startAt: at('15:00'), endAt: at('17:00') },
+    range: { startAt: at('10:00'), endAt: at('23:00') },
     now: at('10:00'),
     lanes: [
       { userId: stage.asker.id, name: '나', busy: inClass },
@@ -209,10 +212,11 @@ async function jieunAt83(date: string): Promise<Named> {
   return jieun;
 }
 
+// Three hours from now, over a time card's range without a place's hours, to 23:30 (P01 ticket 43).
 function aloneBand(date: string, jieun: Named): object {
   const at = timeOn(date);
   return {
-    range: { startAt: at('10:00'), endAt: at('13:00') },
+    range: { startAt: at('10:00'), endAt: at('23:30') },
     now: at('10:00'),
     lanes: [{ userId: stage.asker.id, name: '나', busy: [] }],
     others: [

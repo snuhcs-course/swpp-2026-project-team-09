@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -60,13 +61,16 @@ interface Building {
   walk: number;
   // The stay's end, Korea time with the offset.
   endAt: string;
+  // The time card's range's end (P01 ticket 43): the space's closing, else 23:30, the day's last half hour, holding the
+  // stay whole.
+  until: string;
   study: PlanStudy;
   lines: Plan['lines'];
 }
 
 // A Plan of one building: the User's arrival after the walk, the stay to its end, the first the pick and the others
 // numbered candidates, as the list and the map number them.
-function planOf({ place, walk, endAt, study, lines }: Building, number: number): Plan {
+function planOf({ place, walk, endAt, until, study, lines }: Building, number: number): Plan {
   const arrival = at(`19:${String(10 + walk).padStart(2, '0')}`);
   return {
     id: place.label,
@@ -98,7 +102,7 @@ function planOf({ place, walk, endAt, study, lines }: Building, number: number):
       flags: [],
     },
     band: {
-      range: { startAt: at('19:00'), endAt },
+      range: { startAt: at('19:00'), endAt: until },
       now: at('19:10'),
       lanes: [],
       others: [{ ...OTHER_FRIEND, busy: [], walkMinutes: walk + 3 }],
@@ -115,6 +119,7 @@ const BUILDINGS: Building[] = [
     place: SINYANG_ENG,
     walk: 2,
     endAt: at('22:12'),
+    until: at('23:30'),
     lines: [
       [
         { text: '3층 자유열람실', strong: true },
@@ -131,6 +136,7 @@ const BUILDINGS: Building[] = [
     place: KWANJEONG,
     walk: 14,
     endAt: at('23:00'),
+    until: at('23:00'),
     lines: [
       [
         { text: '7층 열람실', strong: true },
@@ -147,6 +153,7 @@ const BUILDINGS: Building[] = [
     place: LAW,
     walk: 16,
     endAt: '2026-11-05T01:00:00+09:00',
+    until: '2026-11-05T01:00:00+09:00',
     lines: [
       [
         { text: '열람실', strong: true },
@@ -159,6 +166,7 @@ const BUILDINGS: Building[] = [
     place: SINYANG_HUM,
     walk: 15,
     endAt: at('22:25'),
+    until: at('23:30'),
     lines: [[{ text: '1층 라운지', strong: true }], [{ text: '여는 시간을 몰라요', strong: false }]],
     study: { spaces: [spot('sinyang-hum-lounge', '1층 라운지', 'lounge', null, null)], book: null, liveSeats: null },
   },

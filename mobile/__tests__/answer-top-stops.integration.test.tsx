@@ -142,10 +142,10 @@ describe('a step chosen at a folded stop', () => {
     const user = await atDinner();
     await stepGrip('tuck');
     await pass(50);
-    await user.press(screen.getByRole('button', { name: /^1번/u }));
+    await user.press(screen.getByTestId('step-word-1'));
     await pass(50);
 
-    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await user.press(screen.getByTestId('step-word-2'));
     await pass(50);
     // Its height not yet known, its place behind the steps card is not known either: it is not drawn.
     expect(styleOf(timeCard() ?? stepsCard()).opacity).toBe(0);
@@ -209,7 +209,7 @@ describe('an answer to one request, after a fold of several', () => {
     server.on('POST /assistant/messages', { status: 200, body: stepsReplyOn('2026-11-02') });
     await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
     await hideKeyboard();
-    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await user.press(screen.getByTestId('step-word-2'));
     await pass(50);
     await layStepsCard();
     await layFolded(FOLDED);

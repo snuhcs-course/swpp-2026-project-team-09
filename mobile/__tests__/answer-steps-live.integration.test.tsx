@@ -119,9 +119,16 @@ function beside(name: string): ReturnType<typeof screen.queryByRole> {
   return within(screen.getByTestId('ai-input-beside')).queryByRole('button', { name });
 }
 
-function flag(number: number): string | undefined {
-  return mapThings().find((thing) => thing.startsWith(`${String(number)} `));
+// A mark on the map by the start of its name: a step's mark beside the step shown, by its flag's title, or the step
+// shown drawn as its booking or answer alone (P03 ticket 26: no mark carries a step's number).
+function mark(start: string): string | undefined {
+  return mapThings().find((thing) => thing.startsWith(start));
 }
+
+const SEAT_FLAG = '관정 7층 열람실 ›';
+const MEAL_FLAG = '63동 ›';
+// The seat's step, shown, booked: its booking alone's mark (`answer-booked-on-map`).
+const BOOKED_ALONE = /^관정 7층 열람실 · 17:00 · \d+번 · 예약됨$/u;
 
 // Partitions: the seat booked; the meal's step after it. Expected values: a lone booking's "예약됨" and its ticket's
 // 가는 길 (P01 ticket 03), and the meal's own button.
@@ -135,8 +142,8 @@ describe('The seat booked from the steps of a seat and a meal', () => {
     expect(library.writes()).toHaveLength(1);
     expect(screen.getByTestId('step-span-1')).toBeVisible();
     expect(screen.getByTestId('step-span-2')).toBeVisible();
-    expect(flag(1)).toMatch(/^1 관정 7층 열람실 › · \d+번 17:00–18:00 · 예약됨$/u);
-    expect(flag(2)).toBe('2 63동 › · 18:04–18:30');
+    expect(mapThings()).toContainEqual(expect.stringMatching(BOOKED_ALONE));
+    expect(mark(MEAL_FLAG)).toBe('63동 › · 18:04–18:30');
     // The seat's step shows its own answer, the ticket, and the meal's card waits for its step (P03 ticket 23).
     expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
     expect(beside('가는 길')).toBeVisible();
@@ -156,7 +163,7 @@ describe('The seat booked from the steps of a seat and a meal', () => {
     expect(inFrame().getByTestId('library-done')).toBeOnTheScreen();
     expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
 
-    await pressMarker(user, flag(2) ?? '');
+    await pressMarker(user, mark(MEAL_FLAG) ?? '');
     await pass(100);
     expect(inFrame().getByTestId('meal-list')).toBeOnTheScreen();
   });
@@ -166,11 +173,11 @@ describe('The seat booked from the steps of a seat and a meal', () => {
     await user.press(beside('예약하기') ?? screen.getByText('예약하기'));
     await pass(500);
 
-    await pressMarker(user, flag(2) ?? '');
+    await pressMarker(user, mark(MEAL_FLAG) ?? '');
     await pass(100);
     expect(beside('만들고 초대 보내기')).toBeVisible();
 
-    await pressMarker(user, flag(1) ?? '');
+    await pressMarker(user, mark(SEAT_FLAG) ?? '');
     await pass(100);
     expect(beside('가는 길')).toBeVisible();
   });
@@ -179,21 +186,22 @@ describe('The seat booked from the steps of a seat and a meal', () => {
 // Partitions: another candidate on the meal's step; another time on the seat's card. Expected values: the second
 // Plan of the meal answer (301동식당, 12:18–12:45), and the card's end a step later (18:30).
 describe('The steps of a seat and a meal, changed on screen', () => {
-  it('moves the meal’s flag and span to the candidate browsed', async () => {
+  it('moves the meal’s pick and words to the candidate browsed', async () => {
     const user = await askSteps();
-    await pressMarker(user, flag(2) ?? '');
+    await pressMarker(user, mark(MEAL_FLAG) ?? '');
     await pass(100);
 
     // The candidate is chosen in the meal's list, as a meal alone's is (P03 ticket 25).
     await user.press(within(inFrame().getByTestId('meal-list')).getByTestId('meal-row-2'));
     await pass(300);
 
-    expect(flag(2)).toMatch(/^2 301동식당 › · .*12:18–12:45$/u);
-    expect(screen.getByLabelText(/^2번 .*12:18–12:45$/u)).toBeVisible();
+    // Dinner, shown, is its answer alone: the Plan browsed is its pick (P03 ticket 26).
+    expect(mark('301동식당 · ')).toBeDefined();
+    expect(screen.getByTestId('step-word-2')).toHaveAccessibleName(/12:18–12:45$/u);
   });
 
   // The seat's band is its time card's on the bar under the steps card, as a seat answer alone's (P03 ticket 23).
-  it('moves the seat’s flag and span to the time its time card holds', async () => {
+  it('moves the seat’s words and span to the time its time card holds', async () => {
     await askSteps();
     const [, seatCard] = screen.getAllByTestId('time-bar');
     if (seatCard === undefined) {
@@ -206,7 +214,6 @@ describe('The steps of a seat and a meal, changed on screen', () => {
     });
     await pass(300);
 
-    expect(flag(1)).toMatch(/17:00–18:30$/u);
-    expect(screen.getByLabelText(/^1번 .*17:00–18:30$/u)).toBeVisible();
+    expect(screen.getByTestId('step-word-1')).toHaveAccessibleName(/17:00–18:30$/u);
   });
 });

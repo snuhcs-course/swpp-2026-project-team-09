@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { shownMinutes } from '../../travel/travel.js';
@@ -10,7 +11,8 @@ import { SHUTTLE_ADVANTAGE_SECONDS } from '../../travel/judgement-constants.js';
 import { type AnswerLine, type LookupAction, type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
-import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
+import { busyIn } from '../gathering/meal-scene.js';
+import { halfHoursAround } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import { type ShuttleTrip } from './shuttle-trip.js';
 import { type Way } from './way.js';

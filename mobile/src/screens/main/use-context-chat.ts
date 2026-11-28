@@ -11,11 +11,7 @@ import type { RequestContext } from '@/api/assistant-types';
 import type { Tapped } from '@/api/lookup-types';
 import type { Viewport } from '@/features/assistant/study-area';
 import { saysAnswers } from '@/api/capabilities';
-import {
-  type ConversationAnswers,
-  conversationAnswersOf,
-  stepsContextOf,
-} from '@/features/assistant/conversation-answers';
+import { type StepsKept, conversationAnswersOf, stepsContextOf } from '@/features/assistant/conversation-answers';
 import { type Chat, type ChatBubble, useChat } from '@/features/assistant/use-chat';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from './chat-sheet';
@@ -31,16 +27,18 @@ interface Pressed {
 
 // The steps on screen and their answers' conditions, the one on screen as recalculated, for an app that says
 // `answers` (P03 ticket 20); nothing for any other.
-// The steps' answers are those kept on screen (`steps`, P03 ticket 21) when the sheet gives them, else the replies'.
+// The steps' answers are those kept on screen (`steps`, P03 ticket 21) when the sheet gives them for this conversation,
+// else its replies': never another conversation's (P03 ticket 22).
 function stepsOnScreen(
   shown: ShownAnswer | null,
   bubbles: readonly ChatBubble[],
-  steps: ConversationAnswers | null = null,
+  steps: StepsKept | null = null,
 ): Partial<RequestContext> {
   const key = shown?.source?.key;
   const input = shown?.answer?.input;
   const conditions = key === undefined || input === undefined ? null : { key, input };
-  return saysAnswers ? stepsContextOf(steps ?? conversationAnswersOf(bubbles), conditions) : {};
+  const kept = steps !== null && steps.of === (bubbles[0]?.id ?? null) ? steps : null;
+  return saysAnswers ? stepsContextOf(kept ?? conversationAnswersOf(bubbles), conditions) : {};
 }
 
 // What the app knows when the User asks: where the User is on campus or why that is not known, what was pressed on
@@ -50,7 +48,7 @@ export function contextAt(
   shown: ShownAnswer | null,
   { tapped, viewport }: Pressed,
   bubbles: readonly ChatBubble[],
-  stepsKept: ConversationAnswers | null = null,
+  stepsKept: StepsKept | null = null,
 ): RequestContext {
   const { position, locationMissing } = where;
   const conditions = shown?.answer?.input ?? null;
@@ -67,13 +65,10 @@ export function contextAt(
 export function useContextChat(
   where: Where,
   shownNow: RefObject<ShownAnswer | null>,
-): { chat: Chat; stepsNow: RefObject<ConversationAnswers | null> } & Pick<
-  ChatSheetControl,
-  'setTapped' | 'setViewport'
-> {
+): { chat: Chat; stepsNow: RefObject<StepsKept | null> } & Pick<ChatSheetControl, 'setTapped' | 'setViewport'> {
   const pressedNow = useRef<Pressed>({ tapped: null, viewport: null });
   // The steps on screen and their answers as kept on screen, which the sheet sets once it has drawn them (P03 ticket 21).
-  const stepsNow = useRef<ConversationAnswers | null>(null);
+  const stepsNow = useRef<StepsKept | null>(null);
   const bubblesNow = useRef<readonly ChatBubble[]>([]);
   const chat = useChat((): RequestContext =>
     contextAt(where, shownNow.current, pressedNow.current, bubblesNow.current, stepsNow.current),

@@ -13,14 +13,14 @@ import { seatWords } from '@/library/cards/bookings';
 import type { Slot } from '@/library/cards/payloads';
 import { clockOf, minutesOf } from '@/library/cards/times';
 import { type Draft, inKind } from './answer-groups';
-import { stepTone } from './answer-tone';
+import { stepIcon, stepTone } from './answer-tone';
 import { bookingTitle } from './booking-scene';
 import { meAndWalk } from './proposal-scene';
 import { turnOf } from './turn';
 import type { ChatBubble } from './use-chat';
 
 // The requests of the turn on screen, when its reply answered two or more (P03's steps), which the map draws as
-// numbered flags (P04 ticket 09).
+// flags (P04 ticket 09), each marked by its kind's icon (P03 ticket 26).
 export interface ShownSteps {
   bubbleId: number;
   steps: readonly ReplyStep[];
@@ -160,50 +160,47 @@ export function stepsScene(steps: readonly ReplyStep[], me: LatLng | null): MapS
   return { people: mine, places: [], routes: [...walk, ...between], flags: [] };
 }
 
-// The user's choices for the steps' marks, awaiting his decision from use (2026-11-28, P03 ticket 24), one function
-// each. Their colour is `stepTone`'s, the one table of each kind's colour (`kindTone`), as the same answer's mark alone;
-// choice 2, a room's step in the study colour as a seat's, is that table's (`answerTone`).
-// Choice 1: what a seat's or a room's round holds: its number, as every step's, not the 관정 booking pick's book.
-export function bookingStepHolds(): 'number' | 'book' {
-  return 'number';
-}
-
-// Choice 3: how a step's round is drawn: solid, as a pick, for every step done, the chosen one or not; grey for one
-// not done.
+// The steps' marks (P03 ticket 24). Their colour is `stepTone`'s, the one table of each kind's colour (`kindTone`), as
+// the same answer's mark alone; a room's step takes the study colour as a seat's, by that table (`answerTone`). Every
+// round holds its kind's icon from the same table (`stepIcon`), the user's choice of 2026-11-28 ("가안이 좋아보여",
+// P03 ticket 26): numbers mean an answer's candidates alone.
+// How a step's round is drawn: solid, as a pick, for every step done; grey for one not done.
 export function stepMarkRole({ status }: Pick<ReplyStep, 'status'>): 'pick' | 'dropped' {
   return status === 'shown' ? 'pick' : 'dropped';
 }
 
-// Each step with a place as a numbered flag: ① ② by the steps' order, its title with "›" when a press does something,
-// its line, and faded when it was not done.
+// Each step with a place as a mark of its own: a solid round in its kind's colour holding its kind's icon, never a
+// number; its flag, its title with "›" when a press does something, and its line; grey, with no icon, when it was not
+// done. The order is told by the flags' times. The step `leftOut` is drawn by its own answer or booking, as alone
+// (P03 ticket 26).
 export function stepDrafts(
   steps: readonly ReplyStep[],
   lines: readonly string[],
   titles: readonly string[],
   // Whether a press on each step's flag does something, which its "›" says; left out, every one.
   opens: readonly boolean[] = [],
+  leftOut: number | null = null,
 ): Draft[] {
   return steps.flatMap((step, index): Draft[] => {
     const { place } = step;
-    if (place === null) {
+    if (place === null || index === leftOut) {
       return [];
     }
-    const number = index + 1;
     const role = stepMarkRole(step);
-    const book = (step.kind === 'seat' || step.kind === 'room') && bookingStepHolds() === 'book';
     const title = (opens[index] ?? true) ? `${titles[index] ?? step.title} ›` : (titles[index] ?? step.title);
     const line = lines[index] ?? null;
+    const icon = role === 'pick' ? { icon: stepIcon(step.kind) } : {};
     const draft: Draft = {
-      id: `${STEP_ID}${String(number)}`,
-      name: `${String(number)} ${title} · ${line ?? ''}`,
+      id: `${STEP_ID}${String(index + 1)}`,
+      name: `${title} · ${line ?? ''}`,
       position: { latitude: place.latitude, longitude: place.longitude },
       planId: null,
       group: role,
-      symbol: { type: 'dot', role, number: book ? null : number, ...(book ? { study: true } : {}) },
+      symbol: { type: 'dot', role, number: null, ...icon },
       tone: role,
       title,
       line,
-      number,
+      number: null,
     };
     // A step done in its kind's colour, as its answer's pick; one not done grey.
     return [inKind(draft, stepTone(step))];

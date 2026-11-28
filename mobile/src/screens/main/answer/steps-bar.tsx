@@ -13,7 +13,8 @@ import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReplyStep } from '@/api/assistant-types';
 import { now } from '@/clock';
-import { color, font, radius, shadow, space, text } from '@/design-system';
+import { color, font, Icon, kindTone, radius, shadow, space, text } from '@/design-system';
+import { stepIcon, stepTone } from '@/features/assistant/answer-tone';
 import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_TOP } from '../layout';
@@ -30,11 +31,8 @@ const MARGIN = 30 * MINUTE;
 // A step with no end takes this long on the bar.
 const NO_END = 30 * MINUTE;
 const TRACK = 24;
-
-// "①", "②", … for the steps' numbers.
-export function circled(number: number): string {
-  return String.fromCodePoint(0x24_5f + number);
-}
+// A step's icon, as high as its words' letters.
+const WORD_ICON = 16;
 
 // What a step is, in a word: what the User does then. A seat, a room, and a study place all read "공부" (the user's
 // phone, 2026-11-28: "자리라는 텍스트 보다는 공부가 낫지 않을까?"); where, the step's flag and card say. Any other step
@@ -44,6 +42,12 @@ function wordOf(step: ReplyStep): string {
     return '공부';
   }
   return step.title.split(' ').at(-1) ?? step.title;
+}
+
+// A step's word and its time ("공부 17:30–19:00").
+function wordsOf(step: ReplyStep): string {
+  const clock = stepClock(step);
+  return clock === null ? wordOf(step) : `${wordOf(step)} ${clock}`;
 }
 
 // A span's press is this high over its own width, so that a press on it chooses its step as its words do, and the gaps
@@ -151,9 +155,10 @@ function useLifted(
   return { moved, rested: { transform: [{ translateY: at }] } };
 }
 
-// The bar of several requests (P04 ticket 09, board 12): one span a step with a time, numbered as its flag, and the
-// steps' words over them; a press on a step's words or span makes it the step shown. A step not done is faint. Its
-// time is changed on the step's own card.
+// The bar of several requests (P04 ticket 09, board 12): one span a step with a time, and the steps' words over them,
+// each its kind's icon, its word and its time, with no number: numbers mean an answer's candidates alone, and the
+// times tell the order (P03 ticket 26). A press on a step's words or span makes it the step shown. A step not done is
+// faint. Its time is changed on the step's own card.
 export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarProps): ReactElement | null {
   const { top } = useSafeAreaInsets();
   const lifted = useLifted(stops, top);
@@ -175,16 +180,19 @@ export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarPro
       <View style={styles.words}>
         {spans.map(({ index, step }) => (
           <Pressable
-            accessibilityLabel={`${String(index + 1)}번 ${wordOf(step)} ${stepClock(step) ?? ''}`}
+            accessibilityLabel={wordsOf(step)}
             accessibilityRole="button"
             accessibilityState={{ selected: index === active }}
             key={index}
             onPress={() => {
               onStep(index);
             }}
+            style={styles.step}
+            testID={`step-word-${String(index + 1)}`}
           >
+            <Icon color={kindTone[stepTone(step)].ink} name={stepIcon(step.kind)} size={WORD_ICON} />
             <Text style={[styles.word, index === active && styles.wordActive, step.status !== 'shown' && styles.faint]}>
-              {`${circled(index + 1)} ${wordOf(step)} ${stepClock(step) ?? ''}`}
+              {wordsOf(step)}
             </Text>
           </Pressable>
         ))}
@@ -222,6 +230,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     columnGap: space[3],
   },
+  step: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
   word: { ...text.label, color: color.inkMuted },
   // The chosen step in the time card's gold, its span drawn as the card's band (P01 ticket 23).
   wordActive: { fontFamily: font.semiBold, color: color.quest },

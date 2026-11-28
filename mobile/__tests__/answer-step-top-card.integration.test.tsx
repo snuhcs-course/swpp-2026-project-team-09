@@ -83,6 +83,9 @@ function keyed(): AssistantReply {
 
 const ALL = { includeHiddenElements: true };
 
+// The seat's step on the map beside dinner shown: its kind's mark, named by its flag (P03 ticket 26).
+const SEAT_MARK = /^관정 7층 열람실 › /u;
+
 const headWords = (): ReturnType<typeof screen.getByTestId> =>
   within(screen.getByTestId('time-card-head')).getByTestId('time-band-words');
 
@@ -133,7 +136,7 @@ describe("the chosen step's card under the map", () => {
     expect(screen.queryByText('예약 안 함', ALL)).toBeNull();
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeVisible();
 
-    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await user.press(screen.getByTestId('step-word-2'));
     await pass(50);
 
     expect(screen.getByTestId('meal-list', ALL)).toBeTruthy();
@@ -146,7 +149,7 @@ describe('a Lookup in the turn of several requests', () => {
   it('takes the map and the place under the steps card, which stays, until a reply draws the steps again', async () => {
     const user = await atStep(server, 2, keyed());
     const { steps } = keyed();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^1 /u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(SEAT_MARK));
 
     server.on('POST /assistant/messages', { status: 200, body: { ...LEAVE_LOOKUP_REPLY, steps, answers: [] } });
     await sendFromBar(user, '언제 나서면 돼?');
@@ -154,9 +157,9 @@ describe('a Lookup in the turn of several requests', () => {
     await pass(50);
 
     expect(screen.getByTestId('steps-top')).toBeVisible();
-    expect(screen.getByRole('button', { name: /^2번/u })).toBeSelected();
+    expect(screen.getByTestId('step-word-2')).toBeSelected();
     expect(headWords()).toHaveTextContent(/12:45 나서기/u);
-    expect(mapThings()).not.toContainEqual(expect.stringMatching(/^1 /u));
+    expect(mapThings()).not.toContainEqual(expect.stringMatching(SEAT_MARK));
 
     server.on('POST /assistant/messages', { status: 200, body: keyed() });
     await sendFromBar(user, '다시 보여줘');
@@ -164,7 +167,7 @@ describe('a Lookup in the turn of several requests', () => {
     await pass(50);
 
     expect(headWords()).not.toHaveTextContent(/나서기/u);
-    expect(screen.getByRole('button', { name: /^2번/u })).toBeSelected();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^1 /u));
+    expect(screen.getByTestId('step-word-2')).toBeSelected();
+    expect(mapThings()).toContainEqual(expect.stringMatching(SEAT_MARK));
   });
 });

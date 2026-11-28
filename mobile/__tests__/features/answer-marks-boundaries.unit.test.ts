@@ -13,7 +13,8 @@ import type { LatLng } from '@/api/types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
 import { color } from '@/design-system';
-import { drawingOf, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
+import { looksOf } from '@/features/assistant/answer-looks';
+import { drawingOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { lookName } from '@/map/marker-looks';
 import { ME_ID, MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
 

@@ -13,6 +13,24 @@ import { type AnswerLabel, color, MapAnswerMark } from '@/design-system';
 // The 관정 booking's mark (P01 ticket 10): the meal pick's round and label in the study colour, the round with the study
 // layer's book inside.
 
+// A step of several requests (P03 ticket 26): its kind's round with its kind's icon, never a number. Partitions: a
+// meal's step; any pick with no icon (below).
+describe("MapAnswerMark: a step's round", () => {
+  it("draws its kind's icon in place of a number, as a study pick its book", async () => {
+    await render(
+      <MapAnswerMark
+        label={null}
+        symbol={{ type: 'dot', role: 'pick', number: null, kind: 'meal', icon: 'meal' }}
+        testID="m"
+      />,
+    );
+
+    expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.meal });
+    expect(screen.getByTestId('m:icon')).toBeOnTheScreen();
+    expect(screen.queryByTestId('m:book')).toBeNull();
+  });
+});
+
 // Partitions: a study pick's round and label, and any other pick. Expected values: the user's decision of 2026-11-27.
 describe('MapAnswerMark: a study pick', () => {
   it("fills the round with the study colour and draws the layer's book in it, with no number", async () => {
@@ -29,6 +47,7 @@ describe('MapAnswerMark: a study pick', () => {
 
     expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.snuBlue });
     expect(screen.queryByTestId('m:book')).toBeNull();
+    expect(screen.queryByTestId('m:icon')).toBeNull();
   });
 
   it('edges the label with the study colour, keeps the start gold, and ends the line with ›', async () => {

@@ -8,7 +8,12 @@ import { type RefObject, useCallback, useEffect, useMemo, useState } from 'react
 import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { now } from '@/clock';
 import type { ChosenAnswer } from '@/features/assistant/answer-state';
-import { type ConversationAnswers, conversationAnswersOf } from '@/features/assistant/conversation-answers';
+import {
+  type ConversationAnswers,
+  type StepsKept,
+  conversationAnswersOf,
+  withoutWithdrawn,
+} from '@/features/assistant/conversation-answers';
 import {
   chosenAnswerOf,
   type Kept,
@@ -121,6 +126,7 @@ function useChoice(
 type Rename = (from: string, to: string) => void;
 
 const NOTHING_KEPT: ReadonlyMap<string, Kept> = new Map();
+const NONE_WITHDRAWN: ReadonlySet<string> = new Set();
 
 type SetKept = (update: (last: ReadonlyMap<string, Kept>) => ReadonlyMap<string, Kept>) => void;
 
@@ -182,10 +188,18 @@ function useKeptOf(kept: ReadonlyMap<string, Kept>, conversation: ConversationAn
   );
 }
 
-export function useStepAnswer(bubbles: readonly ChatBubble[], replied: ShownSteps | null): StepAnswer {
+// `withdrawn`: the keys later replies withdrew while the steps stay on screen (P03 ticket 22).
+export function useStepAnswer(
+  bubbles: readonly ChatBubble[],
+  replied: ShownSteps | null,
+  withdrawn: ReadonlySet<string> = NONE_WITHDRAWN,
+): StepAnswer {
   const [all, setKept] = useKept(bubbles[0]?.id ?? null);
   const kept = useMemo(() => keptOnScreen(all, bubbles), [all, bubbles]);
-  const conversation = useMemo(() => recalculatedConversation(conversationAnswersOf(bubbles), kept), [bubbles, kept]);
+  const conversation = useMemo(
+    () => withoutWithdrawn(recalculatedConversation(conversationAnswersOf(bubbles), kept), withdrawn),
+    [bubbles, kept, withdrawn],
+  );
   const keyed = conversation.answers.some(({ key }) => key !== undefined);
   const steps = useMemo(
     () =>
@@ -242,22 +256,25 @@ export function useStepAnswerOf(
 }
 
 // What the next request tells of the steps on screen (P03 ticket 20): their answers as recalculated on screen, and the
-// steps as they stand; null for the reply's one answer.
+// steps as they stand, of the conversation `of` its first bubble; null for the reply's one answer.
 export function useStepsNow(
-  ref: RefObject<ConversationAnswers | null>,
+  ref: RefObject<StepsKept | null>,
   { keyed, conversation }: Pick<StepAnswer, 'keyed' | 'conversation'>,
   live: ShownSteps | null,
+  of: number | null,
 ): void {
   useEffect(() => {
-    ref.current = keyed ? { answers: conversation.answers, steps: live?.steps ?? conversation.steps } : null;
+    ref.current = keyed ? { of, answers: conversation.answers, steps: live?.steps ?? conversation.steps } : null;
   });
 }
 
-// The steps of the reply on the map as their answers' keys now name them, and the answers they show.
+// The steps of the reply on the map as their answers' keys now name them, without those later replies withdrew, and the
+// answers they show.
 export function useStepsOfReply<OnMap extends { steps: ShownSteps | null }>(
   replied: OnMap,
   bubbles: readonly ChatBubble[],
+  withdrawn?: ReadonlySet<string>,
 ): { onMap: OnMap; stepAnswer: StepAnswer } {
-  const stepAnswer = useStepAnswer(bubbles, replied.steps);
+  const stepAnswer = useStepAnswer(bubbles, replied.steps, withdrawn);
   return { onMap: { ...replied, steps: stepAnswer.steps }, stepAnswer };
 }

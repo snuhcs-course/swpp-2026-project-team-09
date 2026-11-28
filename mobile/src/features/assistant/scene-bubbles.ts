@@ -4,6 +4,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { turnsOf } from './turn';
@@ -48,4 +49,10 @@ export function sceneBubblesOf(bubbles: readonly ChatBubble[]): readonly ChatBub
     0,
     bubbles.findIndex(({ id }) => id === next.id),
   );
+}
+
+// The keys the replies after the scene withdrew (P03 ticket 22): they drew nothing of their own, so the scene stays, and
+// the steps whose answers they withdrew leave it.
+export function withdrawnAfter(bubbles: readonly ChatBubble[], scene: readonly ChatBubble[]): ReadonlySet<string> {
+  return new Set(bubbles.slice(scene.length).flatMap(({ withdrawn = [] }) => withdrawn));
 }
