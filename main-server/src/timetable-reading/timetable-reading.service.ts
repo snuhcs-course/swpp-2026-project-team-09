@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { HttpException, HttpStatus, Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { LETTERS, type Weekday } from './labels.js';
-import { checkedReading, type TimetableReading } from './reading-checks.js';
+import { checkedReading, servedLeftOut, type TimetableReading } from './reading-checks.js';
 import { leftOutLine, readingLogger } from './reading-log.js';
 import { blocksAnswer, listedBlocks, nearMissGroups, withoutNames, withSecondLook } from './second-look.js';
 import { UnreadableImageException } from './unreadable-image.exception.js';
@@ -133,7 +134,9 @@ export class TimetableReadingService {
       } else {
         this.logger.log(summary);
       }
-      return reading.kind === 'read' ? { ...reading, usedGrid: mapped === true } : reading;
+      return reading.kind === 'read'
+        ? { ...reading, leftOut: servedLeftOut(reading.leftOut), usedGrid: mapped === true }
+        : reading;
     } catch (error) {
       this.logger.warn(`A timetable was not read: ${causeOf(error)}`);
       throw unavailable();

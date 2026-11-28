@@ -2267,8 +2267,12 @@ blocks itself.
 or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a body of another shape, 413 above the
 limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked
 `TIMETABLE_READING_DAILY` times that day in Korea (a setting, 10 unless set), and 503 when the model fails or the server has no key by the
-name `llm.key` gives; the app then reads the picture on the phone. The picture is neither stored nor logged, nor is
-what was read; the log says only how many classes and blocks left out. A reading makes at most 7 model calls
+name `llm.key` gives; the app then reads the picture on the phone. The picture and the words read (names and rooms)
+are neither stored nor logged, and the route's bodies are left off its request line (`BODILESS_ROUTES`). What is
+logged is the left-out blocks' day, time and reason (P05 ticket 90): one WARN line for each, with its day, its start
+and end, the reason and the numbers behind it ("name lines 14, at most 12"); a WARN for each call whose failure left
+blocks out, with its cause and no message; and the count of classes and blocks left out, a WARN when any was. A
+reading makes at most 7 model calls
 (`MOST_MODEL_CALLS`: the layout and the text, at most 3 fading ends asked again, one re-read, one second look at
 near-miss names) and the grid at most 48 blocks; `TIMETABLE_READING_TIMEOUT_MS` (24 000) is one deadline over all of
 a reading's calls, under the phone's 25 s, and `TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bounds each call. A
