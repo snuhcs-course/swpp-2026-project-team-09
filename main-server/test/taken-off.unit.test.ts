@@ -21,8 +21,8 @@ import { refuse } from '../src/assistant/refusals/refusal-tools.js';
 import { replyBody } from '../src/assistant/reply-body.js';
 import { answersOnScreen, takenOff } from '../src/assistant/taken-off.js';
 
-// Which answers on screen a request that ends with none takes off the map (P05 ticket 79). The main server never sends
-// `clears` to an app that says `answers`, so it names the keys of those answers in `withdrawn`. Before, it named none
+// Which answers on screen a request that ends with none takes off the map (P05 ticket 79). The main server names their
+// keys in `withdrawn` to an app that says `answers`, and says `clears` only once nothing stays. Before, it said nothing
 // for a day out of reach: "내일 점심", then "다다음주 월요일 점심", left tomorrow's plan, its time card and 일정에 넣기
 // under the refusal's words, the fault the user saw on 2026-11-26.
 
@@ -157,36 +157,60 @@ const bodyOf = (context: ToolContext): ReturnType<typeof replyBody> => {
 
 const ON_SCREEN_LUNCH: RequestContext = { ...NO_CONTEXT, conditions: LUNCH };
 
-// Partitions: a day out of reach (A); a meal over for today, of another request (B) or of the same; a refusal. And an
-// app before `answers`.
+// The seat's booking step and dinner, as steps on screen.
+const SEAT_AND_DINNER: Pick<RequestContext, 'conditions' | 'answers' | 'steps'> = {
+  conditions: DINNER,
+  answers: [DINNER],
+  steps: [{ ...stepOf('seat'), kind: 'seat', shows: { kind: 'card', key: 'seat 1' } }, stepOf(DINNER_KEY)],
+};
+
+const says = ['answer', 'answers'] satisfies ClientCapability[];
+
+// Partitions: a day out of reach (A); a meal over for today, of another request (B) or of the same; one of two steps,
+// beside an answer or a booking. `clears` only when nothing stays. Then a refusal, and an app before `answers`.
 describe('The reply of a request that ends with none, to an app that says answers', () => {
-  it("names tomorrow's lunch for lunch on a day out of reach (A), and sends no clears", async () => {
-    const context = contextAt('10:00', ON_SCREEN_LUNCH, ['answer', 'answers']);
+  it("names tomorrow's lunch for lunch on a day out of reach (A), and says nothing stays", async () => {
+    const context = contextAt('10:00', ON_SCREEN_LUNCH, says);
     await planning.run({ date: OUT_OF_REACH, meal: 'lunch' }, context);
+
+    expect(bodyOf(context)).toMatchObject({ withdrawn: [LUNCH_KEY], clears: true });
+  });
+
+  it("names none of tomorrow's lunch for tonight's dinner, over for today (B), and lets it stay", async () => {
+    const context = contextAt('21:30', ON_SCREEN_LUNCH, says);
+    await planning.run({ date: TODAY, meal: 'dinner' }, context);
 
     const body = bodyOf(context);
 
-    expect(body.withdrawn).toEqual([LUNCH_KEY]);
+    expect(body.withdrawn ?? []).not.toContain(LUNCH_KEY);
     expect(body).not.toHaveProperty('clears');
   });
 
-  it("names none of tomorrow's lunch for tonight's dinner, over for today (B)", async () => {
-    const context = contextAt('21:30', ON_SCREEN_LUNCH, ['answer', 'answers']);
-    await planning.run({ date: TODAY, meal: 'dinner' }, context);
-
-    expect(bodyOf(context).withdrawn ?? []).not.toContain(LUNCH_KEY);
-  });
-
-  it("names today's lunch for today's lunch, over for today", async () => {
+  it("names today's lunch for today's lunch, over for today, and says nothing stays", async () => {
     const today = meal('lunch', TODAY);
-    const context = contextAt('15:00', { ...NO_CONTEXT, conditions: today }, ['answer', 'answers']);
+    const context = contextAt('15:00', { ...NO_CONTEXT, conditions: today }, says);
     await planning.run({ date: TODAY, meal: 'lunch' }, context);
 
-    expect(bodyOf(context).withdrawn).toEqual([requestKey(today)]);
+    expect(bodyOf(context)).toMatchObject({ withdrawn: [requestKey(today)], clears: true });
   });
 
-  it('names both answers of the steps for a refusal plainly not about them', async () => {
-    const context = contextAt('10:00', { ...NO_CONTEXT, ...STEPS }, ['answer', 'answers']);
+  it.each([
+    ['lunch', STEPS],
+    ["a seat's booking", SEAT_AND_DINNER],
+  ])("names dinner's step alone for dinner on a day out of reach beside %s, which stays", async (_case, steps) => {
+    const context = contextAt('10:00', { ...NO_CONTEXT, ...steps }, says);
+    await planning.run({ date: OUT_OF_REACH, meal: 'dinner' }, context);
+
+    const body = bodyOf(context);
+
+    expect(body.withdrawn).toEqual([DINNER_KEY]);
+    expect(body).not.toHaveProperty('clears');
+  });
+});
+
+describe('The reply of a refusal plainly not about the plans, to an app that says answers', () => {
+  it('names both answers of the steps and says nothing stays', async () => {
+    const context = contextAt('10:00', { ...NO_CONTEXT, ...STEPS }, says);
     const sources = {
       friends: { list: (): Promise<never[]> => Promise.resolve([]) },
       days: { itemsOn: (): Promise<never[]> => Promise.resolve([]) },
@@ -194,7 +218,7 @@ describe('The reply of a request that ends with none, to an app that says answer
     };
     await refuse(sources).run({ kind: 'off-campus' }, context);
 
-    expect(bodyOf(context).withdrawn).toEqual([LUNCH_KEY, DINNER_KEY]);
+    expect(bodyOf(context)).toMatchObject({ withdrawn: [LUNCH_KEY, DINNER_KEY], clears: true });
   });
 });
 

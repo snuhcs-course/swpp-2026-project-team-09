@@ -154,6 +154,9 @@ export interface Presented {
   // A request for another plan, or another request, ended with nothing drawn: the plan on screen leaves it (P05 ticket
   // 55). Left out when the reply may be about the plan on screen.
   clears?: true;
+  // Nothing stays on screen once the answers it takes off leave (P05 ticket 79): what an app that says `answers` reads
+  // as `clears`.
+  empties?: true;
   // The conversation's Classes left out, once a tool of the run left one out or put one back (P05 ticket 70).
   leftOut?: LeftOutClass[];
 }

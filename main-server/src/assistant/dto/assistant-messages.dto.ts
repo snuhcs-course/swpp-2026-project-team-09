@@ -12,6 +12,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -119,7 +120,9 @@ export interface AssistantReplyDto {
   // says `answers`, the request whose answer holds the plan, when one of `answers` does.
   select?: { planId: string; key?: string };
   // The answer on screen leaves the map with its time card and button: the User asked for another plan, or something
-  // else, and nothing could be drawn for it (P05 ticket 55). Left out otherwise, and by a reply that draws its own.
+  // else, and nothing could be drawn for it (P05 ticket 55). Left out otherwise, and by a reply that draws its own. For
+  // an app that says `answers`, only when nothing stays on screen, every answer it shows among `withdrawn` (P05 ticket
+  // 79).
   clears?: true;
   // The asker's Classes the conversation leaves out after this message, which the app keeps for the conversation and
   // sends back as `context.skipped` (P05 ticket 70). Given while the request sent some or a tool left one out or put one

@@ -9,11 +9,12 @@ import { type NoneFound, type ToolContext } from './feature.js';
 import { noDay } from './free-time/tool-parts.js';
 import { isTogether } from './lookup/study-group.js';
 import { type Drawn, requestKey, sameRequest, takeMap } from './presented.js';
-import { onScreen } from './steps/steps-on-screen.js';
+import { keyOf, onScreen } from './steps/steps-on-screen.js';
 
 // A request that ends with none: what the plan on screen becomes (P05 tickets 55 and 79). An app before `answers` is
-// told the plan leaves the map (`clears`). An app that says `answers` never is, since the answers on screen may be of
-// other requests than the one that ended; it is told the keys of those that leave (`withdrawn`).
+// told the plan leaves the map (`clears`). An app that says `answers` is told the keys of the answers on screen that
+// leave (`withdrawn`), since they may be of other requests than the one that ended, and `clears` only when nothing
+// stays (`empties`).
 
 // The request that ended with none, by what tells requests apart: its kind, for a meal its meal, for a study whether it
 // is together. Its day and its other conditions do not count. `unrelated`: a refusal plainly not about the plans.
@@ -62,9 +63,19 @@ export function answersOnScreen(
   return conditions === null ? new Map() : new Map([[requestKey(conditions), conditions]]);
 }
 
-// The one way a tool ends a request with none.
+// Whether nothing stays on screen once the answers of these keys leave: every step on screen is one of them, a booking
+// step being none, or, with no steps, the one answer open is.
+function leavesNothing(context: Pick<RequestContext, 'conditions' | 'answers' | 'steps'>, keys: string[]): boolean {
+  const { steps } = onScreen(context);
+  if (steps.length > 0) {
+    return steps.every((step) => keys.includes(keyOf(step) ?? ''));
+  }
+  return context.conditions !== null && keys.includes(requestKey(context.conditions));
+}
+
+// The one way a tool ends a request with none. A refusal plainly not about the plans leaves nothing either.
 export function endsWithNone(
-  presented: Pick<Drawn, 'clears' | 'withdrawn'>,
+  presented: Pick<Drawn, 'clears' | 'withdrawn' | 'empties'>,
   context: RequestContext,
   failed: Failed,
 ): void {
@@ -72,6 +83,9 @@ export function endsWithNone(
   const keys = takenOff(failed, answersOnScreen(context));
   if (keys.length > 0) {
     presented.withdrawn = [...(presented.withdrawn ?? []).filter((key) => !keys.includes(key)), ...keys];
+  }
+  if (failed.kind === 'unrelated' || leavesNothing(context, keys)) {
+    presented.empties = true;
   }
 }
 

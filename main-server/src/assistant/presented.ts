@@ -17,7 +17,10 @@ import { isTogether } from './lookup/study-group.js';
 // "점심이랑 저녁 짜줘" keeps both: an answer replaces one of the same request and is added after the others otherwise,
 // and a Lookup leaves them.
 
-export type Drawn = Pick<Presented, 'answer' | 'answers' | 'withdrawn' | 'lookup' | 'mapButtons' | 'clears'>;
+export type Drawn = Pick<
+  Presented,
+  'answer' | 'answers' | 'withdrawn' | 'lookup' | 'mapButtons' | 'clears' | 'empties'
+>;
 
 // Which request of the message an answer answers: its kind and day, and for a meal the meal, for a study plan whether
 // it is together. Quests have no day of their own: those of one Global Event are one request.
