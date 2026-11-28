@@ -5,13 +5,15 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER_FROM_14 } from '@/api/mock/data/meet-answer';
 import { NOT_RUNNING_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
-import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf } from '@/features/assistant/answer-marks';
+import { looksOf } from '@/features/assistant/answer-looks';
+import { type AnswerDrawing, drawingOf, drawingOfScene } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import { CAMERA_BOUNDS } from '@/map';
 import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';

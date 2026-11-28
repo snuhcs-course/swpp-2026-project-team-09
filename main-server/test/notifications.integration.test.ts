@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { type NotificationsService } from '../src/notifications/notifications.service.js';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { signInUser, TestUser } from './friends.js';
 import { connectToDatabase } from './quests.js';
 import { withAccessToken } from './sign-in.js';
@@ -38,6 +40,10 @@ beforeAll(async () => {
   notifications = app.get(registered);
   redis = app.get<Redis>(REDIS);
   prisma = connectToDatabase();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -81,6 +87,7 @@ describe('GET /notifications', () => {
         line: '점심',
         at: '2026-11-14T12:10:00+09:00',
         url: '/main?card=party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
+        read: false,
       },
       {
         id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
@@ -90,6 +97,7 @@ describe('GET /notifications', () => {
         line: '저녁 같이',
         at: '2026-11-14T11:58:00+09:00',
         url: '/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b',
+        read: false,
       },
     ]);
   });
@@ -102,6 +110,24 @@ describe('GET /notifications', () => {
 
   it('answers 401 without a sign-in', async () => {
     expect((await getNotifications(null)).status).toBe(401);
+  });
+});
+
+describe('GET /notifications and the time', () => {
+  it('leaves out one whose time has not come, until it comes', async () => {
+    const user = await signInUser(app);
+    const clock = vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date('2026-11-14T03:00:00Z'));
+    await notifications.schedule(user.id, accepted('민수'), new Date('2026-11-14T02:58:00Z'));
+    await notifications.schedule(user.id, accepted('지은', OTHER_QUEST_ID), new Date('2026-11-14T03:00:01Z'));
+
+    expect((await getNotifications(user)).body).toEqual([expect.objectContaining({ title: '민수가 수락했어요' })]);
+
+    clock.mockReturnValue(new Date('2026-11-14T03:00:01Z'));
+
+    expect((await getNotifications(user)).body).toEqual([
+      expect.objectContaining({ title: '지은이 수락했어요' }),
+      expect.objectContaining({ title: '민수가 수락했어요' }),
+    ]);
   });
 });
 

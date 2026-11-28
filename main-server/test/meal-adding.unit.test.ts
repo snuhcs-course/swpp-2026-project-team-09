@@ -2,10 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type MealInput, type Plan } from '../src/assistant/dto/answer.dto.js';
-import { addingDto, addingTo, pinnedTo, withItsPeople } from '../src/assistant/gathering/meal-adding.js';
+import { vi } from 'vitest';
+import { type AnswerReply, type MealInput, type Plan } from '../src/assistant/dto/answer.dto.js';
+import { addingDto, addingTo, asHeld, pinnedTo, withItsPeople } from '../src/assistant/gathering/meal-adding.js';
+import { addingWords } from '../src/assistant/gathering/meal-tool-words.js';
 import { mealChangeable } from '../src/assistant/gathering/meal-plan-parts.js';
 import { type KeptQuest } from '../src/quests/kept-quests.js';
 import { type HeldMeal } from '../src/quests/held-meal.js';
@@ -150,5 +153,80 @@ describe('A meal held, asked for with more Friends than are in it', () => {
 
   it('is not changeable when someone in it is left out', () => {
     expect(mealChangeable(kept([{ userId: MINSU, name: '민수', answer: 'waiting' }]), [JIEUN], true)).toBe(false);
+  });
+});
+
+// P05 ticket 85: no plan has 지은 in it, so the lunch is shown as it is held, with why she cannot join it.
+const partOf = (userId: string): Plan['parts'][number] => ({
+  userId,
+  name: userId,
+  me: false,
+  origin: null,
+  leaveAt: null,
+  walkMinutes: null,
+  leaveBy: null,
+  next: null,
+});
+
+const ADDING_JIEUN = { friendIds: [JIEUN], placeId: PLACE_302, startsAt: STARTS, key: '302동식당' };
+
+const answerOf = (plans: Plan[], reasons: string[], note?: string): AnswerReply => ({
+  input: lunchOf(MINSU, JIEUN),
+  chips: [],
+  plans,
+  dropped: [],
+  noPlan:
+    plans.length > 0 ? null : { reason: 'no-shared-time', lines: reasons.map((text) => [{ text, strong: false }]) },
+  ...(note === undefined ? {} : { note }),
+});
+
+const HELD = answerOf([PLAN], []);
+
+describe('The Friends added, when no plan has them in it', () => {
+  const names = { adding: ADDING_JIEUN, people: [{ userId: JIEUN, name: '지은' }], meal: 'lunch' as const };
+  const heldFor = vi.fn((isKept: (userId: string) => boolean) => (isKept(JIEUN) ? answerOf([], []) : HELD));
+
+  it('shows the meal as it is held for everyone but them, with the reasons that name them as its note', () => {
+    const late = answerOf([], ['지은은 12:33에야 도착해요', '12:30 수업에 가려면 12:11엔 나서야 해요']);
+
+    expect(asHeld(late, names, heldFor)).toEqual({
+      ...late,
+      plans: [PLAN],
+      noPlan: null,
+      note: '지은은 12:33에야 도착해요\n12:30 수업에 가려면 12:11엔 나서야 해요',
+    });
+  });
+
+  it('names them when the reasons do not, before the note the answer had', () => {
+    const none = answerOf([], ['그 시간에는 같이 비는 시간이 없어요'], '시간표를 넣으면 더 정확해요');
+
+    expect(asHeld(none, names, heldFor).note).toBe('지은은 이 점심에 시간이 안 돼요\n시간표를 넣으면 더 정확해요');
+  });
+
+  it('leaves an answer with a plan, one adding nobody, and one whose meal cannot be planned as held either', () => {
+    const late = answerOf([], ['지은은 12:33에야 도착해요']);
+
+    expect(asHeld(HELD, names, heldFor)).toBe(HELD);
+    expect(asHeld(late, { ...names, adding: null }, heldFor)).toBe(late);
+    expect(asHeld(late, names, () => answerOf([], []))).toBe(late);
+  });
+});
+
+describe('What the model is told of the Friends added', () => {
+  const shown = {
+    ...HELD,
+    adding: { friends: [{ userId: JIEUN, name: '지은' }], startAt: PLAN.startAt, movesTo: null },
+  };
+  const withHer = { ...shown, plans: [{ ...PLAN, parts: [partOf(JIEUN)] }] };
+
+  it('says they do not fit, and why, when the plan has no part of theirs', () => {
+    expect(addingWords({ ...shown, note: '지은은 12:33에야 도착해요' }, [])).toMatchObject({
+      adding: { fits: false, why: '지은은 12:33에야 도착해요' },
+    });
+  });
+
+  it('says they fit, with no why, when it has', () => {
+    expect(addingWords(withHer, [])).toMatchObject({ adding: { fits: true } });
+    expect(addingWords(withHer, [])).not.toMatchObject({ adding: { why: expect.anything() as unknown } });
   });
 });

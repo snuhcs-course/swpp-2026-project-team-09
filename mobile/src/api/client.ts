@@ -24,6 +24,8 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -45,6 +47,7 @@ import type { ShownClient } from './quest-parts-types';
 import { withQuestParts } from './quest-parts/with-parts';
 import { asksMainServer } from './servers';
 import type { InterestMatches, WatchedInterest } from './interest-types';
+import { type KeptNotificationsClient, keptNotificationsOf } from './kept-notifications-client';
 import type { PrivateZone } from './private-zone-types';
 import type {
   AskedMoment,
@@ -77,14 +80,7 @@ import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type {
-  FriendRequests,
-  JoinRequest,
-  KeptNotification,
-  MyJoinRequest,
-  QuestInvitation,
-  QuestRemoval,
-} from './waiting-types';
+import type { FriendRequests, JoinRequest, MyJoinRequest, QuestInvitation, QuestRemoval } from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { BetterPlan, MakePlanQuest, PlanQuest } from './plan-quest-types';
 import type { SeatStay, SeatStayMade } from './seat-stay-types';
@@ -92,7 +88,7 @@ import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
 // Everything the screens ask of the main server. A refusal or no answer is thrown as an `ApiError`.
-export interface ApiClient {
+export interface ApiClient extends KeptNotificationsClient {
   completeOnboarding: (answers: OnboardingAnswers) => Promise<void>;
   // Refused with 403 ONBOARDING_REQUIRED until Onboarding is finished.
   enterLobby: () => Promise<Lobby>;
@@ -139,8 +135,6 @@ export interface ApiClient {
   listFriendStatuses: () => Promise<FriendStatus[]>;
   listQuests: () => Promise<Quest[]>;
   listQuestInvitations: () => Promise<QuestInvitation[]>;
-  // The latest first.
-  listNotifications: () => Promise<KeptNotification[]>;
   // Only for a Quest the User leads.
   listJoinRequests: (questId: string) => Promise<JoinRequest[]>;
   listClasses: () => Promise<TimetableClass[]>;
@@ -159,7 +153,6 @@ export interface ApiClient {
   readTimetableImage: (image: string, grid: SentGrid | null) => Promise<ServerTimetableReading>;
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
-  searchPlaces: (words: string) => Promise<Place[]>;
   listGlobalEvents: () => Promise<ListedGlobalEvent[]>;
   // Stars a published Global Event, or clears its star; a repeat changes nothing. Refused with 404
   // GLOBAL_EVENT_NOT_FOUND for an event that is not published.
@@ -319,7 +312,7 @@ export const apiClient: ShownClient = {
   listFriendStatuses: () => chosen().listFriendStatuses(),
   listQuests: () => chosen().listQuests(),
   listQuestInvitations: () => chosen().listQuestInvitations(),
-  listNotifications: () => chosen().listNotifications(),
+  ...keptNotificationsOf(chosen),
   listJoinRequests: (questId) => chosen().listJoinRequests(questId),
   listClasses: () => chosen().listClasses(),
   addClass: (save, key) => chosen().addClass(save, key),
@@ -328,7 +321,6 @@ export const apiClient: ShownClient = {
   resetTimetable: () => chosen().resetTimetable(),
   readTimetableImage: (image, grid) => chosen().readTimetableImage(image, grid),
   listPlaces: () => chosen().listPlaces(),
-  searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
   setFavoriteEvent: (globalEventId, favorite) => chosen().setFavoriteEvent(globalEventId, favorite),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),

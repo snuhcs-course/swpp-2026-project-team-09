@@ -21,6 +21,8 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -63,11 +65,16 @@ type LibraryDetails = Pick<Profile, 'studentNumber' | 'registeredName' | 'affili
 const NO_LIBRARY_DETAILS: LibraryDetails = { studentNumber: null, registeredName: null, affiliation: null };
 let libraryDetails = NO_LIBRARY_DETAILS;
 
+// The kept Notifications the User has read in 알림, which the main server keeps on each row. Kept in memory, like the
+// Master Switch.
+const readNotifications = new Set<string>();
+
 // For the tests: a new start of the app.
 export function forgetMockSwitch(): void {
   masterSwitchOn = false;
   masterOffAsked = false;
   libraryDetails = NO_LIBRARY_DETAILS;
+  readNotifications.clear();
 }
 
 // As the main server: a 학번 such as 2026-12345, with the hyphen or not, is kept as its nine digits, and an empty
@@ -227,7 +234,21 @@ export const mockClient: ApiClient = {
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
   listQuests: () => answer('listQuests', () => [...QUESTS, ...mockMadeQuests()], []),
   listQuestInvitations: () => answer('listQuestInvitations', () => questInvitationsAt(now()), []),
-  listNotifications: () => answer('listNotifications', () => KEPT_NOTIFICATIONS, []),
+  listNotifications: () =>
+    answer(
+      'listNotifications',
+      () => KEPT_NOTIFICATIONS.map((kept) => (readNotifications.has(kept.id) ? { ...kept, read: true } : kept)),
+      [],
+    ),
+  markNotificationsRead: async () => {
+    await answer('markNotificationsRead', () => {
+      for (const { id, at } of KEPT_NOTIFICATIONS) {
+        if (Date.parse(at) <= now().getTime()) {
+          readNotifications.add(id);
+        }
+      }
+    });
+  },
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
   listClasses: () => answer('listClasses', timetable.listClasses, []),
@@ -246,7 +267,6 @@ export const mockClient: ApiClient = {
   listPlaces: () => answer('listPlaces', () => PLACES, []),
   // The mock build has no AI: refused as by a main server without the route, so the phone reads the picture.
   readTimetableImage: () => Promise.reject(new ApiError(404)),
-  searchPlaces: (words) => answer('searchPlaces', () => timetable.searchPlaces(words), []),
   ...mockGlobalEvents,
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),

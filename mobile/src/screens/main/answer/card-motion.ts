@@ -4,6 +4,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { use, useCallback, useState } from 'react';
@@ -23,7 +24,7 @@ import type { Level, LevelHeights } from './card-levels';
 import type { Raising } from './raise-handle';
 import { SheetLinkContext } from './sheet-link';
 
-// The answer sheet moving (P04 tickets 52 and 61). It is laid out once, at its highest step's height (`room`), and
+// The answer sheet moving (P04 tickets 52 and 61). It is laid out once, at the most room any top leaves (`room`), and
 // moved only by a translation on the UI thread, `offset`: how far below its laid-out place it stands, so that the step's
 // height shows. Nothing inside is laid out again while it moves. A drag on the header moves it with the finger; on the
 // content it scrolls the content first, at every step, and moves the card only at the content's ends. A let-go lands as
@@ -46,7 +47,7 @@ interface MotionInput {
   raising: Raising;
   // The content's height at each step, null until the stage and the content are laid out.
   heights: LevelHeights | null;
-  // The scrolling part's laid-out height: its highest step's. Null until the stage is laid out.
+  // The scrolling part's laid-out height, high's or more (`Caps.room`). Null until the stage is laid out.
   room: number | null;
   // What the card shows over and under its scrolling part: its header and the footer's room, so that its whole height
   // is known.

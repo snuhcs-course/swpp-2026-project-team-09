@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
@@ -157,6 +158,7 @@ describe('A booked room', () => {
           line: '관정 4층 6인실 · 18:30에 끝나요',
           at: '2026-11-05T18:20:00+09:00',
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     }

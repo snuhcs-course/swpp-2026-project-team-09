@@ -56,7 +56,9 @@ export function questInvitationsAt(now: Date): QuestInvitation[] {
 
 // The Notifications the main server keeps for the User: 김민준's answers to the User's requests to join, one accepted
 // into the AI 커리어 설명회 party the User holds and one declined from the board's 알고리즘 코테 스터디; and a 파티 its
-// Leader 최유나 ended, whose row says it is gone when pressed; and the 파티 저녁 약속, whose Leader the User became.
+// Leader 최유나 ended, whose row says it is gone when pressed; and the 파티 저녁 약속, whose Leader the User became. The
+// two answers are unread, so that the bell counts them. The 파티 gone is of the day before and the Leader's of days
+// before, so that 알림 shows 오늘, 어제 and 이전.
 export const KEPT_NOTIFICATIONS: KeptNotification[] = [
   {
     id: 'join-accepted:party:q-ai',
@@ -66,6 +68,7 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
     line: 'AI 커리어 설명회 · 김민준님의 파티',
     at: frameTime('11:20'),
     url: '/main?card=party:q-ai',
+    read: false,
   },
   {
     id: 'join-declined:find-parties:post-1',
@@ -75,6 +78,7 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
     line: '알고리즘 코테 스터디 · 김민준님의 파티',
     at: frameTime('10:40'),
     url: '/main?card=find-parties:post-1',
+    read: false,
   },
   {
     id: 'party-ended:party-gone:post-0',
@@ -82,8 +86,10 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
     title: '파티가 없어졌어요',
     ahead: null,
     line: '버들골 저녁 러닝 크루 · 최유나님이 없앴어요',
-    at: frameTime('09:30'),
+    // The day before the frame's.
+    at: new Date('2026-09-30T19:30:00+09:00').toISOString(),
     url: '/main?card=party-gone:post-0',
+    read: true,
   },
   {
     id: 'became-leader:party:q-dinner',
@@ -91,7 +97,9 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
     title: '파티장이 됐어요',
     ahead: null,
     line: '저녁 약속 · 김민준님이 넘겼어요',
-    at: frameTime('09:10'),
+    // Days before the frame's.
+    at: new Date('2026-09-27T09:10:00+09:00').toISOString(),
     url: '/main?card=party:q-dinner',
+    read: true,
   },
 ];

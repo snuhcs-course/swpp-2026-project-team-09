@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
@@ -11,9 +12,9 @@ import { type StyleProp, StyleSheet, View, type ViewProps, type ViewStyle } from
 import { glass } from './tokens';
 
 // The glass layer's levels, from the outside in. What takes each is in the README's § Design system, Glass layer.
-export type GlassLevel = 'panel' | 'inner' | 'field' | 'mapChip' | 'darkChip';
+export type GlassLevel = 'panel' | 'screen' | 'inner' | 'field' | 'mapChip' | 'darkChip';
 
-export const GLASS_LEVELS: readonly GlassLevel[] = ['panel', 'inner', 'field', 'mapChip', 'darkChip'];
+export const GLASS_LEVELS: readonly GlassLevel[] = ['panel', 'screen', 'inner', 'field', 'mapChip', 'darkChip'];
 
 interface GlassProps extends Omit<ViewProps, 'style' | 'children'> {
   level: GlassLevel;
@@ -26,12 +27,12 @@ interface GlassProps extends Omit<ViewProps, 'style' | 'children'> {
 // A see-through surface at a named level, for what the Assistant draws over the map. A caller gives a level and never
 // a colour.
 //
-// A panel blurs what is behind it where the phone can blur the map: iOS 26 and later, with the system's Liquid Glass,
+// A panel, and a whole screen, blurs what is behind it where the phone can blur the map: iOS 26 and later, with the system's Liquid Glass,
 // which blurs as the screen is composed, and no white of its own over it. Android cannot blur the Kakao map, which
 // draws on a GL surface of its own that a view's blur never sees (A04-03), nor can iOS before 26; there the panel is a
 // dense white with no blur.
 export function Glass({ level, style, children, ...view }: GlassProps): ReactElement {
-  if (level !== 'panel' || !blurs()) {
+  if ((level !== 'panel' && level !== 'screen') || !blurs()) {
     return (
       <View {...view} style={[style, surfaces[level]]}>
         {children}
@@ -86,6 +87,8 @@ const surfaces = StyleSheet.create({
     backgroundColor: glass.panel.ground,
     boxShadow: `${glass.panel.shadow}, ${glass.line}`,
   },
+  // A whole screen: a panel's look, denser where nothing blurs. It fills the screen, so it casts no shadow.
+  screen: { backgroundColor: glass.screen.ground },
   // A blurred panel: the shadow on the panel, and the line on a layer over the blur, which would hide it if it were on
   // the panel itself.
   panelShadow: { backgroundColor: 'transparent', boxShadow: glass.panel.shadow },

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -11,9 +12,9 @@ import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type EventsInput, type MapScene, type PlacePoint, type TimeBand } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type AnswerPerson, placeLabelOf, withAnd } from '../gathering/answer-words.js';
-import { MINUTE_MS } from '../gathering/gathering.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
 import { busyIn, busyLabel } from '../gathering/meal-scene.js';
+import { fixedRange } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import { type EventPlan, type EventPlanning, type PlacedEvent, type Way } from './event-fit.js';
 
@@ -30,11 +31,6 @@ export interface EventAnswerArgs extends NamingArgs {
   input: EventsInput;
   planning: EventPlanning;
 }
-
-const HALF_HOUR_MS = 30 * MINUTE_MS;
-// The band reaches this far before a plan's start, unless now is later, and this far past its end.
-const BAND_BEFORE_MS = 60 * MINUTE_MS;
-const BAND_AFTER_MS = 30 * MINUTE_MS;
 
 export const itemWord = ({ isClass }: DayItem): string => (isClass ? '수업' : '일정');
 
@@ -153,19 +149,15 @@ export function sceneOf(plan: EventPlan, naming: EventNaming<NamingArgs>): MapSc
   };
 }
 
-// From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after
-// half an hour past its end: the asker's lane, then the others', the asker's Classes left out, and the time they are
-// there.
+// Around the event's time, which is fixed (`fixedRange`): the asker's lane, then the others', the asker's Classes left
+// out, and the time they are there.
 export function bandOf(
   { state, start, end, stayMinutes, clash }: EventPlan,
   naming: EventNaming<NamingArgs>,
   others: readonly AnswerPerson[] = [],
 ): TimeBand {
   const { now, asker } = naming.args;
-  const from = new Date(
-    Math.floor(Math.max(now.getTime(), start.getTime() - BAND_BEFORE_MS) / HALF_HOUR_MS) * HALF_HOUR_MS,
-  );
-  const until = new Date(Math.ceil((end.getTime() + BAND_AFTER_MS) / HALF_HOUR_MS) * HALF_HOUR_MS);
+  const { from, until } = fixedRange(now, { start, end });
   const span = `${clockOf(start)}–${clockOf(end)}`;
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },

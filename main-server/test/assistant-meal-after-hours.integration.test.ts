@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -10,8 +11,9 @@ import { MealPlanStage } from './meal-plan.js';
 import { type Step } from './scripted-model.js';
 
 // A meal asked for after it is over today (P01 ticket 23, the Release's smoke test, row 1): "배고파" at 21:20 left an
-// answer with nothing to change and a sentence about buttons that were not there. Now the reply offers the next meal;
-// lunch named at 15:00 is in `assistant-meal-by-clock`.
+// answer with nothing to change and a sentence about buttons that were not there. Now the reply offers tomorrow's lunch
+// with 내일 점심으로, a button of a time of today that has passed (P05 ticket 80), beside the model's sentence: a request for
+// now names no time. Lunch named at 15:00 asks for the whole message, in `assistant-meal-by-clock`.
 
 const stage = new MealPlanStage();
 
@@ -22,6 +24,7 @@ afterAll(() => stage.stop());
 const RESTAURANTS = ['301동식당', '302동식당', '학생회관식당'];
 
 const replySchema = z.object({
+  text: z.string(),
   answer: z.custom<AnswerReply | null>(),
   offers: z.array(z.object({ kind: z.string(), label: z.string(), text: z.string() })).optional(),
 });
@@ -34,7 +37,7 @@ function toolSaid(): { result: string; reason: string } {
 }
 
 describe('배고파 after dinner is over', () => {
-  it('draws no answer and offers tomorrow’s lunch as the one button the model names', async () => {
+  it('draws no answer and offers tomorrow’s lunch as the one button, 내일 점심으로', async () => {
     const date = '2098-11-04';
     await stage.asking(date, '21:20');
     await stage.menusOn(date, RESTAURANTS);
@@ -44,10 +47,10 @@ describe('배고파 after dinner is over', () => {
     expect(response.status).toBe(200);
     const reply = replySchema.parse(response.body);
     expect(reply.answer).toBeNull();
-    expect(reply.offers).toEqual([{ kind: 'ask', label: '내일 점심 보기', text: '내일 점심 어디서 먹을까?' }]);
+    expect(reply.offers).toEqual([{ kind: 'ask', label: '내일 점심으로', text: '내일 점심으로 해 줘' }]);
     const said = toolSaid();
     expect(said.result).toBe('none');
-    expect(said.reason).toContain('one button, which plans 내일 점심');
+    expect(said.reason).toContain('Say only "오늘 식사 시간은 지났어요. 내일 점심으로 볼까요?"');
     expect(said.reason).not.toContain('buttons to ease');
   });
 });

@@ -13,13 +13,14 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, type TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
 import type { Mention } from '@/api/mention-types';
-import { color, Icon, NOT_AUTOFILLED, radius, shadow, space, text } from '@/design-system';
+import { color, Icon, radius, shadow, space, TextEntry, text } from '@/design-system';
 import type { Restore } from '@/features/assistant/restore';
 import { AI_INPUT } from './layout';
 import { MentionList } from './mention-list';
@@ -120,8 +121,7 @@ function Field(props: FieldProps): ReactElement {
   const { mention } = props;
   const empty = props.message === '' && !mention.shown;
   return (
-    <TextInput
-      {...NOT_AUTOFILLED}
+    <TextEntry
       ref={props.field}
       accessibilityLabel="AI에게 메시지"
       maxLength={USER_MESSAGE_MAX}
@@ -130,6 +130,7 @@ function Field(props: FieldProps): ReactElement {
       onChangeText={mention.onChangeText}
       onFocus={mention.onFocus}
       onSelectionChange={mention.onSelectionChange}
+      takes={mention.takes}
       placeholder={props.placeholder}
       placeholderTextColor={color.inkMuted}
       selection={mention.selection}
@@ -145,7 +146,7 @@ function Field(props: FieldProps): ReactElement {
             </Text>
           ))
         : undefined}
-    </TextInput>
+    </TextEntry>
   );
 }
 

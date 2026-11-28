@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -35,9 +36,10 @@ const CONDITIONS: PlanInput = {
   placeId: PLACE,
 };
 
+// A condition not set is left out, not written null (P05 ticket 83): here the start.
 const PLAN_LINE =
   `[Plan on screen: {"plan":"학생회관식당","date":"2087-01-07","meal":"lunch","friendIds":["${MINSU}","${JIEUN}"],` +
-  `"from":null,"until":"12:50","placeId":"${PLACE}"}]`;
+  `"until":"12:50","placeId":"${PLACE}"}]`;
 
 describe('The lines of a request context', () => {
   it('give the plan on screen with its conditions', () => {
@@ -101,7 +103,7 @@ describe('The line of a meet on screen', () => {
 
     expect(contextLines({ ...NO_CONTEXT, conditions: meet, planId: '302동 앞' })).toEqual([
       `[Plan on screen: {"plan":"302동 앞","kind":"meet","date":"2087-01-07","friendIds":["${MINSU}"],` +
-        `"from":"14:00","until":null,"placeId":null}]`,
+        `"from":"14:00"}]`,
     ]);
   });
 });

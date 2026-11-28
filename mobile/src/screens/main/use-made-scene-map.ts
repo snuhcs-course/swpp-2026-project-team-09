@@ -9,31 +9,28 @@
 
 import type { FrameKey } from './framed-camera';
 import { useEffect, useMemo } from 'react';
-import type { LibrarySpace, MapScene, ReplyStep } from '@/api/assistant-types';
+import type { MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
 import type { LabelView } from '@/features/assistant/answer-labels';
+import type { Draft } from '@/features/assistant/answer-groups';
 import { type AnswerDrawing, drawingOfScene, type SceneSetting } from '@/features/assistant/answer-marks';
 import { BOOKING_SETTING, bookingScene, studyLine, studySetting } from '@/features/assistant/booking-scene';
 import { cardDrafts, cardNumberOf, type ShownCards } from '@/features/assistant/cards-scene';
 import { meAndWalk, proposalScene, proposalSetting } from '@/features/assistant/proposal-scene';
-import {
-  type ShownSteps,
-  stepDrafts,
-  stepLine,
-  stepNumberOf,
-  stepsScene,
-  stepTitle,
-} from '@/features/assistant/steps-scene';
+import { type ShownSteps, stepNumberOf } from '@/features/assistant/steps-scene';
 import { lookupTakesTheMap } from '@/features/assistant/step-choice';
 import type { MapAvatar, MapMarker, MarkerLook } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
+import { answerStepDrawn, isCardStep, stepPressOf } from './step-press';
+import { type StepBooking, stepMarks, stepsAlone, stepsFrame } from './steps-made';
 import { useFadedFaces } from './use-answer-faces';
 import { bookingKept } from './library/booking-kept';
 import {
   ANSWER_LIMITS,
   type AnswerMap,
+  type Beside,
   type EverydayAvatars,
   othersOf,
   useBase,
@@ -123,50 +120,36 @@ function useSceneMap(
   return { contents: { markers, lines, avatars }, onPress, ...ANSWER_LIMITS };
 }
 
-// Whether a step is the booking whose card is on screen, by the card the step shows: a refused booking beside it keeps
-// its own title (PR 462's review).
-function isCardStep(step: ReplyStep, key: string | null): boolean {
-  return key !== null && step.shows?.kind === 'card' && step.shows.key === key;
+// What the map draws of a reply the app made, and the steps' marks to stand beside an answer step drawn as its answer
+// alone (`Beside`); null when there are none.
+interface MadeNow {
+  made: Made | null;
+  beside: readonly Draft[] | null;
 }
 
-// What the steps' camera frames: the reply, the step chosen, and where each step is, which another plan of a step's
-// answer, or a recalculation that brings another place, moves (P03 ticket 21). A booking's time moves no step.
-function stepsFrame({ bubbleId, steps }: ShownSteps, active: number): FrameKey {
-  const places = steps.map(({ place }) =>
-    place === null ? '' : `${String(place.latitude)},${String(place.longitude)}`,
-  );
-  return { reply: `steps:${String(bubbleId)}`, chosen: [active, places.join('|')] };
-}
-
-// Several requests as numbered flags (P04 ticket 09): the step due, or pressed, carries the seat its card offers; a
-// booking made carries its seat and "예약됨" whichever step is shown (P10 ticket 29).
+// Several requests (P04 ticket 09): the step shown drawn as its answer or booking alone, the other steps beside it as
+// their kinds' marks (P03 ticket 26). An answer step with a Plan is the answer's own map's (`answerStepDrawn`); the
+// booking on screen is its scene alone (`alone`); a step with no drawing of its own leaves the steps alone.
 function stepsMade(
-  shownSteps: ShownSteps,
+  shown: ShownSteps,
   active: number,
-  booking: { key: string | null; seat: string | null; space: LibrarySpace | null; booked: boolean },
-  position: LatLng | null,
-): Made | null {
-  const { steps } = shownSteps;
-  const { key, seat, space, booked } = booking;
-  const first = steps.find(({ place }) => place !== null)?.place;
-  if (first === undefined || first === null) {
-    return null;
+  booking: StepBooking,
+  { answerDrawn, alone, position }: { answerDrawn: boolean; alone: Made | null; position: LatLng | null },
+): MadeNow {
+  const step = shown.steps[active];
+  const frame = stepsFrame(shown, active);
+  if (answerDrawn) {
+    return { made: null, beside: stepMarks(shown, active, booking, active) };
   }
-  const at = now();
-  const lines = steps.map((step, index) => {
-    const card = isCardStep(step, key);
-    return stepLine(step, card && (booked || index === active) ? seat : null, at, card && booked);
-  });
-  const titles = steps.map((step) => stepTitle(step, isCardStep(step, key) ? space : null));
-  // The step shown opens a card only when it is the booking on screen; another step's flag makes it the step shown.
-  const opens = steps.map((step, index) => index !== active || isCardStep(step, key));
-  const setting = { ...BOOKING_SETTING, drafts: stepDrafts(steps, lines, titles, opens) };
+  if (alone !== null && step !== undefined && isCardStep(step, booking.key)) {
+    const drafts = stepMarks(shown, active, booking, active);
+    return { made: { ...alone, source: shown.steps, frame, setting: { ...alone.setting, drafts } }, beside: null };
+  }
+  const steps = stepsAlone(shown, active, booking, position);
+  const setting = { ...BOOKING_SETTING, drafts: steps?.drafts ?? [] };
   return {
-    source: steps,
-    frame: stepsFrame(shownSteps, active),
-    scene: stepsScene(steps, position),
-    setting,
-    flag: { latitude: first.latitude, longitude: first.longitude },
+    made: steps === null ? null : { source: shown.steps, frame, scene: steps.scene, setting, flag: steps.flag },
+    beside: null,
   };
 }
 
@@ -188,11 +171,10 @@ function cardsMade(shown: ShownCards, position: LatLng | null): Made | null {
   };
 }
 
-// The scene of several requests (ticket 09), of the Proposal on screen (P04 ticket 06), or of the seat card's booking (ticket 07) with the room, the
-// seat, and the time the card holds now.
-function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: LatLng | null): Made | null {
-  const friends = useMemo(() => friendPositions(everyday), [everyday]);
-  const { proposal, booking, bookingStage, chat: said, steps, activeStep, cards } = chat;
+// The booking on the map (ticket 07): its scene alone, with the room, the seat, and the time its card holds now, as a
+// seat card alone draws it; and what a seat's step of several requests says of it. No scene with no booking.
+function useBookingNow(chat: ChatSheetControl, position: LatLng | null): { alone: Made | null; step: StepBooking } {
+  const { booking, bookingStage, chat: said } = chat;
   const told = bookingStage.seen?.place === booking?.place ? bookingStage.seen : null;
   const seat = told?.seat ?? null;
   const kept = booking === null ? null : bookingKept(booking, said);
@@ -208,36 +190,50 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
         : studyLine(done.seatLabel ?? null, null, true);
   const space = kept?.kept.space ?? null;
   const start = kept?.kept.slot.start ?? null;
+  return useMemo(() => {
+    const booked = done !== undefined;
+    const step = { key: booking?.card.key ?? null, seat: booked ? (done.seatLabel ?? null) : seat, space, booked };
+    if (booking === null || start === null || space === null) {
+      return { alone: null, step };
+    }
+    const alone = {
+      source: booking,
+      frame: { reply: `booking:${booking.place}`, chosen: [] },
+      scene: bookingScene(booking.point, space, line, position),
+      setting: studySetting(start),
+      flag: { latitude: booking.point.latitude, longitude: booking.point.longitude },
+    };
+    return { alone, step };
+  }, [booking, done, seat, space, start, line, position]);
+}
+
+// The scene of several requests (ticket 09), of the Proposal on screen (P04 ticket 06), or of the seat card's booking
+// (ticket 07), and the steps' marks beside an answer step shown as its answer alone (P03 ticket 26).
+function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: LatLng | null): MadeNow {
+  const friends = useMemo(() => friendPositions(everyday), [everyday]);
+  const { proposal, chat: said, steps, activeStep, cards } = chat;
+  const { alone, step } = useBookingNow(chat, position);
   // A Lookup the steps' reply gave takes the map for its turn (P03 ticket 23, rule 7).
   const lookupTurn = lookupTakesTheMap(said.bubbles.find(({ id }) => id === steps?.bubbleId));
-  return useMemo((): Made | null => {
+  const answerDrawn = answerStepDrawn(chat);
+  return useMemo((): MadeNow => {
     if (steps !== null && !lookupTurn) {
-      const booked = done !== undefined;
-      const stepSeat = booked ? (done.seatLabel ?? null) : seat;
-      return stepsMade(steps, activeStep, { key: booking?.card.key ?? null, seat: stepSeat, space, booked }, position);
+      return stepsMade(steps, activeStep, step, { answerDrawn, alone, position });
     }
     if (proposal !== null) {
       const { latitude, longitude } = proposal.place;
       const scene = proposalScene(proposal, position, friends);
       const setting = proposalSetting(proposal.proposal, now());
       const frame = { reply: `proposal:${String(proposal.bubbleId)}`, chosen: [] };
-      return { source: proposal, frame, scene, setting, flag: { latitude, longitude } };
+      return { made: { source: proposal, frame, scene, setting, flag: { latitude, longitude } }, beside: null };
     }
-    if (cards !== null) {
-      return cardsMade(cards, position);
-    }
-    if (booking === null || start === null || space === null) {
-      return null;
-    }
-    const { latitude, longitude } = booking.point;
-    const scene = bookingScene(booking.point, space, line, position);
-    const frame = { reply: `booking:${booking.place}`, chosen: [] };
-    return { source: booking, frame, scene, setting: studySetting(start), flag: { latitude, longitude } };
-  }, [steps, lookupTurn, activeStep, seat, done, proposal, cards, booking, line, space, start, position, friends]);
+    return { made: cards === null ? alone : cardsMade(cards, position), beside: null };
+  }, [steps, lookupTurn, answerDrawn, activeStep, step, alone, proposal, cards, position, friends]);
 }
 
-// What the map draws of a reply the app makes the scene of: a Proposal (P04 ticket 06) or a seat card (ticket 07).
-// Null while neither is shown.
+// What the map draws of a reply the app makes the scene of: a Proposal (P04 ticket 06), a seat card (ticket 07), or
+// several requests, and the steps' marks to stand beside an answer step's own map (`Beside`, P03 ticket 26). Null
+// while none is shown.
 export function useMadeSceneMap(
   chat: ChatSheetControl,
   map: MainMap,
@@ -245,8 +241,8 @@ export function useMadeSceneMap(
   everyday: EverydayAvatars,
   me: Me,
   onFlag: (id: string, position: LatLng) => void,
-): AnswerMap | null {
-  const made = useMade(chat, everyday, me.position);
+): { map: AnswerMap | null; beside: Beside | null } {
+  const { made, beside } = useMade(chat, everyday, me.position);
   // The walk's minutes, which the seat card's sentence and its done message say (P01 ticket 06).
   const point = chat.booking?.point ?? null;
   const walk = point === null || me.position === null ? null : (meAndWalk(me.position, point).walk[0]?.minutes ?? null);
@@ -254,27 +250,59 @@ export function useMadeSceneMap(
   useEffect(() => {
     tellWalk(walk);
   }, [walk, tellWalk]);
-  // A press on another step's flag makes it the step shown; one on the step shown opens its card when it is a booking.
-  // A booking alone takes a press as a meal's chosen place does: it raises the answer's card, and no card of its own
-  // opens over the map (P01 ticket 10, the user's words).
-  const onMark = (id: string, position: LatLng): void => {
+  const onMark = markPress(chat, onFlag);
+  const drawn = useSceneMap(made, map, room, everyday, me, onMark);
+  return { map: drawn, beside: besideOf(beside, chat) };
+}
+
+// A press on a step's flag does what its "›" says (`stepPressOf`): another step's makes it the step shown; the step
+// shown opens its card when it is the booking on screen with no drawing of its own. A booking alone, or as the step
+// shown, takes a press as a meal's chosen place does: it raises the answer's card, and no card of its own opens over
+// the map (P01 ticket 10, the user's words).
+function markPress(
+  chat: ChatSheetControl,
+  onFlag: (id: string, position: LatLng) => void,
+): (id: string, position: LatLng) => void {
+  return (id, position) => {
     const number = stepNumberOf(id);
     const step = number === null ? undefined : chat.steps?.steps[number - 1];
-    if (
-      number === null &&
-      chat.booking !== null &&
-      chat.steps === null &&
-      chat.proposal === null &&
-      chat.cards === null
-    ) {
+    if (number === null && bookingAlone(chat)) {
       chat.card.raise(false);
     } else if (number === null || step === undefined) {
       onFlag(id, position);
-    } else if (number - 1 !== chat.activeStep) {
-      chat.setActiveStep(number - 1);
-    } else if (isCardStep(step, chat.booking?.card.key ?? null)) {
-      onFlag(id, position);
+    } else {
+      const key = chat.booking?.card.key ?? null;
+      const press = stepPressOf(step, number - 1, { active: chat.activeStep, key });
+      if (press === 'choose') {
+        chat.setActiveStep(number - 1);
+      } else if (press === 'card') {
+        onFlag(id, position);
+      }
     }
   };
-  return useSceneMap(made, map, room, everyday, me, onMark);
+}
+
+// The steps' marks beside an answer step's own map (`Beside`): a press on one makes it the step shown.
+function besideOf(drafts: readonly Draft[] | null, chat: ChatSheetControl): Beside | null {
+  if (drafts === null || chat.steps === null) {
+    return null;
+  }
+  return {
+    drafts,
+    press: (id) => {
+      const number = stepNumberOf(id);
+      if (number !== null) {
+        chat.setActiveStep(number - 1);
+      }
+    },
+  };
+}
+
+// Whether the booking on screen is drawn as alone: the seat card the reply gave alone, or the booking step shown.
+function bookingAlone({ booking, proposal, cards, steps, activeStep }: ChatSheetControl): boolean {
+  if (booking === null || proposal !== null || cards !== null) {
+    return false;
+  }
+  const step = steps?.steps[activeStep];
+  return steps === null || (step !== undefined && isCardStep(step, booking.card.key));
 }

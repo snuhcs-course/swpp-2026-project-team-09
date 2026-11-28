@@ -7,6 +7,7 @@
 
 import { anthropicModel, openRouterModel, runFeature } from '../src/assistant/adapter.js';
 import { bareHourRule } from '../src/assistant/bare-hours.js';
+import { pastTimeRule } from '../src/assistant/past-time.js';
 import { CAMPUS_TERMS_RULES } from '../src/assistant/campus-terms.js';
 import { chatAssistant, type ChatAssistantServices } from '../src/assistant/chat/chat-assistant.js';
 import { NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
@@ -29,10 +30,12 @@ beforeAll(async () => {
 
 const ALL = { drawsAnswers: true, drawsEvents: true, drawsMeets: true, drawsArea: true };
 
-// The time of the request, then what an hour said bare means at it (P05 ticket 75).
+// The time of the request, then what an hour said bare means at it (P05 ticket 75), and what of today has passed (P05
+// ticket 80).
 const NOW_LINE = (time: string, at: string): string =>
   `Now in Korea: ${time} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
-${bareHourRule(new Date(at))}`;
+${bareHourRule(new Date(at))}
+${pastTimeRule(new Date(at))}`;
 
 // Answers every request with the provider's text reply, and keeps each request's body.
 function fakeApi(reply: () => Response): { bodies: Json[]; fetch: typeof globalThis.fetch } {

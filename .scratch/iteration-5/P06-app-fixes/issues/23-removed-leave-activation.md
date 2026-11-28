@@ -1,7 +1,7 @@
 # 23: A removed member leaves the activation, and a 파티 that is gone ends its activation
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.
@@ -29,9 +29,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] A removed Holder is in no Party of that Quest afterwards, and is not seen by its members. (Main server integration test, which fails before the change.)
-- [ ] A deleted Quest leaves no Party behind. (Main server integration test.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] A removed Holder is in no Party of that Quest afterwards, and is not seen by its members. (Main server integration test, which fails before the change.)
+- [x] A deleted Quest leaves no Party behind. (Main server integration test.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 
@@ -39,3 +39,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 - Agent time: about 15 minutes (#702), an estimate. One session built tickets 20, 22, 23 and 32 in turn, from 22:39 to about 23:50 in Korea, review fixes included; time spent waiting for reviewers is left out.
 - Tokens, for that whole session and its eight review subagents together (they cannot be split by ticket): input 842, output 267,875; the input's cache reads 100,145,357 and cache writes 1,223,032 (main session: input 664, output 225,844, cache reads 95,302,985, cache writes 647,322; subagents: input 178, output 42,031, cache reads 4,842,372, cache writes 575,710).
+
+### Agent usage, added (2026-11-28)
+
+- After the entries of 23, 32 and 21 were written, the same session worked on their stacked branches from about 01:00 to 04:00 KST on 2026-11-28: it merged `5.0/Main` into them, ran the main server's integration tests and fixed the `quest-leader` test.
+- Agent time: about 19 minutes, an estimate (gaps under 5 minutes between transcript entries, summed).
+- Tokens, counted here once for the three tickets: input 4,261,415 (cache reads 4,173,894, cache writes 87,419, uncached 102); output 18,007. No subagents ran in that time.

@@ -17,8 +17,6 @@
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { koreaClock, koreaDayWord } from '@/korea-time';
-import type { MarkerLook } from '@/map';
-import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, metresBetween, offset } from './answer-drawing';
 import {
   candidatesAt,
@@ -266,24 +264,28 @@ export function drawingOfScene(
   const asMeal = meal !== undefined || setting.studyPick !== undefined;
   const hidden = hiddenRoutes(meal, scene);
   const places = scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []);
-  // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
-  const drafts = withOpenMarks(
-    meal === undefined ? (setting.opens ?? false) : false,
-    mealDrafts(
-      meal,
-      scene,
-      [
-        ...personDrafts(scene, setting.standings),
-        ...places.map((draft) => inKind(draft, setting.toneKind)),
-        ...flagDrafts(scene),
-        ...keptDrafts(setting.kept),
-        ...(setting.drafts ?? []),
-        // A 관정 booking's way carries its minutes, as a meal Plan's way there (P01 ticket 10).
-        ...(setting.study === undefined ? [] : wayMinutesDrafts(scene, setting.ways)),
-      ],
-      setting.ways,
+  // A meal pick's label says "메뉴 ›" in place of the "›" after its name. Marks made beside the scene's own carry their
+  // own words, "›" included, and look: a step's beside an answer drawn as alone is no pick of the answer's (P03 ticket
+  // 26).
+  const drafts = [
+    ...withOpenMarks(
+      meal === undefined ? (setting.opens ?? false) : false,
+      mealDrafts(
+        meal,
+        scene,
+        [
+          ...personDrafts(scene, setting.standings),
+          ...places.map((draft) => inKind(draft, setting.toneKind)),
+          ...flagDrafts(scene),
+          ...keptDrafts(setting.kept),
+          // A 관정 booking's way carries its minutes, as a meal Plan's way there (P01 ticket 10).
+          ...(setting.study === undefined ? [] : wayMinutesDrafts(scene, setting.ways)),
+        ],
+        setting.ways,
+      ),
     ),
-  );
+    ...(setting.drafts ?? []),
+  ];
   const placed = placeAll(drafts, view, asMeal).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),
@@ -312,6 +314,8 @@ export function drawingOf(
   standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
   view: LabelView | null = null,
   ways?: Ways,
+  // Marks drawn beside the answer's own, as the other steps of several requests (P03 ticket 26); left out, none.
+  beside: readonly Draft[] = [],
 ): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
@@ -341,18 +345,6 @@ export function drawingOf(
     toneKind: answerTone(answer.input.kind),
     over: overPriceIds(answer),
     ...(ways === undefined ? {} : { ways }),
+    ...(beside.length === 0 ? {} : { drafts: beside }),
   });
-}
-
-// The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides
-// chosen in metres, or with those sides.
-export function looksOf(
-  answer: AnswerReply,
-  viewOf: (drawing: AnswerDrawing) => LabelView | null = (): null => null,
-): MarkerLook[] {
-  const looks = answer.plans.flatMap((_, index) => {
-    const view = viewOf(drawingOf(answer, index));
-    return drawingOf(answer, index, NO_STANDINGS, view).things.map(({ look }) => look);
-  });
-  return looks.filter((look, index) => looks.findIndex((other) => lookName(other) === lookName(look)) === index);
 }

@@ -8,7 +8,11 @@ import { act } from '@testing-library/react-native';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { MapCamera } from '@/map';
-import { FIRST, type Given, render, ROOM, shownAt } from './support/answer-map-hook';
+import { stepsReplyOn } from '@/api/mock/data/steps-answer';
+import { stepDrafts } from '@/features/assistant/steps-scene';
+import type { Room } from '@/screens/main/layout';
+import type { Beside } from '@/screens/main/use-answer-map';
+import { drawn, FIRST, type Given, render, ROOM, shownAt } from './support/answer-map-hook';
 import type { Asked } from './support/main-map-stand-in';
 
 // When an answer's camera frames its drawing (P10 ticket 30, the user's phone, 2026-11-28): once for each event that
@@ -62,6 +66,13 @@ async function firstCamera(shown: ShownAnswer): Promise<MapCamera | undefined> {
   const fresh: Asked = { fits: 0, cameras: [] };
   await render(fresh, { ...FIRST, shown });
   return fresh.cameras[0];
+}
+
+// The camera an answer gets when it comes first under a card of 274 and a time card `timeBarHeight` high.
+async function cameraWithBar(timeBarHeight: number): Promise<MapCamera | undefined> {
+  const fresh: Asked = { fits: 0, cameras: [] };
+  await render(fresh, { ...FIRST, room: { ...ROOM, timeBarHeight } });
+  return fresh.cameras.at(-1);
 }
 
 // Partitions: once the framing has rested, a recalculation that keeps the Plan's place, and one that brings another
@@ -145,6 +156,129 @@ describe("the answer's camera and a change of the card", () => {
 
     await rerender({ ...at, room: ROOM });
     await rerender({ ...at, room: { ...ROOM, answerHeight: 336 } });
+
+    expect(asked.cameras).toHaveLength(1);
+  });
+});
+
+// The cards as the frame lays them out over the first Plan: the chat card at 274 and the time card at 120.
+const WITH_BAR: Given = { ...FIRST, room: { ...ROOM, timeBarHeight: 120 } };
+
+// Each change of a top or a bottom card's height or fold, which is no framing event: the chat card raised to middle
+// and high, the time card folded away to its strip under the steps card, and its person rows opened.
+const CARD_CHANGES: [string, Room][] = [
+  ['the chat card raised to middle', { ...ROOM, timeBarHeight: 120, answerHeight: 420 }],
+  ['the chat card raised high', { ...ROOM, timeBarHeight: 120, answerHeight: 700 }],
+  ['the time card folded away', { ...ROOM, timeBarHeight: 24 }],
+  ["the time card's person rows opened", { ...ROOM, timeBarHeight: 200 }],
+];
+
+// The other step of several requests beside the step shown as this answer (P03 ticket 26).
+function seatBeside(): Beside {
+  const [seat] = stepsReplyOn('2026-11-02').steps ?? [];
+  const drafts = seat === undefined ? [] : stepDrafts([seat], ['17:30–19:00'], ['관정 7층 열람실']);
+  return { drafts, press: jest.fn<undefined, [string]>() };
+}
+
+// Partitions: each change of a card's height or fold, there and back, with one answer and with the other steps of
+// several requests beside it. Expected values: the user's phone, 2026-11-28 (P10 ticket 31): the time card folded away
+// and back made the map blink, every mark drawn again; once the map has rested, no such change draws a mark anew or
+// moves the camera.
+describe("the answer's marks and a change of the cards, once the map has rested", () => {
+  it.each(CARD_CHANGES)('stay the same through %s and back', async (_what, room) => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const map = await drawn(asked, WITH_BAR);
+    const at = rested(WITH_BAR, asked);
+    await map.rerender(at);
+    const before = map.marks();
+
+    await map.rerender({ ...at, room });
+    expect(map.marks()).toEqual(before);
+    await map.rerender(at);
+
+    expect(map.marks()).toEqual(before);
+    expect(asked.cameras).toHaveLength(1);
+  });
+
+  it.each(CARD_CHANGES)(
+    'stay the same through %s and back, with the other steps beside the answer',
+    async (_what, room) => {
+      const asked: Asked = { fits: 0, cameras: [] };
+      const map = await drawn(asked, WITH_BAR, seatBeside());
+      const at = rested(WITH_BAR, asked);
+      await map.rerender(at);
+      const before = map.marks();
+      expect(before.some((mark) => mark.startsWith('answer:step:1 '))).toBe(true);
+
+      await map.rerender({ ...at, room });
+      expect(map.marks()).toEqual(before);
+      await map.rerender(at);
+
+      expect(map.marks()).toEqual(before);
+      expect(asked.cameras).toHaveLength(1);
+    },
+  );
+});
+
+// The emulator and a teammate's phone, 2026-11-28: on the first answer after a cold start, and at font 1.3, the map
+// framed the answer with the pick and its marks under the time card. The time card tells its height from its own
+// layout, which can come after the map has rested from the answer's glide; the framing had closed by then and never
+// counted it (P01 ticket 47). Partitions: the time card's first height told after that rest, at the usual font and at a
+// larger one; the chat card's first height told after it; the User's pan before the time card's height; a height told
+// before the rest. Expected values: one move more, to the camera the answer gets when it comes with its cards laid out,
+// and none after a later fold; none after the pan (P10 ticket 30: the camera is the User's), and none for a height told
+// in time.
+describe("the answer's camera and the time card's height told late", () => {
+  it.each([120, 156])('frames again, once, for a time card %i high told after the map rested', async (height) => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, FIRST);
+    const at = rested(FIRST, asked);
+    await rerender(at);
+
+    await rerender({ ...at, room: { ...ROOM, timeBarHeight: height } });
+
+    expect(asked.cameras).toHaveLength(2);
+    expect(asked.cameras[1]).toEqual(await cameraWithBar(height));
+    const again = rested({ ...at, room: { ...ROOM, timeBarHeight: height } }, asked);
+    await rerender(again);
+    await rerender({ ...again, room: { ...ROOM, timeBarHeight: 24 } });
+    expect(asked.cameras).toHaveLength(2);
+  });
+
+  it("frames again, once, for the chat card's first height told after the map rested", async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const unlaid: Given = { ...WITH_BAR, room: { ...WITH_BAR.room, answerHeight: null } };
+    const rerender = await render(asked, unlaid);
+    const at = rested(unlaid, asked);
+    await rerender(at);
+
+    await rerender({ ...at, room: WITH_BAR.room });
+
+    expect(asked.cameras).toHaveLength(2);
+    expect(asked.cameras[1]).toEqual(await cameraWithBar(120));
+  });
+});
+
+describe("the answer's camera where a card's height told late moves nothing", () => {
+  it('leaves the camera where the User panned it before the time card told its height', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, FIRST);
+    const at = rested(FIRST, asked);
+    await rerender(at);
+    const panned: MapCamera = { centre: { latitude: 37.46, longitude: 126.952 }, zoom: 16 };
+    await rerender({ ...at, camera: panned });
+
+    await rerender({ ...at, camera: panned, room: { ...ROOM, timeBarHeight: 120 } });
+
+    expect(asked.cameras).toHaveLength(1);
+  });
+
+  it('moves nothing more for a time card told before the map rested', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, WITH_BAR);
+    const at = rested(WITH_BAR, asked);
+
+    await rerender(at);
 
     expect(asked.cameras).toHaveLength(1);
   });

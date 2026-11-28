@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
@@ -10,8 +11,10 @@ import { type TestUser } from './friends.js';
 import { MealPlanStage } from './meal-plan.js';
 import { firstPlan, jieun, minsu, partyOf, workedExample } from './plan-quests.js';
 import { withAccessToken } from './sign-in.js';
+import { type NotificationDto } from '../src/notifications/dto/notification.dto.js';
+import { keptNotifications } from './kept-notifications.js';
 
-// The Leader's time to leave, kept in GET /notifications when POST /plans makes a party from the design's worked
+// The Leader's time to leave, kept as a Notification when POST /plans makes a party from the design's worked
 // example (a Tuesday at 11:50), and gone when the Leader ends the Quest. Each test stands on a Tuesday of April or May
 // 2088, which no other file uses.
 
@@ -25,8 +28,9 @@ afterAll(async () => {
   await stage.stop();
 });
 
-function getNotifications(user: TestUser): request.Test {
-  return withAccessToken(request(stage.app.getHttpServer()).get('/notifications'), user.accessToken);
+// Every kept one, those for later included: the time to leave is kept ahead of its time.
+function keptFor(user: TestUser): Promise<NotificationDto[]> {
+  return keptNotifications(stage.app, user.id);
 }
 
 async function makeParty(date: string, people: string[], planId: string, startAt: string): Promise<string> {
@@ -47,7 +51,7 @@ describe('A party made from the worked example with 민수 and 지은', () => {
     );
 
     await vi.waitFor(async () => {
-      expect((await getNotifications(stage.asker)).body).toEqual([
+      expect(await keptFor(stage.asker)).toEqual([
         {
           id: `leave-by:party:${questId}`,
           kind: 'leave-by',
@@ -56,11 +60,12 @@ describe('A party made from the worked example with 민수 and 지은', () => {
           line: '학생회관식당까지 걸어서 15분',
           at: `${date}T12:18:00+09:00`,
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });
-    expect((await getNotifications(first)).body).toEqual([]);
-    expect((await getNotifications(second)).body).toEqual([]);
+    expect(await keptFor(first)).toEqual([]);
+    expect(await keptFor(second)).toEqual([]);
   });
 });
 
@@ -73,7 +78,7 @@ describe('A party made from the worked example with 민수', () => {
     const questId = await makeParty(date, [stage.asker.id, friend.id], '302동식당', `${date}T12:15:00+09:00`);
 
     await vi.waitFor(async () => {
-      expect((await getNotifications(stage.asker)).body).toEqual([
+      expect(await keptFor(stage.asker)).toEqual([
         expect.objectContaining({
           id: `leave-by:party:${questId}`,
           ahead: '12:12 나설 시각',
@@ -105,7 +110,7 @@ describe('A party whose Leader has no time to leave', () => {
     } finally {
       schedule.mockRestore();
     }
-    expect((await getNotifications(stage.asker)).body).toEqual([]);
+    expect(await keptFor(stage.asker)).toEqual([]);
   });
 });
 
@@ -130,7 +135,7 @@ describe('A party made when the time to leave cannot be kept', () => {
       schedule.mockRestore();
       warn.mockRestore();
     }
-    expect((await getNotifications(stage.asker)).body).toEqual([]);
+    expect(await keptFor(stage.asker)).toEqual([]);
   });
 });
 
@@ -141,7 +146,7 @@ describe('Ending the party', () => {
     const friend = await minsu(stage);
     const questId = await makeParty(date, [stage.asker.id, friend.id], '302동식당', `${date}T12:15:00+09:00`);
     await vi.waitFor(async () => {
-      expect((await getNotifications(stage.asker)).body).toHaveLength(1);
+      expect(await keptFor(stage.asker)).toHaveLength(1);
     });
 
     const ended = await withAccessToken(
@@ -151,7 +156,7 @@ describe('Ending the party', () => {
 
     expect(ended.status).toBe(204);
     await vi.waitFor(async () => {
-      expect((await getNotifications(stage.asker)).body).toEqual([]);
+      expect(await keptFor(stage.asker)).toEqual([]);
     });
   });
 });

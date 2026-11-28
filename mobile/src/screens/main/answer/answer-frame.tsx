@@ -32,6 +32,7 @@ import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import type { Room } from '../layout';
+import { answerStepDrawn } from '../step-press';
 import { AnswerCaption } from './answer-caption';
 import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
@@ -165,13 +166,15 @@ interface OpenMarkProps {
   onClose: () => void;
 }
 
-// The card of the mark pressed on the map, while one is open and the keyboard is down: a mark of the Plan on screen, or
-// the flag of a Proposal or a booking on screen (`MadeMarkCard`).
+// The card of the mark pressed on the map, while one is open and the keyboard is down: a mark of the Plan on screen,
+// the step of several requests shown as its answer's Plan included (P03 ticket 26), or the flag of a Proposal or a
+// booking on screen (`MadeMarkCard`).
 function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactElement | null {
   const { mark, closeMark, answer: shown } = control;
   if (
     mark !== null &&
     stage !== null &&
+    !answerStepDrawn(control) &&
     (control.proposal !== null || control.booking !== null || control.cards !== null)
   ) {
     return <MadeMarkCard control={control} mark={mark} stage={stage} />;

@@ -2854,6 +2854,11 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
 - Each model call logs one line with the key's name, its provider and the outcome, such as
   `Model call with key default on OpenRouter: answered, finish stop`, or `failed` with its cause: never a key's value or
   what was sent.
+- A tool call the model library refuses for its input is made again once with what the model meant: a field given null
+  left out, and a number written as a string (`"7,000"`) read as that number on a field that takes a number. Each
+  refused call logs one warning with the tool, each refused field's issue code and the type it expected, and what was
+  changed, such as `The model's planMeal call was refused: maxPrice invalid_union; made again with read as a number:
+maxPrice`: field names alone, never a value the model gave, which may hold the User's words.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
   written in each call, reasoning included (4,000). A call that fails with 429 or 529 is sent once more, within the time,
@@ -4139,14 +4144,15 @@ a User has at most one Notification of a kind about a card, and two Friends who 
 words and gives it its address. A feature imports `NotificationsModule` and calls:
 
 - `schedule(userId, told, at)` keeps the Notification for the time `at`, overwriting one kept under the same identity.
-  One that was sent is sent again at `at`.
+  One that was sent is sent again at `at`, and one that was read is unread again.
 - `replace(userId, told, at)` does the same only when one is kept under that identity, and answers whether it did, so
-  that a change arriving after a cancel keeps nothing. One that was sent is sent again only when `at` changes.
+  that a change arriving after a cancel keeps nothing. One that was sent is sent again, and one read is unread again,
+  only when `at` changes.
 - `renew(userId, told, at)` keeps it as `schedule` does, but one kept under the same identity is rewritten without
-  being sent again: it rings once while it is kept.
+  being sent again, and stays read if it was: it rings once while it is kept.
 - `cancel(userId, kind, card, about?)` forgets it; `about` is the person of a kind kept for each one.
 
-`told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock. After each
+`told` holds the facts of a kind, never text. The caller gives the time, and the service reads no clock to keep one. After each
 call the service sends the signal `notice`, which carries nothing, to the User; a `replace` that kept nothing, or a
 `cancel` that forgot nothing, sends none. `schedule`, `replace` and `renew` refuse, by throwing, a card no address opens. The
 calls throw when the database fails too, so a caller that must not fail catches and logs.
@@ -4258,6 +4264,14 @@ capacity 4, and the Holders are told (`step-changed`) only when the meal's step 
 out answers 400 `PLAN_PEOPLE_CHANGED`. A User who holds no meal of that day but an invitation to one, asking for a
 Friend, has nothing planned; the model is told its Holders alone.
 
+So a plan under `adding` may not hold the Friends it names (P05 ticket 85, `asHeld`). When no plan has them in it, as
+for a Friend who arrives after the asker must leave, the answer is the meal as it is held: its one plan is planned for
+everyone of it but them, at its Restaurant and start, `noPlan` is null, and `note` says why they cannot join it,
+naming them ("지호는 이 점심에 시간이 안 돼요" when the reasons do not). `adding` still names them with `movesTo` null,
+and the press invites them to the same Quest at the same time; nobody of it is asked again or told. The model's
+`adding.fits` is then false, with `adding.why`. Only when the meal cannot be planned as it is held either does the
+answer keep `noPlan`; the app then offers 파티 보기 beside its reasons.
+
 A meeting is set aside the same way (`quests/held-meeting.ts`): a new meet's Plan takes the asker's meeting made from a
 meet's Plan that day, not started, that the model names by its ref (`planMeet`'s `questId`), else the one whose
 people are the Friends asked for (the others not declined, or the declined ones when every other declined). One the
@@ -4309,6 +4323,7 @@ The table `notifications` holds them, one row a Notification, deleted with its U
 | `body`       | The push's body, or null for a kind that does not ring       |
 | `rings`      | Whether it is pushed to the User's phone when its time comes |
 | `sent_at`    | When the sender took it to push, or null                     |
+| `read_at`    | When the User read it in 알림, or null while it is unread    |
 | `created_at` | When the row was first stored                                |
 
 `user_id`, `kind`, `card_kind`, `card_id` and `about` are unique together: that is the identity. A row of a kind this
@@ -4328,8 +4343,9 @@ test moves the clock with `vi.spyOn(app.get(CLOCK), 'now')` and calls `sendDue()
 the rows of every User, so the sender's tests keep their Notifications in a year before every other test file's. The
 timer does not keep the process alive and stops at shutdown.
 
-`GET /notifications` answers the signed-in User's Notifications, the latest time first, and 401 without a sign-in. One
-whose time is still to come is in the answer:
+`GET /notifications` answers the signed-in User's Notifications whose time has come by the Quests' `CLOCK`, the latest
+time first, and 401 without a sign-in. One whose time is still to come, such as tomorrow's 지금 나서요, is left out
+until it comes, when the sender rings it and sends `notice`:
 
 ```json
 [
@@ -4340,7 +4356,8 @@ whose time is still to come is in the answer:
     "ahead": null,
     "line": "저녁 같이",
     "at": "2026-11-14T11:58:00+09:00",
-    "url": "/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b"
+    "url": "/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b",
+    "read": false
   }
 ]
 ```
@@ -4348,8 +4365,13 @@ whose time is still to come is in the answer:
 `id` is the identity, `at` the time in Korea with its offset, and `url` the address that opens the card,
 `/main?card=<kind>:<id>`. `cardAddress()` from `src/notifications/card-address.ts` makes it and refuses a card kind
 outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`. `ahead` is the title while `at`
-is still to come, with `at` in Korea in it, and null for a kind that has none: the service reads no clock, and the
-phone shows `ahead` while `at` is after its own now.
+is still to come, with `at` in Korea in it, and null for a kind that has none. The list never shows it, since it lists
+only what has come. `read` is whether the User has read it.
+
+`POST /notifications/read` marks read every Notification of the signed-in User whose time has come by the Quests'
+`CLOCK`, answering 204, and 401 without a sign-in. 알림 calls it once it shows its rows, and the bell counts those
+still unread. One whose time is still to come stays unread, to be counted when it rings. The migration that added
+`read_at` marked read the rows kept before it whose time had come.
 
 **A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card,
 whom it is about, whether it rings and its push's body to `wordsOf()` in `src/notifications/notification-words.ts`,

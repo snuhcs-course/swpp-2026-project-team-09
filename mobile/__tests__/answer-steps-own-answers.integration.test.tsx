@@ -79,9 +79,20 @@ async function asked(reply: AssistantReply): Promise<User> {
 }
 
 async function choose(user: User, number: number): Promise<void> {
-  await user.press(screen.getByRole('button', { name: new RegExp(`^${String(number)}번 `, 'u') }));
+  await user.press(screen.getByTestId(`step-word-${String(number)}`));
   await pass(300);
 }
+
+// A plan browsed in the step's list, as a press on its row chooses it in a meal alone; the menu the press opens is
+// closed again, back to the list (P03 ticket 25: a step lists its plans and has no pager).
+async function browse(user: User, number: number): Promise<void> {
+  await user.press(screen.getByTestId(`meal-row-${String(number)}`));
+  await pass(300);
+  await user.press(screen.getByTestId('meal-menu-back'));
+  await pass(300);
+}
+
+const row = (number: number): ReturnType<typeof screen.getByTestId> => screen.getByTestId(`meal-row-${String(number)}`);
 
 // The time card's words, which read the stretch of its answer's band.
 const bandWords = (): ReturnType<typeof screen.getByTestId> =>
@@ -97,7 +108,7 @@ describe('The steps of lunch and dinner', () => {
 
     expect(bandWords()).toHaveTextContent(new RegExp(DINNER_BAND, 'u'));
     expect(bandWords()).not.toHaveTextContent(new RegExp(LUNCH_BAND, 'u'));
-    expect(screen.getByRole('button', { name: /^2번 /u })).toBeSelected();
+    expect(screen.getByTestId('step-word-2')).toBeSelected();
 
     await choose(user, 1);
 
@@ -106,15 +117,14 @@ describe('The steps of lunch and dinner', () => {
 
   it('bring back the plan last browsed in a step when it is chosen again', async () => {
     const user = await asked(twoMeals());
-    await user.press(within(screen.getByTestId('plan-stepper')).getByLabelText('다음 후보'));
-    await pass(300);
-    expect(screen.getByTestId('plan-count')).toHaveTextContent('2/3');
+    await browse(user, 2);
+    expect(row(2)).toBeSelected();
 
     await choose(user, 2);
-    expect(screen.getByTestId('plan-count')).toHaveTextContent('1/3');
+    expect(row(1)).toBeSelected();
     await choose(user, 1);
 
-    expect(screen.getByTestId('plan-count')).toHaveTextContent('2/3');
+    expect(row(2)).toBeSelected();
     expect(bandWords()).toHaveTextContent(new RegExp(LUNCH_BAND, 'u'));
   });
 
@@ -123,7 +133,7 @@ describe('The steps of lunch and dinner', () => {
     const dinner = reply.answers?.[1];
     await asked({ ...reply, select: { planId: dinner?.plans[0]?.id ?? '', key: dinner?.key } });
 
-    expect(screen.getByRole('button', { name: /^2번 /u })).toBeSelected();
+    expect(screen.getByTestId('step-word-2')).toBeSelected();
     expect(bandWords()).toHaveTextContent(new RegExp(DINNER_BAND, 'u'));
     expect(bandWords()).not.toHaveTextContent(new RegExp(LUNCH_BAND, 'u'));
   });
@@ -172,26 +182,25 @@ describe('A step of lunch and dinner kept on screen', () => {
   it('opens an answer a later reply gave again at its first plan, not at the plan browsed before', async () => {
     const user = await asked(twoMeals());
     await choose(user, 2);
-    await user.press(within(screen.getByTestId('plan-stepper')).getByLabelText('다음 후보'));
-    await pass(300);
-    expect(screen.getByTestId('plan-count')).toHaveTextContent('2/3');
+    await browse(user, 2);
+    expect(row(2)).toBeSelected();
 
     await askAgain(user, twoMeals());
     await choose(user, 2);
 
-    expect(screen.getByTestId('plan-count')).toHaveTextContent('1/3');
+    expect(row(1)).toBeSelected();
   });
 
   it('draws a step at the answer a later reply gave again, not at its recalculation before', async () => {
     const user = await asked(twoMeals());
     await choose(user, 2);
     await moveDinner(laterDinner(dinnerOf(twoMeals()).key));
-    expect(screen.getByRole('button', { name: /^2번 저녁 17:30–18:30/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^저녁 17:30–18:30/u })).toBeOnTheScreen();
     await choose(user, 1);
 
     await askAgain(user, twoMeals());
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 17:00–18:00/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^저녁 17:00–18:00/u })).toBeOnTheScreen();
   });
 
   it('stays on a step whose answer a recalculation gave another key', async () => {
@@ -200,7 +209,7 @@ describe('A step of lunch and dinner kept on screen', () => {
 
     await moveDinner(laterDinner('meal 2026-10-07 dinner together'));
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 17:30–18:30/u })).toBeSelected();
+    expect(screen.getByRole('button', { name: /^저녁 17:30–18:30/u })).toBeSelected();
   });
 });
 
@@ -217,7 +226,7 @@ describe('A step whose answer changed key and changed back', () => {
     await moveDinner(laterDinner(`${key} together`));
     await moveDinner(laterDinner(key, '18:00', '19:00'));
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 18:00–19:00/u })).toBeSelected();
+    expect(screen.getByRole('button', { name: /^저녁 18:00–19:00/u })).toBeSelected();
   });
 
   it('stays chosen at its last answer after three changes back to its first key', async () => {
@@ -229,6 +238,6 @@ describe('A step whose answer changed key and changed back', () => {
     await moveDinner(laterDinner('meal 2026-10-07 late', '17:45', '18:45'));
     await moveDinner(laterDinner(key, '18:00', '19:00'));
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 18:00–19:00/u })).toBeSelected();
+    expect(screen.getByRole('button', { name: /^저녁 18:00–19:00/u })).toBeSelected();
   });
 });

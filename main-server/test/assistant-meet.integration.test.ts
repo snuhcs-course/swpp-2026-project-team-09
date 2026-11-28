@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -75,8 +76,9 @@ const a5Plans = (time: (clock: string) => string): string[] => [
   `학생회관 ${time('12:32')}–${time('12:59')} (27)`,
 ];
 
+// From now to the end of a meeting's day hours (P01 ticket 43).
 const a5Band = (time: (clock: string) => string): object => ({
-  range: { startAt: time('12:00'), endAt: time('18:30') },
+  range: { startAt: time('12:00'), endAt: time('22:00') },
   lanes: [
     {
       name: '나',
@@ -219,7 +221,7 @@ describe('The Friends not in a meet', () => {
     expect(response.status).toBe(200);
     const answer = z.custom<AnswerReply>().parse(response.body);
     expect(answer.plans[0]?.band).toMatchObject({
-      range: { startAt: time('12:00'), endAt: time('18:30') },
+      range: { startAt: time('12:00'), endAt: time('22:00') },
       others: [
         {
           userId: seen.id,
@@ -230,7 +232,7 @@ describe('The Friends not in a meet', () => {
         {
           userId: hidden.id,
           name: '하늘',
-          busy: [{ startAt: time('17:00'), endAt: time('18:30'), label: '58동 수업' }],
+          busy: [{ startAt: time('17:00'), endAt: time('19:00'), label: '58동 수업' }],
           walkMinutes: null,
         },
       ],

@@ -2,10 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
-import { StyleSheet, type ViewStyle } from 'react-native';
 import { stepsReplyOn } from '@/api/mock/data/steps-answer';
 import { space } from '@/design-system';
 import { markLibraryLoggedIn } from '@/library/flag';
@@ -13,10 +13,12 @@ import { foldedTimeCardOf } from '@/screens/main/answer/card-caps';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
+import { raiseCard, shownHeight } from './support/card-grip';
 import type { FakeServer } from './support/fake-server';
 import { sendFromBar, startLibraryChat } from './support/library-chat';
 import { layStage } from './support/lists';
 import { openMain } from './support/main';
+import { stepGrip } from './support/time-card';
 
 // P04 ticket 63, PR 553's review: high's top edge is one line under the folded time card's place, but a reply to
 // several requests draws its bar of steps at the top and, while the step shown is a Plan, that Plan's bar under it,
@@ -52,13 +54,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// High's height: the sheet's scrolling part is laid out at it.
-function highHeight(): number {
-  const style: unknown = screen.getByTestId('answer-card-content').props.style;
-  return Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).height);
-}
-
 // Partitions: the reply to several requests with its Plan's step shown, before and after its bar of steps is laid out.
+// High is read at high: rising there folds the top a stop (P01 ticket 22), and it is let down again to stand unfolded.
 describe('high under the bar of several requests', () => {
   it('stands under the bar of steps and the Plan’s bar where they reach lower than the folded time card', async () => {
     await markLibraryLoggedIn();
@@ -66,14 +63,17 @@ describe('high under the bar of several requests', () => {
     const user = await openMain();
     await layStage(390, 760);
     await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
-    await user.press(screen.getByRole('button', { name: /^2번/u }));
+    await user.press(screen.getByTestId('step-word-2'));
+    await raiseCard();
+    await raiseCard();
+    await stepGrip('untuck');
     await pass(50);
-    const underTheLine = highHeight();
+    const underTheLine = shownHeight();
     const [steps] = screen.getAllByTestId('time-bar');
 
     await fireEvent(steps, 'layout', { nativeEvent: { layout: { x: 16, y: 8, width: 358, height: STEPS_BAR } } });
     await pass(50);
 
-    expect(highHeight()).toBe(underTheLine - (STEPS_BAR + space[2] - foldedTimeCardOf(1)));
+    expect(shownHeight()).toBe(underTheLine - (STEPS_BAR + space[2] - foldedTimeCardOf(1)));
   });
 });

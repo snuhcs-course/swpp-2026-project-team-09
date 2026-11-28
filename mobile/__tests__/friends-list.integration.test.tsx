@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -64,13 +65,14 @@ describe('친구 관리', () => {
     expect(friendRows()).toHaveLength(12);
   });
 
-  it('searches by name and department, and says so when nobody is found', async () => {
+  it('searches by name only, and says so when nobody is found', async () => {
     const user = await openFriendScreen('/me/friends');
 
-    await user.type(screen.getByLabelText('친구 검색'), '컴퓨터');
-    expect(friendRows()).toEqual(['김민준', '정하은']);
+    await user.type(screen.getByLabelText('친구 검색'), '김민');
+    expect(friendRows()).toEqual(['김민준']);
 
-    await user.type(screen.getByLabelText('친구 검색'), '없는');
+    await user.clear(screen.getByLabelText('친구 검색'));
+    await user.type(screen.getByLabelText('친구 검색'), '컴퓨터');
     expect(screen.getByText('결과 없음')).toBeVisible();
   });
 });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -94,13 +95,16 @@ describe('The Leader ending a 파티', () => {
           line: '점심 같이 · 홍길동님이 없앴어요',
           at: AT,
           url: `/main?card=party-gone:${questId}`,
+          read: false,
         },
       ]);
     });
     expect(await ringsOf(member, 'party-ended')).toEqual({ rings: true });
     expect(await goneNotices(leader)).toEqual([]);
   });
+});
 
+describe('The Leader ending a 파티 that others waited on', () => {
   it('tells the one whose request waited and the one invited in 알림 only, without a push', async () => {
     const { leader, asker, invitee, questId } = await party();
 
@@ -145,6 +149,7 @@ describe('The Leader removing a member', () => {
           line: '점심 같이 · 홍길동님의 파티',
           at: AT,
           url: `/main?card=party-gone:${questId}`,
+          read: false,
         },
       ]);
     });

@@ -10,6 +10,7 @@ import {
   afterReply,
   conversationAnswersOf,
   stepsContextOf,
+  withoutWithdrawn,
   withRecalculated,
 } from '@/features/assistant/conversation-answers';
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -134,5 +135,26 @@ describe('What a request tells of the steps on screen', () => {
 
   it('is nothing without steps on screen, so that a single request is sent as before', () => {
     expect(stepsContextOf(afterReply(NONE, reply({ answers: [LUNCH] })), null)).toEqual({});
+  });
+});
+
+// P03 ticket 22: a later reply that drew nothing of its own withdrew some while the steps stay. Partitions: an answer's
+// key, beside a booking step; no key; a key of no answer.
+describe('The conversation without what a later reply withdrew', () => {
+  const onScreen = afterReply(
+    NONE,
+    reply({ answers: [LUNCH, DINNER], steps: [SEAT, stepOf('lunch'), stepOf('dinner')] }),
+  );
+
+  it("loses that answer and its step, and keeps the others and a booking's step", () => {
+    expect(withoutWithdrawn(onScreen, new Set(['dinner']))).toEqual({
+      answers: [LUNCH],
+      steps: [SEAT, stepOf('lunch')],
+    });
+  });
+
+  it('is the same conversation when nothing on screen was withdrawn', () => {
+    expect(withoutWithdrawn(onScreen, new Set())).toBe(onScreen);
+    expect(withoutWithdrawn(onScreen, new Set(['breakfast']))).toBe(onScreen);
   });
 });

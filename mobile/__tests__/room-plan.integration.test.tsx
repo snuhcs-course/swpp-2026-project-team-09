@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -20,8 +21,8 @@ import { startFresh } from './support/mocks';
 import { answer, answerRoom, HIS_PICNIC, openRoom, PICNIC, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The room's 일정: the Sub Quests, the Leader's form with the date·time sheet and the map view, against the fake main
-// server.
+// The room's 일정: the Sub Quests, the Leader's form with the date·time sheet and the place sheet's map view, against
+// the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -126,7 +127,7 @@ describe('the days of 일정', () => {
 });
 
 describe("the Leader's 일정 form, adding", () => {
-  it('adds a Sub Quest with the date·time sheet and the map view, keeping its key for a retry', async () => {
+  it('adds a Sub Quest with the date·time sheet and the place sheet’s map view, keeping its key for a retry', async () => {
     let first = true;
     server.on('GET /places/at', { status: 200, body: { place: ENGINEERING, relation: 'inside' } });
     server.on(`POST ${STEPS}`, () => {
@@ -147,14 +148,16 @@ describe("the Leader's 일정 form, adding", () => {
     await answer(user, '확인');
     expect(screen.getByRole('button', { name: '언제 내일 20:30' })).toBeVisible();
 
-    await user.press(screen.getByRole('button', { name: '지도에서 선택' }));
+    await user.press(screen.getByRole('button', { name: '어디서 장소 검색' }));
+    await user.press(screen.getByRole('button', { name: '지도에서 직접 고르기' }));
     await pass(500);
     expect(shownAddress()).toBe('/place-map');
     expect(screen.getByText('지도를 움직여 핀에 맞추기')).toBeVisible();
     expect(screen.getByText('제1공학관 301동')).toBeVisible();
     expect(screen.getByText('건물 위치예요')).toBeVisible();
     await answer(user, '이 위치로 정하기');
-    expect(screen.getByDisplayValue('제1공학관 301동')).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '이 장소로 정하기' }));
+    expect(screen.getByRole('button', { name: '어디서 제1공학관 301동' })).toBeVisible();
 
     await answer(user, '추가');
     expect(toast()).toHaveTextContent('요청하지 못했어요. 다시 시도해 주세요');
@@ -198,10 +201,12 @@ describe('the map view', () => {
     await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
     await answer(user, '확인');
 
-    await user.press(screen.getByRole('button', { name: '지도에서 선택' }));
+    await user.press(screen.getByRole('button', { name: '어디서 장소 검색' }));
+    await user.press(screen.getByRole('button', { name: '지도에서 직접 고르기' }));
     await pass(500);
     expect(screen.getByText('직접 찍은 위치 · 가장 가까운 건물 기준')).toBeVisible();
     await answer(user, '이 위치로 정하기');
+    await user.press(screen.getByRole('button', { name: '이 장소로 정하기' }));
     await answer(user, '추가');
 
     // The point under the pin, which the main server was asked about.

@@ -1,7 +1,7 @@
 # 30: One count for one thing on every screen
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -30,8 +30,8 @@ Decided on 2026-11-27:
 
 ## Acceptance criteria
 
-- [ ] The same thing gives the same number on each screen. (App integration tests, which fail before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] The same thing gives the same number on each screen. (App integration tests, which fail before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

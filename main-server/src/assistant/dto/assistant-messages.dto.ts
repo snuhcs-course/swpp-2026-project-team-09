@@ -165,7 +165,9 @@ export interface PickTimeOffer {
   free: { from: string; until: string }[];
 }
 
+// A button whose press sends `text` as the User's words.
+export type AskOffer = Extract<RefusalOffer, { kind: 'ask' }>;
+
 // A button under a reply's text: one sent as the User's words, such as a Tutorial quest's 가는 길 보기 (P01-14), one
 // that opens a 파티's room, one that cancels a Quest, or a picker of a Place or a time.
-export type ReplyOffer =
-  Extract<RefusalOffer, { kind: 'ask' }> | QuestOffer | LeaveQuestOffer | PickPlaceOffer | PickTimeOffer;
+export type ReplyOffer = AskOffer | QuestOffer | LeaveQuestOffer | PickPlaceOffer | PickTimeOffer;

@@ -139,8 +139,8 @@ describe('The lines of the steps on screen', () => {
   it('give the step open as the plan on screen and each other one as another step', () => {
     const lines = contextLines({ ...NO_CONTEXT, conditions: meal('dinner'), answers: [meal('lunch'), meal('dinner')] });
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toMatch(/^\[Plan on screen: \{"plan":null,"date":"2026-11-27","meal":"dinner"/u);
-    expect(lines[1]).toMatch(/^\[Another step on screen: \{"plan":null,"date":"2026-11-27","meal":"lunch"/u);
+    expect(lines[0]).toMatch(/^\[Plan on screen: \{"date":"2026-11-27","meal":"dinner"/u);
+    expect(lines[1]).toMatch(/^\[Another step on screen: \{"date":"2026-11-27","meal":"lunch"/u);
   });
 
   it('are as before when the app sends no other steps', () => {

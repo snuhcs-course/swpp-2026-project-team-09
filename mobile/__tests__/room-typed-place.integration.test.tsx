@@ -5,6 +5,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -16,11 +17,12 @@ import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
+import { setPlace } from './support/party-form';
 import { answer, answerRoom, openRoom, PICNIC } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The place of a Sub Quest typed in the room's 일정 form: the Place the words name, or else the words alone, against
-// the fake main server.
+// The place of a Sub Quest typed in the room's 일정 form and kept with the place sheet's 이름만 쓰기: the Place the
+// words name, or else the words alone, against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -69,14 +71,14 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// The form for a new Sub Quest up to `어디서`, with the words typed there.
+// The form for a new Sub Quest up to `어디서`, with the words typed into the place sheet and kept as typed.
 async function typePlace(words: string): Promise<Awaited<ReturnType<typeof openRoom>>> {
   const user = await openRoom();
   await user.press(screen.getByRole('button', { name: '일정 추가' }));
   await user.type(screen.getByLabelText('내용'), '모이기');
   await user.press(screen.getByRole('button', { name: '언제 날짜·시간 선택' }));
   await answer(user, '확인');
-  await user.type(screen.getByLabelText('어디서'), words);
+  await setPlace(user, words, `‘${words.trim()}’ 이름만 쓰기`);
   return user;
 }
 
@@ -136,11 +138,10 @@ describe('a Sub Quest whose place is words alone', () => {
     expect(within(screen.getByLabelText('일정')).getByText('서울대입구역')).toBeVisible();
 
     await user.press(screen.getAllByRole('button', { name: '일정 수정' })[0]);
-    expect(screen.getByDisplayValue('서울대입구역')).toBeVisible();
+    expect(screen.getByRole('button', { name: '어디서 서울대입구역' })).toBeVisible();
     await answer(user, '수정');
     await user.press(screen.getAllByRole('button', { name: '일정 수정' })[0]);
-    await user.clear(screen.getByLabelText('어디서'));
-    await user.type(screen.getByLabelText('어디서'), '301동');
+    await setPlace(user, '301동');
     await answer(user, '수정');
 
     expect(edited()).toEqual([
@@ -151,20 +152,14 @@ describe('a Sub Quest whose place is words alone', () => {
 });
 
 describe('a point picked on the map', () => {
-  it('stays a point when its words change', async () => {
+  it('goes as words alone once other words are kept with 이름만 쓰기, as on the 파티 form', async () => {
     const user = await openRoom();
 
     await user.press(screen.getAllByRole('button', { name: '일정 수정' })[0]);
-    await user.type(screen.getByLabelText('어디서'), ' 로비');
+    await setPlace(user, '301동 앞 로비');
     await answer(user, '수정');
 
-    expect(edited()).toEqual([
-      {
-        title: MEET.title,
-        startsAt: MEET.startsAt,
-        place: { latitude: 37.45091, longitude: 126.95289, label: '301동 앞 로비' },
-      },
-    ]);
+    expect(edited()).toEqual([{ title: MEET.title, startsAt: MEET.startsAt, place: { label: '301동 앞 로비' } }]);
   });
 });
 

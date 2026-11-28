@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -11,6 +12,7 @@ import { z } from 'zod';
 import { type AnswerReply, type MealInput } from '../src/assistant/dto/answer.dto.js';
 import { MealPlanStage, type Named } from './meal-plan.js';
 import { withAccessToken } from './sign-in.js';
+import { keptNotifications } from './kept-notifications.js';
 
 // A seat's stay is no busy time (P05-14, the review of PR 336): a User at a seat still eats, meets and goes out, so a
 // 2-hour seat changes no meal plan, neither the User's own nor a Friend's that plans with them. A return ends the
@@ -61,10 +63,10 @@ async function exampleOn(date: string): Promise<void> {
 }
 
 async function leaveBys(who: Named): Promise<unknown[]> {
-  const response = await withAccessToken(request(stage.app.getHttpServer()).get('/notifications'), who.accessToken);
+  const kept = await keptNotifications(stage.app, who.id);
   return z
     .array(z.object({ kind: z.string() }))
-    .parse(response.body)
+    .parse(kept)
     .filter(({ kind }) => kind === 'leave-by');
 }
 

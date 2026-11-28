@@ -4,14 +4,18 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, type Ref, useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { useRevealFocused } from '@/hooks/use-reveal-focused';
 import { useInsets } from './insets';
 import { AppBar } from './app-bar';
+import { Glass } from './glass';
 import { color, space } from './tokens';
 
 interface FullScreenPanelProps {
@@ -31,6 +35,12 @@ interface FullScreenPanelProps {
   subtle?: boolean;
   // The body, for a screen that scrolls it to a part.
   scrollRef?: Ref<ScrollView>;
+  // On the glass layer's `screen` level instead of white, for a screen the stack shows over the map, which then shows through
+  // (`app/(signed-in)/_layout.tsx`, A04 ticket 08). The app bar is clear on it, as the friend panel's is.
+  glass?: boolean;
+  // A page drawn inside a screen, not a screen of the stack, such as 파티 만들기's 관련 행사 고르기: Android's back then
+  // does what its ‹ does, before the screen under it leaves (P06 ticket 62). A screen of the stack is left by the stack.
+  inner?: boolean;
   children: ReactNode;
 }
 
@@ -69,8 +79,11 @@ export function FullScreenPanel({
   footerHidesForKeyboard = false,
   subtle = false,
   scrollRef,
+  glass = false,
+  inner = false,
   children,
 }: FullScreenPanelProps): ReactElement {
+  useBackToClose(inner, leave.onPress);
   const insets = useInsets();
   const keyboard = useKeyboardHeight(insets.bottom);
   const scroll = useBothRefs(scrollRef);
@@ -78,9 +91,9 @@ export function FullScreenPanel({
   // The keyboard covers the phone's own bar.
   const bottom = keyboard > 0 ? 0 : insets.bottom;
   const shown = footer !== undefined && !(footerHidesForKeyboard && keyboard > 0);
-  return (
-    <View style={[styles.screen, { paddingBottom: keyboard }]} testID="full-screen-panel">
-      <AppBar actions={actions} count={count} leave={leave} line={false} title={title} />
+  const content = (
+    <>
+      <AppBar actions={actions} clear={glass} count={count} leave={leave} line={false} title={title} />
       {under}
       <ScrollView
         contentContainerStyle={shown ? undefined : { paddingBottom: bottom }}
@@ -91,12 +104,25 @@ export function FullScreenPanel({
         <View ref={reveal.content}>{children}</View>
       </ScrollView>
       {shown ? <View style={[styles.footer, { paddingBottom: space[4] + bottom }]}>{footer}</View> : null}
+    </>
+  );
+  if (glass) {
+    return (
+      <Glass level="screen" style={[styles.glass, { paddingBottom: keyboard }]} testID="full-screen-panel">
+        {content}
+      </Glass>
+    );
+  }
+  return (
+    <View style={[styles.screen, { paddingBottom: keyboard }]} testID="full-screen-panel">
+      {content}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
+  glass: { flex: 1 },
   body: { flex: 1 },
   subtle: { backgroundColor: color.surfaceSubtle, borderTopWidth: 1, borderTopColor: color.border },
   footer: {

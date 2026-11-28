@@ -5,12 +5,19 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type RefObject, useState } from 'react';
-import { type KeyboardTypeOptions, type StyleProp, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
-import { color, NOT_AUTOFILLED, radius, size, space, text } from '@/design-system';
-import { cut } from './length';
+import {
+  type KeyboardTypeOptions,
+  type StyleProp,
+  StyleSheet,
+  type TextInput,
+  View,
+  type ViewStyle,
+} from 'react-native';
+import { color, radius, size, space, TextEntry, text } from '@/design-system';
 
 // The frame's mark of the field that has the focus: the key colour's border and a pale ring around it.
 const FOCUS_RING = `0 0 0 3px ${color.blue100}`;
@@ -55,8 +62,7 @@ export function Input({
   const [focused, setFocused] = useState(false);
   return (
     <View style={[styles.box, focused && styles.focused, style]}>
-      <TextInput
-        {...NOT_AUTOFILLED}
+      <TextEntry
         accessibilityHint={on.hint}
         accessibilityLabel={label}
         keyboardType={on.keyboardType}
@@ -64,9 +70,8 @@ export function Input({
           setFocused(false);
           on.onBlur?.();
         }}
-        onChangeText={(typed) => {
-          onChangeText(most === undefined ? typed : cut(typed, most));
-        }}
+        most={most}
+        onChangeText={onChangeText}
         onFocus={() => {
           setFocused(true);
           on.onFocus?.();

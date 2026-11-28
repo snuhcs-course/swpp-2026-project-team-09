@@ -1,7 +1,7 @@
 # 31: An invitation names who invited, and a full 파티 cannot invite
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Database: one migration (the exception to the spec's rule). Releases: a main server Release and an app OTA update.
@@ -25,8 +25,8 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] The card names the inviter. (App integration test, which fails before the change.)
-- [ ] Inviting into a full 파티 is refused with its words; a 파티 with places left invites any number. (Main server integration test, which fails before the change.)
+- [x] The card names the inviter. (App integration test, which fails before the change.)
+- [x] Inviting into a full 파티 is refused with its words; a 파티 with places left invites any number. (Main server integration test, which fails before the change.)
 - [ ] The migration runs on the Dev Server; no native file changes; lint, format and types pass.
 
 ## Comments
@@ -37,3 +37,7 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 - Tokens, the two review subagents included:
   - input: 272 uncached, with 29,270,901 read from the cache and 388,090 written to it;
   - output: 67,416.
+
+### Release (2026-11-28)
+
+- The migration `20261128000000_add_quest_invitation_invited_by` went out with the Releases from `snunow/all/26.11.28-5` on, all of which succeeded. The Dev Server check of its criterion is not recorded, so that box stays open.

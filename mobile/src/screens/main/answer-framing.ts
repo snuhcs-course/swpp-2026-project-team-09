@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -12,7 +13,9 @@ import type { AnswerReply } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { answerCamera, panToShow, type ViewArea } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
-import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/answer-marks';
+import type { Draft } from '@/features/assistant/answer-groups';
+import { looksOf } from '@/features/assistant/answer-looks';
+import { type AnswerDrawing, drawingOf } from '@/features/assistant/answer-marks';
 import type { Standing } from '@/features/assistant/invited-friends';
 import { drawsMeal } from '@/features/assistant/meal-marks';
 import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
@@ -137,10 +140,14 @@ export function useFirstView(
   standings: ReadonlyMap<string, Standing>,
   framing: Framing,
   avoid: readonly LatLng[],
+  beside: readonly Draft[],
 ): LabelView | null {
   return useMemo(
-    () => (answer === null || !drawsMeal(answer) ? null : labelViewOf(drawingOf(answer, 0, standings), framing, avoid)),
-    [answer, standings, framing, avoid],
+    () =>
+      answer === null || !drawsMeal(answer)
+        ? null
+        : labelViewOf(drawingOf(answer, 0, standings, null, undefined, beside), framing, avoid),
+    [answer, standings, framing, avoid, beside],
   );
 }
 
@@ -155,15 +162,21 @@ export function useHeldViews(
   framing: Framing,
   avoid: readonly LatLng[],
   base: AnswerDrawing | null,
+  // Marks drawn beside the answer's own (`Beside`), which the views keep in sight.
+  beside: readonly Draft[],
 ): { held: LabelView | null; looks: readonly MarkerLook[] } {
-  const first = useFirstView(sent ? null : answer, standings, framing, avoid);
+  const first = useFirstView(sent ? null : answer, standings, framing, avoid, beside);
   const held = useMemo(() => heldView(first, base), [first, base]);
   const looks = useMemo(
     () =>
       answer === null
         ? NO_LOOKS
-        : looksOf(answer, (drawing) => (first === null ? labelViewOf(drawing, framing) : heldView(first, drawing))),
-    [answer, framing, first],
+        : looksOf(
+            answer,
+            (drawing) => (first === null ? labelViewOf(drawing, framing) : heldView(first, drawing)),
+            beside,
+          ),
+    [answer, framing, first, beside],
   );
   return { held, looks };
 }

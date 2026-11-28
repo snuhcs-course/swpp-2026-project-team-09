@@ -19,19 +19,23 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { Logger } from '@nestjs/common';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   APICallError,
   generateText,
+  InvalidToolInputError,
   type LanguageModel,
   type LanguageModelMiddleware,
   RetryError,
   stepCountIs,
   type SystemModelMessage,
   tool,
+  type ToolCallRepairFunction,
   type ToolSet,
   wrapLanguageModel,
 } from 'ai';
@@ -39,9 +43,9 @@ import { withApprovalLine } from './approval-line.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
 import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
-import { keptRefusal, lookupBeside } from './refusals/refusals.js';
-import { saidText, warnsOfNoText, wordlessText } from './wordless-reply.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
+import { replyOf } from './run-reply.js';
+import { meantInput } from './tool-input-repair.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
 // feature over it. Tools and features do not import the SDK, so that moving to another library replaces this file.
@@ -252,6 +256,20 @@ function observed(
   };
 }
 
+const toolInputLog = new Logger('ToolInput');
+
+// A tool call the SDK refused for its input, made again with what the model meant (`meantInput`, P05 tickets 82 and
+// 84), with one warning line that names the tool and its refused fields, never a value the model gave.
+const repairedToolCall: ToolCallRepairFunction<ToolSet> = async ({ toolCall, error, inputSchema }) => {
+  if (!InvalidToolInputError.isInstance(error)) {
+    return null;
+  }
+  const { toolName, input: written } = toolCall;
+  const { input, line } = meantInput({ toolName, input: written, schema: await inputSchema({ toolName }), error });
+  toolInputLog.warn(line);
+  return input === null ? null : { ...toolCall, input };
+};
+
 function toolSetOf({ tools }: Feature, context: ToolContext, observer: RunObserver | undefined): ToolSet {
   return Object.fromEntries(
     Object.entries(tools).map(([name, { description, input, run }]) => {
@@ -276,6 +294,19 @@ function systemOf(feature: Feature, now: Date): SystemModelMessage[] {
   return perRequest === undefined ? [stable] : [stable, { role: 'system', content: perRequest }];
 }
 
+// What the tools of one run share: who asks and what their app knew, and what the run has presented so far.
+function toolContextOf(asker: Request, messages: readonly ChatMessage[]): ToolContext {
+  return {
+    ...asker,
+    capabilities: new Set(asker.capabilities),
+    found: foundWithMentions(asker.context.mentions),
+    shown: lastShown(messages),
+    presented: { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null, refusal: null },
+    judged: new Map(),
+    restaurants: new Map(),
+  };
+}
+
 // Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and
 // what the presenters put beside it. It throws NoAnswerError when the steps ran out on tools or the run has nothing to
 // say or show, and the SDK's errors when the model fails or the time runs out. An observer, if given, is told of each
@@ -288,20 +319,13 @@ export async function runFeature(
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
   observer?: RunObserver,
 ): Promise<FeatureReply> {
-  const context: ToolContext = {
-    ...asker,
-    capabilities: new Set(asker.capabilities),
-    found: foundWithMentions(asker.context.mentions),
-    shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null, refusal: null },
-    judged: new Map(),
-    restaurants: new Map(),
-  };
+  const context = toolContextOf(asker, messages);
   const { steps, finishReason } = await generateText({
     model,
     instructions: systemOf(feature, asker.now),
     messages: messagesFor(messages, asker, feature.libraryCatalogue),
     tools: toolSetOf(feature, context, observer),
+    repairToolCall: repairedToolCall,
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
     maxOutputTokens,
@@ -337,32 +361,6 @@ function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observe
   const { text, added } = withApprovalLine(reply.text, reply.cards, userTexts);
   observer?.replied({ modelText: reply.text, approvalLine: added });
   return { ...reply, text };
-}
-
-// The reply of a run that ended, once the feature has changed what it presented: the model's text, a refusal's lines
-// without any, or what a reply with no words says (wordlessText).
-async function replyOf(
-  text: string,
-  finishReason: string,
-  feature: Feature,
-  context: ToolContext,
-): Promise<FeatureReply | null> {
-  await feature.afterRun?.(context);
-  const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
-  presented.refusal = keptRefusal(presented);
-  presented.lookup = lookupBeside(presented);
-  if (presented.answer !== null || presented.lookup !== null || presented.refusal !== null) {
-    delete presented.offers;
-  }
-  const said = saidText(text, presented);
-  if (said !== '') {
-    return { ...presented, text: said, noTextFinishReason: null };
-  }
-  const wordless = wordlessText(presented);
-  if (wordless === null) {
-    return null;
-  }
-  return { ...presented, text: wordless, noTextFinishReason: warnsOfNoText(presented, wordless) ? finishReason : null };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an

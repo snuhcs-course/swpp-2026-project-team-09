@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -19,6 +20,7 @@ import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { addClass } from './timetable.js';
 import { refuseKakao } from './walking-route.js';
+import { keptNotifications } from './kept-notifications.js';
 
 // A seat booked on the phone, told to the main server at POST /library/seat-stays, on board AmStudy a1 and a6:
 // Wednesday 2026-11-04 at 13:50 in Korea, a seat in 7A 열람실 2 구역 from 14:00 for 6 hours, and 철학개론 at 16:00 in
@@ -73,10 +75,10 @@ function stay(user: TestUser, body: object = SEAT): request.Test {
 }
 
 async function leaveBys(user: TestUser): Promise<z.infer<typeof notificationSchema>[]> {
-  const response = await withAccessToken(request(app.getHttpServer()).get('/notifications'), user.accessToken);
+  const kept = await keptNotifications(app, user.id);
   return z
     .array(notificationSchema)
-    .parse(response.body)
+    .parse(kept)
     .filter(({ kind }) => kind === 'leave-by');
 }
 

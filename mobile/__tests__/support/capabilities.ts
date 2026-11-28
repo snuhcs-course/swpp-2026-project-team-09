@@ -19,4 +19,5 @@ export const SENT_CAPABILITIES = [
   'pick',
   'study-plan',
   'study-group',
+  'answers',
 ];

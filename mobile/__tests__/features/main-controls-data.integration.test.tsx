@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -28,13 +29,13 @@ afterEach(() => {
 });
 
 describe('활성 파티', () => {
-  it("counts the members of the User's Party who share their position, the User left out", async () => {
+  it("counts the members of the User's Party who share their position, the User too once they share in it", async () => {
     const { result } = await renderHook(useActiveParty, { wrapper });
     expect(result.current).toBeNull();
 
     await settle();
 
-    expect(result.current).toEqual({ id: 'm1', title: 'AI 커리어 설명회 같이 가요', line: '3명 공유 중' });
+    expect(result.current).toEqual({ id: 'm1', title: 'AI 커리어 설명회 같이 가요', line: '4명 공유 중' });
   });
 
   it('is nothing for a User in no Party', async () => {

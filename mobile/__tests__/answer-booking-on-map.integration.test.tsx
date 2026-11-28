@@ -224,9 +224,10 @@ describe("a seat card's time card", () => {
 });
 
 // PR 460's review: the seat card of several requests (P03) is never left without its 예약하기. With the steps on the map
-// (P04 ticket 09) the seat is step ①, shown first, and its 예약하기 stands beside the input.
+// (P04 ticket 09) the seat is the step shown first, drawn as its booking alone (P03 ticket 26), and its 예약하기
+// stands beside the input.
 describe('a seat card that is one of several requests', () => {
-  it('is step ① on the map, with 예약하기 beside the input', async () => {
+  it('is the step shown first, drawn on the map as its booking alone, with 예약하기 beside the input', async () => {
     const reply = stepsReplyOn('2026-11-02');
     await markLibraryLoggedIn();
     server.on('POST /assistant/messages', { status: 200, body: reply });
@@ -235,7 +236,7 @@ describe('a seat card that is one of several requests', () => {
     await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
     await pass(500);
 
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^1 관정 7층 열람실 ›/u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:30/u));
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeVisible();
     expectNoWrite(library);
   });

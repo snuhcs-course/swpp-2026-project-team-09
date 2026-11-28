@@ -13,15 +13,15 @@ The user, on 2026-11-28, about the steps' marks drawn in one gold-brown: "각자
 ## What changes
 
 - `features/assistant/steps-scene.ts`: `stepDrafts` reads the two choices that are not colours:
-  - `bookingStepHolds()`: choice 1, what a seat's or a room's round holds. It holds its number, as every step's does, not the 관정 booking pick's book.
+  - Choice 1, what a seat's or a room's round holds, was decided by the user on 2026-11-28 ("가안이 좋아보여"): every step's round holds its kind's icon, never a number (ticket 26, which removed `bookingStepHolds`).
   - `stepMarkRole(step)`: choice 3, how a step's round is drawn. Every step done is solid, as a pick, the chosen one or not; a step not done is grey.
 - Choice 2, a room's step in the study colour as a seat's, is #726's table (`answerTone('room')`).
 
-## The three choices, awaiting the user's decision
+## The three choices
 
 | # | Choice | Built as | The other way |
 | - | ------ | -------- | ------------- |
-| 1 | A seat's or a room's step mark | its number in the study colour | the 관정 booking pick's book, with no number |
+| 1 | A seat's or a room's step mark | decided (ticket 26): its kind's icon, the book, with no number; every step's round holds its kind's icon | — |
 | 2 | A room's step colour | study, as a seat's | the default navy |
 | 3 | The steps not chosen | solid, as every step done | soft, as one answer's other candidates |
 

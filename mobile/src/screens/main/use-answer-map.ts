@@ -15,6 +15,7 @@
 import { useEffect, useEffectEvent, useMemo } from 'react';
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
+import type { Draft } from '@/features/assistant/answer-groups';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene } from '@/features/assistant/answer-marks';
 import type { Standing } from '@/features/assistant/invited-friends';
@@ -57,6 +58,30 @@ const NO_LOOKS: readonly MarkerLook[] = [];
 const NO_LINES: readonly MapLine[] = [];
 const NO_ROUTES: MapScene['routes'] = [];
 const NO_POINTS: readonly LatLng[] = [];
+const NO_DRAFTS: readonly Draft[] = [];
+
+// Marks drawn beside an answer's own, in its drawing, so that its labels keep clear of them and its camera keeps them in
+// sight: the other steps of several requests beside the step shown as its answer alone (P03 ticket 26). A press on one
+// goes to `press`.
+export interface Beside {
+  drafts: readonly Draft[];
+  press: (id: string) => void;
+}
+
+function isBeside(beside: Beside | null, id: string): boolean {
+  return beside !== null && beside.drafts.some((draft) => draft.id === id);
+}
+
+// The answer's presses, with a press on a mark beside its own sent to that mark's `press`.
+function withBeside(onPress: (id: string) => void, beside: Beside | null): (id: string) => void {
+  return (id) => {
+    if (beside !== null && isBeside(beside, id)) {
+      beside.press(id);
+    } else {
+      onPress(id);
+    }
+  };
+}
 
 type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed' | 'changing' | 'left'>;
 
@@ -73,9 +98,15 @@ function alone(answer: AnswerReply, index: number): AnswerReply {
 
 // Once 그대로 두기 left a Quest already set as it is (P04 ticket 20), its tag is the only mark beside the User's own
 // (`keptDrawingOf`); with no point, nothing is drawn.
-function keptDrawOf(answer: AnswerReply, index: number): ((view: LabelView | null) => AnswerDrawing) | null {
-  const base = keptDrawingOf(answer, index);
-  return base === null ? null : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view) ?? base;
+function keptDrawOf(
+  answer: AnswerReply,
+  index: number,
+  beside: readonly Draft[],
+): ((view: LabelView | null) => AnswerDrawing) | null {
+  const base = keptDrawingOf(answer, index, null, beside);
+  return base === null
+    ? null
+    : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view, beside) ?? base;
 }
 
 // The drawing of the Plan on screen: alone once made or changed, the kept Quest's tag once left as it is, else the
@@ -84,18 +115,18 @@ function drawOf(
   answer: AnswerReply | null,
   index: number,
   standings: ReadonlyMap<string, Standing>,
-  settled: boolean,
-  leftAlone: boolean,
+  { settled, leftAlone }: { settled: boolean; leftAlone: boolean },
+  beside: readonly Draft[],
   ways?: Ways,
 ): Draw | null {
   if (answer === null) {
     return null;
   }
   if (leftAlone) {
-    return keptDrawOf(answer, index);
+    return keptDrawOf(answer, index, beside);
   }
   const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
-  return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways);
+  return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways, beside);
 }
 
 export interface AnswerMap {
@@ -184,7 +215,7 @@ export function useDrawnMap(
     () => held ?? (base === null ? null : labelViewOf(base, framing, avoid)),
     [held, base, framing, avoid],
   );
-  const placedAt = useRestedView(shown, map.camera);
+  const placedAt = useRestedView(shown, map.camera, frame);
   const next = useMemo(() => (draw === null || placedAt === null ? base : draw(placedAt)), [draw, base, placedAt]);
   const baseKey = useMemo(() => looksKey(base), [base]);
   const { drawing, view, images } = useMadeDrawing(baseKey, next, placedAt, looks);
@@ -248,12 +279,33 @@ function planFrame(
   return { key: { reply: source, chosen }, from: answer, active };
 }
 
+// The Plan on screen's drawing, and the same with its ways (`drawOf`). A meal Plan's legs are drawn, and say their
+// minutes, on the ways it is gone (`meal-marks.ts`); no other answer asks for them.
+function useDraws(
+  { answer, index }: ShownAnswer,
+  standings: ReadonlyMap<string, Standing>,
+  { settled, leftAlone }: { settled: boolean; leftAlone: boolean },
+  besides: readonly Draft[],
+): { plain: Draw | null; draw: Draw | null } {
+  const ways = useMealWays(answer !== null && drawsMeal(answer) ? answer.plans[index] : undefined);
+  const plain = useMemo(
+    () => drawOf(answer, index, standings, { settled, leftAlone }, besides),
+    [answer, index, standings, settled, leftAlone, besides],
+  );
+  const draw = useMemo(
+    () => drawOf(answer, index, standings, { settled, leftAlone }, besides, ways),
+    [answer, index, standings, settled, leftAlone, besides, ways],
+  );
+  return { plain, draw };
+}
+
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
 // Avatars of the people it draws. Null while no Plan is shown. The looks of every Plan, each at its own camera, are
 // asked for when the answer comes, so that the arrows never wait for a picture. A Friend's face that a press would add
 // carries a "+", and lights while that add is on its way. Once "이대로 초대" is pressed the faces say how each invited
 // Friend stands, no face carries a "+", and a press changes nothing: the Plan is sent. A press on the pick, before or
 // after, opens its card, and one on the User's start or a face of the Plan's people opens theirs before (`onMark`).
+// Marks `beside` it are drawn with it and take their own press.
 export function useAnswerMap(
   shown: ShownAnswer,
   map: MainMap,
@@ -263,23 +315,15 @@ export function useAnswerMap(
   onMark: OnMark = ignoreMark,
   // Whether the map shows this answer, not a scene the app made over it (`Frame`).
   active = true,
+  beside: Beside | null = null,
 ): AnswerMap | null {
   const { answer, index } = shown;
   const settled = made !== null || changed !== null;
   // A Plan made or changed wins the drawing over 그대로 두기 (PR 444's review).
   const leftAlone = left !== null && !settled;
   const routes = answer?.plans[index]?.scene.routes;
-  // A meal Plan's legs are drawn, and say their minutes, on the ways it is gone (`meal-marks.ts`); no other answer asks
-  // for them.
-  const ways = useMealWays(answer !== null && drawsMeal(answer) ? answer.plans[index] : undefined);
-  const plain = useMemo(
-    () => drawOf(answer, index, standings, settled, leftAlone),
-    [answer, index, standings, settled, leftAlone],
-  );
-  const draw = useMemo(
-    () => drawOf(answer, index, standings, settled, leftAlone, ways),
-    [answer, index, standings, settled, leftAlone, ways],
-  );
+  const besides = beside?.drafts ?? NO_DRAFTS;
+  const { plain, draw } = useDraws(shown, standings, { settled, leftAlone }, besides);
   const framing = useFraming(map, room, true);
   // The camera is worked out without the ways, so that it stays put while their paths come.
   const base = useBase(plain);
@@ -289,8 +333,9 @@ export function useAnswerMap(
   // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
   const sent = sending || settled || changing || leftAlone;
   const avoid = useFacePoints(faces);
-  const { held, looks } = useHeldViews(answer, sent, standings, framing, avoid, base);
-  const press = pressableWhile(sent);
+  const { held, looks } = useHeldViews(answer, sent, standings, framing, avoid, base, besides);
+  const own = pressableWhile(sent);
+  const press = (id: string): boolean => own(id) || isBeside(beside, id);
   const frame = planFrame(shown, settled, leftAlone, active);
   const drawn = useDrawnMap(draw, base, frame, looks, map, framing, routes, press, avoid, held);
   if (drawn === null) {
@@ -299,7 +344,7 @@ export function useAnswerMap(
   const { markers, lines, drawing, placed, view } = drawn;
   return {
     contents: { markers, lines, avatars: facesClearOf(faces, placed, view) },
-    onPress: planPress(drawing, shown, sent, onMark),
+    onPress: withBeside(planPress(drawing, shown, sent, onMark), beside),
     ...ANSWER_LIMITS,
   };
 }

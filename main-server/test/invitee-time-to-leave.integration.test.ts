@@ -15,9 +15,10 @@ import { MealPlanStage, type Named } from './meal-plan.js';
 import { firstPlan, jieun, minsu, type Party, partyOf, workedExample } from './plan-quests.js';
 import { answerInvitation, endQuest, removeHolder } from './quest-recruiting.js';
 import { dropQuest, editSubQuest, getQuest } from './quests.js';
-import { withAccessToken } from './sign-in.js';
+import { type NotificationDto } from '../src/notifications/dto/notification.dto.js';
+import { keptNotifications } from './kept-notifications.js';
 
-// An invited User's own time to leave, kept in GET /notifications when they accept a party made at POST /plans from
+// An invited User's own time to leave, kept as a Notification when they accept a party made at POST /plans from
 // the design's worked example (a Tuesday at 11:50), gone when they leave the Quest or it ends, and kept again by the
 // same rule when its step is changed (P06 ticket 25). Each test stands on
 // a Tuesday of July or August 2088, which no other file posts menus for.
@@ -32,8 +33,9 @@ afterAll(async () => {
   await stage.stop();
 });
 
-function getNotifications(user: TestUser): request.Test {
-  return withAccessToken(request(stage.app.getHttpServer()).get('/notifications'), user.accessToken);
+// Every kept one, those for later included: the time to leave is kept ahead of its time.
+function keptFor(user: TestUser): Promise<NotificationDto[]> {
+  return keptNotifications(stage.app, user.id);
 }
 
 function accept(user: TestUser, { invitations }: Party): request.Test {
@@ -60,7 +62,7 @@ async function minsuAccepted(date: string): Promise<{ questId: string; friend: N
   const { party, friend } = await workedParty(date);
   expect((await accept(friend, party)).status).toBe(201);
   await vi.waitFor(async () => {
-    expect((await getNotifications(friend)).body).toHaveLength(1);
+    expect(await keptFor(friend)).toHaveLength(1);
   });
   return { questId: party.quest.id, friend };
 }
@@ -79,7 +81,7 @@ async function expectNoneKept(friend: Named, party: Party): Promise<void> {
   } finally {
     keep.mockRestore();
   }
-  expect((await getNotifications(friend)).body).toEqual([]);
+  expect(await keptFor(friend)).toEqual([]);
 }
 
 describe('An invited User who accepts the party of 민수 and 지은', () => {
@@ -91,7 +93,7 @@ describe('An invited User who accepts the party of 민수 and 지은', () => {
     expect((await accept(friend, party)).status).toBe(201);
 
     await vi.waitFor(async () => {
-      expect((await getNotifications(friend)).body).toEqual([
+      expect(await keptFor(friend)).toEqual([
         {
           id: `leave-by:party:${questId}`,
           kind: 'leave-by',
@@ -100,10 +102,11 @@ describe('An invited User who accepts the party of 민수 and 지은', () => {
           line: '학생회관식당까지 걸어서 18분',
           at: `${date}T12:15:00+09:00`,
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });
-    expect((await getNotifications(other)).body).toEqual([]);
+    expect(await keptFor(other)).toEqual([]);
   });
 });
 
@@ -152,7 +155,7 @@ describe('An invited User’s accepting when the time to leave cannot be kept', 
       schedule.mockRestore();
       warn.mockRestore();
     }
-    expect((await getNotifications(friend)).body).toEqual([]);
+    expect(await keptFor(friend)).toEqual([]);
   });
 });
 
@@ -171,7 +174,7 @@ describe('An invited User who leaves the party', () => {
 
     // A User removed is told so (P06 ticket 22); the time to leave is gone either way.
     await vi.waitFor(async () => {
-      expect((await getNotifications(friend)).body).not.toContainEqual(expect.objectContaining({ kind: 'leave-by' }));
+      expect(await keptFor(friend)).not.toContainEqual(expect.objectContaining({ kind: 'leave-by' }));
     });
   });
 });
@@ -184,7 +187,7 @@ describe('Ending a party an invited User accepted', () => {
 
     // The party is gone, which is told (P06 ticket 22), and its time to leave with it.
     await vi.waitFor(async () => {
-      expect((await getNotifications(friend)).body).not.toContainEqual(expect.objectContaining({ kind: 'leave-by' }));
+      expect(await keptFor(friend)).not.toContainEqual(expect.objectContaining({ kind: 'leave-by' }));
     });
   });
 });
@@ -211,7 +214,7 @@ describe('A step the Leader changes in the room', () => {
 
     expect(edited.status).toBe(200);
     await vi.waitFor(async () => {
-      const kept = keptSchema.parse((await getNotifications(friend)).body);
+      const kept = keptSchema.parse(await keptFor(friend));
       expect(kept.map(({ kind }) => kind).toSorted()).toEqual(['leave-by', 'step-changed']);
       const leaveBy = kept.find(({ kind }) => kind === 'leave-by');
       // One time to leave, once his Class has ended at 12:15 and before the new start.

@@ -4,10 +4,14 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { mockClient } from '@/api/mock/client';
+import { QUESTS } from '@/api/mock/data/quests';
+import type { Quest } from '@/api/types';
 import { pass, screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import { FULL_SCREEN } from './support/lists';
@@ -17,6 +21,12 @@ import { startFresh } from './support/mocks';
 // The Quest list on the whole screen, the `MainQuests` frame, against the mocks.
 
 jest.mock('expo-location');
+// As on Android, where nothing blurs the map: the list on glass is the `screen` level's white.
+jest.mock('expo-glass-effect', () => ({
+  isLiquidGlassAvailable: (): boolean => false,
+  isGlassEffectAPIAvailable: (): boolean => false,
+  GlassView: (): null => null,
+}));
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
   useMotionAllowed: (): boolean => false,
@@ -55,6 +65,16 @@ describe('the Quest list on the whole screen', () => {
     await user.press(screen.getByRole('button', { name: '닫기' }));
     expect(screen.queryByRole('header', { name: '퀘스트 3' })).toBeNull();
     expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+  });
+
+  it('lies on glass over the map, whose floating parts give way until it closes (A04 ticket 08)', async () => {
+    const user = await openQuests();
+
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.85)' });
+    expect(screen.getByTestId('over-map', { includeHiddenElements: true })).toHaveStyle({ opacity: 0 });
+
+    await user.press(screen.getByRole('button', { name: '닫기' }));
+    expect(screen.getByTestId('over-map')).not.toHaveStyle({ opacity: 0 });
   });
 
   it("is closed by Android's back button", async () => {
@@ -147,6 +167,47 @@ describe('a press of a row of the Quest list on the whole screen', () => {
   });
 });
 
+// A 비공개 파티 like 저녁 약속 whose time is not set yet, made after the mock's Quests (P06 ticket 42).
+function untimedBoardGame(): Quest {
+  const dinner = QUESTS.find(({ id }) => id === 'q-dinner');
+  const [step] = dinner?.subQuests ?? [];
+  if (dinner === undefined || step === undefined) {
+    throw new Error('the mock has no 저녁 약속');
+  }
+  const place = { placeId: null, label: '녹두', latitude: 37.47045, longitude: 126.93761 };
+  return {
+    ...dinner,
+    id: 'q-board',
+    title: '보드게임',
+    createdAt: '2026-10-01T03:00:00.000Z',
+    subQuests: [{ ...step, id: 'q-board-1', title: '보드게임', startsAt: null, endsAt: null, place }],
+  };
+}
+
+describe('a Quest whose time is not set', () => {
+  beforeEach(() => {
+    jest.spyOn(mockClient, 'listQuests').mockResolvedValue([...QUESTS, untimedBoardGame()]);
+  });
+
+  it('is counted and listed last, under 시간 미정, with 시간 미정 for its time', async () => {
+    await openQuests();
+
+    expect(screen.getByRole('header', { name: '퀘스트 4' })).toBeVisible();
+    expect(screen.getByRole('header', { name: '시간 미정' })).toBeVisible();
+    const row = screen.getByRole('button', { name: '비공개 파티 · 김민준 · 보드게임 · 녹두 · 시간 미정' });
+    expect(within(row).getByText('시간 미정')).toBeVisible();
+    const labels = screen.getAllByRole('button', { name: /^(강의|공개 파티|비공개 파티)/u });
+    expect(labels.at(-1)?.props.accessibilityLabel).toBe(row.props.accessibilityLabel);
+  });
+
+  it("is on the main screen's Quest list and in its count", async () => {
+    await openMain();
+
+    expect(screen.getByTestId('quest-count')).toHaveTextContent('4');
+    expect(screen.getByText('시간 미정 · 녹두')).toBeOnTheScreen();
+  });
+});
+
 describe("the Quest list on the whole screen's states", () => {
   it('says so without a Quest', async () => {
     process.env.EXPO_PUBLIC_MOCK_EMPTY = 'listQuests';
@@ -167,5 +228,19 @@ describe("the Quest list on the whole screen's states", () => {
     expect(screen.getByLabelText('불러오는 중')).toBeVisible();
     await pass(1000);
     expect(screen.getByRole('button', { name: CLASS })).toBeVisible();
+  });
+});
+
+describe('the Quest list opened from 내 정보', () => {
+  it('is white, since 내 정보 and not the map lies under it (A04 ticket 08)', async () => {
+    const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: '내 정보' }));
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: '내 퀘스트' }));
+    await pass(0);
+
+    expect(screen.getByRole('header', { name: '퀘스트 3' })).toBeVisible();
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: '#FFFFFF' });
   });
 });

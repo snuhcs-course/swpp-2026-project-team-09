@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (11a, 17 and 18; 02, 03, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15 and 16 are done; 01, 04 and 05 are held, see Solution)
+Status: ready-for-agent (17 and 18; 02, 03, 06, 07, 08, 09, 10, 11, 11a, 12, 13, 14, 15, 16 and 20 to 33 are done; 37 to 40 are ready; 42 is built; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -42,8 +42,14 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 33. **A full 파티's 모집글.** "참여하기 대신 '정원 초과' 등의 문구로 … 비활성화 느낌의 버튼."
 34. **파티 만들기.** Added by the user on 2026-11-26, from their notes on the 파티 form (wireframe item 8). Settled over four rounds on 2026-11-27 (`references/34-1-form-wireframe.webp`): the form as a preview of its 모집글, title and text typed in place, the settings changed in place, a building search with a badge for what the place matched, and no photo or tags ("태그가 어차피 지금 서버로 안간다고 했잖아 … 일단은 빼고").
 35. **Sheets that close.** Added by the user on 2026-11-27, with no wireframe: every sheet slides down instead of vanishing, and closes by a tap on its handle, a tap above it, or a swipe down from anywhere on it, "대신 … 스크롤이 최상단이 아니면 내려가면 안돼".
+37. **A 파티's news opens its room.** Added by the user on 2026-11-28: "파티장 인도받음, 파티 신청 수락되었을 때, 멤버가 일정을 바꿈, 멤버가 도착함/늦음, 친구가 내 계획 초대를 수락함/거절함 … 지도 위 파티 카드 말고 내 파티방 (일정이랑 조원들, 활성화 있는 그 창)으로 이동할 수 있도록".
+38. **The bell counts unread 알림.** Added by the user on 2026-11-28: "종에 빨간 1 (새 알림 숫자)이 안 뜸 … 읽지 않은 알림 서버에 저장하게 해주고, 인 앱 종 모양에 안 읽은 거 숫자 띄워줘".
+39. **알림 by day.** Added by the user on 2026-11-28: "오늘, 어제, 이전으로 나눠서 알림 분류".
+40. **Deleting a row of 알림.** Added by the user on 2026-11-28: "오른쪽에서 왼쪽으로 스와이프하면 … 빨간색 배경에 흰 테두리의 쓰레기통 모양 나오게 해서 알림 지울 수 있게".
+41. **Two ways to set a place.** From fyoon46's review of PR 712 on 2026-11-28: the room's 일정 form still sets a place with the old typed field and map button, without the kind tag. The user asked for a ticket the same day.
+42. **A 파티 without a time is on no list.** Added by the user on 2026-11-28: "'시간 미정'인 파티 … 메인 화면의 '퀘스트'에는 안 뜨잖아 … 퀘스트 창 맨 하단에 '시간 미정'으로 해서 퀘스트로 뜰 수 있게". The map shows it by its place; the Quest lists and their count leave it out.
 
-Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 20 to 33 against 331adc64 on 2026-11-27: none was fixed then.
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 20 to 33 against 331adc64 on 2026-11-27, and items 37 to 40 against ec8337d6 and item 42 against b4b1379c on 2026-11-28: none was fixed then.
 
 ## Solution
 
@@ -85,6 +91,12 @@ One ticket per item, numbered as the items:
 33. [33: A full 파티's 모집글 says so on its button](issues/33-full-post-button.md)
 34. [34: 파티 만들기 as a preview of its 모집글: title and text typed in place, time, place and event in one box, the settings changed in place, a building search for the place, and no photo or tags](issues/34-form-as-post-preview.md)
 35. [35: Every sheet slides down when it closes, and closes by a tap or a drag on its handle, or a tap above it](issues/35-sheets-slide-down.md)
+37. [37: A 파티's own news opens its room, not its card on the map](issues/37-notices-open-the-room.md)
+38. [38: The main server keeps which Notifications are read, and the bell counts the unread](issues/38-unread-notices-count.md)
+39. [39: 알림 is grouped into 오늘, 어제 and 이전](issues/39-notices-by-day.md)
+40. [40: A kept Notification is deleted by a swipe to the left](issues/40-swipe-to-delete-notice.md)
+41. [41: The room's 일정 form sets its place with the 파티 form's place sheet and shows the same kind tag](issues/41-room-step-place-sheet.md)
+42. [42: A Quest whose time is not set is on the Quest list, last, under 시간 미정](issues/42-untimed-quests-last.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -114,6 +126,13 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 
 - Added on 2026-11-27 and built at once: 34. It changes the 파티 form (`screens/party/form/`), `features/party/making.ts`, the stand-in photos and tags (`api/quest-parts/`), 찾기's search and order and 추천 이유 (`features/party/finding.ts`, `screens/party/post-reasons.tsx`), and the room's tag chips after 19. Tickets 28 and 31 also touch `use-send.ts` and `making.ts`; whichever lands second merges `5.0/Main` first.
 - Added on 2026-11-27 and built at once: 35. After the phone checks of 2026-11-28 it changes only `BottomSheet` (`design-system/bottom-sheet.tsx`, `sheet-pull.ts`) and where the time wheel is mounted, so sheets added on `BottomSheet` later need nothing from it.
+- Added on 2026-11-28 and set `ready-for-agent`: 37 to 40, 알림's presses, unread count, days and deletion. Order and shared files:
+  - 38 before 40: both add routes to `main-server/src/notifications/` (the controller and the store).
+  - 39 before 40: both change 알림's rows (`screens/me/notifications-screen.tsx`), and 40's rows are only those 39 lists.
+  - 38 and 39 both change `notifications.service.ts` (`listFor`), and 37 too: one after another, or the second merges `5.0/Main` first.
+  - 37 changes the Notifications' words and the app's address handling (`notification-words.ts`, `use-asked-card.ts`, `push/card-address.ts`) and can run beside 38 and 39; whichever lands second merges `5.0/Main` first.
+- Added on 2026-11-28 and built once 34 merged (PR 712): 41. It changes the room's `PlanForm` (`screens/room/plan-form.tsx`) and may move the place sheet and kind tag out of `screens/party/form/` to a place both screens import.
+- Added on 2026-11-28 and built at once: 42. It changes the Quest list's rows and groups (`features/quests/adapter.ts`). PR 759 (A04-08) changes the same two screens' look, not their rows; whichever lands second merges `5.0/Main` first.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -176,6 +195,11 @@ When the held tickets are taken up, tickets touching the same files never run at
 51. As a User making a 파티, I want the form to look like the 모집글 it makes and to fit on one screen, typing the title and text in place and changing the settings without leaving it, so that I see what others will see.
 52. As a User naming a place, I want to pick a building from a search and to see whether my place is a known building, a point on the map or only my words.
 53. As a User closing a sheet, I want it to slide down, and to close it by a tap or a drag on its handle or by a tap above it.
+54. As a member, I want a 파티's news (a new Leader, an accepted request, a changed step, a member arrived or late, a Friend's answer) to open its room.
+55. As a User, I want the bell to show how many 알림 I have not read.
+56. As a User, I want 알림 grouped into 오늘, 어제 and 이전.
+57. As a User, I want to delete a row of 알림 by swiping it away.
+58. As a User who made a 파티 without setting its time, I want it on my Quest list, last, saying 시간 미정.
 
 ## Implementation Decisions
 
@@ -219,6 +243,15 @@ Decided on 2026-11-27 (20 to 33):
 - 31: inviting is refused only into a 파티 full at that moment; 31 adds one database migration, the exception to the rule below. 20 to 26, 31 and 32 need a main server Release.
 - 34 (2026-11-27): 파티 만들기 is a preview of its 모집글. The title and text are typed in place with no confirm button; the time, the place and the event share one label-less box whose rows open sheets; the place sheet searches buildings and the row's badge says 건물, 지도 or 직접 입력; 인원, 공개 범위, 참여 방식 and 게시판 change in place and 친구 초대 opens a sheet; the button stays pressable and marks empty required fields; picking an event leaves the title empty. Photos and tags go with everything that ran on their stand-ins (the room's chips, 찾기's tag search and order, 추천 이유's 관심사), and the pull request records why and what bringing them back needs.
 - 35 (2026-11-27): every `BottomSheet` slides down with its last content when it closes, and closes by a tap on its handle, a tap on the scrim, Android's back, or a swipe down from anywhere on it that follows the finger and closes past a threshold or on a flick. A swipe that starts inside a vertical scroll area closes only if that area was at its top when the finger went down; otherwise it only scrolls, even after reaching the top. The centre `Dialog`, the full-screen `Modal`s and the Assistant's answer sheet are left as they are. Changed after the phone checks (2026-11-28): the user dropped the swipe from the body and its list rule. The sheet closes by a tap or a drag on its handle bar, the drag let go by the way the finger moves, by a tap on the scrim, or by Android's back, and its lists scroll natively.
+
+Decided on 2026-11-28 (37 to 40):
+
+- 37: the seven kinds (`became-leader`, `join-accepted`, `step-changed`, `arrived`, `late`, `accepted`, `declined`) are still kept under `party:<questId>`, so that a new one replaces an old one, and are listed and pushed with `room:<questId>`. A row and a tapped push open the 파티's room, those kept before included; the other kinds keep their addresses. The app OTA update goes out first or with the Release.
+- 38: read state lives on the main server: `Notification.readAt`, nullable, set for all the User's Notifications whose time has come when 알림 opens; the migration sets it on the rows that exist whose time has come, so a row still ahead counts when it rings. A write that rings a row again (`keep`, `replace` moving the time) makes it unread again; `renew` keeps it. The bell counts what waits plus the unread, without the two kinds a derived row stands for. 38 adds one database migration, a second exception to the rule below.
+- 39: a Notification whose time has not come is not listed (`GET /notifications` leaves it out). 오늘 / 어제 / 이전 by the Korea day of a Notification's time; what waits, which has no time, at the top of 오늘; an empty group is not shown.
+- 40: a swipe to the left on a kept Notification shows a red action with a white outlined trash icon; a press on it or a full swipe deletes it by `DELETE /notifications/:id`, `:id` being the list's identity. What waits does not swipe, nor anything not yet listed. No confirm and no undo.
+- 41 (2026-11-28): the room's 일정 form sets 어디서 with the 파티 form's place sheet: a row with the place's words, its grey kind tag and a chevron opens the same sheet, and what is sent is unchanged. `WhereField` goes.
+- 42 (2026-11-28): a Quest whose time is not set is on the Quest list over the map, in its count, and on the whole screen under a last group 시간 미정, after every Quest with a time, the first made first. Its row says 시간 미정 where a time stands. One whose every step ended stays off.
 
 For all tickets:
 
@@ -276,6 +309,9 @@ Every item received and where it went:
 | 20–33 파티·행사에서 사용자가 알 수 없는 것 (code audit, 2026-11-27) | Tickets 20 to 33, those the user took up; the rest held (Out of Scope) |
 | 8 파티 만들기 (added 2026-11-26) | Ticket 34, settled over four rounds on 2026-11-27 (the preview, typing in place, settings in place, the building search and its badge, no photo or tags) |
 | 팝업창이 부드럽게 내려가고, 바·빈 공간·스와이프로 닫히기 (added 2026-11-27) | Ticket 35 |
+| 알림 누르면 파티방, 안 읽은 알림 숫자, 오늘/어제/이전, 스와이프로 지우기 (added 2026-11-28) | Tickets 37 to 40 |
+| 파티 상세 일정의 장소도 같은 장소 시트로 (PR 712 review, 2026-11-28) | Ticket 41 |
+| 시간 미정 파티도 퀘스트 목록 맨 아래 '시간 미정'으로 (added 2026-11-28) | Ticket 42 |
 
 Notes for the tickets:
 

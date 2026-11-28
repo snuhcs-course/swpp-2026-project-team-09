@@ -13,7 +13,8 @@ import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReplyStep } from '@/api/assistant-types';
 import { now } from '@/clock';
-import { color, font, radius, shadow, space, text } from '@/design-system';
+import { color, font, Icon, kindTone, radius, shadow, space, text } from '@/design-system';
+import { stepIcon, stepTone } from '@/features/assistant/answer-tone';
 import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_TOP } from '../layout';
@@ -30,22 +31,31 @@ const MARGIN = 30 * MINUTE;
 // A step with no end takes this long on the bar.
 const NO_END = 30 * MINUTE;
 const TRACK = 24;
+// A step's icon, as high as its words' letters.
+const WORD_ICON = 16;
 
-// "①", "②", … for the steps' numbers.
-export function circled(number: number): string {
-  return String.fromCodePoint(0x24_5f + number);
-}
-
-// What a step is, in a word: "자리", "방", or the last word of its title ("저녁").
+// What a step is, in a word: what the User does then. A seat, a room, and a study place all read "공부" (the user's
+// phone, 2026-11-28: "자리라는 텍스트 보다는 공부가 낫지 않을까?"); where, the step's flag and card say. Any other step
+// reads the last word of its title ("저녁").
 function wordOf(step: ReplyStep): string {
-  if (step.kind === 'seat') {
-    return '자리';
-  }
-  if (step.kind === 'room') {
-    return '방';
+  if (step.kind === 'seat' || step.kind === 'room') {
+    return '공부';
   }
   return step.title.split(' ').at(-1) ?? step.title;
 }
+
+// A step's word and its time ("공부 17:30–19:00").
+function wordsOf(step: ReplyStep): string {
+  const clock = stepClock(step);
+  return clock === null ? wordOf(step) : `${wordOf(step)} ${clock}`;
+}
+
+// A span's press is this high over its own width, so that a press on it chooses its step as its words do, and the gaps
+// between spans take none (P03 ticket 25). It is a box of its own, not a hit slop: Android sends no touch to a child
+// outside its parent's bounds. Over the track it takes the bar's gap above, up to the words, and the rest below, the
+// bar's padding or the day's line, which takes no touch.
+const SPAN_TOUCH = 44;
+const ABOVE_TRACK = space[2];
 
 interface Span {
   index: number;
@@ -85,29 +95,41 @@ export function caretOf(steps: readonly ReplyStep[], active: number): number | u
   return span === undefined ? undefined : shareOf(spans)((span.start + span.end) / 2);
 }
 
-// The track with one span a step.
+// The track with one span a step, each span a press as high as `SPAN_TOUCH`.
 function Track({
   spans,
   active,
   share,
+  onStep,
 }: {
   spans: Span[];
   active: number;
   share: (at: number) => number;
+  onStep: (index: number) => void;
 }): ReactElement {
   return (
-    <View style={styles.track}>
+    <View style={styles.spans} testID="step-spans">
+      <View style={styles.track} />
       {spans.map(({ index, step, start, end }) => (
-        <View
+        // A screen reader reaches the step by its words, which say it; the span is the same press for a finger.
+        <Pressable
+          accessible={false}
           key={index}
-          style={[
-            styles.span,
-            { left: percent(share(start)), width: percent(share(end) - share(start)) },
-            index === active ? styles.spanActive : null,
-            step.status === 'shown' ? null : styles.spanNot,
-          ]}
-          testID={`step-span-${String(index + 1)}`}
-        />
+          onPress={() => {
+            onStep(index);
+          }}
+          style={[styles.spanTouch, { left: percent(share(start)), width: percent(share(end) - share(start)) }]}
+          testID={`step-span-${String(index + 1)}-touch`}
+        >
+          <View
+            style={[
+              styles.span,
+              index === active ? styles.spanActive : null,
+              step.status === 'shown' ? null : styles.spanNot,
+            ]}
+            testID={`step-span-${String(index + 1)}`}
+          />
+        </Pressable>
       ))}
     </View>
   );
@@ -133,9 +155,10 @@ function useLifted(
   return { moved, rested: { transform: [{ translateY: at }] } };
 }
 
-// The bar of several requests (P04 ticket 09, board 12): one span a step with a time, numbered as its flag, and the
-// steps' words over them; a press on a step's words or span makes it the step shown. A step not done is faint. Its
-// time is changed on the step's own card.
+// The bar of several requests (P04 ticket 09, board 12): one span a step with a time, and the steps' words over them,
+// each its kind's icon, its word and its time, with no number: numbers mean an answer's candidates alone, and the
+// times tell the order (P03 ticket 26). A press on a step's words or span makes it the step shown. A step not done is
+// faint. Its time is changed on the step's own card.
 export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarProps): ReactElement | null {
   const { top } = useSafeAreaInsets();
   const lifted = useLifted(stops, top);
@@ -157,22 +180,29 @@ export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarPro
       <View style={styles.words}>
         {spans.map(({ index, step }) => (
           <Pressable
-            accessibilityLabel={`${String(index + 1)}번 ${wordOf(step)} ${stepClock(step) ?? ''}`}
+            accessibilityLabel={wordsOf(step)}
             accessibilityRole="button"
             accessibilityState={{ selected: index === active }}
             key={index}
             onPress={() => {
               onStep(index);
             }}
+            style={styles.step}
+            testID={`step-word-${String(index + 1)}`}
           >
+            <Icon color={kindTone[stepTone(step)].ink} name={stepIcon(step.kind)} size={WORD_ICON} />
             <Text style={[styles.word, index === active && styles.wordActive, step.status !== 'shown' && styles.faint]}>
-              {`${circled(index + 1)} ${wordOf(step)} ${stepClock(step) ?? ''}`}
+              {wordsOf(step)}
             </Text>
           </Pressable>
         ))}
       </View>
-      <Track active={active} share={share} spans={spans} />
-      {day === '' ? null : <Text style={styles.day}>{day}</Text>}
+      <Track active={active} onStep={onStep} share={share} spans={spans} />
+      {day === '' ? null : (
+        <View style={styles.dayRow}>
+          <Text style={styles.day}>{day}</Text>
+        </View>
+      )}
     </Reanimated.View>
   );
 }
@@ -200,21 +230,37 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     columnGap: space[3],
   },
+  step: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
   word: { ...text.label, color: color.inkMuted },
   // The chosen step in the time card's gold, its span drawn as the card's band (P01 ticket 23).
   wordActive: { fontFamily: font.semiBold, color: color.quest },
   faint: { color: color.inkSubtle },
-  track: { height: TRACK, borderRadius: radius.full, backgroundColor: color.border },
+  // The track keeps its place between the words and the day: its press box reaches over the gap above and below it.
+  spans: { height: SPAN_TOUCH, marginTop: -ABOVE_TRACK, marginBottom: TRACK + ABOVE_TRACK - SPAN_TOUCH },
+  track: {
+    position: 'absolute',
+    top: ABOVE_TRACK,
+    right: 0,
+    left: 0,
+    height: TRACK,
+    borderRadius: radius.full,
+    backgroundColor: color.border,
+  },
+  spanTouch: { position: 'absolute', top: 0, bottom: 0 },
   span: {
     position: 'absolute',
-    top: 0,
-    bottom: 0,
+    top: ABOVE_TRACK,
+    right: 0,
+    left: 0,
+    height: TRACK,
     borderRadius: radius.full,
     backgroundColor: color.snuBlue,
     opacity: 0.55,
   },
   spanActive: { opacity: 1, borderWidth: 2, borderColor: color.quest, backgroundColor: color.questSoft },
   spanNot: { backgroundColor: color.inkSubtle },
+  // Under the spans' press box, which reaches over its top.
+  dayRow: { pointerEvents: 'none' },
   day: { ...text.caption, color: color.inkMuted },
 });
 
@@ -244,6 +290,7 @@ export function StepsTop({ control, drawCard, onHeight }: StepsTopProps): ReactE
   const { heights, onSteps, onCard } = useHeights(stops?.setStepsHeight);
   const { steps, activeStep, setActiveStep } = control;
   useTold(toldOf(stops?.stop ?? 2, heights, drawCard !== null), onHeight);
+  useTold(toldOf(2, heights, drawCard !== null), stops?.setUnfoldedHeight ?? nothing);
   if (steps === null) {
     return null;
   }
@@ -285,6 +332,10 @@ function useHeights(setStepsHeight?: (height: number) => void): {
     setHeights((last) => (last.card === height ? last : { ...last, card: height }));
   }, []);
   return { heights, onSteps, onCard };
+}
+
+function nothing(): void {
+  // No stops to tell: the top outside the answer's sheet link.
 }
 
 function useTold(told: number, onHeight: (height: number) => void): void {

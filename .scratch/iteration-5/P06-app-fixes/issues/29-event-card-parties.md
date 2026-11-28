@@ -1,7 +1,7 @@
 # 29: The map's event card leads to the 파티 recruiting for it
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -24,8 +24,8 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] The button opens the recruiting sheet when there are 파티, the form when none. (App integration test, which fails before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] The button opens the recruiting sheet when there are 파티, the form when none. (App integration test, which fails before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

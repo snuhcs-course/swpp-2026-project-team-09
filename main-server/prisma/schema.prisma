@@ -275,6 +275,8 @@ model Notification {
   body      String?
   rings     Boolean
   sentAt    DateTime? @map("sent_at") @db.Timestamptz(3)
+  // When the User read it, by opening 알림 once its time had come. Unread while null.
+  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
   createdAt DateTime  @default(now()) @map("created_at")
 
   @@unique([userId, kind, cardKind, cardId, about])

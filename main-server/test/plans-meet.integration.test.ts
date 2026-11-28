@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import request from 'supertest';
@@ -130,6 +131,7 @@ const leaveByOf = (date: string, questId: string, clock: string, line: string): 
   line,
   at: time(date, clock),
   url: `/main?card=party:${questId}`,
+  read: false,
 });
 
 // 민수's card for 302동 앞: his Class ends in 302동 itself at 12:15.
@@ -201,7 +203,7 @@ describe('a5: the first Plan, 302동 앞 from 12:15, made into a Quest', () => {
 
   it('keeps the Leader’s time to leave: 3 minutes from 301동 to 302동 앞, setting out at 12:12', async () => {
     await vi.waitFor(async () => {
-      expect((await stage.notificationsOf(stage.asker)).body).toEqual([
+      expect(await stage.notificationsOf(stage.asker)).toEqual([
         leaveByOf(date, quest.id, '12:12', '302동 앞까지 걸어서 3분'),
       ]);
     });

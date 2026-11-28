@@ -22,17 +22,17 @@ import {
   type BandBound,
   clockOf,
   droppedAt,
-  onBandDay,
   HANDLE_WIDTH,
   handlesOutside,
   shareOf,
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import { BandOnTrack, type HeldBand, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
+import { BandOnTrack, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
 import { BandWords, type HeadRoom } from './band-head-words';
 import { HourNotches, UnderTrack } from './band-hour-marks';
 import { NowMark, Red, useShownBand } from './band-track';
+import { type Moved, useMovedBand } from './moved-band';
 import { SkippedBlocks, SkippedLine } from './skipped-classes';
 
 interface TimeBandProps {
@@ -62,12 +62,6 @@ interface TimeBandProps {
   head?: HeadRoom;
 }
 
-// A handle moved by a drag, or let go and held while the recalculation it asked for is on its way.
-interface Moved {
-  bound: BandBound;
-  clock: string;
-}
-
 export const LANE_HEIGHT = 20;
 const BAR_HEIGHT = 8;
 // A handle takes a touch this wide, and its drag begins only on a sideways move, so that the card still scrolls over
@@ -91,13 +85,16 @@ interface HandleProps {
   disabled: boolean;
   onMove: (moved: Moved) => void;
   onLetGo: (moved: Moved) => void;
+  // The drag ended without its finger let go, as when the card's scroll took the touch: the end goes back.
+  onCancel: () => void;
   // The lanes' drag that moves the band whole, which waits while the handle has the touch.
   whole: PanGesture;
 }
 
-// A handle's drag, which moves its end by the finger's distance and lets it go there.
+// A handle's drag, which moves its end by the finger's distance and lets it go there; a drag that ends otherwise puts
+// it back, so that no end stays drawn where no recalculation was asked for (P01 ticket 48).
 function useHandlePan(props: HandleProps): PanGesture {
-  const { bound, band, trackWidth, disabled, onMove, onLetGo, whole } = props;
+  const { bound, band, trackWidth, disabled, onMove, onLetGo, onCancel, whole } = props;
   const own = bound === 'from' ? band.startAt : band.endAt;
   return useMemo(() => {
     const at = (translationX: number): Moved => ({
@@ -115,10 +112,17 @@ function useHandlePan(props: HandleProps): PanGesture {
       .onUpdate(({ translationX }) => {
         onMove(at(translationX));
       })
-      .onEnd(({ translationX }) => {
-        onLetGo(at(translationX));
+      .onEnd(({ translationX }, success) => {
+        if (success) {
+          onLetGo(at(translationX));
+        }
+      })
+      .onFinalize((_event, success) => {
+        if (!success) {
+          onCancel();
+        }
       });
-  }, [bound, band, own, trackWidth, disabled, onMove, onLetGo, whole]);
+  }, [bound, band, own, trackWidth, disabled, onMove, onLetGo, onCancel, whole]);
 }
 
 function Handle(props: HandleProps): ReactElement {
@@ -210,49 +214,6 @@ function RedOver({ band, moving }: Pick<LanesProps, 'band' | 'moving'>): ReactEl
   );
 }
 
-interface MovedBand extends HeldBand {
-  onMove: (moved: Moved) => void;
-  onLetGo: (moved: Moved) => void;
-}
-
-// The band as drawn: the Plan's, or with a handle where it is dragged, or where it was let go until the
-// recalculation it asked for ends or a new band comes.
-function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandProps['onDrop']): MovedBand {
-  const [moved, setMoved] = useState<Moved | null>(null);
-  const [seen, setSeen] = useState({ band, disabled });
-  if (seen.band !== band || seen.disabled !== disabled) {
-    setSeen({ band, disabled });
-    if (seen.band !== band || !disabled) {
-      setMoved(null);
-    }
-  }
-  const handlers = useMemo(
-    () => ({
-      onMove: (next: Moved): void => {
-        if (!disabled) {
-          setMoved(next);
-        }
-      },
-      onLetGo: (next: Moved): void => {
-        if (disabled) {
-          return;
-        }
-        const own = clockOf(next.bound === 'from' ? band.startAt : band.endAt);
-        setMoved(next.clock === own ? null : next);
-        if (next.clock !== own) {
-          onDrop(next.bound, next.clock);
-        }
-      },
-    }),
-    [band, disabled, onDrop],
-  );
-  const shown = {
-    startAt: moved?.bound === 'from' ? onBandDay(moved.clock, band) : band.startAt,
-    endAt: moved?.bound === 'until' ? onBandDay(moved.clock, band) : band.endAt,
-  };
-  return { shown, bound: moved?.bound ?? null, ...handlers };
-}
-
 // The time bar's band: its words with the day on top, then the people's busy stretches on one row, the line of now,
 // and the band with a handle at each end, which a drag or a screen reader's step moves by five minutes, and lanes that
 // move it whole. Folded, the track runs over the free time around the span; else over the whole range.
@@ -283,6 +244,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
       outside={handlesOutside(shown, band.range, trackWidth)}
       trackWidth={trackWidth}
       whole={whole}
+      onCancel={moved.onCancel}
       onLetGo={moved.onLetGo}
       onMove={moved.onMove}
       shown={shown}

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -130,6 +131,8 @@ const TODAYS_TOOLS = [
   'showLibrarySeats',
   'showMyLibraryBookings',
   'getTutorial',
+  // Asks back about a time of today that has passed, for every app (P05 ticket 80).
+  'askPastTime',
 ];
 
 const givenToolNames = (): string[] =>

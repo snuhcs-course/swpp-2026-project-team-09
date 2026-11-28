@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -91,7 +93,7 @@ function press(answered: AnswerReply, questId: string): request.Test {
 const stepsToldTo = async (user: TestUser): Promise<unknown[]> =>
   z
     .array(z.object({ id: z.string() }))
-    .parse((await stage.notificationsOf(user)).body)
+    .parse(await stage.notificationsOf(user))
     .filter(({ id }) => id.startsWith('step-changed:'));
 
 const questOf = async (questId: string): Promise<{ id: string; capacity: number; takenAlone: boolean }> =>
@@ -130,7 +132,7 @@ describe('A Friend who can come at the lunch’s start, added to a lunch the ask
     });
     expect(words).toMatchObject({ result: 'planned', adding: { movesTo: null, fits: true } });
     expect((await getInvitations(stage.app, haeun)).body).toEqual([]);
-    expect((await stage.notificationsOf(haeun)).body).toEqual([]);
+    expect(await stage.notificationsOf(haeun)).toEqual([]);
   });
 
   it('is invited to the same Quest on the press, and 민수 is told nothing', async () => {
@@ -176,18 +178,41 @@ describe('A Friend who can come only later', () => {
   });
 });
 
+// P05 ticket 85: the lunch is shown as it is held, with why; the press still invites them, and nobody in it again.
 describe('A Friend who cannot come in the lunch', () => {
-  it('is said not to fit, with no plan to press and nothing sent', async () => {
-    const date = '2101-03-15';
-    const minsu = await dayOf(date);
-    const jiho = await friendUntil('지호', '15:00');
-    const lunch = await lunchOf(stage.asker, date, [minsu]);
+  const date = '2101-03-15';
+  let [minsu, jiho]: Named[] = [];
+  let lunch: Lunch;
+  let added: AnswerReply;
 
+  beforeAll(async () => {
+    [minsu, jiho] = [await dayOf(date), await friendUntil('지호', '15:00')];
+    lunch = await lunchOf(stage.asker, date, [minsu]);
+    await answer(minsu, lunch.questId, 'accept');
+  });
+
+  it('is shown the lunch as it is held, with why they cannot join it, and nothing is sent before the press', async () => {
     const { body, words } = await askToAdd(date, jiho);
+    added = answerIn(body);
+    const [plan] = added.plans;
 
-    expect(answerIn(body).plans).toEqual([]);
-    expect(words).toMatchObject({ result: 'none', adding: { fits: false } });
+    expect(ids(added)).toEqual([stage.asker.id, minsu.id, jiho.id]);
+    expect(added.planSet).toMatchObject({ questId: lunch.questId, changeable: true });
+    expect([plan?.id, plan?.startAt, plan?.endAt]).toEqual([lunch.plan.id, lunch.plan.startAt, lunch.plan.endAt]);
+    expect(plan?.parts.map(({ userId }) => userId)).toEqual([stage.asker.id, minsu.id]);
+    expect([added.noPlan, added.note]).toEqual([null, expect.stringContaining('지호')]);
+    expect(added.adding).toMatchObject({ friends: [{ userId: jiho.id }], startAt: lunch.plan.startAt, movesTo: null });
+    expect(words).toMatchObject({ result: 'planned', adding: { fits: false, why: added.note } });
     expect(await stage.invitationTo(jiho, lunch.questId)).toBeUndefined();
+  });
+
+  it('is invited to the same Quest on the press, at the same time, and 민수 is neither asked again nor told', async () => {
+    const changed = await press(added, lunch.questId);
+
+    expect(changed.status).toBe(200);
+    expect(await stage.invitationTo(jiho, lunch.questId)).toBeDefined();
+    expect(await stage.invitationTo(minsu, lunch.questId)).toBeUndefined();
+    expect(await stepsToldTo(minsu)).toEqual([]);
   });
 });
 

@@ -35,7 +35,7 @@ import { useToast } from '@/design-system';
 import { type ShownBooking, shownBookingOf, studyBookingOf } from '@/features/assistant/booking-scene';
 import { type ShownCards, shownCardsOf } from '@/features/assistant/cards-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
-import type { ConversationAnswers } from '@/features/assistant/conversation-answers';
+import type { StepsKept } from '@/features/assistant/conversation-answers';
 import { mayChooseStep, stepShowsCard } from '@/features/assistant/step-choice';
 import { liveStepsOf, type ShownSteps, shownStepsOf, type StepsNow } from '@/features/assistant/steps-scene';
 import type { Viewport } from '@/features/assistant/study-area';
@@ -53,7 +53,7 @@ import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
 import { type StepAnswer, useStepAnswerOf, useStepsNow, useStepsOfReply } from './use-step-answer';
-import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
+import { sceneBubblesOf, withdrawnAfter } from '@/features/assistant/scene-bubbles';
 import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type ActStage, useActStage } from './library/act-stage';
@@ -150,7 +150,8 @@ function useOnMap(
   chat: Chat,
   { bubbles, framed }: { bubbles: readonly ChatBubble[]; framed: boolean },
 ): ReturnType<typeof useStepsOfReply<ReturnType<typeof useShownOnMap>>> {
-  return useStepsOfReply(useShownOnMap({ ...chat, bubbles }, framed), bubbles);
+  const withdrawn = useMemo(() => withdrawnAfter(chat.bubbles, bubbles), [chat.bubbles, bubbles]);
+  return useStepsOfReply(useShownOnMap({ ...chat, bubbles }, framed), bubbles, withdrawn);
 }
 
 // The steps as they stand now (P10 ticket 29): the answer's step at the Plan on screen, and the booking's at the time
@@ -186,13 +187,13 @@ function useStepsShown(
     stepAnswer,
     shown,
     stepsNow,
-  }: { stepAnswer: StepAnswer; shown: ShownAnswer; stepsNow: RefObject<ConversationAnswers | null> },
+  }: { stepAnswer: StepAnswer; shown: ShownAnswer; stepsNow: RefObject<StepsKept | null> },
   chat: Chat,
   bubbles: readonly ChatBubble[],
 ): Pick<ChatSheetControl, 'steps' | 'activeStep' | 'setActiveStep'> {
   const answerOf = useStepAnswerOf(stepAnswer, shown);
   const steps = useLiveSteps(onMap, shown, chat, { bubbles, answerOf });
-  useStepsNow(stepsNow, stepAnswer, steps);
+  useStepsNow(stepsNow, stepAnswer, steps, bubbles[0]?.id ?? null);
   return {
     steps,
     activeStep: stepAnswer.activeStep,

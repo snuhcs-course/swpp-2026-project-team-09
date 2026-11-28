@@ -115,23 +115,24 @@ function beside(name: string): ReturnType<typeof screen.queryByRole> {
   return within(screen.getByTestId('ai-input-beside')).queryByRole('button', { name });
 }
 
-function flag(number: number): string | undefined {
-  return mapThings().find((thing) => thing.startsWith(`${String(number)} `));
+// A mark on the map by the start of its name (P03 ticket 26: no mark carries a step's number).
+function mark(start: string): string | undefined {
+  return mapThings().find((thing) => thing.startsWith(start));
 }
 
-// P04 ticket 09: the steps stand on the map as numbered flags with one span each on the bar, in place of the list.
+// P04 ticket 09: the steps stand on the map with one span each on the bar, in place of the list; the step shown is
+// drawn as its booking or answer alone, the other as its kind's mark with its flag (P03 ticket 26).
 describe('A reply to a seat and then dinner', () => {
-  it('draws ① 관정 and ② 63동 as flags, two numbered spans on the bar, and no list in the card', async () => {
+  it('draws the seat as its booking alone and 63동 as its mark, two spans on the bar, and no list in the card', async () => {
     await ask({ cards: [SEAT_CARD], answer: MEAL_ANSWER, steps: [seatStep(), mealStep] });
 
-    expect(flag(1)).toMatch(/^1 관정 7층 열람실 › · (\d+번 )?17:00–18:00$/u);
-    expect(flag(2)).toBe('2 63동 › · 18:04–18:30');
+    expect(mark('관정 7층 열람실 · 17:00')).toBeDefined();
+    expect(mark('63동 ›')).toBe('63동 › · 18:04–18:30');
     expect(screen.getByTestId('step-span-1')).toBeVisible();
     expect(screen.getByTestId('step-span-2')).toBeVisible();
     expect(inFrame().queryByTestId('reply-steps')).toBeNull();
     // The seat's step shows as a seat answer alone: its band is its time card's on the bar, and its card the ticket with
-    // no second band. The meal's other candidates and their stepper are its own step's card, shown when ② is chosen
-    // (P03 ticket 23).
+    // no second band. The meal's other candidates are its own step's card, shown when ② is chosen (P03 ticket 23).
     expect(inFrame().getByTestId(`library-book-${SEAT_CARD.library.key}`)).toBeVisible();
     expect(inFrame().queryByTestId('slot-band')).toBeNull();
     expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
@@ -141,19 +142,21 @@ describe('A reply to a seat and then dinner', () => {
   it("makes the seat the step shown, with its seat and 예약하기, and a press on ② makes the meal's button the button", async () => {
     const user = await ask({ cards: [SEAT_CARD], answer: MEAL_ANSWER, steps: [seatStep(), mealStep] });
 
-    expect(flag(1)).toMatch(/^1 관정 7층 열람실 › · \d+번 17:00–18:00$/u);
+    expect(mark('관정 7층 열람실 · 17:00')).toMatch(/^관정 7층 열람실 · 17:00 · \d+번/u);
     expect(beside('예약하기')).toBeVisible();
     // The seat's own time card stands under the steps' bar, as a seat card alone draws it (P03 ticket 23).
     expect(screen.getAllByTestId('time-bar')).toHaveLength(2);
 
-    await pressMarker(user, flag(2) ?? '');
+    await pressMarker(user, mark('63동 ›') ?? '');
     await pass(100);
 
     expect(beside('만들고 초대 보내기')).toBeVisible();
     expect(beside('예약하기')).toBeNull();
-    // The meal's own bar, with its handles, stands under the steps' bar while ② is shown, and its card in the frame.
+    // The meal's own bar, with its handles, stands under the steps' bar while ② is shown, and its card in the frame:
+    // its list, which switches the Plan, and no pager, as a meal alone shows (P03 ticket 25).
     expect(screen.getAllByTestId('time-bar')).toHaveLength(2);
-    expect(inFrame().getByTestId('plan-stepper')).toBeVisible();
+    expect(inFrame().getByTestId('meal-list')).toBeVisible();
+    expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
     expect(library.writes()).toEqual([]);
   });
 
@@ -161,7 +164,7 @@ describe('A reply to a seat and then dinner', () => {
     await ask({ cards: [], answer: MEAL_ANSWER, steps: [seatStep('not-done'), mealStep] });
 
     expect(within(inFrame().getByTestId('steps-not-done')).getByText('열람실은 당일만 예약할 수 있어요')).toBeVisible();
-    expect(flag(1)).toBe('1 7층 7A 열람실 2 구역 › · 못 했어요');
+    expect(mark('7층 7A 열람실 2 구역')).toBe('7층 7A 열람실 2 구역 › · 못 했어요');
     expect(beside('만들고 초대 보내기')).toBeVisible();
   });
 });
@@ -170,7 +173,7 @@ describe('A reply to one request', () => {
   it('shows no numbers', async () => {
     await ask({ cards: [], answer: MEAL_ANSWER });
 
-    expect(flag(1)).toBeUndefined();
+    expect(mapThings().filter((name) => /^\d+ /u.test(name))).toEqual([]);
     expect(screen.queryByTestId('step-span-1')).toBeNull();
     expect(beside('만들고 초대 보내기')).toBeVisible();
   });

@@ -9,10 +9,11 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { koreaTime } from '../assistant/korea-time.js';
 import { SignalsService } from '../common/signals.service.js';
 import { type Notification } from '../generated/prisma/client.js';
+import { CLOCK, type Clock } from '../quests/clock.js';
 import { type Card, cardAddress } from './card-address.js';
 import { type NotificationDto } from './dto/notification.dto.js';
 import { identityOf, type NotificationKind, type Told } from './notification.js';
@@ -60,6 +61,7 @@ export class NotificationsService {
   constructor(
     private readonly store: NotificationStore,
     private readonly signals: SignalsService,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async schedule(userId: string, told: Told, at: Date): Promise<void> {
@@ -90,8 +92,15 @@ export class NotificationsService {
     }
   }
 
-  async listFor(userId: string): Promise<NotificationDto[]> {
-    return (await this.store.readAll(userId))
+  // Those whose time has come: one kept ahead is read when it has rung and 알림 is opened again.
+  async markRead(userId: string): Promise<void> {
+    await this.store.markRead(userId, this.clock.now());
+  }
+
+  // Those whose time has come by `until`, now by default: one kept ahead, such as tomorrow's 지금 나서요, is listed when
+  // it rings. A later `until` reads what is kept for later, as the tests that keep it do.
+  async listFor(userId: string, until: Date = this.clock.now()): Promise<NotificationDto[]> {
+    return (await this.store.readCome(userId, until))
       .filter((row) => isKnown(row))
       .map((row) => {
         const card = { kind: row.cardKind, id: row.cardId };
@@ -103,6 +112,7 @@ export class NotificationsService {
           line: row.line,
           at: koreaTime(row.at),
           url: cardAddress(card),
+          read: row.readAt !== null,
         };
       });
   }
