@@ -1,4 +1,4 @@
-# 62: 친구 추가 in three soft boxes, with 찾기 level with its field and a copy icon after the Friend ID
+# 70: 친구 추가 in three soft boxes, with 찾기 level with its field and a copy icon after the Friend ID
 
 Parent: [P06 spec](../spec.md)
 Status: ready-for-human (built; waits for review)
