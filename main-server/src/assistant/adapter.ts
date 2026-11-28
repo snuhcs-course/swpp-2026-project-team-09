@@ -27,14 +27,12 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   APICallError,
   generateText,
-  InvalidToolInputError,
   type LanguageModel,
   type LanguageModelMiddleware,
   RetryError,
   stepCountIs,
   type SystemModelMessage,
   tool,
-  type ToolCallRepairFunction,
   type ToolSet,
   wrapLanguageModel,
 } from 'ai';
@@ -44,6 +42,7 @@ import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 import { replyOf } from './run-reply.js';
+import { repairedToolCall } from './tool-input-repair.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
 // feature over it. Tools and features do not import the SDK, so that moving to another library replaces this file.
@@ -254,26 +253,6 @@ function observed(
   };
 }
 
-// A tool call the SDK refused for its input, made again with the fields the model gave null left out (P05 ticket 82):
-// the model copies the conditions on screen as they are, an unset one as null, and a field that takes no null refused
-// the call each time. A field that takes null never gets here, and an input still wrong is refused as before.
-const nullsLeftOut: ToolCallRepairFunction<ToolSet> = ({ toolCall, error }) => {
-  if (!InvalidToolInputError.isInstance(error)) {
-    return Promise.resolve(null);
-  }
-  let input: unknown;
-  try {
-    input = JSON.parse(toolCall.input);
-  } catch {
-    return Promise.resolve(null);
-  }
-  if (typeof input !== 'object' || input === null || Array.isArray(input) || !Object.values(input).includes(null)) {
-    return Promise.resolve(null);
-  }
-  const set = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== null));
-  return Promise.resolve({ ...toolCall, input: JSON.stringify(set) });
-};
-
 function toolSetOf({ tools }: Feature, context: ToolContext, observer: RunObserver | undefined): ToolSet {
   return Object.fromEntries(
     Object.entries(tools).map(([name, { description, input, run }]) => {
@@ -329,7 +308,7 @@ export async function runFeature(
     instructions: systemOf(feature, asker.now),
     messages: messagesFor(messages, asker, feature.libraryCatalogue),
     tools: toolSetOf(feature, context, observer),
-    repairToolCall: nullsLeftOut,
+    repairToolCall: repairedToolCall,
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
     maxOutputTokens,
