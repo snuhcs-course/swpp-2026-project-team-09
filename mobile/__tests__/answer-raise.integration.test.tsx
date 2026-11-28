@@ -8,6 +8,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
@@ -67,8 +68,8 @@ function contentStyle(): ViewStyle {
   return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
 }
 
-// What of the scrolling part shows: it is laid out once at its highest step's height, and the card stands that much
-// lower than its place, less what shows (P04 tickets 52 and 61).
+// What of the scrolling part shows: it is laid out once at the most room any top leaves, and the card stands that much
+// lower than its place, less what shows (P04 tickets 52 and 61, P01 ticket 45).
 async function shown(): Promise<number> {
   // The card's translation is drawn on the next frame.
   await pass(50);

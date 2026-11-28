@@ -5,6 +5,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -158,7 +159,7 @@ function useContentScroll(
   });
   const whole = natural === null ? 0 : natural + under;
   const scrolls = heights !== null && whole > heights[level] + 1;
-  // The scroll view is laid out at the highest step's height: under the content it needs as much room as the low card
+  // The scroll view is laid out at `room`, high's or more: under the content it needs as much room as the low card
   // shows less, so that the content scrolls its end clear of the fade there too, and of the band over the footer at low
   // (PR 553's review).
   const padBottom = caps === null || heights === null ? 0 : caps.room - heights.low + Math.max(FADE, caps.band);
