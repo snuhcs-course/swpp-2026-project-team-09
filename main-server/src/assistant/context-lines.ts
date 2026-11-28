@@ -13,6 +13,15 @@ import { type PlanInput, type RequestContext, type StudyInput } from './dto/answ
 import { isTogether } from './lookup/study-group.js';
 import { KWANJEONG_BUILDING, seatToBook } from './lookup/study-plan-parts.js';
 import { requestKey } from './presented.js';
+import { shownClock } from './free-time/free-time.js';
+
+// A window's clocks as the model reads them, on their own day (P05 ticket 91): never an hour past 23.
+function shownWindow({ from, until }: { from: string | null; until: string | null }): {
+  from: string | null;
+  until: string | null;
+} {
+  return { from: from === null ? null : shownClock(from), until: until === null ? null : shownClock(until) };
+}
 
 // The study plan on screen (P10), with the places the app numbers.
 function studyFacts(input: StudyInput, planId: string | null, planIds?: string[]): object {
@@ -24,8 +33,7 @@ function studyFacts(input: StudyInput, planId: string | null, planIds?: string[]
     date,
     what,
     friendIds,
-    from: window.from,
-    until: window.until,
+    ...shownWindow(window),
     minutes,
     near: area !== null,
   };
@@ -66,7 +74,7 @@ function allFacts(conditions: PlanInput, planId: string | null, planIds?: string
   if (conditions.kind === 'meet') {
     const { date, people, window, placeId } = conditions;
     const friendIds = people.slice(1).map(({ userId }) => userId);
-    return { plan: planId, kind: 'meet', date, friendIds, from: window.from, until: window.until, placeId };
+    return { plan: planId, kind: 'meet', date, friendIds, ...shownWindow(window), placeId };
   }
   if (conditions.kind === 'study') {
     return studyFacts(conditions, planId, planIds);
@@ -77,8 +85,7 @@ function allFacts(conditions: PlanInput, planId: string | null, planIds?: string
     date,
     meal,
     friendIds: people.slice(1).map(({ userId }) => userId),
-    from: window.from,
-    until: window.until,
+    ...shownWindow(window),
     ...(window.now === true ? { now: true } : {}),
     placeId,
     ...(planIds === undefined ? {} : { numbered: planIds }),

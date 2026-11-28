@@ -3,12 +3,13 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, ConditionChip, TimeBand } from '@/api/assistant-types';
 import { withParticle } from '@/features/map/short-name';
 
-import { clockAt, clockOf, earliestMsOf, msOf, onBandDay, stepMsOf, type Stretch } from './time-band';
+import { bandTimeAt, clockOf, earliestMsOf, lastDropMsOf, msOf, stepMsOf, type Stretch } from './time-band';
 
 // The time band moved whole: its width kept, by whole steps of the distance moved, inside the range; and who cannot
 // come in the time it covers.
@@ -29,8 +30,9 @@ export interface Clash {
 function movedBy(band: Band, distance: number): Stretch {
   const start = msOf(band.startAt);
   const width = msOf(band.endAt) - start;
-  const moved = Math.min(Math.max(start + distance, earliestMsOf(band)), msOf(band.range.endAt) - width);
-  return { startAt: onBandDay(clockAt(moved), band), endAt: onBandDay(clockAt(moved + width), band) };
+  const latest = Math.min(msOf(band.range.endAt) - width, lastDropMsOf(band, stepMsOf(band)));
+  const moved = Math.min(Math.max(start + distance, earliestMsOf(band)), latest);
+  return { startAt: bandTimeAt(moved), endAt: bandTimeAt(moved + width) };
 }
 
 // `share` is the distance dragged as a share of the range's width; less than half a step moves nothing.

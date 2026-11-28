@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Quest, QuestMember, QuestRoomRequest } from '@/api/types';
@@ -38,6 +39,7 @@ export function isQuest(value: unknown): value is Quest {
     listOf(isSubQuest)(field(value, 'subQuests')) &&
     typeof field(value, 'classQuest') === 'boolean' &&
     ['boolean', 'undefined'].includes(typeof field(value, 'takenAlone')) &&
+    ['boolean', 'undefined'].includes(typeof field(value, 'seatStay')) &&
     isNumber(field(value, 'waitingJoinRequests')) &&
     (field(value, 'members') === undefined || listOf(isQuestMember)(field(value, 'members'))) &&
     isRoomRequestOrNone(field(value, 'roomRequest')) &&

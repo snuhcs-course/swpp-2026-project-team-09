@@ -5,6 +5,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -15,7 +16,9 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type TravelProvider } from '../src/travel/travel.js';
-import { signInUser, type TestUser } from './friends.js';
+import { befriend, signInUser, type TestUser } from './friends.js';
+import { invite } from './quest-recruiting.js';
+import { refused } from './signals.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { addClass } from './timetable.js';
@@ -94,6 +97,9 @@ describe('POST /library/seat-stays', () => {
         capacity: 1,
         joinPolicy: 'closed',
         takenAlone: true,
+        // The room tells a seat's stay, which still refuses 수정 and an invitation, from other Quests taken alone (P05
+        // ticket 89).
+        seatStay: true,
         holders: [{ id: user.id }],
         subQuests: [
           {
@@ -125,5 +131,39 @@ describe('POST /library/seat-stays', () => {
     const response = await stay(user, { ...SEAT, spaceId: '4F-group-6' }).expect(400);
 
     expect(response.body).toMatchObject({ code: 'NOT_A_SEAT' });
+  });
+});
+
+describe("A seat's stay among the User's Quests", () => {
+  it('is marked a seat’s stay, which the room reads (P05 ticket 89)', async () => {
+    const user = await student('목록좌석', null);
+    const { quest } = z.object({ quest: z.object({ id: z.string() }) }).parse((await stay(user).expect(201)).body);
+
+    const listed = await withAccessToken(request(app.getHttpServer()).get('/quests'), user.accessToken).expect(200);
+
+    const mine = z.array(z.object({ id: z.string(), seatStay: z.boolean() })).parse(listed.body);
+    expect(mine.find(({ id }) => id === quest.id)).toMatchObject({ seatStay: true });
+  });
+});
+
+// A seat's stay is one person's booking, which no one shares: it still refuses an invitation and a change of its
+// settings (P03 ticket 17), as the user kept it on 2026-11-28 when every other Quest taken alone came to gather.
+describe('A seat’s stay, a Friend invited later', () => {
+  it('takes no invitation and no change of its settings', async () => {
+    const user = await student('좌석친구', null);
+    const friend = await signInUser(app, { name: '옆자리', department: '수학과' });
+    await befriend(app, user, friend);
+    const { quest } = z.object({ quest: z.object({ id: z.string() }) }).parse((await stay(user).expect(201)).body);
+
+    const invited = await invite(app, user, quest.id, friend.id);
+    const changed = await withAccessToken(
+      request(app.getHttpServer()).patch(`/quests/${quest.id}`),
+      user.accessToken,
+    ).send({
+      capacity: 2,
+    });
+
+    expect(invited.body).toMatchObject(refused(409, 'QUEST_TAKEN_ALONE'));
+    expect(changed.body).toMatchObject(refused(409, 'QUEST_TAKEN_ALONE'));
   });
 });

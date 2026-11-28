@@ -3,6 +3,7 @@
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, Ref } from 'react';
@@ -67,28 +68,29 @@ export function TitleInPlace({ value, onChange, marked, frameRef }: InPlaceProps
   );
 }
 
-// The text, typed in place as the title is, on as many lines as it takes. Required under 공개 only.
+// The text, typed in place as the title is, on as many lines as it takes. Required under 공개 only. A Quest taken
+// alone's asks for its own words (P06 ticket 68).
 export function TextInPlace({
   value,
   onChange,
   marked,
   frameRef,
   required,
-}: InPlaceProps & { required: boolean }): ReactElement {
+  alone,
+}: InPlaceProps & { required: boolean; alone: boolean }): ReactElement {
+  const hint = alone ? '어떤 퀘스트인지 적어 주세요' : '어떤 파티인지 소개해 주세요';
   return (
     <View style={styles.field}>
       <View ref={frameRef} style={[markStyles.frame, marked && markStyles.marked]} testID="text-box">
         <View style={styles.line}>
           <View style={styles.grow}>
-            {value === '' ? (
-              <Placeholder required={required} style={styles.text} words="어떤 파티인지 소개해 주세요" />
-            ) : null}
+            {value === '' ? <Placeholder required={required} style={styles.text} words={hint} /> : null}
             <TextEntry
               accessibilityLabel="본문"
               maxLength={TEXT_MOST}
               multiline
               onChangeText={onChange}
-              placeholder="어떤 파티인지 소개해 주세요"
+              placeholder={hint}
               placeholderTextColor="transparent"
               style={[styles.text, styles.input]}
               value={value}

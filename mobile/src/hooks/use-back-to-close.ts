@@ -3,9 +3,10 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { BackHandler } from 'react-native';
 
 // What a swipe from the left edge closes, the latest to open last, and who watches it.
@@ -36,26 +37,35 @@ function latestCloser(): (() => void) | null {
 // A swipe from the left edge closes it too, as the press does, unless `edge` is false: what lies on the map without
 // covering its edge, which the map's own drags need.
 export function useBackToClose(open: boolean, close: () => void, { edge = true }: { edge?: boolean } = {}): void {
+  // The latest close, so that a caller giving a new one on each render keeps its place among the listeners: one added
+  // again would stand above a sheet opened after it, and a back would close both (PR 782's review).
+  const latest = useRef(close);
   useEffect(() => {
+    latest.current = close;
+  });
+  useEffect(() => {
+    const closing = (): void => {
+      latest.current();
+    };
     const back = open
       ? BackHandler.addEventListener('hardwareBackPress', () => {
-          close();
+          closing();
           return true;
         })
       : null;
-    const swiped = open && edge ? close : null;
-    if (swiped !== null) {
-      edgeClosers.push(swiped);
+    const swiped = open && edge;
+    if (swiped) {
+      edgeClosers.push(closing);
       changed();
     }
     return (): void => {
       back?.remove();
-      if (swiped !== null) {
-        edgeClosers.splice(edgeClosers.lastIndexOf(swiped), 1);
+      if (swiped) {
+        edgeClosers.splice(edgeClosers.lastIndexOf(closing), 1);
         changed();
       }
     };
-  }, [open, close, edge]);
+  }, [open, edge]);
 }
 
 // What a swipe from the left edge closes now, the latest to open, or null with nothing open.

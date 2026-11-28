@@ -22,7 +22,7 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 ## What to build
 
 - The stored card stays `party:<questId>`: a kept Notification's key holds its card (`@@unique` on `Notification`, `keyOf` in `notification-store.ts`), and a new card would no longer replace a row kept before. Where the main server reads and sends a Notification, it gives these seven kinds the room's address, `room:<questId>`, in place of the stored card: in `listFor` (the row's `url`) and in the sender's `ring` (the push's). Each row of 알림 and each push of them then opens the 파티's room, those kept before this change included (decided 2026-11-28, review of PR 747).
-- The app opens `room:<id>` as `/room/<id>`, from a row of 알림 and from a tapped push. A room whose 파티 is gone closes itself as now (`useCloseWhenGone`). It also says "이미 없는 파티예요", as `party-gone` does.
+- The app opens `room:<id>` as `/room/<id>`, from a row of 알림 and from a tapped push. Either opens the room in one move from where the User is: a tapped push pushes `/room/<id>` itself (`use-notification-links.ts`) and does not go through `/main?card=`, which would show the map first and slide the room in after it (added 2026-11-29 from fyoon46's review of #755, by the one-transition rule set for #785). A room whose 파티 is gone closes itself as now (`useCloseWhenGone`). It also says "이미 없는 파티예요", as `party-gone` does.
 - The other kinds keep their addresses:
   - `party-gone`, `find-parties`, `invitation` and `event` as now;
   - 지금 나서요 (`leave-by`), its card on the map;
@@ -38,6 +38,7 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 
 - [ ] The seven kinds are kept under `party:<questId>` as now, and listed and pushed with `room:<questId>`; a second one of the same key replaces the first. (Main server test, which fails before the change.)
 - [ ] Pressing such a row or push opens the 파티's room, and a gone 파티's says so. (App integration test, which fails before the change.)
+- [ ] A tapped push of such a kind asks the router for the room alone, with no move to `/main` first, and 뒤로 comes back to the screen it was tapped over. (App integration test, which fails before the change.)
 - [ ] No native file changes; lint, format and types pass.
 
 ## Comments
@@ -49,3 +50,11 @@ Estimates: agent time is the gaps under 5 minutes between transcript entries, su
 | Work | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
 | Build, code review and its fixes, emulator screens, PR #755 | about 10 minutes | 22,456,059 | 22,309,492 | 146,427 | 140 | 42,375 |
+
+### Agent usage (2026-11-29)
+
+Estimates, measured as above.
+
+| Work | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| fyoon46's review of #755: the room push in one move, the merge of `5.0/Main` | about 10 minutes | 6,852,098 | 6,816,131 | 35,885 | 82 | 19,789 |

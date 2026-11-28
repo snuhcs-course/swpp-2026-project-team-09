@@ -211,7 +211,8 @@ describe('the detail sheet', () => {
     await user.press(card(CAREER).getByRole('button', { name: CAREER.title }));
     await pass(500);
 
-    expect(screen.getByRole('button', { name: '모집 중인 파티 2 · 찾기/모집' })).toBeVisible();
+    // The row's party line says the same; the sheet's button is the one in the sheet.
+    expect(within(screen.getByTestId('event-detail')).getByRole('button', { name: '모집 중인 파티 2' })).toBeVisible();
   });
 });
 

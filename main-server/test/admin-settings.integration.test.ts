@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -93,6 +94,13 @@ async function history(): Promise<z.infer<typeof historySchema>> {
   return historySchema.parse(response.body);
 }
 
+// The Collections' switches, after llm.key, off as the env settings of the tests are while none is saved.
+const SWITCHES = ['judgement.automatic', 'sameEvent.titleRule', 'sameEvent.aiChoice', 'collection.extraSnu'];
+
+function switchListed(name: string): unknown {
+  return expect.objectContaining({ name, type: 'BOOLEAN', default: false, value: false, lastChange: null });
+}
+
 describe("an Administrator's list of the global settings", () => {
   it('lists llm.key with its type, the names of the keys with their providers and its value, and no key', async () => {
     const { body, text } = await listed();
@@ -109,8 +117,18 @@ describe("an Administrator's list of the global settings", () => {
         ],
         lastChange: null,
       }),
+      ...SWITCHES.map((name) => switchListed(name)),
     ]);
     expect(text).not.toContain('sk-');
+  });
+
+  it('labels the switches on and off', async () => {
+    const { body } = await listed();
+
+    expect(body.find(({ name }) => name === 'sameEvent.titleRule')?.allowed).toEqual([
+      { value: true, label: 'on' },
+      { value: false, label: 'off' },
+    ]);
   });
 
   it("refuses a User's token", async () => {

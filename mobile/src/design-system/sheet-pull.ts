@@ -3,6 +3,7 @@
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -11,9 +12,11 @@ import { type SharedValue, useSharedValue, withSpring } from 'react-native-reani
 import { scheduleOnRN } from 'react-native-worklets';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 
-// The drag on a `BottomSheet`'s handle bar (P06 ticket 35), on the UI thread. The sheet follows the finger down and, let
-// go, closes or springs back by the way the finger was moving. The sheet's body takes no drag: the user's decision after
-// the phone check of 2026-11-28, where a swipe on the body never closed the sheet.
+// The drags on a `BottomSheet` (P06 tickets 35 and 53), on the UI thread. The sheet follows the finger down and, let
+// go, closes or springs back by the way the finger was moving. Its handle bar and its head drag it. Its body takes no
+// drag while its content scrolls, but a pull down while the content's scroll is at its top hands over to the sheet, as
+// on the Assistant's answer card, and a body that does not scroll is pulled anywhere (decided on 2026-11-28, amending
+// the same day's rule that the body takes no drag). A sheet whose body holds wheels to scroll takes no pull there.
 
 // A drag starts past this many points, so that a tap on the bar stays a tap, and a drag sideways past this many is no
 // drag, as on the answer card (`card-drag.ts`).
@@ -76,6 +79,46 @@ export function closesOnLetGo(down: number, velocityY: number, height: number): 
 function springBack(down: SharedValue<number>, reduce: boolean): void {
   'worklet';
   down.value = reduce ? 0 : withSpring(0, BACK);
+}
+
+// How far the sheet's content is scrolled from its top, which `SheetScroll` keeps: 0 for a body that does not scroll.
+export function useScrollTop(): SharedValue<number> {
+  return useSharedValue(0);
+}
+
+// The body's pull: once the finger moves down with the content at its top, the sheet follows it from there, and closes
+// or springs back on the let-go as by the handle bar. While the content is scrolled the finger scrolls it alone.
+export function useBodyPan(sheet: SheetPull, scrollTop: SharedValue<number>): PanGesture {
+  const { down, height, reduce, onPulledAway } = sheet;
+  const from = useSharedValue(0);
+  return Gesture.Pan()
+    .withTestId('sheet-body-drag')
+    .activeOffsetY([-PAN_STARTS, PAN_STARTS])
+    .failOffsetX([-SIDEWAYS, SIDEWAYS])
+    .onStart(({ translationY }) => {
+      'worklet';
+      from.value = translationY;
+    })
+    .onUpdate(({ translationY }) => {
+      'worklet';
+      if (scrollTop.value > 0 && down.value === 0) {
+        // Still scrolling: the pull counts from where the content reaches its top.
+        from.value = translationY;
+        return;
+      }
+      down.value = Math.max(0, translationY - from.value);
+    })
+    .onEnd(({ velocityY }, success) => {
+      'worklet';
+      if (down.value === 0) {
+        return;
+      }
+      if (success && closesOnLetGo(down.value, velocityY, height.value)) {
+        scheduleOnRN(onPulledAway);
+      } else {
+        springBack(down, reduce);
+      }
+    });
 }
 
 // The handle bar's drag: the sheet follows the finger down, never up past its place, and closes or springs back as the

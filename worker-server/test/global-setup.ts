@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -25,7 +26,6 @@ export default function setup({ provide }: TestProject): void {
     MAIN_SERVER_URL: 'http://main-server.test:3000',
     // Not a secret: the stand-in for the main server keeps the token of each message.
     WORKER_TOKEN: 'test-worker-token-of-thirty-two-characters',
-    EXTRA_SNU_COLLECTION: 'off',
     // Read by src/main.ts only: the tests start the application without its logger.
     LOG_FORMAT: 'text',
   });

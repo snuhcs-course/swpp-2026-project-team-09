@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -56,5 +57,23 @@ describe('Button', () => {
     expect(button).toHaveTextContent(/^$/u);
     await userEvent.press(button);
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The user (2026-11-28): "버튼 텍스트가 짤리는 것" ("모집 중인 파티 1 · 찾…" in the 행사 sheet). A button's words are never
+// cut: they wrap to a second line, and the button grows to hold them.
+describe("a Button's words", () => {
+  it('are never cut short with an ellipsis, and the button grows to hold them', async () => {
+    await render(
+      <Button onPress={jest.fn<void, []>()} size="lg">
+        모집 중인 파티 12 · 찾기/모집 · 함께 갈 사람
+      </Button>,
+    );
+
+    const words = screen.getByText('모집 중인 파티 12 · 찾기/모집 · 함께 갈 사람');
+    expect(words).not.toHaveProp('numberOfLines', 1);
+    expect(words).toHaveStyle({ flexShrink: 1, textAlign: 'center' });
+    expect(screen.getByRole('button')).toHaveStyle({ minHeight: 52 });
+    expect(screen.getByRole('button')).not.toHaveStyle({ height: 52 });
   });
 });

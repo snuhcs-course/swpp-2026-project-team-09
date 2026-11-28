@@ -1,6 +1,6 @@
 # A04: The app's UI and usability polish
 
-Status: in progress (01 and 03 to 07 are done; 08 waits for review; 02 waits for P04's work, see its ticket)
+Status: in progress (01 and 03 to 07 are done; 08 waits for review; 02 waits for P04's work, see its ticket; 09 to 12, added 2026-11-28, are open)
 
 ## Problem Statement
 
@@ -13,6 +13,7 @@ The app's screens have grown one ticket at a time, and they no longer read as on
 - **The 행사 tab's** date column is large and long event titles wrap to two lines.
 - **The 내 정보 timetable** scrolls inside its card and does not read as a timetable grid.
 - **The Quest list on the whole screen** (added by the user on 2026-11-28) is solid white, while the friend panel beside it lies on glass over the map.
+- **The bottom bar** (added by the user on 2026-11-28, with the proposal <https://claude.ai/artifact/UgGcW4Jx5G5doZhPnT89iK>): its best place, the middle, opens 파티 만들기, which the 파티 tab's pencil button already does; the AI, the app's centre, is one tab among others; and what the User put in their day, what waits for their answer and their 관정도서관 bookings are spread over the map, 파티 > 초대, 알림 behind 내 정보's bell and the AI's 내 예약.
 
 The canvas does not match the app one to one. It holds screens the app no longer has (Legacy*, the P15 "before" screens), shows features differently, and draws some things the app never built. So the changelog sets the scope, and the canvas only shows how each item should look.
 
@@ -30,6 +31,13 @@ Seven tickets. They are split so that no two of them change the same source file
 6. [**The map.**](issues/06-map.md) One navy for quest rows, told apart by icon. Glass icon tags for the map's 행사, 파티 and 퀘스트 marks. New restaurant and study-space pins and layer colours. A glass friend panel. No "가까이 보기".
 7. [**The 행사 tab and the timetable.**](issues/07-events-and-timetable.md) A smaller date column and one-line titles on the 행사 tab, and a ruled 09–21 timetable grid on 내 정보.
 8. [**The Quest list on glass.**](issues/08-quests-on-glass.md) Added on 2026-11-28: the Quest list on the whole screen lies on glass over the map, and the map's floating parts give way as they do for the friend panel.
+
+Added on 2026-11-28, from the proposal's 권장 boards, in the proposal's order. They follow one another (09, then 10, then 11 and 12), and they replace P06 ticket 04, which ticket 09's pull request says.
+
+9. [**The bottom bar with the AI in the middle.**](issues/09-bottom-bar-ai-in-the-middle.md) 파티, 행사, [middle], 알림, 내 정보, with no ＋ and no 지도 tab. The middle is the map's tab: from another tab it goes to the map with the AI raised; on the map it raises and lowers the AI input and its lines. The app opens raised. 알림 becomes a tab and 내 정보's bell goes.
+10. [**오늘.**](issues/10-today-tab.md) 알림 grows into 오늘: 답할 것, 오늘 일정 (Quests and classes) and the newest 지난 알림, on one page with capped sections instead of inner tabs.
+11. [**관정도서관 bookings in 오늘.**](issues/11-kwanjeong-bookings-in-today.md) A 예약 section of seat and room tickets, as 내 예약 draws them; a press goes to the AI's 내 예약, where 취소 and 반납 are done with its red button.
+12. [**Two counts.**](issues/12-two-counts.md) 오늘 counts what the User must do; the middle counts what the AI has ready (a conversation to go on with, made Plans waiting for answers), while the AI is lowered.
 
 How the work runs:
 
@@ -246,13 +254,15 @@ The 행사 tab and the timetable (ticket 07)
   - café, convenience-store and other restaurants in the 식당 layer;
   - a dining cluster.
 - **Legacy\* screens and the P15 "before" screens.**
-- **P06's held tickets.** 01 (the map's lists go), 04 (the bottom tabs) and 05 (the User's own marker) stay in P06 and their spec is not changed. Ticket 06 here does not run at the same time as P06-05, as both change the map pin.
+- **P06's held tickets.** 01 (the map's lists go) and 05 (the User's own marker) stay in P06 and their spec is not changed. Ticket 06 here does not run at the same time as P06-05, as both change the map pin. P06-04 (the bottom tabs with a 식단 tab) is replaced by tickets 09 to 12 (decided by the user on 2026-11-28); ticket 09's pull request says so, and its file is left as it is until then.
+- **A 식단 tab.** The menus stay reached from a restaurant card's "메뉴 보기".
 - **Changes to the Assistant's behaviour.** Ticket 02 changes only how its screens look. The Assistant's flows keep changing under P04, and the glass layer and its documentation are how those later screens get the same look.
 
 ## Further Notes
 
 Order and conflicts:
 
+- 09 to 12 (added 2026-11-28) run one after another. 09 changes the tab bar, `BottomNav`, the tab tour, the tabs' routes, 내 정보's header and the map's input layer (`map-bottom.tsx`, also changed by P04's open work and by A04-02), and the main screen's tests that P06-01 changes too; 10 the 알림 screen; 11 also the library's 내 예약 card (P01's area); 12 the counts. Each merges `5.0/Main` before its pull request.
 - 08 (added 2026-11-28) changes `FullScreenPanel`, the signed-in stack's options for `/quests`, the Quest list and the friend panel's giving way (moved to `screens/main/map-cover.ts`); no open A04 ticket touches them.
 
 - 01, 04, 05 and 07 start together. 01 is small and goes first.

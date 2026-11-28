@@ -14,35 +14,58 @@
 
 import { type ReactElement, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { color, EmptyState, ErrorState, LoadingState, NO_RESULTS, space } from '@/design-system';
+import { ChipRow, color, EmptyState, ErrorState, LoadingState, NO_RESULTS, type RowChip, space } from '@/design-system';
 import {
   EVENT_SEARCH_HINT,
   type EventFilter,
   type EventSources,
   type EventView,
+  NO_STARRED,
+  NO_STARRED_LINE,
   toEventViews,
 } from '@/features/events/adapter';
 import type { Quest } from '@/api/types';
 import { useEventSources } from '@/features/events/use-events';
 import { showFind } from '../party/use-party-actions';
-import { TabScreen } from '../shell/tab-screen';
+import { TabScreen, type TabSearch } from '../shell/tab-screen';
 import { EventDetailSheet } from './event-detail-sheet';
 import { EventRow } from './event-row';
-import { Filters } from './events-bar';
 import { EventSheets, type EventSheetsState, type PickedEvent, useEventSheets } from './event-sheets';
 import { type Focus, useFocus } from './use-focus';
+import { useStarred } from './use-starred';
+
+// The `Events` frame's filters, in the app's one row of filters.
+const FILTERS: readonly RowChip<EventFilter>[] = [
+  { key: 'all', label: '전체' },
+  { key: 'today', label: '오늘' },
+  { key: 'week', label: '이번 주' },
+  { key: 'recruiting', label: '파티 모집 중' },
+];
 
 interface ListProps extends Omit<Focus, 'focused'> {
   sources: EventSources;
   filter: EventFilter;
   search: string;
+  // The starred events alone, while the ☆ is on.
+  kept: ReadonlySet<string> | null;
   focused: string | null;
   onOpen: (event: EventView) => void;
   onParty: (event: PickedEvent) => void;
 }
 
-function List({ sources, filter, search, focused, scroll, onCardAt, onOpen, onParty }: ListProps): ReactElement {
-  const views = toEventViews(sources, filter, search);
+// What the list says when nothing is left: the search's 결과 없음, the ☆'s words, or the filter's.
+function Empty({ filter, search, kept }: Pick<ListProps, 'filter' | 'search' | 'kept'>): ReactElement {
+  if (search.trim() !== '') {
+    return <EmptyState words={NO_RESULTS} />;
+  }
+  if (kept !== null) {
+    return <EmptyState line={NO_STARRED_LINE} words={NO_STARRED[filter]} />;
+  }
+  return <EmptyState words="해당하는 행사가 없어요" />;
+}
+
+function List({ sources, filter, search, kept, focused, scroll, onCardAt, onOpen, onParty }: ListProps): ReactElement {
+  const views = toEventViews(sources, filter, search, kept);
   // Without any event, the tab says what it is for, and leads to the 파티 one can join meanwhile (HE H7).
   if (sources.events.length === 0) {
     return (
@@ -50,7 +73,7 @@ function List({ sources, filter, search, focused, scroll, onCardAt, onOpen, onPa
     );
   }
   if (views.length === 0) {
-    return <EmptyState words={search.trim() === '' ? '해당하는 행사가 없어요' : NO_RESULTS} />;
+    return <Empty filter={filter} kept={kept} search={search} />;
   }
   return (
     <ScrollView contentContainerStyle={styles.list} ref={scroll}>
@@ -109,6 +132,11 @@ interface EventsScreenProps {
   onFocused: () => void;
 }
 
+// The app bar's search: its words, or null while the title shows; ✕ also sets the filters back to 전체.
+function searchOf(words: string | null, onWords: (words: string | null) => void): TabSearch {
+  return { label: '행사 검색', field: '행사 검색어', placeholder: EVENT_SEARCH_HINT, words, onWords };
+}
+
 // The 행사 tab, the `Events` frame: the published Global Events, one row each, and their 파티. A row opens the
 // `EventsDetail` sheet.
 export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElement {
@@ -124,31 +152,28 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
   const focusing = useFocus(focus, data !== undefined, onFocused, showAll);
   const quests = data?.quests ?? [];
   const sheets = useEventSheets();
+  const starred = useStarred(data?.events);
   return (
     <TabScreen
-      search={{
-        label: '행사 검색',
-        field: '행사 검색어',
-        placeholder: EVENT_SEARCH_HINT,
-        words: search,
-        onWords: (words) => {
-          if (words === null) {
-            showAll();
-          } else {
-            setSearch(words);
-          }
-        },
-      }}
+      search={searchOf(search, (words) => {
+        if (words === null) {
+          showAll();
+        } else {
+          setSearch(words);
+        }
+      })}
       title="행사"
+      toggle={{ icon: 'star', label: '별표한 행사만 보기', on: starred.on, onToggle: starred.turn }}
     >
       <View style={styles.ground}>
-        <Filters filter={filter} onFilter={setFilter} />
+        <ChipRow chips={FILTERS} onSelect={setFilter} selected={filter} />
         {data === undefined && isPending ? <LoadingState /> : null}
         {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
         {data === undefined ? null : (
           <List
             {...focusing}
             filter={filter}
+            kept={starred.kept}
             onOpen={setOpened}
             onParty={sheets.setRecruitEvent}
             search={search ?? ''}

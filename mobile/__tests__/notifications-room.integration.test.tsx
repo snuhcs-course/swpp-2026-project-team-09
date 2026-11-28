@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -18,8 +19,8 @@ import { recordMoves } from './support/moves';
 import { answerRoom, PICNIC, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// A 파티's own news in 알림 and its push open the 파티's room, `room:<questId>` (P06 ticket 37). A tapped push opens
-// its address on the main screen, as `push-*` tests with the push stand-in; here the address is opened as it does.
+// A 파티's own news in 알림 opens the 파티's room, `room:<questId>` (P06 ticket 37). A tapped push opens the room
+// itself (`push/notification-room-links`); the main screen still opens the room for the address in its `card`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -93,7 +94,7 @@ describe("a 파티's own news in 알림", () => {
   });
 });
 
-describe("the address of a 파티's own news, as a tapped push opens it", () => {
+describe("the address of a 파티's own news on the main screen", () => {
   it("opens the 파티's room from the main screen", async () => {
     await openMain();
 

@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +13,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { questsQuery } from '@/api/queries';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
 import type { JoinPolicy } from '@/api/types';
-import { BottomSheet, Button, color, font, Icon, RoundIcon, space, text } from '@/design-system';
+import { BottomSheet, Button, color, font, Icon, RoundIcon, SheetTitle, space, text } from '@/design-system';
 import { partyHeldAloneFor } from '@/features/events/adapter';
 import { topicParticle } from '@/features/map/short-name';
 import { joinLabel } from './post-card';
@@ -78,6 +79,16 @@ function GoneNote({ eventId }: { eventId: string | null }): ReactElement | null 
   );
 }
 
+// The sheet's head: the party icon and the question.
+function JoinHead({ title }: { title: string }): ReactElement {
+  return (
+    <View style={styles.head}>
+      <RoundIcon fill={color.partySoft} icon="users" ink={color.party} />
+      <SheetTitle>{`‘${title}’에 참여할까요?`}</SheetTitle>
+    </View>
+  );
+}
+
 // The join confirm sheet, the frame's `PartyJoin`. Its note says that any member may switch the Party on, as the
 // app has it (P06 spec, Rules), where the frame says the 파티장.
 export function JoinSheet<Subject extends JoinSubject>({
@@ -86,13 +97,14 @@ export function JoinSheet<Subject extends JoinSubject>({
   onJoin,
 }: JoinSheetProps<Subject>): ReactElement {
   return (
-    <BottomSheet label="참여 확인" onClose={onClose} open={post !== null}>
+    <BottomSheet
+      head={post === null ? undefined : <JoinHead title={post.title} />}
+      label="참여 확인"
+      onClose={onClose}
+      open={post !== null}
+    >
       {post === null ? null : (
         <View style={styles.body}>
-          <RoundIcon fill={color.partySoft} icon="users" ink={color.party} />
-          <Text accessibilityRole="header" style={styles.title}>
-            {`‘${post.title}’에 참여할까요?`}
-          </Text>
           <View style={styles.rows}>
             <Row label="일정" words={post.time} />
             <Row label="장소" words={post.place} />
@@ -129,8 +141,8 @@ export function JoinSheet<Subject extends JoinSubject>({
 }
 
 const styles = StyleSheet.create({
+  head: { gap: space[3] },
   body: { gap: space[3], paddingHorizontal: space[5] },
-  title: { ...text.title, color: color.ink },
   rows: { gap: space[2], padding: space[3], borderRadius: 12, backgroundColor: color.surfaceSubtle },
   row: { flexDirection: 'row', gap: space[3] },
   rowLabel: { width: 36, fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.inkMuted },

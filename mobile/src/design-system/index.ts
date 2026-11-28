@@ -29,7 +29,8 @@ export { NOT_AUTOFILLED } from './autofill';
 export { Avatar, initials, type PresenceStatus } from './avatar';
 export { Badge, type BadgeTone } from './badge';
 export { BottomNav, type BottomNavItem } from './bottom-nav';
-export { BottomSheet } from './bottom-sheet';
+export { BottomSheet, SheetTitle } from './bottom-sheet';
+export { SheetScroll } from './sheet-scroll';
 export { Button } from './button';
 export { cardStyles } from './card';
 export { DayTile } from './day-tile';
@@ -43,7 +44,7 @@ export { FullScreenPanel } from './full-screen-panel';
 export { FLOATING_ACTION_ROOM, FloatingActionArea, useListEnd } from './floating-action';
 export { Glass, GLASS_LEVELS, type GlassLevel } from './glass';
 export { Icon, ICON_NAMES, iconOrFlag, type IconName } from './icon';
-export { ListRow, RoundIcon, SectionHeader } from './list-row';
+export { ListRow, RoundIcon, RowCard, SectionHeader } from './list-row';
 export {
   ANSWER_SYMBOL_BOX,
   CAPSULE,

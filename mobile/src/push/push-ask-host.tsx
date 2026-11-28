@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createContext, type ReactElement, type ReactNode, use, useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, space, text } from '@/design-system';
+import { BottomSheet, Button, color, SheetTitle, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
 import { keep, readKeptAfterChanges } from '@/storage/kept';
 import { askPushPermission, pushPermission } from './device';
@@ -52,11 +53,13 @@ function PushSheet({ open, onClose }: { open: boolean; onClose: () => void }): R
       .catch(() => null);
   };
   return (
-    <BottomSheet label="푸시 알림" onClose={onClose} open={open}>
+    <BottomSheet
+      head={<SheetTitle>나설 시각을 휴대폰으로 알려 드릴까요?</SheetTitle>}
+      label="푸시 알림"
+      onClose={onClose}
+      open={open}
+    >
       <View style={styles.body}>
-        <Text accessibilityRole="header" style={styles.title}>
-          나설 시각을 휴대폰으로 알려 드릴까요?
-        </Text>
         <Text style={styles.words}>나설 시각, 초대, 예약, 관심만 보내요.</Text>
         <View style={styles.buttons}>
           <Button full onPress={allow} size="lg">
@@ -107,7 +110,6 @@ export function PushAskHost({ children }: { children: ReactNode }): ReactElement
 
 const styles = StyleSheet.create({
   body: { gap: space[3], paddingHorizontal: space[5] },
-  title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },
   buttons: { gap: space[2], marginTop: space[1] },
   footer: { ...text.caption, color: color.inkMuted, textAlign: 'center' },

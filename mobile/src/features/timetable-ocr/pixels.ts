@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { OcrPixels } from './native-ocr';
@@ -167,6 +168,32 @@ export function rowColour(
     }
   }
   return count === 0 ? null : [red / count, green / count, blue / count];
+}
+
+const middleOf = (values: number[]): number => values.toSorted((one, other) => one - other)[values.length >> 1] ?? 0;
+
+// The median colour, channel by channel, of the pixels of a row between x0 and x1 (exclusive) that pass `keep`, or null
+// when none does. Unlike the mean, the edges of a letter, where the block's colour blends with the letter's, do not move
+// it while they are under half the row (P05 ticket 90).
+export function rowMedian(
+  image: PixelImage,
+  y: number,
+  x0: number,
+  x1: number,
+  keep: (index: number) => boolean,
+): [number, number, number] | null {
+  const [red, green, blue]: number[][] = [[], [], []];
+  for (let x = x0; x < x1; x += 1) {
+    const index = y * image.width + x;
+    if (keep(index)) {
+      red?.push(image.rgba[index * 4] ?? 0);
+      green?.push(image.rgba[index * 4 + 1] ?? 0);
+      blue?.push(image.rgba[index * 4 + 2] ?? 0);
+    }
+  }
+  return red === undefined || green === undefined || blue === undefined || red.length === 0
+    ? null
+    : [middleOf(red), middleOf(green), middleOf(blue)];
 }
 
 export function colourDistance(one: readonly number[], other: readonly number[]): number {

@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { BandRules, MealInput, TimeBand } from '@/api/assistant-types';
@@ -31,6 +32,20 @@ interface Band {
 
 const MINUTE_MS = 60_000;
 export const STEP_MS = BAND_STEP_MINUTES * MINUTE_MS;
+
+const KOREA_OFFSET_MS = 9 * 60 * MINUTE_MS;
+const DAY_MS = 24 * 60 * MINUTE_MS;
+
+// Korea's calendar day of a time: "2026-11-28".
+function koreaDayOf(ms: number): string {
+  return new Date(ms + KOREA_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+// The last step a band's start or end may be let go at: before its day ends. A time dropped is sent as a clock, which
+// the main server reads on the band's day, so 00:30 after midnight would read as that morning's (P01 ticket 48).
+export function lastDropMsOf(band: { range: Stretch }, step: number): number {
+  return Date.parse(`${koreaDayOf(msOf(band.range.startAt))}T00:00:00+09:00`) + DAY_MS - step;
+}
 
 // A meal's band: 5-minute steps, at least 15 minutes, anywhere in its range.
 export const MEAL_RULES: BandRules = {
@@ -90,14 +105,16 @@ function kept(ms: number, bound: BandBound, band: Band): number {
           stepUp(msOf(band.startAt) + least, step),
           Math.min(stepDown(msOf(band.range.endAt), step), stepDown(msOf(band.startAt) + most, step)),
         ];
-  return Math.min(Math.max(ms, lowest), highest);
+  return Math.min(Math.max(ms, lowest), highest, lastDropMsOf(band, step));
 }
 
 // The handle moved from `own` toward `wanted`, where it may stand. For a band off the steps the nearest step it may
-// take can lie behind its own time: it then stays.
+// take can lie behind its own time: it then stays. A handle pressed where it is stays too, as an end past the last
+// drop does, and an end that the last drop would leave shorter than the shortest length.
 function moved(own: number, wanted: number, bound: BandBound, band: Band): string {
   const time = kept(wanted, bound, band);
-  return clockAt((wanted - own) * (time - own) < 0 ? own : time);
+  const short = bound === 'until' && time < msOf(band.startAt) + rulesOf(band).leastMinutes * MINUTE_MS;
+  return clockAt(short || (wanted - own) * (time - own) <= 0 ? own : time);
 }
 
 function ownOf(bound: BandBound, band: Band): number {
@@ -133,15 +150,26 @@ export function stepped(bound: BandBound, direction: 1 | -1, band: Band): string
   return moved(time, direction === 1 ? stepDown(time, step) + step : stepUp(time, step) - step, bound, band);
 }
 
-// A clock time of the window on the band's day, with Korea's offset.
-export function onBandDay(clock: string, band: { startAt: string }): string {
-  return `${band.startAt.slice(0, 10)}T${clock}:00+09:00`;
+// A time as the band writes its times, in Korea time with the offset.
+export function bandTimeAt(ms: number): string {
+  return `${new Date(ms + KOREA_OFFSET_MS).toISOString().slice(0, 19)}+09:00`;
+}
+
+// A clock time of the window on the band's day, with Korea's offset. A range that runs past midnight (a study place
+// open to 01:00) puts a clock before its start and no later than its end on the next day (P01 ticket 48); the range is
+// the band's own without one.
+export function onBandDay(clock: string, band: { startAt: string; endAt?: string; range?: Stretch }): string {
+  const { startAt, endAt = startAt } = band.range ?? band;
+  const start = msOf(startAt);
+  const end = msOf(endAt);
+  const past = koreaDayOf(end) !== koreaDayOf(start) && clock < clockAt(start) && clock <= clockAt(end);
+  return `${koreaDayOf(past ? start + DAY_MS : start)}T${clock}:00+09:00`;
 }
 
 export function clashes(
   busy: readonly Stretch[],
   fixed: MealInput['window'],
-  band: { startAt: string; endAt: string },
+  band: { startAt: string; endAt: string; range?: Stretch },
 ): Stretch[] {
   if (fixed.from === null && fixed.until === null) {
     return [];
@@ -212,8 +240,8 @@ export function foldedRangeOf(band: TimeBand): Stretch {
   const startMs = before === null ? null : Math.max(msOf(band.range.startAt), before - FOLD_MARGIN_MS);
   const endMs = after === null ? null : Math.min(msOf(band.range.endAt), after + FOLD_MARGIN_MS);
   return {
-    startAt: startMs === null ? band.range.startAt : onBandDay(clockAt(startMs), band),
-    endAt: endMs === null ? band.range.endAt : onBandDay(clockAt(endMs), band),
+    startAt: startMs === null ? band.range.startAt : bandTimeAt(startMs),
+    endAt: endMs === null ? band.range.endAt : bandTimeAt(endMs),
   };
 }
 

@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
@@ -236,8 +237,9 @@ describe('The time band under a fixed window', () => {
     expect(rangeOf(window('11:10', '13:40'))).toEqual({ startAt: time('11:00'), endAt: time('14:00') });
   });
 
-  it('stays as it was when the window lies inside it', () => {
-    expect(rangeOf(window('12:10', '12:50'))).toEqual({ startAt: time('11:30'), endAt: time('13:30') });
+  // Between the asker's Classes, 11:00–11:50 and 13:00–13:50, as lunch can be eaten there (P01 ticket 46).
+  it('stays between the asker’s Classes when the window lies inside it', () => {
+    expect(rangeOf(window('12:10', '12:50'))).toEqual({ startAt: time('11:30'), endAt: time('13:00') });
   });
 });
 

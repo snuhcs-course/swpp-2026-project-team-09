@@ -4,13 +4,12 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { causeOf } from '../assistant/adapter.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { Settings } from '../common/settings.js';
 import {
   GlobalEventState,
   type Judgement,
@@ -45,7 +44,10 @@ import {
 } from './session-settling.js';
 import { type StepSwitches } from './session-comparison.js';
 import { verdictOf } from './session-verdict.js';
+import { StepSwitchesService } from './step-switches.service.js';
 import { withStepLock } from './step-lock.js';
+
+type Transaction = Prisma.TransactionClient;
 
 // The step after a Collection's answer, which the worker waits for only five seconds. For each post: the link rule, then
 // the rules' reading and a Judgement's, then the comparison with the events that exist, then publication of the sessions
@@ -56,11 +58,11 @@ import { withStepLock } from './step-lock.js';
 // Collection until it finishes, without limit, because going over it again costs nothing. A try is what costs, and only
 // a Judgement's own count limits those, so a post left by a database failure asks the model no more often for it. The
 // step finishes a post once its Judgement has an answer or no try left.
+//
+// Each entry point reads the step's switches once, so that an Administrator's change applies from the next one.
 @Injectable()
 export class PublicationStepService {
   private readonly logger = new Logger(PublicationStepService.name);
-  private readonly switches: StepSwitches;
-  private readonly judges: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -68,15 +70,8 @@ export class PublicationStepService {
     private readonly judgements: JudgementsService,
     private readonly places: PlacesService,
     private readonly sameEventChoices: SameEventChoicesService,
-    settings: ConfigService<Settings, true>,
-  ) {
-    this.switches = {
-      publishes: settings.get('AUTOMATIC_PUBLICATION', { infer: true }),
-      comparesTitles: settings.get('SAME_EVENT_TITLE_RULE', { infer: true }),
-      choosesByAi: settings.get('SAME_EVENT_AI_CHOICE', { infer: true }),
-    };
-    this.judges = settings.get('AUTOMATIC_JUDGEMENT', { infer: true });
-  }
+    private readonly stepSwitches: StepSwitchesService,
+  ) {}
 
   // Runs the step over every post of the Source not through it: those just stored, and those a failure or a restart
   // left before. Those it fails on wait for the next Collection of the Source. Never rejects.
@@ -88,9 +83,10 @@ export class PublicationStepService {
         orderBy: { key: 'asc' },
       });
       const ids = await this.undecidedByLinks(posts.map(({ id }) => id));
+      const { judges, switches } = this.stepSwitches.current();
       const due = new Set([
-        ...(this.judges ? await this.judgements.dueAmong(ids) : []),
-        ...(this.switches.choosesByAi ? await this.sameEventChoices.dueAmong(ids) : []),
+        ...(judges ? await this.judgements.dueAmong(ids) : []),
+        ...(switches.choosesByAi ? await this.sameEventChoices.dueAmong(ids, switches.comparesTitles) : []),
       ]);
       // One at a time. Those that wait for no model go first, so that an outage holds up only what needs it.
       const published = await this.runOverPosts([
@@ -110,11 +106,14 @@ export class PublicationStepService {
   async overDraft(globalEventId: string): Promise<Judgement | null> {
     const judgement = await this.judgements.judgeDraft(globalEventId);
     if (judgement !== null) {
-      if (this.switches.choosesByAi) {
-        await this.sameEventChoices.ask(judgement.sourcePostId, true);
+      const { switches } = this.stepSwitches.current();
+      if (switches.choosesByAi) {
+        await this.sameEventChoices.ask(judgement.sourcePostId, switches.comparesTitles, true);
       }
       const published = await this.locked(async (tx) =>
-        (await this.isBeingAsked(tx, judgement.sourcePostId)) ? false : this.settleJudged(tx, judgement.sourcePostId),
+        (await this.isBeingAsked(tx, judgement.sourcePostId, switches))
+          ? false
+          : this.settleJudged(tx, judgement.sourcePostId, switches),
       );
       if (published) {
         this.globalEvents.signalChanged();
@@ -139,19 +138,20 @@ export class PublicationStepService {
   // published one. An event an Administrator has changed or discarded meanwhile is left as it is. With automatic
   // publication off, what is not attached stays a Draft. The version stays: it counts an Administrator's changes.
   publishPost(sourcePostId: string): Promise<boolean> {
+    const { judges, switches } = this.stepSwitches.current();
     return this.locked(async (tx) => {
-      if (await this.isBeingAsked(tx, sourcePostId)) {
+      if (await this.isBeingAsked(tx, sourcePostId, switches)) {
         return false;
       }
       const stored = await tx.sourcePost.findUniqueOrThrow({ where: { id: sourcePostId }, include: WITH_OWN_SESSIONS });
-      const byRules = await settleReadByRules(tx, stored, this.switches);
-      const judged = await this.settleJudged(tx, sourcePostId);
+      const byRules = await settleReadByRules(tx, stored, switches);
+      const judged = await this.settleJudged(tx, sourcePostId, switches);
       const post = await tx.sourcePost.findUniqueOrThrow({
         where: { id: sourcePostId },
         include: { judgement: true, ...WITH_OWN_SESSIONS },
       });
       // With Judgements turned off meanwhile, no try will come.
-      if (!this.judges || post.judgement === null || !waitsForAJudgement(post, post.judgement)) {
+      if (!judges || post.judgement === null || !waitsForAJudgement(post, post.judgement)) {
         await this.finish(tx, sourcePostId);
       }
       return byRules || judged;
@@ -194,8 +194,8 @@ export class PublicationStepService {
   }
 
   // Another server asks the model about the post: it settles the post itself once it has the answer.
-  private isBeingAsked(tx: Prisma.TransactionClient, sourcePostId: string): Promise<boolean> {
-    return this.switches.choosesByAi ? this.sameEventChoices.isBeingAsked(tx, sourcePostId) : Promise.resolve(false);
+  private isBeingAsked(tx: Transaction, sourcePostId: string, switches: StepSwitches): Promise<boolean> {
+    return switches.choosesByAi ? this.sameEventChoices.isBeingAsked(tx, sourcePostId) : Promise.resolve(false);
   }
 
   private async finish(tx: Prisma.TransactionClient, sourcePostId: string): Promise<void> {
@@ -228,13 +228,13 @@ export class PublicationStepService {
   // whose place or length failed is compared too, and attached or held, never published; one that the checks of its time
   // or of its place pass fills its Draft. Nothing, should an Administrator have changed any of the post's events while
   // the model read it: they may have split off a session the answer holds too.
-  private async settleJudged(tx: Prisma.TransactionClient, sourcePostId: string): Promise<boolean> {
+  private async settleJudged(tx: Transaction, sourcePostId: string, switches: StepSwitches): Promise<boolean> {
     const post = await tx.sourcePost.findUniqueOrThrow({ where: { id: sourcePostId }, include: WITH_OWN_SESSIONS });
     const judgement = await tx.judgement.findUnique({ where: { sourcePostId } });
     if (judgement?.outcome !== JudgementOutcome.judged || judgement.publishedAt !== null) {
       return false;
     }
-    if (this.switches.publishes) {
+    if (switches.publishes) {
       await tx.judgement.update({ where: { sourcePostId }, data: { publishedAt: new Date() } });
     }
     if (isChangedByAdministrator(post)) {
@@ -255,7 +255,7 @@ export class PublicationStepService {
       const draftId = placed.get(session);
       const verdict = verdictOf(session.checks);
       const draft = drafts.find(({ globalEventId }) => globalEventId === draftId);
-      const toSettle = { post, draft, number, switches: this.switches };
+      const toSettle = { post, draft, number, switches };
       const settles = draftId !== undefined && (!verdict.publishable || place !== undefined);
       if (!settles) {
         written.push(session);
@@ -325,11 +325,12 @@ export class PublicationStepService {
 
   // No transaction holds the call to the model.
   private async overPost(sourcePostId: string): Promise<boolean> {
-    if (this.judges) {
+    const { judges, switches } = this.stepSwitches.current();
+    if (judges) {
       await this.judgements.judgePost(sourcePostId);
     }
-    if (this.switches.choosesByAi) {
-      await this.sameEventChoices.ask(sourcePostId);
+    if (switches.choosesByAi) {
+      await this.sameEventChoices.ask(sourcePostId, switches.comparesTitles);
     }
     return this.publishPost(sourcePostId);
   }

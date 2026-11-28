@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +11,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { PrivateZone } from '@/api/private-zone-types';
 import { privateZonesQuery } from '@/api/queries';
-import { cardStyles, color, Icon, ListRow, RoundIcon, space, text } from '@/design-system';
+import { color, Icon, ListRow, RoundIcon, RowCard, space, text } from '@/design-system';
 
 const LINE = '칠한 곳 안에서는 시간표만 보여요';
 
@@ -23,7 +24,7 @@ export function PrivateZoneRow(): ReactElement {
   const count = useQuery({ ...privateZonesQuery, select: countOf }).data;
   const words = count === undefined ? null : `${String(count)}곳`;
   return (
-    <View style={[cardStyles.card, styles.card]}>
+    <RowCard>
       <ListRow
         label={['비공개 구역', LINE, ...(words === null ? [] : [words])].join(', ')}
         leading={<RoundIcon fill={color.privateSoft} icon="lock" ink={color.private} />}
@@ -39,12 +40,11 @@ export function PrivateZoneRow(): ReactElement {
           </View>
         }
       />
-    </View>
+    </RowCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { paddingVertical: space[1] },
   trailing: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
   count: { ...text.label, color: color.inkMuted },
 });

@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { clockTime } from '../free-time/tool-parts.js';
+import { windowClock } from '../free-time/tool-parts.js';
 
 // A meal's conditions that cannot be met (P02-14, board n11), declared with the same shapes in the app's
 // `relax-types.ts`.
@@ -17,5 +18,5 @@ export type RelaxOffer =
 
 // A meal's window: the start and end the User fixed, and `now` when they said 지금.
 export const mealWindowSchema = z
-  .strictObject({ from: clockTime.nullable(), until: clockTime.nullable(), now: z.boolean().optional() })
+  .strictObject({ from: windowClock.nullable(), until: windowClock.nullable(), now: z.boolean().optional() })
   .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until');

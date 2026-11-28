@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -18,7 +19,7 @@ import { holdProposal } from '@/features/party/held-proposal';
 import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { sendingIcon, useSendParty } from '../party/form/use-send';
-import { showMine } from '../party/use-party-actions';
+import { showMade } from '../party/use-party-actions';
 import type { ProposalActions } from './chat-cards';
 import type { ProposalMaking } from './chat-proposal-card';
 import { useStepBaselines, withChanges } from './party-change';
@@ -29,7 +30,7 @@ const STARTED = '시작 시간이 지났어요. 새 시간을 채팅으로 알�
 // Why a Proposal cannot be sent as it stands, checked again on the phone before 만들기: the form's own readiness, and a
 // start that has passed since the Assistant proposed it, which the main server would take.
 function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
-  if (!isReady(form, proposal.invitees.length, false)) {
+  if (!isReady(form)) {
     return NOT_READY;
   }
   return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
@@ -113,7 +114,7 @@ export function useProposalMaking(onMade: Made, { latest, bubbles }: Kept = EVER
       if (sent.sent === 'room') {
         router.navigate(`/room/${sent.questId}`);
       } else {
-        showMine();
+        showMade(sent.alone === true);
       }
     });
   };

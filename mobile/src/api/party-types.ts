@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { SubQuestContent } from './room-types';
@@ -24,6 +25,8 @@ export interface QuestMaking {
   joinPolicy: JoinPolicy;
   board?: Board;
   subQuest: Partial<SubQuestContent> & { title: string };
+  // A Quest taken alone, Closed with no board and for one: a to-do of the User's own (P05 ticket 87).
+  takenAlone?: boolean;
 }
 
 // PATCH /quests/:questId: what changes, the rest left out.
