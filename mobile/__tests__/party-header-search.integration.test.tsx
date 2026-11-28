@@ -147,6 +147,18 @@ describe('the search', () => {
     expect(screen.queryByLabelText('파티 검색어')).toBeNull();
   });
 
+  it("closes with Android's back before the back leaves the tab", async () => {
+    const pressBack = holdBackButton();
+    const user = await openAt('/party');
+    await user.press(screen.getByRole('button', { name: '파티 검색' }));
+
+    expect(await pressBack()).toBe(true);
+    expect(screen.queryByLabelText('파티 검색어')).toBeNull();
+    expect(screen.getByRole('header', { name: '파티' })).toBeVisible();
+  });
+});
+
+describe("the header search's look", () => {
   // The user's choice of the header search's look, 나 (2026-11-28): no box, the words in the title's place on the
   // header's white, the magnifier before them, and one ✕, the app's, that closes the search.
   it('is words in the title’s place with no box, and one ✕ that closes it, on 파티 and on 행사 alike', async () => {
@@ -172,15 +184,5 @@ describe('the search', () => {
     await user.press(screen.getByRole('button', { name: '행사 검색' }));
     expect(screen.getByTestId('header-search')).toBeVisible();
     expect(screen.getByLabelText('행사 검색어')).toHaveStyle({ fontSize: 18 });
-  });
-
-  it("closes with Android's back before the back leaves the tab", async () => {
-    const pressBack = holdBackButton();
-    const user = await openAt('/party');
-    await user.press(screen.getByRole('button', { name: '파티 검색' }));
-
-    expect(await pressBack()).toBe(true);
-    expect(screen.queryByLabelText('파티 검색어')).toBeNull();
-    expect(screen.getByRole('header', { name: '파티' })).toBeVisible();
   });
 });
