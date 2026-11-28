@@ -14,7 +14,7 @@ import { koreaTime } from '../assistant/korea-time.js';
 import { SignalsService } from '../common/signals.service.js';
 import { type Notification } from '../generated/prisma/client.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { type Card, cardAddress } from './card-address.js';
+import { type Card, cardAddress, openedAddress } from './card-address.js';
 import { type NotificationDto } from './dto/notification.dto.js';
 import { identityOf, type NotificationKind, type Told } from './notification.js';
 import { type Kept, NotificationStore } from './notification-store.js';
@@ -137,7 +137,7 @@ export class NotificationsService {
           ahead: row.ahead,
           line: row.line,
           at: koreaTime(row.at),
-          url: cardAddress(card),
+          url: openedAddress(row.kind, card),
           read: row.readAt !== null,
         };
       });

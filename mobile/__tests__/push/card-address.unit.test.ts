@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fallbackFor, readCardAddress } from '@/push/card-address';
@@ -53,6 +54,10 @@ describe('where a card not on the map falls back to', () => {
       pathname: '/events',
       params: { focus: 'later-event' },
     });
+  });
+
+  it("opens the 파티's room for a 파티's own news (P06 ticket 37)", () => {
+    expect(fallbackFor({ kind: 'room', id: 'q1' })).toBe('/room/q1');
   });
 
   it('stays on the main map for any other kind', () => {

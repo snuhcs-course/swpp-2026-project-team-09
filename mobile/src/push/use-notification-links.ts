@@ -3,12 +3,13 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import type { NotificationResponse } from 'expo-notifications';
 import { useEffect, useRef } from 'react';
-import { readCardAddress } from './card-address';
+import { readCardAddress, roomAddress } from './card-address';
 import { clearLastPushTap, lastPushTap, onPushTap } from './device';
 
 // A tapped push opens the address in its data once the User is here, as Invite Links do: the tap that started the
@@ -29,6 +30,13 @@ export function useNotificationLinks(here: boolean): void {
         return;
       }
       handled.current = identifier;
+      clearLastPushTap();
+      // A 파티's own news opens its room over where the User is, in one move: through the map's `card` it would show
+      // the map first and then slide the room in (P06 ticket 37).
+      if (address.kind === 'room') {
+        router.push(roomAddress(address.id));
+        return;
+      }
       const target = { pathname: '/main', params: { card: `${address.kind}:${address.id}` } } as const;
       // `navigate` from a screen above the tabs pushes a second tab navigator over it, and `dismissTo` from the tabs
       // reaches the tab navigator, which ignores it.
@@ -37,7 +45,6 @@ export function useNotificationLinks(here: boolean): void {
       } else {
         router.navigate(target);
       }
-      clearLastPushTap();
     };
     open(lastPushTap());
     return onPushTap(open);
