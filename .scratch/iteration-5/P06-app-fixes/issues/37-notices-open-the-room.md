@@ -50,3 +50,11 @@ Estimates: agent time is the gaps under 5 minutes between transcript entries, su
 | Work | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
 | Build, code review and its fixes, emulator screens, PR #755 | about 10 minutes | 22,456,059 | 22,309,492 | 146,427 | 140 | 42,375 |
+
+### Agent usage (2026-11-29)
+
+Estimates, measured as above.
+
+| Work | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| fyoon46's review of #755: the room push in one move, the merge of `5.0/Main` | about 10 minutes | 6,852,098 | 6,816,131 | 35,885 | 82 | 19,789 |
