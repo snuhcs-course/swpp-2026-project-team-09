@@ -83,8 +83,10 @@ function shownRows(): string[] {
     .filter((label) => label.includes(' · '));
 }
 
-async function openNotifications(bell = '오늘, 새 소식 4개'): Promise<Awaited<ReturnType<typeof openMain>>> {
-  const user = await openMain();
+type User = Awaited<ReturnType<typeof openMain>>;
+
+// Every row of 알림, from 오늘's "알림 모두 보기", in the app already started.
+async function openFrom(user: User, bell: string): Promise<User> {
   await user.press(screen.getByRole('tab', { name: bell }));
   await pass(500);
   await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
@@ -92,12 +94,16 @@ async function openNotifications(bell = '오늘, 새 소식 4개'): Promise<Awai
   return user;
 }
 
+async function openNotifications(bell = '오늘, 새 소식 4개'): Promise<User> {
+  return openFrom(await openMain(), bell);
+}
+
 describe('알림', () => {
   it("lists what waits for the User in the frame's order, and counts it on the bell and on 파티", async () => {
-    await openMain();
+    const user = await openMain();
 
     expect(screen.getByRole('tab', { name: '파티, 새 소식 3개' })).toBeVisible();
-    await openNotifications();
+    await openFrom(user, '오늘, 새 소식 4개');
 
     expect(screen.getByRole('header', { name: '알림 4' })).toBeVisible();
     expect(shownRows()).toEqual(ROWS);

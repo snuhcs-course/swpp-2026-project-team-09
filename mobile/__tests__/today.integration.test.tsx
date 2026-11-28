@@ -245,7 +245,8 @@ describe('지난 알림', () => {
     await pass(500);
 
     expect(screen.getByRole('header', { name: /^알림/u })).toBeVisible();
-    expect(screen.getByText('알림 1')).toBeVisible();
+    // Read inside 알림's panel: 오늘 stays mounted under it.
+    expect(within(screen.getByTestId('full-screen-panel')).getByText('알림 1')).toBeVisible();
     expect(shownAddress()).toBe('/notifications');
     await user.press(screen.getByRole('button', { name: '뒤로' }));
     expect(screen.getByRole('tab', { name: /^오늘/u })).toBeSelected();
