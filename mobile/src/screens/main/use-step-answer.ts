@@ -10,6 +10,7 @@ import { now } from '@/clock';
 import type { ChosenAnswer } from '@/features/assistant/answer-state';
 import {
   type ConversationAnswers,
+  type StepsKept,
   conversationAnswersOf,
   withoutWithdrawn,
 } from '@/features/assistant/conversation-answers';
@@ -255,14 +256,15 @@ export function useStepAnswerOf(
 }
 
 // What the next request tells of the steps on screen (P03 ticket 20): their answers as recalculated on screen, and the
-// steps as they stand; null for the reply's one answer.
+// steps as they stand, of the conversation `of` its first bubble; null for the reply's one answer.
 export function useStepsNow(
-  ref: RefObject<ConversationAnswers | null>,
+  ref: RefObject<StepsKept | null>,
   { keyed, conversation }: Pick<StepAnswer, 'keyed' | 'conversation'>,
   live: ShownSteps | null,
+  of: number | null,
 ): void {
   useEffect(() => {
-    ref.current = keyed ? { answers: conversation.answers, steps: live?.steps ?? conversation.steps } : null;
+    ref.current = keyed ? { of, answers: conversation.answers, steps: live?.steps ?? conversation.steps } : null;
   });
 }
 

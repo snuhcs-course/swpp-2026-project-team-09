@@ -7,6 +7,7 @@
 import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { contextFor } from '@/features/assistant/request-context';
 import { contextAt } from '@/screens/main/use-context-chat';
 
 // What a request of this app tells of the steps on screen, now that it says `answers` (P03 tickets 20 and 22): every
@@ -58,6 +59,38 @@ describe('A request of this app with steps on screen', () => {
     const one: ChatBubble = { ...REPLY, answer: LUNCH, answers: [LUNCH], steps: undefined };
 
     const context = contextAt(where, null, { tapped: null, viewport: null }, [one]);
+
+    expect(context).not.toHaveProperty('answers');
+    expect(context).not.toHaveProperty('steps');
+  });
+});
+
+// The user's phone on 2026-11-28: after "＋ 새 대화" the first request still told the old conversation's steps, and the
+// main server planned the new request into them. Partitions: the steps kept on screen of this conversation, of another
+// one; a conversation with no reply yet.
+describe("A request tells no other conversation's steps", () => {
+  const where = { position: null, locationMissing: null };
+  const pressed = { tapped: null, viewport: null };
+  const kept = { of: REPLY.id, answers: [LUNCH], steps: [stepOf('lunch'), stepOf('dinner')] };
+
+  it('tells the steps kept on screen of this conversation', () => {
+    expect(contextAt(where, null, pressed, [REPLY], kept)).toMatchObject({ answers: [LUNCH.input] });
+  });
+
+  it('never the steps kept on screen of another conversation', () => {
+    const asked: ChatBubble = { ...REPLY, id: 9, role: 'user', answers: undefined, steps: undefined, answer: null };
+
+    const context = contextAt(where, null, pressed, [asked], kept);
+
+    expect(context).not.toHaveProperty('answers');
+    expect(context).not.toHaveProperty('steps');
+  });
+
+  it('never from a conversation with no reply yet', () => {
+    const asked: ChatBubble = { ...REPLY, id: 9, role: 'user' };
+    const told = contextAt(where, null, pressed, [REPLY], kept);
+
+    const context = contextFor(told, [asked]);
 
     expect(context).not.toHaveProperty('answers');
     expect(context).not.toHaveProperty('steps');

@@ -35,7 +35,7 @@ import { useToast } from '@/design-system';
 import { type ShownBooking, shownBookingOf, studyBookingOf } from '@/features/assistant/booking-scene';
 import { type ShownCards, shownCardsOf } from '@/features/assistant/cards-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
-import type { ConversationAnswers } from '@/features/assistant/conversation-answers';
+import type { StepsKept } from '@/features/assistant/conversation-answers';
 import { mayChooseStep, stepShowsCard } from '@/features/assistant/step-choice';
 import { liveStepsOf, type ShownSteps, shownStepsOf, type StepsNow } from '@/features/assistant/steps-scene';
 import type { Viewport } from '@/features/assistant/study-area';
@@ -187,13 +187,13 @@ function useStepsShown(
     stepAnswer,
     shown,
     stepsNow,
-  }: { stepAnswer: StepAnswer; shown: ShownAnswer; stepsNow: RefObject<ConversationAnswers | null> },
+  }: { stepAnswer: StepAnswer; shown: ShownAnswer; stepsNow: RefObject<StepsKept | null> },
   chat: Chat,
   bubbles: readonly ChatBubble[],
 ): Pick<ChatSheetControl, 'steps' | 'activeStep' | 'setActiveStep'> {
   const answerOf = useStepAnswerOf(stepAnswer, shown);
   const steps = useLiveSteps(onMap, shown, chat, { bubbles, answerOf });
-  useStepsNow(stepsNow, stepAnswer, steps);
+  useStepsNow(stepsNow, stepAnswer, steps, bubbles[0]?.id ?? null);
   return {
     steps,
     activeStep: stepAnswer.activeStep,

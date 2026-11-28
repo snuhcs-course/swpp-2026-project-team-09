@@ -22,6 +22,12 @@ export interface ConversationAnswers {
   steps: readonly ReplyStep[] | null;
 }
 
+// The steps on screen as the sheet keeps them for the next request, and the conversation they are of, by its first
+// bubble: a request of another conversation never tells them (P03 ticket 22).
+export interface StepsKept extends ConversationAnswers {
+  of: number | null;
+}
+
 const NONE: ConversationAnswers = { answers: [], steps: null };
 
 type Replied = Pick<ChatBubble, 'role' | 'failure' | 'own' | 'refusal' | 'answer' | 'answers' | 'withdrawn' | 'steps'>;
