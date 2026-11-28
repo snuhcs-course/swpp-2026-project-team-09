@@ -56,7 +56,8 @@ export const TOMORROW_PARTY = quest('q-party-2', '보드게임', '2026-10-07T18:
 export const KEPT: KeptNotification[] = Array.from({ length: 7 }, (_, index) => ({
   ...ACCEPTED,
   id: `n${String(index)}`,
-  title: `알림 ${String(index + 1)}`,
+  // Not "알림 N", which 알림's own title with its count reads.
+  title: `소식 ${String(index + 1)}`,
   at: `2026-10-06T12:${String(52 + index)}:00+09:00`,
   read: true,
 }));
