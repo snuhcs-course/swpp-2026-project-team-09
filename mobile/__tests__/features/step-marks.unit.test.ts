@@ -136,13 +136,14 @@ describe("The steps' marks, by kind", () => {
   });
 });
 
-// Partitions: a step's mark beside an answer drawn as alone, a meal without menus (its pick opens a card, "›") and with
-// menus (its pick is the meal's). Expected values: the emulator, 2026-11-28: the seat's flag beside dinner read
+// Partitions: a step's mark beside an answer drawn as alone, a meal without menus and events (their pick opens a card,
+// "›"), and a meal with menus (its pick is the meal's). Expected values: the emulator, 2026-11-28: the seat's flag beside dinner read
 // "관정 7층 열람실 › ›", the answer's own "›" added again to a mark that carries its own.
 describe("A step's mark beside an answer drawn as alone", () => {
   it.each<[string, AnswerReply]>([
     ['a meal whose menus are not known', MEAL_ANSWER],
     ['a meal with menus', MEAL_ANSWER_MENUS],
+    ['an events answer', EVENTS_ANSWER],
   ])('keeps its own words and look beside %s', (_, answer) => {
     const [seat] = stepsReplyOn('2026-11-02').steps ?? [];
     if (seat === undefined) {

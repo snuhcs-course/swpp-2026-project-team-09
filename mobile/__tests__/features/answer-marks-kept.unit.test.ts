@@ -2,13 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, KeptQuest } from '@/api/assistant-types';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
+import { stepsReplyOn } from '@/api/mock/data/steps-answer';
 import { drawingOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import { keptDrawingOf, nearKeptWords } from '@/features/assistant/kept-drawing';
+import { stepDrafts } from '@/features/assistant/steps-scene';
 import { seen } from '../support/answer-marks';
 
 // P04 ticket 20: the place of a Quest already set marked on the map apart from the candidates. Expected values: the
@@ -125,6 +128,18 @@ describe('the drawing of a Quest left as it is', () => {
 
   it('is none without a point', () => {
     expect(keptDrawingOf(beside(MEAL_ANSWER_ALONE, { ...LUNCH, point: null }), 0)).toBeNull();
+  });
+
+  // TaeHyun79's review of #741: the step of several requests shown as this answer keeps the other steps in sight.
+  it('keeps the marks drawn beside the answer, the other steps of several requests', () => {
+    const [seat] = stepsReplyOn('2026-11-02').steps ?? [];
+    if (seat === undefined) {
+      throw new Error('No seat step');
+    }
+    const steps = stepDrafts([seat], ['17:30–19:00'], ['관정 7층 열람실']);
+    const drawing = keptDrawingOf(beside(MEAL_ANSWER_ALONE, LUNCH), 0, null, steps);
+
+    expect(drawing?.things.map(({ id }) => id)).toContain('answer:step:1');
   });
 });
 

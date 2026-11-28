@@ -98,9 +98,15 @@ function alone(answer: AnswerReply, index: number): AnswerReply {
 
 // Once 그대로 두기 left a Quest already set as it is (P04 ticket 20), its tag is the only mark beside the User's own
 // (`keptDrawingOf`); with no point, nothing is drawn.
-function keptDrawOf(answer: AnswerReply, index: number): ((view: LabelView | null) => AnswerDrawing) | null {
-  const base = keptDrawingOf(answer, index);
-  return base === null ? null : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view) ?? base;
+function keptDrawOf(
+  answer: AnswerReply,
+  index: number,
+  beside: readonly Draft[],
+): ((view: LabelView | null) => AnswerDrawing) | null {
+  const base = keptDrawingOf(answer, index, null, beside);
+  return base === null
+    ? null
+    : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view, beside) ?? base;
 }
 
 // The drawing of the Plan on screen: alone once made or changed, the kept Quest's tag once left as it is, else the
@@ -117,7 +123,7 @@ function drawOf(
     return null;
   }
   if (leftAlone) {
-    return keptDrawOf(answer, index);
+    return keptDrawOf(answer, index, beside);
   }
   const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
   return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways, beside);
