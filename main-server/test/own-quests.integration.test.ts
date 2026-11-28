@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -21,6 +22,9 @@ import { signInUser } from './friends.js';
 import { attend, connectToDatabase, getQuests, makeQuest, place132, storeEvent } from './quests.js';
 import { ANY_STRING, refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
+
+// Neither taken alone nor a seat's stay (P05 ticket 89).
+const NOT_ALONE = { takenAlone: false, seatStay: false };
 
 // A Quest with no room request and no room booked (P05 ticket 68).
 const NO_ROOMS = { roomRequest: null, bookedRoom: null };
@@ -84,7 +88,7 @@ describe('Making a Quest of one’s own', () => {
         },
       ],
       classQuest: false,
-      takenAlone: false,
+      ...NOT_ALONE,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
       ...NO_ROOMS,
