@@ -9,7 +9,7 @@
 
 import type { FrameKey } from './framed-camera';
 import { useEffect, useMemo } from 'react';
-import type { LibrarySpace, MapScene, ReplyStep } from '@/api/assistant-types';
+import type { AnswerReply, LibrarySpace, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
 import type { LabelView } from '@/features/assistant/answer-labels';
@@ -29,6 +29,8 @@ import { lookupTakesTheMap } from '@/features/assistant/step-choice';
 import type { MapAvatar, MapMarker, MarkerLook } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
+import { openMealMenu } from './answer/meal-card';
+import { isCardStep, type StepPress, stepPressOf } from './step-press';
 import { useFadedFaces } from './use-answer-faces';
 import { bookingKept } from './library/booking-kept';
 import {
@@ -123,12 +125,6 @@ function useSceneMap(
   return { contents: { markers, lines, avatars }, onPress, ...ANSWER_LIMITS };
 }
 
-// Whether a step is the booking whose card is on screen, by the card the step shows: a refused booking beside it keeps
-// its own title (PR 462's review).
-function isCardStep(step: ReplyStep, key: string | null): boolean {
-  return key !== null && step.shows?.kind === 'card' && step.shows.key === key;
-}
-
 // What the steps' camera frames: the reply, the step chosen, and where each step is, which another plan of a step's
 // answer, or a recalculation that brings another place, moves (P03 ticket 21). A booking's time moves no step.
 function stepsFrame({ bubbleId, steps }: ShownSteps, active: number): FrameKey {
@@ -144,7 +140,7 @@ function stepsMade(
   shownSteps: ShownSteps,
   active: number,
   booking: { key: string | null; seat: string | null; space: LibrarySpace | null; booked: boolean },
-  position: LatLng | null,
+  { position, answer }: { position: LatLng | null; answer: AnswerReply | null },
 ): Made | null {
   const { steps } = shownSteps;
   const { key, seat, space, booked } = booking;
@@ -158,8 +154,8 @@ function stepsMade(
     return stepLine(step, card && (booked || index === active) ? seat : null, at, card && booked);
   });
   const titles = steps.map((step) => stepTitle(step, isCardStep(step, key) ? space : null));
-  // The step shown opens a card only when it is the booking on screen; another step's flag makes it the step shown.
-  const opens = steps.map((step, index) => index !== active || isCardStep(step, key));
+  // A flag's "›" says what a press on it does, by the rule the press itself follows (`stepPressOf`).
+  const opens = steps.map((step, index) => stepPressOf(step, index, { active, key, answer }) !== null);
   const setting = { ...BOOKING_SETTING, drafts: stepDrafts(steps, lines, titles, opens) };
   return {
     source: steps,
@@ -214,7 +210,12 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
     if (steps !== null && !lookupTurn) {
       const booked = done !== undefined;
       const stepSeat = booked ? (done.seatLabel ?? null) : seat;
-      return stepsMade(steps, activeStep, { key: booking?.card.key ?? null, seat: stepSeat, space, booked }, position);
+      return stepsMade(
+        steps,
+        activeStep,
+        { key: booking?.card.key ?? null, seat: stepSeat, space, booked },
+        { position, answer: chat.answer.answer },
+      );
     }
     if (proposal !== null) {
       const { latitude, longitude } = proposal.place;
@@ -254,7 +255,8 @@ export function useMadeSceneMap(
   useEffect(() => {
     tellWalk(walk);
   }, [walk, tellWalk]);
-  // A press on another step's flag makes it the step shown; one on the step shown opens its card when it is a booking.
+  // A press on a step's flag does what its "›" says (`stepPressOf`): another step's makes it the step shown; the step
+  // shown opens its card when it is the booking on screen, or what its answer's chosen place opens alone.
   // A booking alone takes a press as a meal's chosen place does: it raises the answer's card, and no card of its own
   // opens over the map (P01 ticket 10, the user's words).
   const onMark = (id: string, position: LatLng): void => {
@@ -270,11 +272,31 @@ export function useMadeSceneMap(
       chat.card.raise(false);
     } else if (number === null || step === undefined) {
       onFlag(id, position);
-    } else if (number - 1 !== chat.activeStep) {
-      chat.setActiveStep(number - 1);
-    } else if (isCardStep(step, chat.booking?.card.key ?? null)) {
-      onFlag(id, position);
+    } else {
+      const key = chat.booking?.card.key ?? null;
+      const press = stepPressOf(step, number - 1, { active: chat.activeStep, key, answer: chat.answer.answer });
+      pressStep(press, {
+        chat,
+        step: number - 1,
+        open: () => {
+          onFlag(id, position);
+        },
+      });
     }
   };
   return useSceneMap(made, map, room, everyday, me, onMark);
+}
+
+// A step's press, as `stepPressOf` says it.
+function pressStep(
+  press: StepPress | null,
+  { chat, step, open }: { chat: ChatSheetControl; step: number; open: () => void },
+): void {
+  if (press === 'choose') {
+    chat.setActiveStep(step);
+  } else if (press === 'card' || press === 'pick') {
+    open();
+  } else if (press === 'menu' && chat.answer.plan !== null) {
+    openMealMenu(chat, chat.answer.plan.id);
+  }
 }

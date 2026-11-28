@@ -158,7 +158,7 @@ describe('The seat booked from the steps of a seat and a meal', () => {
 
     await pressMarker(user, flag(2) ?? '');
     await pass(100);
-    expect(inFrame().getByTestId('plan-stepper')).toBeOnTheScreen();
+    expect(inFrame().getByTestId('meal-list')).toBeOnTheScreen();
   });
 
   it('goes on to the meal: ② makes its button the button, and ① gives the ticket’s back', async () => {
@@ -184,10 +184,11 @@ describe('The steps of a seat and a meal, changed on screen', () => {
     await pressMarker(user, flag(2) ?? '');
     await pass(100);
 
-    await user.press(within(inFrame().getByTestId('plan-stepper')).getByRole('button', { name: '다음 후보' }));
+    // The candidate is chosen in the meal's list, as a meal alone's is (P03 ticket 25).
+    await user.press(within(inFrame().getByTestId('meal-list')).getByTestId('meal-row-2'));
     await pass(300);
 
-    expect(flag(2)).toMatch(/^2 301동식당 · .*12:18–12:45$/u);
+    expect(flag(2)).toMatch(/^2 301동식당 › · .*12:18–12:45$/u);
     expect(screen.getByLabelText(/^2번 .*12:18–12:45$/u)).toBeVisible();
   });
 
