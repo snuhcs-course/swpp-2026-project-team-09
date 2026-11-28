@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import * as projection from '@/map/projection';
@@ -81,7 +82,7 @@ describe("a made Quest's card, opened again", () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
   });
 
-  it("shows the card after inviting on a press of the flag, with 민수 waiting and the Quest's step", async () => {
+  it('shows the card after inviting on a press of the flag, with 민수 waiting, and no row that repeats its line', async () => {
     const user = await openMain(KEPT_MADE);
 
     await pressMarker(user, FLAG);
@@ -89,7 +90,8 @@ describe("a made Quest's card, opened again", () => {
     expect(madeCard().getByText('민수 · 아직 안 봄')).toBeVisible();
     expect(madeCard().getByText('민수에게 점심 초대를 보냈어요')).toBeVisible();
     expect(madeCard().getByText('11/17(화) 12:15 302동식당 · 수락하면 알려 드려요')).toBeVisible();
-    expect(madeCard().getByText('302동식당에서 식사')).toBeVisible();
+    // The Quest's one step, "12:15 302동식당에서 식사", only says the line above again (P04 ticket 96).
+    expect(madeCard().queryByTestId('quest-steps')).toBeNull();
     expect(madeCard().getByRole('button', { name: '답 닫기' })).toBeEnabled();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
     expect(screen.queryByRole('tab', { name: '지도' })).toBeNull();
