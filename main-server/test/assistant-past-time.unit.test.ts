@@ -76,11 +76,14 @@ describe('The question back', () => {
   it('sends, for each button, the time named on the next day and today from now', () => {
     expect(namedTimeAsk('아침 7시')).toEqual({
       named: '아침 7시',
-      tomorrow: '내일 아침 7시로 해 줘',
-      today: '오늘 지금부터 해 줘',
+      question: '내일로 볼까요?',
+      offers: [
+        { kind: 'ask', label: '내일로', text: '내일 아침 7시로 해 줘' },
+        { kind: 'ask', label: '오늘 지금부터', text: '오늘 지금부터 해 줘' },
+      ],
     });
-    expect(namedTimeAsk('점심').tomorrow).toBe('내일 점심으로 해 줘');
-    expect(namedTimeAsk('07:00').tomorrow).toBe('내일 07:00으로 해 줘');
+    expect(namedTimeAsk('점심').offers[0]?.text).toBe('내일 점심으로 해 줘');
+    expect(namedTimeAsk('07:00').offers[0]?.text).toBe('내일 07:00으로 해 줘');
   });
 
   it('is asked once for the message, the first time that passed', () => {
@@ -97,33 +100,42 @@ describe('The question back', () => {
     });
   });
 
-  it('has no 오늘 지금부터 when nothing is left of today for it', () => {
+  it('has no button for today when nothing is left of today', () => {
     const presented = emptyPresented();
     askPast(presented, mealAsk('dinner', { laterToday: false }, []));
 
     expect(presented.asks).toEqual({
-      text: '오늘 저녁 시간은 지났어요. 내일로 볼까요?',
-      offers: [{ kind: 'ask', label: '내일로', text: '내일 저녁으로 해 줘' }],
+      text: '오늘 저녁 시간은 지났어요. 내일 저녁으로 볼까요?',
+      offers: [{ kind: 'ask', label: '내일 저녁으로', text: '내일 저녁으로 해 줘' }],
     });
   });
 });
 
-// The meal's own check, the one mechanism with the same buttons: lunch named at 15:00, a meal named none after dinner.
+// The meal's own check, the one mechanism and sentence shape: its buttons are the next meal today and the same meal
+// tomorrow, never 오늘 지금부터. Partitions: lunch named at 15:00, dinner named after it, a meal named none after dinner.
 describe("A meal's question back once it is over today", () => {
-  it('asks for tomorrow’s lunch or today from now, with the same Friends', () => {
-    expect(mealAsk('lunch', { laterToday: true }, ['민수'])).toEqual({
-      named: '점심 시간',
-      tomorrow: '민수와 내일 점심으로 해 줘',
-      today: '민수와 오늘 지금부터 해 줘',
-    });
+  it('asks for today’s dinner or tomorrow’s lunch, with the same Friends', () => {
+    const ask = mealAsk('lunch', { laterToday: true }, ['민수']);
+
+    expect(questionOf(ask)).toBe('오늘 점심 시간은 지났어요. 오늘 저녁이나 내일 점심으로 볼까요?');
+    expect(ask.offers).toEqual([
+      { kind: 'ask', label: '오늘 저녁으로', text: '민수와 오늘 저녁으로 해 줘' },
+      { kind: 'ask', label: '내일 점심으로', text: '민수와 내일 점심으로 해 줘' },
+    ]);
+  });
+
+  it('asks for tomorrow’s dinner alone once dinner is over', () => {
+    const ask = mealAsk('dinner', { laterToday: false }, []);
+
+    expect(questionOf(ask)).toBe('오늘 저녁 시간은 지났어요. 내일 저녁으로 볼까요?');
+    expect(ask.offers.map(({ label }) => label)).toEqual(['내일 저녁으로']);
   });
 
   it('asks for tomorrow’s lunch alone when the User named no meal and dinner is over', () => {
-    expect(mealAsk(undefined, { laterToday: false }, [])).toEqual({
-      named: '식사 시간',
-      tomorrow: '내일 점심으로 해 줘',
-      today: null,
-    });
+    const ask = mealAsk(undefined, { laterToday: false }, []);
+
+    expect(questionOf(ask)).toBe('오늘 식사 시간은 지났어요. 내일 점심으로 볼까요?');
+    expect(ask.offers).toEqual([{ kind: 'ask', label: '내일 점심으로', text: '내일 점심으로 해 줘' }]);
   });
 });
 
