@@ -1,7 +1,7 @@
 # 38: The main server keeps which Notifications are read, and the bell counts the unread
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Database: one migration (nullable `Notification.readAt`). Releases: a main server Release and an app OTA update.
