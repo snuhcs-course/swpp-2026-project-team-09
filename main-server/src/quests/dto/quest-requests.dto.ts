@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -61,7 +62,8 @@ export type SubQuestContentDto = z.infer<typeof subQuestContentSchema>;
 
 // A Quest of the User's own, without a Global Event. Left out, the capacity is 4, the Join Policy Closed and the
 // description empty. An Open or an Approval Quest is posted on a board and holds two or more, and a Closed one is on
-// none. The Assistant's Proposal runs this schema too, and gives the model these messages as they are.
+// none. `takenAlone` makes it a Quest of one's own with nobody in it, a to-do of the User's (P05 ticket 87): Closed, on
+// no board, for one. The Assistant's Proposal runs this schema too, and gives the model these messages as they are.
 export const makeQuestSchema = z
   .strictObject({
     title: titleSchema,
@@ -70,6 +72,15 @@ export const makeQuestSchema = z
     joinPolicy: z.enum(JoinPolicy).optional(),
     board: z.enum(QuestBoard).optional(),
     description: descriptionSchema.optional(),
+    takenAlone: z.boolean().optional(),
+  })
+  .refine(({ takenAlone, joinPolicy = JoinPolicy.closed }) => takenAlone !== true || joinPolicy === JoinPolicy.closed, {
+    path: ['board'],
+    message: 'A Quest taken alone is Closed and on no board',
+  })
+  .refine(({ takenAlone, capacity }) => takenAlone !== true || capacity === undefined || capacity === 1, {
+    path: ['capacity'],
+    message: 'A Quest taken alone has a capacity of 1',
   })
   .refine(({ joinPolicy = JoinPolicy.closed, board }) => (board === undefined) === (joinPolicy === JoinPolicy.closed), {
     path: ['board'],
