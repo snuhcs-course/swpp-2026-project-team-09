@@ -10,7 +10,7 @@ const clock = (minutes: number): string =>
   `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
 // The minute of the day in Korea at `now`.
-function minuteOfDay(now: Date): number {
+export function minuteOfDay(now: Date): number {
   const [hours = 0, minutes = 0] = koreaTime(now).slice(11, 16).split(':').map(Number);
   return hours * 60 + minutes;
 }

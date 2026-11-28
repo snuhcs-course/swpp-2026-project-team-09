@@ -17,13 +17,13 @@
 import { z } from 'zod';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
 import { type AnswerReply, type MealInput, type RequestContext } from '../dto/answer.dto.js';
-import { defineTool, type Presented, type Tool, type ToolContext } from '../feature.js';
+import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { presentAnswer, reviseAnswer, takeMap } from '../presented.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { mealByClock } from '../free-time/meal-fit.js';
 import { clockTime, dateInput, outOfReach } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
-import { mealAfter, nextMealOffer } from './meal-after-hours.js';
+import { type MealAsked, mealOverToday } from './meal-after-hours.js';
 import { PRICE_INPUTS, priceConditionOf } from './meal-price.js';
 import { type MealPlanService } from './meal-plan.service.js';
 import { addingWords, busyWords, invitedWords, plannedWords } from './meal-tool-words.js';
@@ -49,27 +49,15 @@ const BREAKFAST = 'Breakfast is not planned: say in one sentence that lunch and 
 
 const NOT_NOW = 'There is no time now when everyone can eat together; the app offers buttons to ease it.';
 
-const overToday = (words: string): string =>
-  `That meal is over for today. The app shows your sentence with one button, which plans ${words}. Say in one sentence that the meal is over and that the button plans ${words}; name no other button.`;
-
-// A Friend's name as the chips write it, without " · 출발지 모름" or " · 위치 모름".
-const friendNames = ({ chips }: AnswerReply): string[] =>
-  chips.flatMap(({ kind, text }) => (kind === 'person' ? [text.split(' · ')[0] ?? text] : []));
-
-// No plan: a meal over for today leaves the map and offers the next meal instead, and the model hears of buttons only
+// No plan: a meal over for today asks back or offers the next (meal-after-hours.ts), and the model hears of buttons only
 // when the answer carries some.
-function noneOf(
-  answer: AnswerReply,
-  input: MealInput,
-  { now, context, presented, posted }: { now: Date; context: RequestContext; presented: Presented; posted: boolean },
-): object {
+function noneOf(answer: AnswerReply, input: MealInput, asked: MealAsked & { posted: boolean }): object {
   const relax = answer.noPlan?.relax ?? [];
-  const next = relax.length === 0 ? mealAfter(input, now) : null;
-  if (next !== null) {
-    withdrawAnswer(presented, input, context);
-    presented.offers = [nextMealOffer(next, friendNames(answer))];
-    return { result: 'none', meal: input.meal, reason: overToday(next.words) };
+  const over = relax.length === 0 ? mealOverToday(answer, input, asked) : null;
+  if (over !== null) {
+    return over;
   }
+  const { posted } = asked;
   const reason = answer.noPlan?.reason ?? 'no-fit';
   if (!posted) {
     return { result: 'none', meal: input.meal, reason: NOT_POSTED };
@@ -250,7 +238,12 @@ function mealInputOf(
 async function plannedFor(
   plans: Pick<MealPlanService, 'asked' | 'planned'>,
   chained: MealInput,
-  { toolContext, planInput, kind }: { toolContext: ToolContext; planInput: MealInput; kind: CuisineWord | null },
+  {
+    toolContext,
+    planInput,
+    kind,
+    named,
+  }: { toolContext: ToolContext; planInput: MealInput; kind: CuisineWord | null; named: boolean },
 ): Promise<object> {
   const { userId, now, context, presented } = toolContext;
   const { location, locationMissing } = context;
@@ -265,7 +258,7 @@ async function plannedFor(
   presentAnswer(presented, answer);
   const adding = addingWords(answer, asked.alreadyIn);
   if (answer.noPlan !== null) {
-    return { ...noneOf(answer, planInput, { now, context, presented, posted }), ...busyWords(busy), ...adding };
+    return { ...noneOf(answer, planInput, { now, named, context, presented, posted }), ...busyWords(busy), ...adding };
   }
   return { ...plannedWords(answer, served, { meal: planInput.meal, kind }), ...adding };
 }
@@ -313,6 +306,7 @@ export function planMeal(plans: MealPlans, startAfter: StartAfter = (asked) => P
         toolContext,
         planInput,
         kind,
+        named: args.meal !== undefined,
       });
       if (pickPeople === true) {
         reviseAnswer(presented, withPicking);

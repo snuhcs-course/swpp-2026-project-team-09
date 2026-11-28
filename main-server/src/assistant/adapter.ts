@@ -19,6 +19,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -39,9 +40,8 @@ import { withApprovalLine } from './approval-line.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
 import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
-import { keptRefusal, lookupBeside } from './refusals/refusals.js';
-import { saidText, warnsOfNoText, wordlessText } from './wordless-reply.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
+import { replyOf } from './run-reply.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
 // feature over it. Tools and features do not import the SDK, so that moving to another library replaces this file.
@@ -337,32 +337,6 @@ function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observe
   const { text, added } = withApprovalLine(reply.text, reply.cards, userTexts);
   observer?.replied({ modelText: reply.text, approvalLine: added });
   return { ...reply, text };
-}
-
-// The reply of a run that ended, once the feature has changed what it presented: the model's text, a refusal's lines
-// without any, or what a reply with no words says (wordlessText).
-async function replyOf(
-  text: string,
-  finishReason: string,
-  feature: Feature,
-  context: ToolContext,
-): Promise<FeatureReply | null> {
-  await feature.afterRun?.(context);
-  const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
-  presented.refusal = keptRefusal(presented);
-  presented.lookup = lookupBeside(presented);
-  if (presented.answer !== null || presented.lookup !== null || presented.refusal !== null) {
-    delete presented.offers;
-  }
-  const said = saidText(text, presented);
-  if (said !== '') {
-    return { ...presented, text: said, noTextFinishReason: null };
-  }
-  const wordless = wordlessText(presented);
-  if (wordless === null) {
-    return null;
-  }
-  return { ...presented, text: wordless, noTextFinishReason: warnsOfNoText(presented, wordless) ? finishReason : null };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an

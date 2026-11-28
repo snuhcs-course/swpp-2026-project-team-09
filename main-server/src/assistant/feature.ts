@@ -25,7 +25,7 @@ import {
   type ReplyStep,
   type RequestContext,
 } from './dto/answer.dto.js';
-import { type ReplyOffer } from './dto/assistant-messages.dto.js';
+import { type AskOffer, type ReplyOffer } from './dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
 import { type FoundIds } from './found-ids.js';
@@ -159,6 +159,9 @@ export interface Presented {
   empties?: true;
   // The conversation's Classes left out, once a tool of the run left one out or put one back (P05 ticket 70).
   leftOut?: LeftOutClass[];
+  // The question back of a time of today the User named that has passed, and its buttons (P05 ticket 80): the reply is
+  // they alone and draws nothing. Only `past-time.ts` writes it.
+  asks?: { text: string; offers: AskOffer[] };
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.

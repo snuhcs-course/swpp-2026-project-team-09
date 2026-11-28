@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -100,8 +101,10 @@ describe('A start the User names before dinner is served', () => {
   });
 });
 
+// Lunch being over, the reply asks back as for any time of today that has passed (P05 ticket 80): tomorrow's lunch, or
+// today from now, which plans dinner. It offered "오늘 저녁 보기" alone before.
 describe('A lunch the User names at 15:00', () => {
-  it('is planned as asked and, lunch being over, offers today’s dinner instead of an answer (P01-23)', async () => {
+  it('is planned as asked and, lunch being over, asks back instead of an answer (P01-23)', async () => {
     const date = '2087-10-21';
     const friend = await askedAtThree(date);
 
@@ -111,10 +114,14 @@ describe('A lunch the User names at 15:00', () => {
       '오늘 점심 민수랑 먹자',
     );
 
-    expect(stage.model.toolResults().at(-1)).toMatchObject({ result: 'none', meal: 'lunch' });
+    expect(stage.model.toolResults().at(-1)).toMatchObject({ result: 'asked', meal: 'lunch' });
     expect(response.body).toMatchObject({
+      text: '오늘 점심 시간은 지났어요. 내일로 볼까요?',
       answer: null,
-      offers: [{ kind: 'ask', label: '오늘 저녁 보기', text: '민수와 오늘 저녁 어디서 먹을까?' }],
+      offers: [
+        { kind: 'ask', label: '내일로', text: '민수와 내일 점심으로 해 줘' },
+        { kind: 'ask', label: '오늘 지금부터', text: '민수와 오늘 지금부터 해 줘' },
+      ],
     });
   });
 });

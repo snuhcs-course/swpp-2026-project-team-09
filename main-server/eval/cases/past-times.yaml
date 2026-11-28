@@ -1,0 +1,144 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-28  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A time of today the User named that has passed is asked back before anything is planned (P05 ticket 80): at 11:13
+# "아침 7시에 도서관 갔다가 점심" was planned at once for tomorrow. askPastTime puts the question and its two buttons,
+# 내일로 and 오늘 지금부터, under the reply. A bare hour keeps the Bare hours line, and a time still to come today, a
+# request with no time, or another day named asks nothing. The answers to the question plan the message before it. The
+# P6 world from the app that says `study-plan` (`capabilities: study-app`) on Wednesday 2026-11-04, and the P4 world
+# from the current app on Monday 2026-11-02. Written, and not run.
+
+- id: past-times-library-then-lunch
+  category: past-times
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T11:13:00+09:00'
+  repeat: 3
+  turns:
+    - user: 아침 7시에 도서관 갔다가 점심
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [askPastTime]
+      forbidden: [planStudy, planMeal, proposeLibraryBooking, findLibraryFreeSlots]
+    args:
+      askPastTime: { at: '07:00' }
+
+- id: past-times-lunch-after-lunch
+  category: past-times
+  world: p4-answer
+  capabilities: app
+  now: '2026-11-02T15:00:00+09:00'
+  repeat: 3
+  turns:
+    - user: 점심 먹자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [askPastTime]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest]
+    args:
+      askPastTime: { part: lunch }
+
+- id: past-times-bare-hour-is-ahead
+  category: past-times
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T11:13:00+09:00'
+  repeat: 3
+  turns:
+    - user: 7시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [askPastTime]
+    args:
+      planStudy: { date: '2026-11-04', from: '19:00' }
+
+- id: past-times-evening-is-ahead
+  category: past-times
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T11:13:00+09:00'
+  repeat: 3
+  turns:
+    - user: 저녁 7시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [askPastTime]
+    args:
+      planStudy: { date: '2026-11-04', from: '19:00' }
+
+- id: past-times-another-day-named
+  category: past-times
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T11:13:00+09:00'
+  repeat: 3
+  turns:
+    - user: 내일 아침 7시에 공부할거야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [askPastTime]
+    args:
+      planStudy: { date: '2026-11-05', from: '07:00' }
+
+- id: past-times-no-time-is-now
+  category: past-times
+  world: p4-answer
+  capabilities: app
+  now: '2026-11-02T11:13:00+09:00'
+  repeat: 3
+  turns:
+    - user: 배고파
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [askPastTime]
+
+- id: past-times-answered-tomorrow
+  category: past-times
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T11:13:00+09:00'
+  repeat: 3
+  turns:
+    - user: 아침 7시에 공부할거야
+    - assistant:
+        text: 오늘 아침 7시는 지났어요. 내일로 볼까요?
+    - user: 내일 아침 7시로 해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [askPastTime]
+    args:
+      planStudy: { date: '2026-11-05', from: '07:00' }
+
+- id: past-times-answered-today-from-now
+  category: past-times
+  world: p6-answer
+  capabilities: study-app
+  now: '2026-11-04T11:14:00+09:00'
+  repeat: 3
+  turns:
+    - user: 아침 7시에 공부할거야
+    - assistant:
+        text: 오늘 아침 7시는 지났어요. 내일로 볼까요?
+    - user: 오늘 지금부터 해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [askPastTime]
+    args:
+      planStudy: { date: '2026-11-04' }
