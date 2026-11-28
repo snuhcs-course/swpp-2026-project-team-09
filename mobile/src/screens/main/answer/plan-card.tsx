@@ -28,6 +28,7 @@ import { CardNote } from './card-note';
 import { MealList, mealCard } from './meal-list';
 import { MealMenu } from './meal-menu';
 import { mealWordsOf } from './meal-words';
+import { recalculatedWords } from '@/features/assistant/recalculated-words';
 import { OfferButtons } from './offer-buttons';
 import { PlanStepper } from './plan-stepper';
 import { KindChips } from './kind-chips';
@@ -227,6 +228,12 @@ function MealSheet({
   return <MealList answer={answer} busy={busy} shown={shown} />;
 }
 
+// The reply's words over an answer of any other kind, and once it is recalculated the words every kind takes then
+// (P04 ticket 97); a reply without words that was not recalculated keeps its lines alone.
+function wordsOf(said: string, shown: ShownAnswer): string {
+  return shown.answer !== null && shown.answer !== shown.source ? recalculatedWords(said, shown) : said;
+}
+
 export function PlanCard(props: PlanCardProps): ReactElement {
   const { shown, answer, invitation, over = [], onClose, focus, said = '' } = props;
   const busy = shown.recalculating || invitation.sending || invitation.changing;
@@ -235,7 +242,11 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const group = shown.plan?.study?.group;
   return (
     <View style={styles.plan}>
-      <Said lines={linesOf(shown, answer, over)} refusal={over.length} said={meal || group !== undefined ? '' : said} />
+      <Said
+        lines={linesOf(shown, answer, over)}
+        refusal={over.length}
+        said={meal || group !== undefined ? '' : wordsOf(said, shown)}
+      />
       {meal ? <MealBody {...props} busy={busy} /> : null}
       {/* A meal with no Plan keeps its conditions, each with its ✕ (P01 ticket 31). */}
       {shown.plan === null && answer.input.kind === 'meal' ? (

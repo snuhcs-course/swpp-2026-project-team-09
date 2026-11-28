@@ -5,6 +5,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -149,7 +150,8 @@ describe('the words over the list once something else is chosen', () => {
     expect(screen.getByTestId('meal-words')).toHaveTextContent(SENTENCE);
   });
 
-  it('are the chosen place’s line once the answer is recalculated', async () => {
+  // P04 ticket 97: a plain sentence, never the list's row again ("301동식당 · 11:50 · 걸음 …"), which the user found stiff.
+  it('are one plain sentence of the new first place once the answer is recalculated', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY, () => layStage(390, 760));
 
@@ -157,7 +159,7 @@ describe('the words over the list once something else is chosen', () => {
     await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 
-    expect(screen.getByTestId('meal-words')).toHaveTextContent(/^301동식당 · \d{2}:\d{2} · /u);
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(/^\d{2}:\d{2}에 301동식당을 추천해요\.$/u);
   });
 });
 
