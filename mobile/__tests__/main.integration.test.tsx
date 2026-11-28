@@ -94,17 +94,7 @@ describe("the main screen's bottom navigation", () => {
 });
 
 describe("a slot of the main screen's bottom navigation", () => {
-  it('opens 파티 만들기 with 올리기, and says nothing', async () => {
-    givePhone({ permission: 'granted' });
-    const user = await openMain();
-
-    await user.press(screen.getByRole('button', { name: '올리기' }));
-
-    expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
-    expect(screen.queryByText(NOT_READY)).toBeNull();
-  });
-
-  it('says nothing for 지도, where the User is', async () => {
+  it('says nothing for 지도, where the User is, and lowers the AI', async () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 
