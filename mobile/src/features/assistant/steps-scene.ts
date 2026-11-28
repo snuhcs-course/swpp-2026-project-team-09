@@ -44,6 +44,9 @@ export interface StepsNow {
   plan: Plan | null;
   index: number;
   card: { key: string; slot: Slot } | null;
+  // When the steps name their answers by key (P03 ticket 21): each step's answer as on screen, its Plan, and whether
+  // either moved from the reply's. Left out, the one answer above stands for every answer step.
+  answerOf?: (key: string) => { answer: AnswerReply; plan: Plan | null; moved: boolean } | null;
 }
 
 // The answer's step at the Plan on screen, as the main server makes it of a Plan (`answerStep`), or not done with the
@@ -67,12 +70,17 @@ function slotStretch({ date, start, minutes }: Slot): Pick<ReplyStep, 'startAt' 
 // The steps as they stand now (P10 ticket 29). The reply's steps are the main server's of the moment it answered: the
 // answer's step is of the reply's first Plan, and a booking's of the time its card offered. Once the Plan on screen is
 // another, a candidate browsed or an answer recalculated by a band moved or Friends added, the answer's step is drawn at
-// it; a booking's step is drawn at the time its card holds. Drawn over the reply's steps until steps carry their own
-// answers.
+// it; a booking's step is drawn at the time its card holds. Steps that name their answers by key are each drawn at their
+// own answer (P03 ticket 21).
 export function liveStepsOf(shown: ShownSteps, now: StepsNow): ShownSteps {
-  const { reply, answer, plan, index, card } = now;
+  const { reply, answer, plan, index, card, answerOf } = now;
   const moved = answer !== null && (answer !== reply || index !== 0);
   const steps = shown.steps.map((step) => {
+    const key = step.shows?.kind === 'answer' ? step.shows.key : undefined;
+    if (key !== undefined && answerOf !== undefined) {
+      const own = answerOf(key);
+      return own?.moved === true ? answerStepAt(step, own.answer, own.plan) : step;
+    }
     if (step.shows?.kind === 'answer') {
       return moved ? answerStepAt(step, answer, plan) : step;
     }

@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
@@ -25,9 +26,22 @@ interface Shown {
   index: number;
 }
 
+// The answer of the step chosen among several (P03 ticket 21): its key, the reply's answer of it (`source`), the answer
+// on screen for it, recalculated since, and the plan the User was last on in it.
+export interface ChosenAnswer {
+  key: string;
+  source: AnswerReply;
+  answer: AnswerReply;
+  // The plan the User was last on in it; null for one not browsed since the reply that gave it, which opens as that
+  // reply opens it (TaeHyun79's review of #725).
+  index: number | null;
+}
+
 export interface AnswerState extends Shown {
   // The id of the conversation's last reply bubble, or null without one.
   replyId: number | null;
+  // The key of the step chosen whose answer is on screen; null for the reply's one answer.
+  key: string | null;
   source: AnswerReply | null;
   basisOpen: boolean;
   adding: boolean;
@@ -54,16 +68,21 @@ export type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 
 // A new reply's answer on screen: at its first Plan, at a menu question's Restaurant with its menu open (P04 ticket
 // 72), or at the plan the reply chose in words, such as for a dish picked from the menus (P05 ticket 51).
-function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
-  const given = reply?.answer ?? null;
+// The answer of a step chosen is its own, at the plan the User was last on in it (P03 ticket 21), else as above.
+function fresh(reply: ChatBubble | undefined, epoch: number, step: ChosenAnswer | null = null): AnswerState {
+  const given = step?.source ?? reply?.answer ?? null;
   const source = given === null ? null : offeredAnswer(given);
+  const answer = step === null ? source : offeredAnswer(step.answer);
   const opened = openedIndex(source);
   const chosen = source?.plans.findIndex(({ id }) => id === reply?.select) ?? -1;
-  const index = Math.max(opened >= 0 ? opened : chosen, 0);
+  const last = Math.max((answer?.plans.length ?? 0) - 1, 0);
+  const own = step === null || step.index === null;
+  const index = own ? Math.max(opened >= 0 ? opened : chosen, 0) : Math.min(step.index ?? 0, last);
   return {
     replyId: reply?.id ?? null,
+    key: step?.key ?? null,
     source,
-    answer: source,
+    answer,
     index,
     basisOpen: opensBasis(source?.plans[index]),
     adding: false,
@@ -75,7 +94,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     recalculating: false,
     pendingAdd: null,
     moving: null,
-    menu: opened >= 0,
+    menu: own && opened >= 0,
     epoch,
     newest: reply?.id ?? 0,
   };
@@ -119,8 +138,12 @@ export function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | u
 }
 
 // The state the hook starts with, the conversation's last reply shown as it is: it opens no picking by itself.
-export function firstState(reply: ChatBubble | undefined, bubbles: readonly ChatBubble[]): AnswerState {
-  return { ...fresh(reply, 0), newest: newestOf(bubbles) };
+export function firstState(
+  reply: ChatBubble | undefined,
+  bubbles: readonly ChatBubble[],
+  step: ChosenAnswer | null = null,
+): AnswerState {
+  return { ...fresh(reply, 0, step), newest: newestOf(bubbles) };
 }
 
 // A new reply on screen, which opens picking when it has just arrived and asks for it (P04 ticket 73).
@@ -128,6 +151,7 @@ export function arrivedState(
   reply: ChatBubble | undefined,
   last: AnswerState,
   bubbles: readonly ChatBubble[],
+  step: ChosenAnswer | null = null,
 ): AnswerState {
-  return openedIfArrived(fresh(reply, last.epoch + 1), { replyId: reply?.id, seen: last.newest, bubbles });
+  return openedIfArrived(fresh(reply, last.epoch + 1, step), { replyId: reply?.id, seen: last.newest, bubbles });
 }

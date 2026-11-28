@@ -13,6 +13,7 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
+import { holdsAnswer } from '@/features/assistant/answer-holder';
 import { fromCardReplyOf } from '@/features/assistant/app-turn';
 import { modelWordsOf } from '@/features/assistant/model-words';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
@@ -35,7 +36,6 @@ import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 import type { TellAct } from '../library/act-stage';
 import type { LibraryCardActions } from '../library/use-library-call';
-import { offeredAnswer } from '@/features/assistant/meal-offered';
 import { SENTENCE } from './line-types';
 import { useSlotHeld } from './sentence-slot';
 
@@ -62,8 +62,7 @@ function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
 
 export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
   const { shown, invitation } = onScreen;
-  const { answer } = bubble;
-  const fromReply = answer !== undefined && answer !== null && offeredAnswer(answer) === shown.source;
+  const fromReply = holdsAnswer(bubble, shown.source);
   // A plan chosen in words is the plan's card, opened at its Restaurant (P05 ticket 56).
   const chosen = bubble.select !== undefined && shown.answer?.plans.some(({ id }) => id === bubble.select) === true;
   if ((fromReply || keepsShown(bubble) || chosen) && shown.answer !== null) {
