@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -20,6 +21,7 @@ import {
   FullScreenPanel,
   Icon,
   LoadingState,
+  NO_RESULTS,
   RoundIcon,
   SearchField,
   SectionHeader,
@@ -28,17 +30,12 @@ import {
   useToast,
 } from '@/design-system';
 import type { FriendView } from '@/features/friends/adapter';
+import { matchesFriend } from '@/features/friends/matches-friend';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { useFriendRequests } from '@/features/friends/use-friend-requests';
 import { useFriends } from '@/features/friends/use-friends';
 import { EndFriendship } from './end-friendship';
 import { NO_ANSWER } from './words';
-
-// A search by name and department, where spaces do not count, as in the frame.
-function found(friend: FriendView, query: string): boolean {
-  const wanted = query.replaceAll(/\s/gu, '');
-  return `${friend.name}${friend.department}`.replaceAll(/\s/gu, '').includes(wanted);
-}
 
 // The rows at the top of the list: 친구 추가 with the navy round plus, and the entry to 친구 요청.
 function Entries({ received }: { received: number | undefined }): ReactElement {
@@ -99,12 +96,12 @@ interface ListProps {
 }
 
 function Friends({ friends, query, onPress }: ListProps): ReactElement {
-  const shown = friends.filter((friend) => found(friend, query));
+  const shown = friends.filter((friend) => matchesFriend(friend, query));
   return (
     <>
       <SectionHeader>{`친구 ${friends.length}`}</SectionHeader>
       {friends.length === 0 ? <EmptyState words="아직 친구가 없어요" /> : null}
-      {friends.length > 0 && shown.length === 0 ? <EmptyState words="결과 없음" /> : null}
+      {friends.length > 0 && shown.length === 0 ? <EmptyState words={NO_RESULTS} /> : null}
       {shown.map((friend) => (
         <FriendRow
           friend={friend}

@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { RequestContext } from '@/api/assistant-types';
 import type { MentionedContext, Mention } from '@/api/mention-types';
+import { matchesWords } from '@/features/search/matches-words';
 
 // A Friend picked with "@" in the AI input, where "@이름" stands in the message: from `start` to `end`, "@" included and
 // the space after it not.
@@ -52,10 +54,14 @@ export function mentionQuery(state: MentionedText, cursor: number): { start: num
   return { start, query };
 }
 
-// The Friends whose name holds the words, in their order, ignoring case. Every Friend for no words.
+// The Friends whose name holds the words, in their order, as every search matches them. Every Friend for no words. A
+// space after the words ends them: then the name must hold them as typed, so that '민수 ' finds no 김민수.
 export function friendsMatching<Friend extends { name: string }>(friends: readonly Friend[], query: string): Friend[] {
-  const words = query.toLowerCase();
-  return friends.filter(({ name }) => name.toLowerCase().includes(words));
+  if (/\s$/u.test(query)) {
+    const words = query.toLowerCase();
+    return friends.filter(({ name }) => name.toLowerCase().includes(words));
+  }
+  return friends.filter(({ name }) => matchesWords(query, [name]));
 }
 
 // The words with "@이름 " in place of the "@" and the words being typed, and where the cursor goes: after the space.

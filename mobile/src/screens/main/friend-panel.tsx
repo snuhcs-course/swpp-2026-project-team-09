@@ -8,6 +8,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -28,6 +29,7 @@ import {
   IconButton,
   ListRow,
   LoadingState,
+  NO_RESULTS,
   radius,
   SearchField,
   SectionHeader,
@@ -37,6 +39,7 @@ import {
   text,
 } from '@/design-system';
 import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
+import { matchesFriend } from '@/features/friends/matches-friend';
 import { profileLabel } from '@/features/friends/profile';
 import { useFriends } from '@/features/friends/use-friends';
 import { useHideTabBarOnMain } from '../shell/main-tab-bar';
@@ -50,12 +53,6 @@ interface FriendPanelProps {
   onClose: () => void;
   // A press on a Friend's row.
   onShow: (friend: FriendView) => void;
-}
-
-// A search by name and department, where spaces do not count, as in the frame.
-function found(friend: FriendView, query: string): boolean {
-  const wanted = query.replaceAll(/\s/gu, '');
-  return `${friend.name}${friend.department}`.replaceAll(/\s/gu, '').includes(wanted);
 }
 
 function FriendRow({ friend, onMeet, onShow }: { friend: FriendView } & Omit<GroupsProps, 'friends'>): ReactElement {
@@ -101,7 +98,7 @@ interface GroupsProps {
 
 function Groups({ friends, onMeet, onShow }: GroupsProps): ReactElement {
   if (friends.length === 0) {
-    return <EmptyState words="결과 없음" />;
+    return <EmptyState words={NO_RESULTS} />;
   }
   return (
     <>
@@ -195,7 +192,9 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
     onClose();
     router.push({ pathname: '/party-form', params: { friendId: id } });
   };
-  const shown = friends?.filter((friend) => (filter === 'all' || friend.presence === filter) && found(friend, query));
+  const shown = friends?.filter(
+    (friend) => (filter === 'all' || friend.presence === filter) && matchesFriend(friend, query),
+  );
   useShownOnMain(open);
   return (
     <SidePanel glass label="친구" onClose={onClose} open={open}>

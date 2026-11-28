@@ -4,12 +4,14 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Friend } from '@/api/types';
-import { Avatar, Chip, color, font, Icon, radius, SearchField, space } from '@/design-system';
+import { Avatar, Chip, color, EmptyState, font, Icon, NO_RESULTS, radius, SearchField, space } from '@/design-system';
+import { matchesFriend } from '@/features/friends/matches-friend';
 import { FieldHead } from './field-head';
 
 interface FriendPickerProps {
@@ -19,11 +21,6 @@ interface FriendPickerProps {
   most: number;
   hint: string;
   onChosen: (ids: string[]) => void;
-}
-
-export function matchesFriend({ name, department }: Friend, search: string): boolean {
-  const words = search.replaceAll(/\s/gu, '');
-  return words === '' || name.includes(words) || department.replaceAll(/\s/gu, '').includes(words);
 }
 
 interface FriendRowProps {
@@ -60,6 +57,7 @@ export function FriendRow({ friend, on, disabled, onPress }: FriendRowProps): Re
 export function FriendPicker({ friends, chosen, most, hint, onChosen }: FriendPickerProps): ReactElement {
   const [search, setSearch] = useState('');
   const full = chosen.length >= most;
+  const found = friends.filter((friend) => matchesFriend(friend, search));
   return (
     <View style={styles.field}>
       <FieldHead hint={hint} icon="personPlus" label="친구 초대" />
@@ -82,22 +80,21 @@ export function FriendPicker({ friends, chosen, most, hint, onChosen }: FriendPi
       )}
       <SearchField label="친구 검색" onChangeText={setSearch} placeholder="친구 검색" value={search} />
       <View style={styles.list}>
-        {friends
-          .filter((friend) => matchesFriend(friend, search))
-          .map((friend) => {
-            const on = chosen.includes(friend.id);
-            return (
-              <FriendRow
-                disabled={!on && full}
-                friend={friend}
-                key={friend.id}
-                on={on}
-                onPress={() => {
-                  onChosen(on ? chosen.filter((one) => one !== friend.id) : [...chosen, friend.id]);
-                }}
-              />
-            );
-          })}
+        {found.length === 0 && friends.length > 0 ? <EmptyState words={NO_RESULTS} /> : null}
+        {found.map((friend) => {
+          const on = chosen.includes(friend.id);
+          return (
+            <FriendRow
+              disabled={!on && full}
+              friend={friend}
+              key={friend.id}
+              on={on}
+              onPress={() => {
+                onChosen(on ? chosen.filter((one) => one !== friend.id) : [...chosen, friend.id]);
+              }}
+            />
+          );
+        })}
       </View>
     </View>
   );

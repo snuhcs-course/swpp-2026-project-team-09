@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { font } from '@/design-system';
@@ -161,6 +162,20 @@ describe("the friend panel's search and chips", () => {
     expect(screen.queryByRole('button', { name: /^공강/u })).toBeNull();
     expect(screen.queryByRole('button', { name: /^수업 중/u })).toBeNull();
     expect(screen.queryByRole('button', { name: /^이동 중/u })).toBeNull();
+  });
+});
+
+describe("the friend panel's search of Hangul being typed", () => {
+  // The phone's keyboard gives '커' before '컴', and 'ㅋ' before both (reported on 2026-11-28 with 'ㅋㅓㅁ' and 결과 없음).
+  it('narrows while a Hangul syllable is still being composed, and by first consonants', async () => {
+    const user = await openPanel();
+
+    await user.type(screen.getByLabelText(SEARCH), '커');
+    expect(shownFriends()).toEqual(['김민준', '정하은']);
+
+    await user.press(screen.getByRole('button', { name: '지우기' }));
+    await user.type(screen.getByLabelText(SEARCH), 'ㅋㅍㅌ');
+    expect(shownFriends()).toEqual(['김민준', '정하은']);
   });
 });
 

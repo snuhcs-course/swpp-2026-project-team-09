@@ -5,24 +5,21 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Board, TimetableClass, Weekday } from '@/api/types';
+import { NO_RESULTS } from '@/design-system';
+import { matchesWords } from '@/features/search/matches-words';
 import { koreaClock, koreaDaysAfter, koreaMinutes, koreaWeekday, koreaWeekdayName } from '@/korea-time';
 import { boardName } from './boards';
 import type { PostView } from './posts';
 
 // 찾기's search and order, and the reasons 파티 모집글 gives for recommending a post.
 
-function squeezed(words: string): string {
-  return words.replaceAll(/\s/gu, '');
-}
-
 // Whether the post's title, text or place hold the words, spaces and every '#' left out.
 export function matchesSearch(post: PostView, search: string): boolean {
-  const words = squeezed(search).replaceAll('#', '');
-  const where = squeezed(`${post.title}${post.description}${post.place}`);
-  return words === '' || where.includes(words);
+  return matchesWords(search, [post.title, post.description, post.place]);
 }
 
 // 모집 중인 파티: the posts the User did not hide that match the search, in the order given.
@@ -44,7 +41,7 @@ export function postsOnBoard(posts: readonly PostView[], board: BoardFilter): Po
 // What 찾기 says when nothing is left: "식사 게시판에 모집 중인 파티가 없어요" for a board, "결과 없음" for 전체 and a
 // search.
 export function noPostsWords(board: BoardFilter): string {
-  return board === 'all' ? '결과 없음' : `${boardName(board)}에 모집 중인 파티가 없어요`;
+  return board === 'all' ? NO_RESULTS : `${boardName(board)}에 모집 중인 파티가 없어요`;
 }
 
 export interface Reasons {

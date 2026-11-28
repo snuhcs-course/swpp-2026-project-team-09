@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, Ref } from 'react';
-import { StyleSheet, Text, TextInput, type TextStyle, View } from 'react-native';
-import { Avatar, color, font, Icon, NOT_AUTOFILLED, space } from '@/design-system';
+import { StyleSheet, Text, type TextStyle, View } from 'react-native';
+import { Avatar, color, font, Icon, space, TextEntry } from '@/design-system';
 import { MarkLine, markStyles, Required } from './mark';
 
 // The top of the 파티 form, as its 모집글 will show: the title and the text, typed where they will stand, and the poster
@@ -48,8 +49,7 @@ export function TitleInPlace({ value, onChange, marked, frameRef }: InPlaceProps
         <View style={styles.line}>
           <View style={styles.grow}>
             {value === '' ? <Placeholder required style={styles.title} words="제목을 입력하세요" /> : null}
-            <TextInput
-              {...NOT_AUTOFILLED}
+            <TextEntry
               accessibilityLabel="제목"
               maxLength={TITLE_MOST}
               onChangeText={onChange}
@@ -83,8 +83,7 @@ export function TextInPlace({
             {value === '' ? (
               <Placeholder required={required} style={styles.text} words="어떤 파티인지 소개해 주세요" />
             ) : null}
-            <TextInput
-              {...NOT_AUTOFILLED}
+            <TextEntry
               accessibilityLabel="본문"
               maxLength={TEXT_MOST}
               multiline

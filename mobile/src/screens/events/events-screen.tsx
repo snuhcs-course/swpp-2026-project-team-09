@@ -9,11 +9,12 @@
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { color, EmptyState, ErrorState, IconButton, LoadingState, space } from '@/design-system';
+import { color, EmptyState, ErrorState, IconButton, LoadingState, NO_RESULTS, space } from '@/design-system';
 import { type EventFilter, type EventSources, type EventView, toEventViews } from '@/features/events/adapter';
 import type { Quest } from '@/api/types';
 import { useEventSources } from '@/features/events/use-events';
@@ -43,7 +44,7 @@ function List({ sources, filter, search, focused, scroll, onCardAt, onOpen, onPa
     );
   }
   if (views.length === 0) {
-    return <EmptyState words={search.trim() === '' ? '해당하는 행사가 없어요' : '검색 결과가 없어요'} />;
+    return <EmptyState words={search.trim() === '' ? '해당하는 행사가 없어요' : NO_RESULTS} />;
   }
   return (
     <ScrollView contentContainerStyle={styles.list} ref={scroll}>
