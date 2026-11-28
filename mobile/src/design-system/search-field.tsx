@@ -21,6 +21,8 @@ interface SearchFieldProps {
   label: string;
   // What a screen reader says for ✕: "지우기" unless given.
   clearLabel?: string;
+  // The field takes the focus when it appears, so that the keyboard rises at once: a search opened by a press.
+  autoFocus?: boolean;
 }
 
 // What a list narrowed by a search says when nothing is left.
@@ -34,12 +36,14 @@ export function SearchField({
   placeholder,
   label,
   clearLabel = '지우기',
+  autoFocus = false,
 }: SearchFieldProps): ReactElement {
   return (
     <View style={styles.field}>
       <Icon color={color.inkMuted} name="search" size={18} />
       <TextEntry
         accessibilityLabel={label}
+        autoFocus={autoFocus}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={color.inkSubtle}

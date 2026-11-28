@@ -451,7 +451,13 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   that wait for the User and concern 파티, every row but the kept Notifications and the Friend Requests. While the
   lists load, and when every one failed, there is no badge.
 - 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
-  파티 has "+ 만들기" and the tabs 찾기, 내 파티 and 초대; its address names the tab (`/party?tab=invites`). 내 정보's
+  A tab with a search gives `TabScreen` its `search`: the magnifier at the bar's top right, which turns the title's
+  row into the field, focused at once so the keyboard rises, and ✕ "검색 닫기"; Android's back closes an open search
+  before it leaves the tab. The words narrow the list together with the tab's filters. 파티 has the search and the
+  tabs 찾기, 내 파티 and 초대, and 파티 만들기 floats over all three (`FloatingActionArea`: a navy rounded square of 56
+  with a white pencil, 16 from the right and 12 above the navigation, which gives way while the keyboard is up; every
+  list inside ends with `useListEnd`, which keeps `FLOATING_ACTION_ROOM` free so that the last card scrolls wholly
+  above the button); its address names the tab (`/party?tab=invites`). 내 정보's
   address can ask for its 위치 공유 card (`/me?show=sharing`), and 행사's marks one Global Event (`/events?focus=<id>`).
   파티, 행사 and 내 정보 are described below.
 - **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
@@ -1169,8 +1175,8 @@ invitations (`초대 {n}`, red).
 
 - **찾기**: the recruiting Quests with a place left that the User did not hide, those sharing more tags with the User
   first, then the newest. Under the tabs, outside the list that scrolls, the board filters 전체 · 식사 · 진로 · 취미 ·
-  공연 (`ChipRow` without counts, `find-bar.tsx`), fading at their end, with the magnifier `파티 검색` after them,
-  which turns them into the search field over every board; its ✕ `검색 닫기` brings the filters back at 전체. A board
+  공연 (`ChipRow` without counts, `find-bar.tsx`), fading at their end. The app bar's search `파티 검색` narrows the
+  board chosen; opened from 내 파티 or 초대 it shows 찾기, leaving 찾기 closes it, and its ✕ `검색 닫기` keeps the board. A board
   with no post says "{식사} 게시판에 모집 중인 파티가 없어요". A card (`find-card.tsx`) has the board, the fill, the title, the next Sub
   Quest's time and place on their own lines ("시간 미정", "장소 미정") and the event of a 파티 for one in blue; a press
   opens the 모집글 as a sheet over 찾기 (`post-sheet.tsx`). Its `참여하기`, or `참여 신청` for an Approval Quest,
@@ -1216,8 +1222,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 **행사** (`src/screens/events/`, the `Events` frame, `/events`) lists the published Global Events (`GET
 /global-events`) by their start, with the data of `useEventSources()` and the words of `src/features/events/adapter.ts`:
 
-- The app bar (`events-bar.tsx`) has "행사" and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
-  place of the title and keeps the events whose title, place or description holds the words.
+- The app bar has "행사" and `TabScreen`'s search "행사 검색", which keeps the events whose title, place or
+  description the words find; its ✕ "검색 닫기" also sets the filters back to 전체.
 - The filters "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest
   the User can join; the User's own 파티 is not one) filter the list; the chosen one is bold navy on light blue. Under them, on the white ground,
   "다가오는 행사" heads the list. Empty: "여기서는 학교 행사를 모아 볼 수 있어요" with "파티 찾기" without any event,

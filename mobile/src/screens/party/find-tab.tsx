@@ -7,12 +7,13 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
-import { EmptyState, ErrorState, LoadingState, space } from '@/design-system';
+import { EmptyState, ErrorState, LoadingState, NO_RESULTS, space, useListEnd } from '@/design-system';
 import { type BoardFilter, noPostsWords, postsOnBoard } from '@/features/party/finding';
 import type { PostView } from '@/features/party/posts';
 import { useFindPosts, useOfficialRecruiting } from '@/features/party/use-party';
@@ -34,7 +35,7 @@ interface PostsProps {
   onOpen: (post: PostView) => void;
 }
 
-// The cards of the board chosen, or of every board while searching, in 찾기's order.
+// The cards of the board chosen that the search finds, in 찾기's order.
 function Posts({ board, search, onOpen }: PostsProps): ReactElement {
   const { data: found, isPending, refetch } = useFindPosts(search);
   const posts = found === undefined ? undefined : postsOnBoard(found, board);
@@ -42,7 +43,7 @@ function Posts({ board, search, onOpen }: PostsProps): ReactElement {
     <>
       {found === undefined && isPending ? <LoadingState /> : null}
       {found === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-      {posts?.length === 0 ? <EmptyState words={noPostsWords(board)} /> : null}
+      {posts?.length === 0 ? <EmptyState words={search.trim() === '' ? noPostsWords(board) : NO_RESULTS} /> : null}
       {(posts ?? []).map((post) => (
         <FindCard key={post.questId} onOpen={onOpen} post={post} />
       ))}
@@ -128,27 +129,31 @@ function useFindSheets(): FindSheets {
   };
 }
 
-// 찾기: the board filters or the search, which stay put; the banner of official recruiting; the recruiting posts
+// 찾기: the board filters, which stay put and narrow the search of the app bar with the board chosen; the banner of official recruiting; the recruiting posts
 // ordered by the User's tags, whose cards open their 모집글 in a sheet; and the people looking for company. The build
 // that asks the main server has no official recruiting and no people looking for company.
-export function FindTab(): ReactElement {
+export function FindTab({ search }: { search: string | null }): ReactElement {
   const [board, setBoard] = useState<BoardFilter>('all');
-  // The words searched, or null while the filters show.
-  const [search, setSearch] = useState<string | null>(null);
   const searching = search !== null;
   const list = useRef<ScrollView>(null);
   // Another board, or the search opened or closed, starts from its first card, not where the last list was scrolled.
   useEffect(() => {
     list.current?.scrollTo({ y: 0, animated: false });
   }, [board, searching]);
+  const end = useListEnd(space[4]);
   const official = useOfficialRecruiting().data ?? [];
   const { open, joinOfficial, sheets } = useFindSheets();
   return (
     <>
-      <FindBar board={board} onBoard={setBoard} onSearch={setSearch} search={search} />
+      <FindBar board={board} onBoard={setBoard} />
       {official.length === 0 ? null : <OfficialBanner onOpen={joinOfficial} recruiting={official} />}
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" ref={list} testID="find-list">
-        <Posts board={searching ? 'all' : board} onOpen={open} search={search ?? ''} />
+      <ScrollView
+        contentContainerStyle={[styles.body, { paddingBottom: end }]}
+        keyboardShouldPersistTaps="handled"
+        ref={list}
+        testID="find-list"
+      >
+        <Posts board={board} onOpen={open} search={search ?? ''} />
         <Seekers />
       </ScrollView>
       {sheets}
@@ -157,5 +162,5 @@ export function FindTab(): ReactElement {
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space[3], paddingHorizontal: space[4], paddingBottom: space[4] },
+  body: { gap: space[3], paddingHorizontal: space[4] },
 });
