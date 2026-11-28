@@ -4,13 +4,14 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { type ReactElement, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, font, Icon, size, space, text } from '@/design-system';
+import { AppBar, color, font, space, text } from '@/design-system';
 import { LEGAL_DOCUMENTS, LEGAL_TEXTS, type LegalDocument, type LegalSection } from './legal-documents';
 
 // Back to the screen the document was opened from. Opened by its address alone, there is none: the app starts.
@@ -68,14 +69,7 @@ export function LegalScreen({ document, part }: { document: LegalDocument; part?
   const sections = LEGAL_TEXTS[document];
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { height: size.appBar + insets.top, paddingTop: insets.top }]}>
-        <Pressable accessibilityLabel="닫기" accessibilityRole="button" onPress={close} style={styles.close}>
-          <Icon name="x" size={22} />
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>
-          {title}
-        </Text>
-      </View>
+      <AppBar leave={{ kind: 'close', onPress: close }} title={title} />
       {sections === undefined ? (
         <View style={styles.body}>
           <Text style={styles.placeholder}>{`(${title} 내용이 들어갈 것)`}</Text>
@@ -89,18 +83,6 @@ export function LegalScreen({ document, part }: { document: LegalDocument; part?
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    paddingRight: space[2],
-    paddingLeft: space[1],
-    borderBottomWidth: 1,
-    borderBottomColor: color.border,
-  },
-  close: { width: size.touchMin, height: size.touchMin, alignItems: 'center', justifyContent: 'center' },
-  // The frame's own size for this header, between the `title` and `titleLg` text styles.
-  title: { fontFamily: font.bold, fontSize: 20, lineHeight: 28, color: color.ink },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] },
   placeholder: { ...text.label, fontFamily: font.medium, color: color.inkSubtle, textAlign: 'center' },
   text: { gap: space[6], padding: space[5] },
