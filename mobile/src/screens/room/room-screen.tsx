@@ -12,13 +12,25 @@
  * 2026-11-20  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Button, color, ErrorState, font, FullScreenPanel, LoadingState, space, useToastAbove } from '@/design-system';
+import {
+  Button,
+  color,
+  ErrorState,
+  font,
+  FullScreenPanel,
+  LoadingState,
+  space,
+  useToast,
+  useToastAbove,
+} from '@/design-system';
+import { PARTY_GONE } from '@/features/notifications/address';
 import { heldAlone } from '@/features/quests/adapter';
 import type { RoomView } from '@/features/quests/room-adapter';
 import { useRoom } from '@/features/quests/use-room';
@@ -129,14 +141,24 @@ function goingAsk(room: RoomView, actions: RoomActions, onLeft: () => void): Ask
 }
 
 // A Quest the User no longer holds closes its room, unless the User just left it here. The signed-in layout's
-// `GoneQuestsWatch` tells it, once, whichever screen is shown.
-function useCloseWhenGone(gone: boolean, left: { current: boolean }): void {
+// `GoneQuestsWatch` tells it, once, whichever screen is shown, of a Quest the room showed. One gone before the room
+// could show it, as one opened from its news in 알림 or its push, the room tells itself.
+function useCloseWhenGone(gone: boolean, room: RoomView | undefined, left: { current: boolean }): void {
+  const showToast = useToast();
+  // Whether the room ever showed its Quest: `useRoom` gives no room once a read of it fails, the shown one included.
+  const shown = useRef(false);
+  if (room !== undefined) {
+    shown.current = true;
+  }
   useEffect(() => {
     if (gone && !left.current) {
       left.current = true;
+      if (!shown.current) {
+        showToast(PARTY_GONE, undefined, 'alert');
+      }
       leaveRoom();
     }
-  }, [gone, left]);
+  }, [gone, left, showToast]);
 }
 
 // The footer's full-width danger button: `나가기`, `파티 없애기` for the Leader, or `퀘스트 없애기` for a Quest taken
@@ -188,7 +210,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
   const [ask, setAsk] = useState<Ask | null>(null);
   const left = useRef(false);
   const open = useIsFocused();
-  useCloseWhenGone(gone, left);
+  useCloseWhenGone(gone, room, left);
   useToastAbove(FOOTER, open);
   const onLeft = (): void => {
     left.current = true;

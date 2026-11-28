@@ -78,7 +78,7 @@ describe('The Leader leaving a 파티', () => {
           ahead: null,
           line: '저녁 같이 먹어요 · 홍길동님이 나갔어요',
           at: '2026-11-14T11:58:00+09:00',
-          url: `/main?card=party:${questId}`,
+          url: `/main?card=room:${questId}`,
           read: false,
         },
       ]);
