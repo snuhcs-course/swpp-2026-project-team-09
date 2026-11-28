@@ -34,14 +34,15 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const ROW = '12:18 나설 시각 · 학생회관식당까지 걸어서 15분 · 12:18';
+const ROW = '지금 나서요 · 학생회관식당까지 걸어서 15분 · 12:18';
 // The dinner's Party as the room opens it: closed and for 8.
 const OPENING = { title: DINNER.title, capacity: 8, joinPolicy: 'closed', questId: DINNER.id };
 
 let server: FakeServer;
 
 beforeEach(async () => {
-  jest.useFakeTimers({ now: new Date('2026-10-06T12:10:00+09:00') });
+  // Once the time to leave has come: the main server lists it only then.
+  jest.useFakeTimers({ now: new Date('2026-10-06T12:20:00+09:00') });
   await startFresh();
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });

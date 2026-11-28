@@ -83,8 +83,11 @@ export class NotificationStore {
     });
   }
 
-  // The latest time first.
-  readAll(userId: string): Promise<Notification[]> {
-    return this.prisma.notification.findMany({ where: { userId }, orderBy: [{ at: 'desc' }, { createdAt: 'desc' }] });
+  // Those whose time has come by `now`, the latest time first.
+  readCome(userId: string, now: Date): Promise<Notification[]> {
+    return this.prisma.notification.findMany({
+      where: { userId, at: { lte: now } },
+      orderBy: [{ at: 'desc' }, { createdAt: 'desc' }],
+    });
   }
 }

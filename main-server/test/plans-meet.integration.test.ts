@@ -203,7 +203,7 @@ describe('a5: the first Plan, 302동 앞 from 12:15, made into a Quest', () => {
 
   it('keeps the Leader’s time to leave: 3 minutes from 301동 to 302동 앞, setting out at 12:12', async () => {
     await vi.waitFor(async () => {
-      expect((await stage.notificationsOf(stage.asker)).body).toEqual([
+      expect(await stage.notificationsOf(stage.asker)).toEqual([
         leaveByOf(date, quest.id, '12:12', '302동 앞까지 걸어서 3분'),
       ]);
     });

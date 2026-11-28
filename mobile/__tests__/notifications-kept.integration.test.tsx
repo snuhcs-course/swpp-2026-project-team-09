@@ -177,13 +177,14 @@ describe('an unread kept Notification', () => {
 });
 
 describe('the time to leave in 알림', () => {
-  it("shows its time while it is still to come, and opens the party's card when pressed", async () => {
-    jest.setSystemTime(new Date('2026-10-06T12:10:00+09:00'));
+  it("shows its title, never the one ahead, and opens the party's card when pressed", async () => {
+    // Listed once its time has come; the phone's clock a little behind the main server's still shows its title.
+    jest.setSystemTime(new Date('2026-10-06T12:17:00+09:00'));
     server.on('GET /notifications', { status: 200, body: [LEAVE_BY] });
     const user = await openNotifications('알림');
 
-    const row = screen.getByRole('button', { name: '12:18 나설 시각 · 학생회관식당까지 걸어서 15분 · 12:18' });
-    expect(screen.getByText('12:18 나설 시각')).toBeVisible();
+    const row = screen.getByRole('button', { name: '지금 나서요 · 학생회관식당까지 걸어서 15분 · 12:18' });
+    expect(screen.queryByText('12:18 나설 시각')).toBeNull();
     expect(screen.getByText('학생회관식당까지 걸어서 15분')).toBeVisible();
     await user.press(row);
     await pass(500);

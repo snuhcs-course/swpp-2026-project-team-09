@@ -13,7 +13,7 @@
 
 import type { Party, Quest } from '@/api/types';
 import type { FriendRequests, JoinRequest, KeptNotification, QuestInvitation } from '@/api/waiting-types';
-import { koreaCalendar, koreaClock, sameKoreaDay } from '@/korea-time';
+import { koreaCalendar, koreaClock, koreaDaysAfter, sameKoreaDay } from '@/korea-time';
 import { readCardAddress } from '@/push/card-address';
 import { cardAddress } from './address';
 
@@ -62,6 +62,8 @@ export interface NoticeView {
   address: string | null;
   // A kept Notification's time, "11:58" today in Korea and "11월 16일" before. Null for a row of what waits for the User.
   time: string | null;
+  // The same time as an instant, by which the rows are grouped. Null for a row of what waits.
+  at: string | null;
 }
 
 // The lists 알림 is composed from. A list that failed is null and gives no rows.
@@ -98,11 +100,6 @@ const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
   'became-leader': 'user',
 };
 
-// `ahead` while the time is still to come, as the main server reads no clock.
-function keptTitle({ title, ahead, at }: KeptNotification, now: Date): string {
-  return typeof ahead === 'string' && Date.parse(at) > now.getTime() ? ahead : title;
-}
-
 // A new match of a watched interest has the look of what it opens: a recruiting party's people, or an event's calendar.
 function keptIcon({ kind, url }: KeptNotification): NoticeView['icon'] {
   if (kind === 'interest-new') {
@@ -134,11 +131,12 @@ function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[]
       key: `notice-${notification.id}`,
       kind: keptKind(notification.kind),
       icon: keptIcon(notification),
-      title: keptTitle(notification, now),
+      title: notification.title,
       sub: notification.line,
       questId: notification.kind === 'leave-by' ? (readCardAddress(notification.url)?.id ?? null) : null,
       address: notification.url,
       time: timeOf(notification.at, now),
+      at: notification.at,
     }));
 }
 
@@ -155,6 +153,7 @@ function partyNotices(parties: readonly Party[]): NoticeView[] {
       questId: quest?.id ?? null,
       address: null,
       time: null,
+      at: null,
     }));
 }
 
@@ -168,6 +167,7 @@ function friendRequestNotices({ received }: FriendRequests): NoticeView[] {
     questId: null,
     address: null,
     time: null,
+    at: null,
   }));
 }
 
@@ -184,6 +184,7 @@ function invitationNotices(invitations: readonly NoticedInvitation[]): NoticeVie
     questId: null,
     address: cardAddress('invitation', id),
     time: null,
+    at: null,
   }));
 }
 
@@ -199,6 +200,7 @@ function joinRequestNotices(joinRequests: NonNullable<NoticeSources['joinRequest
       questId: quest.id,
       address: null,
       time: null,
+      at: null,
     }));
 }
 
@@ -230,6 +232,38 @@ export function waitingNotices(notices: readonly NoticeView[]): NoticeView[] {
 // read. One without `read`, from a main server that keeps no read state, is read.
 export function unreadKept(kept: readonly KeptNotification[], now: Date): KeptNotification[] {
   return shownKept(kept).filter(({ read, at }) => read === false && Date.parse(at) <= now.getTime());
+}
+
+// 알림's groups, by the Korea day of each row's time against `now`.
+export type NoticeDayTitle = '오늘' | '어제' | '이전';
+
+export interface NoticeDay {
+  title: NoticeDayTitle;
+  notices: NoticeView[];
+}
+
+function dayOf({ at }: NoticeView, now: Date): NoticeDayTitle {
+  if (at === null) {
+    return '오늘';
+  }
+  const days = koreaDaysAfter(now, new Date(at));
+  return days >= 0 ? '오늘' : days === -1 ? '어제' : '이전';
+}
+
+// The rows under 오늘, 어제 and 이전, the latest first in each. What waits has no time and stands at the top of 오늘, in
+// the order given. A group with no rows is left out.
+export function noticeDays(notices: readonly NoticeView[], now: Date): NoticeDay[] {
+  const titles: NoticeDayTitle[] = ['오늘', '어제', '이전'];
+  const instantOf = ({ at }: NoticeView): number => (at === null ? Infinity : Date.parse(at));
+  return titles
+    .map((title) => ({
+      title,
+      // Stable: what waits keeps its order, above every row with a time.
+      notices: notices
+        .filter((notice) => dayOf(notice, now) === title)
+        .toSorted((one, other) => (one.at === other.at ? 0 : instantOf(other) - instantOf(one))),
+    }))
+    .filter(({ notices: rows }) => rows.length > 0);
 }
 
 // Whether others ask the User to let them into the Quest: the User leads it, and it is Approval, or Open, which takes

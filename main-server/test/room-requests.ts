@@ -21,6 +21,7 @@ import { patchProfile } from './profile.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
+import { keptNotifications } from './kept-notifications.js';
 
 // The stage of the room requests: the app on a clock that stands at Wednesday 2026-11-04 10:05 in Korea, as the
 // library tools' stage does, and on a database of its own (ownDatabase): a read of a room request expires every request
@@ -243,12 +244,9 @@ export class RoomStage {
     );
   }
 
+  // Every Notification kept for the User, those ahead of their time included, such as a booking's ending.
   async notifications(user: TestUser): Promise<NotificationBody[]> {
-    const response = await withAccessToken(
-      request(this.app.getHttpServer()).get('/notifications'),
-      user.accessToken,
-    ).expect(200);
-    return z.array(notificationSchema).parse(response.body);
+    return z.array(notificationSchema).parse(await keptNotifications(this.app, user.id));
   }
 
   // The User's Notifications of this kind, once at least `count` are kept: they are kept after the answer.

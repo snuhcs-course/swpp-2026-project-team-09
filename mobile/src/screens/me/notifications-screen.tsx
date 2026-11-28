@@ -24,12 +24,14 @@ import {
   LoadingState,
   noticeTone,
   RoundIcon,
+  SectionHeader,
   space,
   text,
   useNotReadyToast,
 } from '@/design-system';
 import { openAddress } from '@/features/notifications/address';
-import { type NoticeKind, type NoticeView, waitingNotices } from '@/features/notifications/adapter';
+import { now } from '@/clock';
+import { type NoticeKind, type NoticeView, noticeDays, waitingNotices } from '@/features/notifications/adapter';
 import { useMarkShownRead, useNotices } from '@/features/notifications/use-notices';
 import { PartyOnButton } from './party-on-button';
 
@@ -100,19 +102,33 @@ function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }
   );
 }
 
+// The rows under 오늘, 어제 and 이전, each group in its own card.
 function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement {
   const press = usePress();
+  if (notices.length === 0) {
+    return (
+      <View style={[cardStyles.card, styles.card]}>
+        <EmptyState words="새 알림이 없어요" />
+      </View>
+    );
+  }
   return (
-    <View style={[cardStyles.card, styles.card]}>
-      {notices.length === 0 ? <EmptyState words="새 알림이 없어요" /> : null}
-      {notices.map((notice) => (
-        <Notice
-          key={notice.key}
-          notice={notice}
-          onPress={() => {
-            press(notice);
-          }}
-        />
+    <View style={styles.days}>
+      {noticeDays(notices, now()).map((day) => (
+        <View key={day.title}>
+          <SectionHeader>{day.title}</SectionHeader>
+          <View style={[cardStyles.card, styles.card]}>
+            {day.notices.map((notice) => (
+              <Notice
+                key={notice.key}
+                notice={notice}
+                onPress={() => {
+                  press(notice);
+                }}
+              />
+            ))}
+          </View>
+        </View>
       ))}
     </View>
   );
@@ -143,6 +159,7 @@ export function NotificationsScreen(): ReactElement {
 const styles = StyleSheet.create({
   body: { padding: space[4] },
   card: { paddingVertical: 0 },
+  days: { gap: space[2] },
   aside: { alignItems: 'flex-end', gap: space[1], paddingVertical: space[2] },
   time: { ...text.label, color: color.inkFaint },
 });

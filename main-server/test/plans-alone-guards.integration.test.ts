@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import request from 'supertest';
@@ -20,6 +21,7 @@ import { attend, connectToDatabase, getQuest } from './quests.js';
 import { jobFairOn } from './recruiting-parties.js';
 import { refused } from './signals.js';
 import { withAccessToken } from './sign-in.js';
+import { keptNotifications } from './kept-notifications.js';
 
 // What keeps a Quest taken alone apart from a 파티 (P03 ticket 17), over the started server with the seed's walking
 // table and the design's job fair (a Friday at 13:50): the party form reaching a Quest taken alone, "여기로" meeting the
@@ -64,13 +66,10 @@ async function takeAlone(date: string, event: GlobalEvent): Promise<request.Resp
 }
 
 async function leaveByCount(): Promise<number> {
-  const response = await withAccessToken(
-    request(stage.app.getHttpServer()).get('/notifications'),
-    stage.asker.accessToken,
-  );
+  const kept = await keptNotifications(stage.app, stage.asker.id);
   return z
     .array(z.object({ kind: z.string() }))
-    .parse(response.body)
+    .parse(kept)
     .filter(({ kind }) => kind === 'leave-by').length;
 }
 

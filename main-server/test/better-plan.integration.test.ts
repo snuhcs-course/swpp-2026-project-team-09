@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import request from 'supertest';
@@ -128,7 +129,7 @@ describe('After 지은 declines, the change to the better Plan', () => {
     expect(toldUsers(planChanged)).toEqual([stage.asker.id, minsu.id].toSorted());
     expect(toldUsers(questsChanged)).toEqual([stage.asker.id, minsu.id].toSorted());
     await vi.waitFor(async () => {
-      expect((await stage.notificationsOf(stage.asker)).body).toContainEqual(
+      expect(await stage.notificationsOf(stage.asker)).toContainEqual(
         expect.objectContaining({
           id: `leave-by:party:${questId}`,
           at: `${date}T12:12:00+09:00`,

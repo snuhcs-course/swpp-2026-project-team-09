@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -91,7 +92,7 @@ function press(answered: AnswerReply, questId: string): request.Test {
 const stepsToldTo = async (user: TestUser): Promise<unknown[]> =>
   z
     .array(z.object({ id: z.string() }))
-    .parse((await stage.notificationsOf(user)).body)
+    .parse(await stage.notificationsOf(user))
     .filter(({ id }) => id.startsWith('step-changed:'));
 
 const questOf = async (questId: string): Promise<{ id: string; capacity: number; takenAlone: boolean }> =>
@@ -130,7 +131,7 @@ describe('A Friend who can come at the lunch’s start, added to a lunch the ask
     });
     expect(words).toMatchObject({ result: 'planned', adding: { movesTo: null, fits: true } });
     expect((await getInvitations(stage.app, haeun)).body).toEqual([]);
-    expect((await stage.notificationsOf(haeun)).body).toEqual([]);
+    expect(await stage.notificationsOf(haeun)).toEqual([]);
   });
 
   it('is invited to the same Quest on the press, and 민수 is told nothing', async () => {
