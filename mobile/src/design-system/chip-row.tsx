@@ -5,6 +5,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -42,6 +43,7 @@ export function ChipRow<Key extends string>({
       horizontal
       showsHorizontalScrollIndicator={false}
       style={styles.scroll}
+      testID="chip-row"
     >
       {shown.map(({ key, label, count }) => {
         const chosen = key === selected;
@@ -76,8 +78,10 @@ const ROW_PADDING = 10;
 
 const styles = StyleSheet.create({
   // The room above and below the tabs is padding on the scroller itself: Android does not size a sideways scroller to
-  // its content's minHeight, so the row would touch what is above it. The row is 60 high, as the 행사 tab's.
-  scroll: { flexGrow: 0, paddingVertical: ROW_PADDING },
+  // its content's minHeight, so the row would touch what is above it. The row is 60 high, as the 행사 tab's. It never
+  // shrinks: a long list under it overflows the column, and a scroll view shrinks by default, so the chips and the
+  // list rose a few points with 전체 and not with a filter that left one row.
+  scroll: { flexGrow: 0, flexShrink: 0, paddingVertical: ROW_PADDING },
   row: { alignItems: 'center', gap: space[1], paddingHorizontal: space[5] },
   tab: { justifyContent: 'center', height: TAB_HEIGHT, paddingHorizontal: space[4], borderRadius: radius.md },
   chosen: { backgroundColor: color.blue100 },
