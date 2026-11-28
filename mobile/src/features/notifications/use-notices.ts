@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type UseQueryResult, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -67,8 +68,8 @@ export function useNotices(): ScreenData<NoticeView[]> {
   };
 }
 
-// The number on the bell: the rows of 알림 that wait for the User, and the kept Notifications they have not read. Nothing
-// while the lists load or when every one failed.
+// The number on 오늘 (A04 ticket 12; once 내 정보's bell): the rows of 알림 that wait for the User, the rows of 답할 것,
+// and the kept Notifications they have not read. Nothing while the lists load or when every one failed.
 export function useBellCount(): number {
   const notices = useNotices().data;
   const kept = useQuery(notificationsQuery).data ?? [];
@@ -134,10 +135,4 @@ export function useDeleteAllNotices(): () => void {
   return () => {
     mutate();
   };
-}
-
-// The number on the bottom navigation's 파티: the rows of 알림 that wait for the User and concern 파티. It never fails a screen: while
-// the lists load, and when every one failed, there is no badge.
-export function usePartyBadge(): number {
-  return waitingNotices(useNotices().data ?? []).filter(({ kind }) => kind !== 'friend-request').length;
 }

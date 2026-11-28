@@ -106,7 +106,7 @@ describe('the groups of 알림', () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
     server.on('GET /notifications', { status: 200, body: [LAST_WEEK, YESTERDAY, TWO_DAYS_AGO, TODAY] });
 
-    await openNotifications('오늘, 새 소식 1개');
+    await openNotifications('오늘, 답할 것 1개');
 
     expect(shownOrder()).toEqual([
       '# 오늘',

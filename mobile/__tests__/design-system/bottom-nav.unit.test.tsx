@@ -112,3 +112,28 @@ describe("BottomNav's bar", () => {
     expect(screen.getByRole('tab', { name: '지도' }).parent).toHaveStyle({ height: 65, borderTopWidth: 1 });
   });
 });
+
+// A04 ticket 12: each count says what it counts, and the round tab's is a small navy count on its edge.
+describe("BottomNav's words for a count", () => {
+  it('say what a tab counts', async () => {
+    await render(<BottomNav active={0} items={[{ icon: 'today', label: '오늘', badge: 3, badgeWords: '답할 것' }]} />);
+
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 3개' })).toBeVisible();
+  });
+
+  it("put the round tab's count on its edge, in navy", async () => {
+    await render(
+      <BottomNav
+        active={0}
+        items={[
+          { icon: 'users', label: '파티' },
+          { icon: 'mapSpark', label: '지도', round: true, raised: false, badge: 2, badgeWords: 'AI가 준비한 것' },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: '지도, AI가 준비한 것 2개' })).toBeVisible();
+    expect(screen.getByTestId('bottom-nav-round-count')).toHaveTextContent('2');
+    expect(screen.getByTestId('bottom-nav-round-count')).toHaveStyle({ position: 'absolute', borderColor: '#001A72' });
+  });
+});

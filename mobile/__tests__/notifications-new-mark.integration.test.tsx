@@ -72,7 +72,7 @@ afterEach(() => {
 
 async function openNotifications(): Promise<Awaited<ReturnType<typeof openMain>>> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: '오늘, 새 소식 2개' }));
+  await user.press(screen.getByRole('tab', { name: '오늘, 답할 것 2개' }));
   await pass(500);
   return user;
 }
@@ -100,7 +100,7 @@ describe('the new mark in 알림', () => {
     await user.press(screen.getByRole('tab', { name: '내 정보' }));
     await pass(500);
 
-    await user.press(screen.getByRole('tab', { name: '오늘, 새 소식 1개' }));
+    await user.press(screen.getByRole('tab', { name: '오늘, 답할 것 1개' }));
     await pass(500);
 
     expect(screen.getByRole('button', { name: UNREAD_ROW })).toBeVisible();

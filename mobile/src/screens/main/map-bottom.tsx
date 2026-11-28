@@ -33,7 +33,7 @@ import { nextMeal } from '@/features/dining/adapter';
 import type { FirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
-import { useAiRaised } from '../shell/ai-raised';
+import { useAiRaised, useTellReady } from '../shell/ai-raised';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { AnswerFrame } from './answer/answer-frame';
@@ -250,6 +250,8 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const guided = tutorial.guide !== null;
   // Lowered only on the everyday map: an answer frame hides the bottom bar, and its card keeps its input.
   const lowered = !useAiRaised().raised && !chat.framed;
+  // What the AI has ready, which the bar's middle counts while these lines are out of sight (A04 ticket 12).
+  useTellReady((mapChipOf(chat)?.kind === 'continue' ? 1 : 0) + unasked.made.waiting);
   const cardShown = invitation.shown || made.shown !== null;
   const { listOpen, inputGone, inputShown } = inputStateOf(chat);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;

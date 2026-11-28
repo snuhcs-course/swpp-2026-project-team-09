@@ -66,11 +66,13 @@ describe("the main screen's bottom navigation", () => {
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeVisible();
   });
 
-  it('counts on 파티 what waits for the User in Parties: a Party opened and an invitation', async () => {
+  // A04 ticket 12: what 파티 counted is in 오늘's 답할 것.
+  it('counts on 오늘 what waits for the User, a Party opened and an invitation among it, and nothing on 파티', async () => {
     givePhone({ permission: 'granted' });
     await openMain();
 
-    expect(screen.getByRole('tab', { name: '파티, 새 소식 2개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: /^오늘, 답할 것 \d+개$/u })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '파티' })).toBeVisible();
   });
 
   it('shows no count when the lists cannot be read', async () => {
@@ -80,6 +82,7 @@ describe("the main screen's bottom navigation", () => {
     await pass(3000);
 
     expect(screen.getByRole('tab', { name: '파티' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘' })).toBeVisible();
   });
 
   it("keeps a toast where the frame has it: 158 from the bottom, 78 above the navigation's top", async () => {

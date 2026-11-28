@@ -453,10 +453,13 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   layout, in memory only, and the tabs start raised. 파티 만들기 is the 파티 tab's pencil button. A tab stays mounted
   while another is shown, so the map keeps its native view, its camera, the open card, the route and the collapsed
   lists. The bar has no line on top but the frames' shadow (`shadow.nav`), and under its items 16 or the phone's own
-  inset, whichever is larger (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is
-  `usePartyBadge()`: the rows of 알림 that wait for the User and concern 파티, every row but the kept Notifications and
-  the Friend Requests. The number on 오늘 is `useBellCount()`: the rows that wait and the kept Notifications unread.
-  While the lists load, and when every one failed, there is no badge.
+  inset, whichever is larger (`navPaddingBottom` in `src/screens/shell/layout.ts`). The bar has two counts, which
+  never count the same thing (A04 ticket 12). 오늘's, in red, is `useBellCount()`, what the User must do: the rows of
+  답할 것 and the kept Notifications unread, said as "오늘, 답할 것 3개". The middle's, a small navy count on its edge,
+  is what the AI has ready, which the map tells the bar (`useTellReady`): the conversation to go on with ("이어서 ·
+  …", 1 while there is one) and each Quest made from a Plan that still waits for a Friend's answer, said as "지도, AI가
+  준비한 것 2개"; it shows only while the AI is lowered or another tab is in front. 파티 has none. While the lists
+  load, and when every one failed, 오늘 has no badge.
 - 파티, 행사, 오늘 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
   A tab with a search gives `TabScreen` its `search`: the magnifier at the bar's top right, which turns the title's
   row into the field, focused at once so the keyboard rises, and ✕ "검색 닫기". The field is `SearchField`'s `bare`

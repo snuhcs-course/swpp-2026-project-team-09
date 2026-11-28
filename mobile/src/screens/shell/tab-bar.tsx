@@ -12,7 +12,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNav, type BottomNavItem, color, shadow } from '@/design-system';
-import { useBellCount, usePartyBadge } from '@/features/notifications/use-notices';
+import { useBellCount } from '@/features/notifications/use-notices';
 import { useAiRaised } from './ai-raised';
 import { navPaddingBottom } from './layout';
 import { useTabBarHiddenOnMain } from './main-tab-bar';
@@ -27,22 +27,21 @@ const SLOTS = [
   { route: 'me', icon: 'user', label: '내 정보' },
 ] as const;
 
-type Route = (typeof SLOTS)[number]['route'];
-
 interface Counts {
-  party: number;
-  bell: number;
+  // What the User must do: the rows of 답할 것 and the kept Notifications unread.
+  today: number;
+  // What the AI has ready, or 0 while its lines show on the map.
+  ready: number;
 }
 
-// 파티 counts the rows of 알림 that wait and concern 파티; 오늘 counts what 내 정보's bell counted, the rows that wait
-// and the kept Notifications unread.
+// The bar's two counts (A04 ticket 12), which never count the same thing: 오늘's in red, the middle's in navy on its
+// edge. 파티 has none: what it counted is in 오늘's 답할 것.
 function itemsWith(counts: Counts, raised: boolean): BottomNavItem[] {
   return SLOTS.map(({ route, icon, label }): BottomNavItem => {
     if (route === 'main') {
-      return { icon, label, round: true, raised };
+      return { icon, label, round: true, raised, badge: counts.ready, badgeWords: 'AI가 준비한 것' };
     }
-    const badges: Partial<Record<Route, number>> = { party: counts.party, today: counts.bell };
-    return { icon, label, badge: badges[route] };
+    return route === 'today' ? { icon, label, badge: counts.today, badgeWords: '답할 것' } : { icon, label };
   });
 }
 
@@ -51,11 +50,13 @@ function itemsWith(counts: Counts, raised: boolean): BottomNavItem[] {
 // another tab shows the map with the AI raised. Each tab tells the toast where to sit while it is in front. It gives
 // way to the answer frame on the map, so that the AI is neither raised nor lowered there.
 export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement | null {
-  const counts = { party: usePartyBadge(), bell: useBellCount() };
-  const { raised, setRaised } = useAiRaised();
+  const today = useBellCount();
+  const { raised, setRaised, ready } = useAiRaised();
   const { bottom } = useSafeAreaInsets();
   const hiddenOnMain = useTabBarHiddenOnMain();
   const current = state.routes[state.index]?.name;
+  // Raised on the map, the lines themselves show what the AI has ready.
+  const counts = { today, ready: current === 'main' && raised ? 0 : ready };
   if (hiddenOnMain && current === 'main') {
     return null;
   }
