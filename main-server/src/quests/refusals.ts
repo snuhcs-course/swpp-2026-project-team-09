@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { ConflictException, ForbiddenException, HttpStatus, NotFoundException } from '@nestjs/common';
@@ -42,6 +43,8 @@ export const removedAsk = (): ConflictException =>
 export const sharedQuestHeld = (): ConflictException =>
   conflict('SHARED_QUEST_HELD', 'The User holds a Shared Quest for this Global Event.');
 
-// A Quest taken alone gathers nobody: no one is invited into it and its settings stay (P03 ticket 17).
+// A seat's stay, a Quest taken alone for one person's booking, gathers nobody: no one is invited into it and its
+// settings stay (P03 ticket 17), nor does a Quest taken alone switch a Party on. Every other Quest taken alone gathers
+// by an invitation or a change of its settings (P05 ticket 87).
 export const takenAloneRefused = (): ConflictException =>
-  conflict('QUEST_TAKEN_ALONE', 'A Quest taken alone gathers nobody.');
+  conflict('QUEST_TAKEN_ALONE', 'This Quest taken alone gathers nobody.');

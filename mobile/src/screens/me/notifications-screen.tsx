@@ -8,6 +8,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -24,6 +25,7 @@ import {
   LoadingState,
   noticeTone,
   RoundIcon,
+  RowCard,
   SectionHeader,
   space,
   text,
@@ -128,7 +130,7 @@ function Notices({ notices, fresh }: { notices: readonly NoticeView[]; fresh: Re
       {noticeDays(notices, now()).map((day) => (
         <View key={day.title}>
           <SectionHeader>{day.title}</SectionHeader>
-          <View style={[cardStyles.card, styles.card]}>
+          <RowCard>
             {day.notices.map((notice) => (
               <Notice
                 fresh={fresh.has(notice.key)}
@@ -139,7 +141,7 @@ function Notices({ notices, fresh }: { notices: readonly NoticeView[]; fresh: Re
                 }}
               />
             ))}
-          </View>
+          </RowCard>
         </View>
       ))}
     </View>

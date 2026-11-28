@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -114,27 +115,36 @@ describe('"여기로" on an event the User posted a 파티 for', () => {
   });
 });
 
-// Partitions: an invitation of a Friend, and a change of settings. Expected values: 409 QUEST_TAKEN_ALONE for both, and
-// the Quest as it was.
-describe('a Quest taken alone', () => {
-  it('takes no invitation and no change of its settings', async () => {
+// The user's rule of 2026-11-28 ("어시스턴트 계획은 초대할 수도 있지 않나?"): a Quest taken alone from a Plan gathers by a
+// later invitation through its room, its time and place as they are, and its time to leave goes, as attending gathers
+// it; it was refused with QUEST_TAKEN_ALONE (P03 ticket 17). A seat's stay still refuses (seat-stays). Partitions: an
+// invitation of a Friend, and a change of settings.
+describe('a Quest taken alone from a Plan', () => {
+  it('gathers by an invitation of a Friend: no longer taken alone, a 파티 of four, its steps and its time to leave', async () => {
     const date = '2069-01-18';
     const jobFair = await jobFairDay(date);
     const friend = await stage.friend('민수');
     const { quest } = questSchema.parse((await takeAlone(date, jobFair)).body);
+    expect(await leaveByCount()).toBe(1);
 
     const invited = await invite(stage.app, stage.asker, quest.id, friend.id);
+
+    expect(invited.status).toBe(204);
+    const gathered = z.custom<QuestDto>().parse((await getQuest(stage.app, stage.asker, quest.id)).body);
+    expect(gathered).toMatchObject({ takenAlone: false, capacity: 4, joinPolicy: 'closed' });
+    expect(gathered.subQuests.map(({ startsAt }) => startsAt)).toEqual(quest.subQuests.map(({ startsAt }) => startsAt));
+    expect(await leaveByCount()).toBe(0);
+  });
+
+  it('gathers by a change of its settings to a 파티 on a board', async () => {
+    const date = '2069-01-25';
+    const jobFair = await jobFairDay(date);
+    const { quest } = questSchema.parse((await takeAlone(date, jobFair)).body);
+
     const changed = await patch(quest.id, { capacity: 4, joinPolicy: 'open', board: 'career' });
 
-    expect(invited.status).toBe(409);
-    expect(invited.body).toMatchObject(refused(409, 'QUEST_TAKEN_ALONE'));
-    expect(changed.status).toBe(409);
-    expect(changed.body).toMatchObject(refused(409, 'QUEST_TAKEN_ALONE'));
-    expect((await getQuest(stage.app, stage.asker, quest.id)).body).toMatchObject({
-      takenAlone: true,
-      capacity: 1,
-      joinPolicy: 'closed',
-    });
+    expect(changed.status).toBe(200);
+    expect(changed.body).toMatchObject({ takenAlone: false, capacity: 4, joinPolicy: 'open', board: 'career' });
   });
 });
 
@@ -152,9 +162,9 @@ describe('the party form for an event the User has a 파티 for', () => {
   });
 });
 
-// Partitions: a Quest taken alone with no event, as a booked seat's is, and one for an event. Expected values: 409
-// QUEST_TAKEN_ALONE for a change of settings, and for switching its Party on, which would show it to Friends (the review
-// of PR 338, C and E).
+// Partitions: a booked seat's stay, and a Quest taken alone for an event. Expected values: 409 QUEST_TAKEN_ALONE for a
+// change of the seat's settings, and for switching a Party on, which would show it to Friends (the review of PR 338, C
+// and E).
 describe('a Quest taken alone, kept from others', () => {
   it("takes no change of settings with no event, as a seat's", async () => {
     await jobFairDay('2069-02-01');
@@ -164,6 +174,8 @@ describe('a Quest taken alone, kept from others', () => {
         leaderId: stage.asker.id,
         capacity: 1,
         takenAlone: true,
+        // As a booked seat's stay is made (seat-stays.service): the seat is what keeps it from others (P05 ticket 87).
+        seatStay: true,
         holders: { create: { userId: stage.asker.id } },
         subQuests: { create: { title: '관정관 좌석', startsAt: new Date('2069-02-01T05:00:00Z') } },
       },
