@@ -12,6 +12,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -29,7 +30,8 @@ import { fitsJoinPolicy, type UpdateQuestDto } from './dto/quest-requests.dto.js
 import { QuestDto } from './dto/quest.dto.js';
 import { newLeaderTold, tellNewLeader } from './new-leader.js';
 import { QuestParty } from './quest-party.js';
-import { QuestsService } from './quests.service.js';
+import { ALONE_CAPACITY, QuestsService } from './quests.service.js';
+import { forgetLeaveBy } from './taken-alone.js';
 import { conflict, notFound, notLeader, questNotFound, takenAloneRefused } from './refusals.js';
 
 const notHolder = (): NotFoundException => notFound('NOT_QUEST_HOLDER', 'This User does not hold this Quest.');
@@ -75,10 +77,12 @@ export class LeaderService {
 
   // A capacity below the number of Holders is refused. The Quest the changes lead to is on a board when it is Open or
   // Approval, and on none when Closed: a change to Closed clears the board. An Open or an Approval Quest of one is
-  // refused only to a change of the capacity or the Join Policy, so that one stored before still takes the others.
+  // refused only to a change of the capacity or the Join Policy, so that one stored before still takes the others. A
+  // Quest taken alone takes a change too, but a seat's stay (P05 ticket 87).
   async update(userId: string, questId: string, changes: UpdateQuestDto): Promise<QuestDto> {
+    let gathered = false;
     await this.changeAsLeader(userId, questId, async (tx, quest, holderIds) => {
-      if (quest.takenAlone) {
+      if (quest.takenAlone && quest.seatStay) {
         throw takenAloneRefused();
       }
       if (changes.capacity !== undefined && changes.capacity < holderIds.length) {
@@ -95,8 +99,14 @@ export class LeaderService {
       if (!closed && (changes.board ?? quest.board) === null) {
         throw conflict('BOARD_REQUIRED', 'An Open or an Approval Quest is on a board.');
       }
-      await tx.quest.update({ where: { id: questId }, data: closed ? { ...changes, board: null } : changes });
+      // A Quest taken alone changed to hold more than one gathers, as an invitation gathers it (P05 ticket 87).
+      gathered = quest.takenAlone && (changes.capacity ?? quest.capacity) > ALONE_CAPACITY;
+      const data = { ...changes, ...(closed ? { board: null } : {}), ...(gathered ? { takenAlone: false } : {}) };
+      await tx.quest.update({ where: { id: questId }, data });
     });
+    if (gathered) {
+      await forgetLeaveBy(this.notifications, this.logger, { userId, questId });
+    }
     return this.quests.read(userId, questId);
   }
 

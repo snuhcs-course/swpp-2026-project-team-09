@@ -213,12 +213,12 @@ sends the other stages itself. `src/usage/` is the only place that imports `post
 **The events**, sent once their work is committed, never inside a transaction, with the User id (our database's UUID)
 as `distinctId`:
 
-| Event                           | When                                                                                                                                                                                                         | Properties                                                                          |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `assistant_reply_completed`     | `POST /assistant/messages` answers 200; the answers and the taps send nothing                                                                                                                                | none                                                                                |
-| `party_creation_completed`      | a 파티 is stored (`POST /quests/own` but one taken alone; `POST /quests` that makes the User's Quest for the Global Event, or gathers others from a Quest taken alone; `POST /plans` but a Plan taken alone) | `visibility` of the stored Quest: `public` (Open or Approval) or `private` (Closed) |
-| `party_join_completed`          | the User is stored as a Holder, sent for the User who joined, also when the Leader accepted                                                                                                                  | `how`: `joined_directly`, `invitation_accepted` or `request_accepted`               |
-| `friendship_creation_completed` | a friendship is stored, sent once for each of the two Users                                                                                                                                                  | `how`: `request_accepted`, `invite_link_accepted` or `requests_crossed`             |
+| Event                           | When                                                                                                                                                                                                                                                         | Properties                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `assistant_reply_completed`     | `POST /assistant/messages` answers 200; the answers and the taps send nothing                                                                                                                                                                                | none                                                                                |
+| `party_creation_completed`      | a 파티 is stored (`POST /quests/own` but one taken alone; `POST /quests` that makes the User's Quest for the Global Event, or gathers others from a Quest taken alone; an invitation that gathers a Quest taken alone; `POST /plans` but a Plan taken alone) | `visibility` of the stored Quest: `public` (Open or Approval) or `private` (Closed) |
+| `party_join_completed`          | the User is stored as a Holder, sent for the User who joined, also when the Leader accepted                                                                                                                                                                  | `how`: `joined_directly`, `invitation_accepted` or `request_accepted`               |
+| `friendship_creation_completed` | a friendship is stored, sent once for each of the two Users                                                                                                                                                                                                  | `how`: `request_accepted`, `invite_link_accepted` or `requests_crossed`             |
 
 Every event also carries `source: "server"`, and nothing else: no text of a message or an answer, no title, Place,
 coordinates, name, Student Number or Friend list, no person property, and GeoIP is off. Not counted: a Quest taken
@@ -1155,8 +1155,8 @@ Friend is a Closed Quest the User makes and invites the Friend into. The routes,
   `"takenAlone": true` makes a Quest of the User's own with nobody in it, a to-do of theirs (P05 ticket 87): Closed, on
   no board, capacity 1, and `takenAlone` in its answer, which the app draws among the User's Quests and in no list or
   count of 파티. With `open` or `approval` it is refused with 400 on `board`, and with a capacity other than 1 on
-  `capacity`. As every Quest taken alone, it takes no invitation and no change of its settings (`QUEST_TAKEN_ALONE`),
-  and it counts as no 파티 made (`party_creation_completed` is not sent).
+  `capacity`. It counts as no 파티 made (`party_creation_completed` is not sent). As every Quest taken alone but a
+  seat's stay, it gathers by a later invitation or a change of its settings to more than one (below).
 - `GET /quests/recruiting` answers the list of recruiting Quests, `GET /quests/recruiting?globalEventId=...` the same
   for one Global Event and `GET /quests/recruiting?board=meal` for one board; the two combine (see below).
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
@@ -1228,8 +1228,14 @@ A Quest reads:
   made.
 - `classQuest` is `true` for a Class Quest and `false` for every stored Quest. `leader` and `createdAt` are `null` for
   a Class Quest only.
-- `takenAlone` is `true` for a Quest taken alone, made from a Plan for one person or from a booked seat. It gathers
-  nobody, so it is never a 파티: it is in no list or count of parties, and its capacity is 1.
+- `takenAlone` is `true` for a Quest taken alone: made with `POST /quests/own` and `takenAlone`, from a Plan for one
+  person, or from a booked seat. While taken alone it is no 파티: it is in no list or count of parties, its capacity is
+  1, and it switches no Party on (`QUEST_TAKEN_ALONE`). It gathers, its time and place as they are, when its Leader
+  invites a Friend (`POST /quests/:questId/invitations`) or changes its capacity to more than one (`PATCH
+/quests/:questId`). It is then no longer taken alone, takes capacity 4 for an invitation or the capacity given, and
+  its `leave-by` goes, as attending gathers it; an invitation also sends `party_creation_completed` (P05 ticket 87). A
+  seat's stay (`seatStay`), one person's booking, gathers nobody: an invitation and a change of its settings are
+  refused with 409 `QUEST_TAKEN_ALONE` (P03 ticket 17).
 - `waitingJoinRequests` is the number of requests to join waiting for the Leader's answer when the reading User leads
   the Quest, and `0` otherwise.
 - `roomRequest` is set on a booking party, the Quest a room request made (Group study room requests), for the map's
