@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -24,7 +25,6 @@ import {
   text,
 } from '@/design-system';
 import { usePlaceSearch } from '@/features/places/use-place-search';
-import { useBackToClose } from '@/hooks/use-back-to-close';
 
 interface PlacePickerProps {
   // The id of the Place chosen before, which the list checks.
@@ -89,7 +89,6 @@ function NoMatch({ words }: { words: string }): ReactElement {
 export function PlacePicker({ picked, onPick, onClose }: PlacePickerProps): ReactElement {
   const [words, setWords] = useState('');
   const { places, asked, isError, retry } = usePlaces(words);
-  useBackToClose(true, onClose);
   let body: ReactElement;
   if (places === undefined) {
     body = isError ? <ErrorState onRetry={retry} /> : <LoadingState />;
@@ -114,6 +113,7 @@ export function PlacePicker({ picked, onPick, onClose }: PlacePickerProps): Reac
   return (
     <View style={StyleSheet.absoluteFill}>
       <FullScreenPanel
+        inner
         leave={{ kind: 'back', onPress: onClose }}
         title="장소 선택"
         under={
