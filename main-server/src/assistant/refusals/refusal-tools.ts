@@ -3,12 +3,14 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type FriendViewService } from '../../friends/friend-view.service.js';
 import { type PlaceLookup } from '../../places/place-lookup.js';
 import { defineTool, type NoneFound, noneFound, type Tool, type ToolContext } from '../feature.js';
+import { endsWithNone } from '../taken-off.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { placeLabelOf } from '../gathering/place-naming.js';
 import { koreaDate } from '../korea-time.js';
@@ -148,7 +150,7 @@ export function refuse(sources: RefusalSources): Tool {
       // a Friend, or a Friend not found, may be about the plan's own people, and keeps it; so do words that are vague or
       // cannot be read, such as a typo or half a sentence, as words alone do.
       if (CLEARING.has(refusal.kind)) {
-        presented.clears = true;
+        endsWithNone(presented, context.context, { kind: 'unrelated' });
       }
       return {
         result: 'shown',

@@ -11,16 +11,17 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
 import { type AnswerReply, type MealInput, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Presented, type Tool, type ToolContext } from '../feature.js';
-import { presentAnswer, reviseAnswer, takeMap, withdrawAnswer } from '../presented.js';
+import { presentAnswer, reviseAnswer, takeMap } from '../presented.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { mealByClock } from '../free-time/meal-fit.js';
-import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
+import { clockTime, dateInput, outOfReach } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { mealAfter, nextMealOffer } from './meal-after-hours.js';
 import { PRICE_INPUTS, priceConditionOf } from './meal-price.js';
@@ -28,6 +29,7 @@ import { type MealPlanService } from './meal-plan.service.js';
 import { addingWords, busyWords, invitedWords, plannedWords } from './meal-tool-words.js';
 import { NOT_POSTED } from './not-posted.js';
 import { skipOf, skippedWords, skipParameters } from '../free-time/left-out-classes.js';
+import { endsWithNone, outOfReachDay, withdrawAnswer } from '../taken-off.js';
 
 export { PLAN_RULES } from './plan-rules.js';
 
@@ -59,12 +61,12 @@ const friendNames = ({ chips }: AnswerReply): string[] =>
 function noneOf(
   answer: AnswerReply,
   input: MealInput,
-  { now, presented, posted }: { now: Date; presented: Presented; posted: boolean },
+  { now, context, presented, posted }: { now: Date; context: RequestContext; presented: Presented; posted: boolean },
 ): object {
   const relax = answer.noPlan?.relax ?? [];
   const next = relax.length === 0 ? mealAfter(input, now) : null;
   if (next !== null) {
-    withdrawAnswer(presented, input);
+    withdrawAnswer(presented, input, context);
     presented.offers = [nextMealOffer(next, friendNames(answer))];
     return { result: 'none', meal: input.meal, reason: overToday(next.words) };
   }
@@ -256,14 +258,14 @@ async function plannedFor(
   const asked = await plans.asked(userId, chained);
   takeMap(presented);
   if ('invited' in asked) {
-    withdrawAnswer(presented, planInput);
+    withdrawAnswer(presented, planInput, context);
     return invitedWords(asked.invited, planInput.meal);
   }
   const { answer, served, busy = [], posted = true } = await plans.planned(userId, asked.input, at);
   presentAnswer(presented, answer);
   const adding = addingWords(answer, asked.alreadyIn);
   if (answer.noPlan !== null) {
-    return { ...noneOf(answer, planInput, { now, presented, posted }), ...busyWords(busy), ...adding };
+    return { ...noneOf(answer, planInput, { now, context, presented, posted }), ...busyWords(busy), ...adding };
   }
   return { ...plannedWords(answer, served, { meal: planInput.meal, kind }), ...adding };
 }
@@ -286,10 +288,10 @@ export function planMeal(plans: MealPlans, startAfter: StartAfter = (asked) => P
       // A plan asked for a day out of reach, or for breakfast, cannot be made: the plan on screen leaves the map, so that
       // the reply's words are not read over it (P05 ticket 55).
       if (outOfReach(date, now)) {
-        return outOfReachDay(date, presented);
+        return outOfReachDay(date, toolContext, { kind: 'meal', meal: args.meal ?? mealByClock(date, now, args.from) });
       }
       if (args.meal === 'breakfast') {
-        presented.clears = true;
+        endsWithNone(presented, context, { kind: 'meal', meal: 'breakfast' });
         return { result: 'none', meal: 'breakfast', reason: BREAKFAST };
       }
       const seen = seenIds(context);

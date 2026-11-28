@@ -5,16 +5,16 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type AnswerReply, type Lookup, type MealInput, type PlanInput } from '../src/assistant/dto/answer.dto.js';
-import { type Presented } from '../src/assistant/feature.js';
 import {
-  clearDrawn,
-  presentAnswer,
-  presentLookup,
-  requestKey,
-  reviseAnswer,
-  withdrawAnswer,
-} from '../src/assistant/presented.js';
+  type AnswerReply,
+  type Lookup,
+  type MealInput,
+  NO_CONTEXT,
+  type PlanInput,
+} from '../src/assistant/dto/answer.dto.js';
+import { type Presented } from '../src/assistant/feature.js';
+import { clearDrawn, presentAnswer, presentLookup, requestKey, reviseAnswer } from '../src/assistant/presented.js';
+import { withdrawAnswer } from '../src/assistant/taken-off.js';
 
 // What a reply draws on the map changes only through these helpers (P05 ticket 72): an answer takes the map from a
 // Lookup and the layer buttons, a Lookup from an answer, and a withdrawn answer also takes the plan on screen off it.
@@ -86,7 +86,7 @@ describe('What a reply draws', () => {
 
   it('a withdrawn answer clears the plan on screen; clearing leaves it', () => {
     const withdrawn = { ...fresh(), answer: answer('2026-11-27') };
-    withdrawAnswer(withdrawn, events('2026-11-27'));
+    withdrawAnswer(withdrawn, events('2026-11-27'), NO_CONTEXT);
     expect(withdrawn).toMatchObject({ answer: null, lookup: null, mapButtons: [], clears: true });
     const cleared = { ...fresh(), lookup };
     clearDrawn(cleared);
@@ -132,8 +132,8 @@ describe('The answers of a message', () => {
 
   it('names a request withdrawn once, and no longer when it is drawn again', () => {
     const presented = fresh();
-    withdrawAnswer(presented, meal('2026-11-27', 'dinner'));
-    withdrawAnswer(presented, meal('2026-11-27', 'dinner'));
+    withdrawAnswer(presented, meal('2026-11-27', 'dinner'), NO_CONTEXT);
+    withdrawAnswer(presented, meal('2026-11-27', 'dinner'), NO_CONTEXT);
     expect(presented.withdrawn).toHaveLength(1);
     presentAnswer(presented, answerOf(meal('2026-11-27', 'dinner', '18:00')));
     expect(presented.withdrawn).toEqual([]);
@@ -163,7 +163,7 @@ describe('The answers of a message', () => {
     const presented = fresh();
     presentAnswer(presented, answerOf(meal('2026-11-27', 'lunch')));
     presentAnswer(presented, answerOf(meal('2026-11-27', 'dinner')));
-    withdrawAnswer(presented, meal('2026-11-27', 'dinner'));
+    withdrawAnswer(presented, meal('2026-11-27', 'dinner'), NO_CONTEXT);
     expect(presented.answers?.map(({ input }) => input)).toEqual([meal('2026-11-27', 'lunch')]);
     expect(presented.withdrawn).toEqual([requestKey(meal('2026-11-27', 'dinner'))]);
     expect(presented.answer).toBeNull();
