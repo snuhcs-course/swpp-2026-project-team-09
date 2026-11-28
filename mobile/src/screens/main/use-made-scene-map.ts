@@ -25,6 +25,7 @@ import {
   stepsScene,
   stepTitle,
 } from '@/features/assistant/steps-scene';
+import { lookupTakesTheMap } from '@/features/assistant/step-choice';
 import type { MapAvatar, MapMarker, MarkerLook } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
@@ -198,8 +199,10 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
         : studyLine(done.seatLabel ?? null, null, true);
   const space = kept?.kept.space ?? null;
   const start = kept?.kept.slot.start ?? null;
+  // A Lookup the steps' reply gave takes the map for its turn (P03 ticket 23, rule 7).
+  const lookupTurn = lookupTakesTheMap(said.bubbles.find(({ id }) => id === steps?.bubbleId));
   return useMemo((): Made | null => {
-    if (steps !== null) {
+    if (steps !== null && !lookupTurn) {
       const booked = done !== undefined;
       const stepSeat = booked ? (done.seatLabel ?? null) : seat;
       return stepsMade(steps, activeStep, { key: booking?.card.key ?? null, seat: stepSeat, space, booked }, position);
@@ -221,7 +224,7 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
     const scene = bookingScene(booking.point, space, line, position);
     const frame = { reply: `booking:${booking.place}`, chosen: [] };
     return { source: booking, frame, scene, setting: studySetting(start), flag: { latitude, longitude } };
-  }, [steps, activeStep, seat, done, proposal, cards, booking, line, space, start, position, friends]);
+  }, [steps, lookupTurn, activeStep, seat, done, proposal, cards, booking, line, space, start, position, friends]);
 }
 
 // What the map draws of a reply the app makes the scene of: a Proposal (P04 ticket 06) or a seat card (ticket 07).

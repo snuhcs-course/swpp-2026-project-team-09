@@ -4,11 +4,12 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useState } from 'react';
 import type { EarlierConversation } from '@/features/assistant/conversations';
-import { offeredAnswer } from '@/features/assistant/meal-offered';
+import { holdsAnswer } from '@/features/assistant/answer-holder';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type PlanOutcome, type PlanOutcomes, planWhat } from '@/features/assistant/turn-outcome';
@@ -52,12 +53,8 @@ export function usePlanOutcomes(
   }, [bubbles, earlier]);
   const { made, changed, left } = invitation;
   const { source, plan } = shown;
-  // The answer on screen is the reply's as the app offers it (`offeredAnswer`), the same object for the same answer.
-  const replyId =
-    source === null
-      ? null
-      : (bubbles.find(({ answer }) => answer !== undefined && answer !== null && offeredAnswer(answer) === source)
-          ?.id ?? null);
+  // The reply that holds the answer on screen (`holdsAnswer`).
+  const replyId = source === null ? null : (bubbles.find((bubble) => holdsAnswer(bubble, source))?.id ?? null);
   useEffect(() => {
     const outcome = plan === null ? null : outcomeOf(planWhat(plan), { made, changed, left });
     if (outcome === null || replyId === null) {

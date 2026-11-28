@@ -6,6 +6,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -22,6 +23,7 @@ import { CHANGE_WORDS, type ProposalMaking } from '../chat-proposal-card';
 import { type Choice, ChoiceRow } from './choice-row';
 import { lookupMainOf, useLookupMain } from './lookup-card';
 import { RoomOfferButton, roomOfferOn } from './room-offer';
+import { lookupTakesTheMap } from '@/features/assistant/step-choice';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
 import { lookupDocks } from './words-rest';
 import type { StepBack } from '../library/act-stage';
@@ -199,10 +201,13 @@ export function libraryActOf({ framed, chat, libraryAct }: ChatSheetControl): Pl
 
 // Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, then its ticket's once
 // booked (가는 길, 예약 취소; P10 ticket 29), or its Plan's, else the one its card tells, as a group study room's does
-// alone (P10 ticket 16): the chains one request's button takes.
+// alone (P10 ticket 16): the chains one request's button takes. None while a Lookup takes the map, whose own button
+// the dock then shows (P03 ticket 23, rule 7).
 function stepActionOf(control: ChatSheetControl): PlanAction | null {
-  const step = control.steps?.steps[control.activeStep];
-  if (step === undefined || step.status !== 'shown') {
+  const { steps, activeStep, chat } = control;
+  const step = steps?.steps[activeStep];
+  const lookupTurn = lookupTakesTheMap(chat.bubbles.find(({ id }) => id === steps?.bubbleId));
+  if (step === undefined || step.status !== 'shown' || lookupTurn) {
     return null;
   }
   return step.kind === 'seat' || step.kind === 'room'

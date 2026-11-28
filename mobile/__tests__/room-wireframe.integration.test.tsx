@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -101,8 +102,8 @@ describe("the room's head", () => {
     for (const tag of pickFor(PUBLIC.id, TAG_SET)) {
       expect(within(screen.getByLabelText('태그')).getByText(`#${tag}`)).toBeVisible();
     }
-    expect(screen.getByText('오늘 17:40')).toBeVisible();
-    // The box's place and the step's.
+    // The box's time and place, and the step's.
+    expect(screen.getAllByText('오늘 17:40')).toHaveLength(2);
     expect(screen.getAllByText('301동 앞')).toHaveLength(2);
   });
 

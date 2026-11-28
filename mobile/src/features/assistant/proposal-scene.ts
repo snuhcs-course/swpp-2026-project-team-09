@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene, PlacePoint, QuestProposal } from '@/api/assistant-types';
@@ -88,7 +89,9 @@ export function proposalScene(
   };
 }
 
-// How a Proposal's scene is drawn: its start's day on the flag before its time ("내일(수) 14:00 · 공개").
+// How a Proposal's scene is drawn: its start's day on the flag before its time ("내일(수) 14:00 · 공개"), its place in
+// the party's colour.
 export function proposalSetting(proposal: QuestProposal, now: Date): SceneSetting {
-  return { number: null, plans: [], standings: NO_STANDINGS, day: koreaDayWord(proposal.startsAt, now) };
+  const day = koreaDayWord(proposal.startsAt, now);
+  return { number: null, plans: [], standings: NO_STANDINGS, day, toneKind: 'party' };
 }

@@ -2,15 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent, screen, type userEvent, within } from '@testing-library/react-native';
+import { fireEvent, type userEvent, within } from '@testing-library/react-native';
 import type { ReplyStep } from '@/api/assistant-types';
 import type { Place } from '@/api/types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { pass } from './support/app';
+import { pass, screen } from './support/app';
 import { mapThings } from './support/answer-map';
 import { PLACES } from './support/dining';
 import type { FakeServer } from './support/fake-server';
@@ -125,7 +126,7 @@ function flag(number: number): string | undefined {
 // Partitions: the seat booked; the meal's step after it. Expected values: a lone booking's "예약됨" and its ticket's
 // 가는 길 (P01 ticket 03), and the meal's own button.
 describe('The seat booked from the steps of a seat and a meal', () => {
-  it('keeps the steps and the meal, says the seat is booked, and puts its ticket’s 가는 길 beside the input', async () => {
+  it('keeps the steps, says the seat is booked, and puts its ticket’s 가는 길 beside the input', async () => {
     const user = await askSteps();
 
     await user.press(beside('예약하기') ?? screen.getByText('예약하기'));
@@ -136,22 +137,27 @@ describe('The seat booked from the steps of a seat and a meal', () => {
     expect(screen.getByTestId('step-span-2')).toBeVisible();
     expect(flag(1)).toMatch(/^1 관정 7층 열람실 › · \d+번 17:00–18:00 · 예약됨$/u);
     expect(flag(2)).toBe('2 63동 › · 18:04–18:30');
-    expect(inFrame().getByTestId('plan-stepper')).toBeVisible();
+    // The seat's step shows its own answer, the ticket, and the meal's card waits for its step (P03 ticket 23).
+    expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
     expect(beside('가는 길')).toBeVisible();
     expect(beside('만들고 초대 보내기')).toBeNull();
   });
 
-  // The card's one sentence slot (P01 ticket 20): the app's own line made by a button takes it from the model's reply,
-  // as a seat answer alone's ticket does; the answer's card stays.
-  it('gives the card’s sentence to the booking: the reply’s words go, its ticket stands, the meal’s card stays', async () => {
+  // The card's one sentence slot (P01 ticket 20): the seat's step shows as a seat alone, its ticket's line in place of the
+  // reply, then the app's line after a button; the meal's card, with the reply's words, is ②'s (P03 ticket 23).
+  it('gives the card’s sentence to the seat’s ticket, then to the booking, and the meal’s card with the reply to ②', async () => {
     const user = await askSteps();
-    expect(inFrame().getByText(SAID)).toBeOnTheScreen();
+    expect(inFrame().queryByText(SAID)).toBeNull();
 
     await user.press(beside('예약하기') ?? screen.getByText('예약하기'));
     await pass(500);
 
     expect(inFrame().queryByText(SAID)).toBeNull();
     expect(inFrame().getByTestId('library-done')).toBeOnTheScreen();
+    expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
+
+    await pressMarker(user, flag(2) ?? '');
+    await pass(100);
     expect(inFrame().getByTestId('plan-stepper')).toBeOnTheScreen();
   });
 
@@ -185,11 +191,14 @@ describe('The steps of a seat and a meal, changed on screen', () => {
     expect(screen.getByLabelText(/^2번 .*12:18–12:45$/u)).toBeVisible();
   });
 
-  it('moves the seat’s flag and span to the time its card holds', async () => {
+  // The seat's band is its time card's on the bar under the steps card, as a seat answer alone's (P03 ticket 23).
+  it('moves the seat’s flag and span to the time its time card holds', async () => {
     await askSteps();
-    const band = within(
-      within(inFrame().getByTestId(`library-book-${SEAT_CARD.library.key}`)).getByTestId('slot-band'),
-    );
+    const [, seatCard] = screen.getAllByTestId('time-bar');
+    if (seatCard === undefined) {
+      throw new Error('no seat time card');
+    }
+    const band = within(seatCard);
 
     await fireEvent(band.getByRole('adjustable', { name: '끝 시각' }), 'accessibilityAction', {
       nativeEvent: { actionName: 'increment' },

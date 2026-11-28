@@ -13,6 +13,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -43,7 +44,7 @@ import { pickReplyTo } from './data/pick';
 import { MENU_ANSWER_REPLY, MENU_CLOSED_REPLY } from './data/menu-answer';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
-import { isStepsAsk, stepsReplyOn } from './data/steps-answer';
+import { severalAnswersReplyTo } from './data/several-answers';
 import { studyCopyFor, studyGroupReplyTo } from './data/study-group-answers';
 import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
@@ -264,12 +265,10 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes(NOT_NOW_ASKED)) {
     return NOT_NOW_REPLY;
   }
-  const cancel = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last) ?? skippedReplyTo(last);
+  const changed = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last) ?? skippedReplyTo(last);
+  const cancel = changed ?? severalAnswersReplyTo(last, koreaDateKey(now()));
   if (cancel !== null) {
     return cancel;
-  }
-  if (isStepsAsk(last)) {
-    return stepsReplyOn(koreaDateKey(now()));
   }
   if (last.includes(CROWDED_ASKED)) {
     return crowdedMealReply(koreaDateKey(koreaNextDay(now())), now().toISOString());
