@@ -12,6 +12,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -31,7 +32,9 @@ import {
   type PartyForm,
   type PlanChange,
   recruitingOf,
+  staysAlone,
 } from '@/features/party/making';
+import { heldAlone } from '@/features/quests/adapter';
 import { refusalWords } from '@/features/quests/refusals';
 import { useAskForPush } from '@/push/push-ask-host';
 import { trackAction } from '@/telemetry';
@@ -54,13 +57,19 @@ async function invite(questId: string, friends: readonly string[]): Promise<Invi
   return { count: refused.length, full: refused.some((error) => isRefusal(error, 409, 'QUEST_FULL')) };
 }
 
+// What was done: a Quest taken alone, a 비공개 파티 or a posted one, made or changed.
+function doneOf(form: PartyForm, editing: boolean, alone: boolean): string {
+  if (alone) {
+    return editing ? '퀘스트를 수정했어요' : '퀘스트를 만들었어요';
+  }
+  if (editing) {
+    return '모집글을 수정했어요';
+  }
+  return form.visibility === 'private' ? '비공개 파티를 만들었어요' : '파티를 올렸어요';
+}
+
 // "파티를 올렸어요 · 2명에게 초대 요청", and the Friends the main server refused after it.
-function toastOf(form: PartyForm, editing: boolean, invited: number, refused: InviteRefusals): string {
-  const done = editing
-    ? '모집글을 수정했어요'
-    : form.visibility === 'private'
-      ? '비공개 파티를 만들었어요'
-      : '파티를 올렸어요';
+function toastOf(done: string, editing: boolean, invited: number, refused: InviteRefusals): string {
   const main = editing || invited === 0 ? done : `${done} · ${String(invited)}명에게 초대 요청`;
   if (refused.count === 0) {
     return main;
@@ -69,8 +78,8 @@ function toastOf(form: PartyForm, editing: boolean, invited: number, refused: In
 }
 
 // An edit: the Quest's fields, then the time and place of its plan.
-async function change(quest: ShownQuest, form: PartyForm, plan: PlanChange | null): Promise<void> {
-  const fields = changeOf(quest, form);
+async function change(quest: ShownQuest, form: PartyForm, plan: PlanChange | null, alone: boolean): Promise<void> {
+  const fields = changeOf(quest, form, alone);
   if (Object.keys(fields).length > 0) {
     await apiClient.changeQuest(quest.id, fields);
   }
@@ -106,7 +115,7 @@ export type Sent = 'taken' | 'refused' | 'room';
 // with the alert icon although the Quest was made or changed.
 export type Sending =
   | { sent: 'refused'; toast: string }
-  | { sent: 'taken' | 'room'; questId: string; toast: string; invitesRefused?: boolean };
+  | { sent: 'taken' | 'room'; questId: string; toast: string; invitesRefused?: boolean; alone?: boolean };
 
 // The icon of a sending's toast, for every one who shows it: ✓ only for a Quest made or changed with every Friend
 // invited; a refusal, a step left to the room and a Friend left uninvited are failures, with the alert icon.
@@ -127,14 +136,15 @@ export function useSendParty(
     }
   };
   return async (form, friends, plan, elsewhere = false) => {
+    const alone = staysAlone(form, friends.length, quest === null || heldAlone(quest));
     let questId: string;
     let attended: Quest | null = null;
     try {
       if (quest !== null) {
-        await change(quest, form, plan);
+        await change(quest, form, plan, alone);
         questId = quest.id;
       } else if (form.event === null) {
-        questId = (await making(form, () => apiClient.makeQuest(makingOf(form), newIdempotencyKey()))).id;
+        questId = (await making(form, () => apiClient.makeQuest(makingOf(form, alone), newIdempotencyKey()))).id;
       } else {
         const eventId = form.event.id;
         attended = await making(form, () => apiClient.attendGlobalEvent(eventId, attendingTitleOf(form)));
@@ -157,8 +167,8 @@ export function useSendParty(
     if (invited > 0) {
       askForPush();
     }
-    const toast = toastOf(form, quest !== null, invited, refused);
-    return { sent: 'taken', questId, toast, invitesRefused: refused.count > 0 };
+    const toast = toastOf(doneOf(form, quest !== null, alone), quest !== null, invited, refused);
+    return { sent: 'taken', questId, toast, invitesRefused: refused.count > 0, alone };
   };
 }
 

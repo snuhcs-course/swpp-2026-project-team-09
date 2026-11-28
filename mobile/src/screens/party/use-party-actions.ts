@@ -11,6 +11,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -63,6 +64,18 @@ function showPartyTab(tab: PartyTab): void {
 
 export function showMine(): void {
   showPartyTab('mine');
+}
+
+// Where a Quest just made shows: one taken alone in the Quest list, in place of the screen that made it, any other in
+// 내 파티 (P06 ticket 67).
+export function showMade(alone: boolean): void {
+  if (!alone) {
+    showMine();
+  } else if (router.canDismiss()) {
+    router.replace('/quests');
+  } else {
+    router.push('/quests');
+  }
 }
 
 export function showFind(): void {

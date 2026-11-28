@@ -9,6 +9,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { QuestProposal } from '@/api/assistant-types';
@@ -17,6 +18,7 @@ import type { ShownQuest } from '@/api/quest-parts-types';
 import type { SubQuestContent, SubQuestPlace } from '@/api/room-types';
 import type { Board, GlobalEvent, Quest, SubQuest } from '@/api/types';
 import { now as clockNow } from '@/clock';
+import { heldAlone } from '@/features/quests/adapter';
 import { stepsAhead } from '@/features/quests/plan-steps';
 
 // What 파티 만들기 sends: a new Quest, or the change to one, from what the form holds.
@@ -133,7 +135,10 @@ export function formOf(quest: ShownQuest, event: FormEvent | null): PartyForm {
     ...emptyForm(),
     title: quest.title,
     description: quest.description,
-    capacity: Math.min(Math.max(quest.capacity, leastOf(visibility)), MAX_CAPACITY),
+    // A Quest taken alone opens at a 파티's 인원, which shows once a Friend is chosen.
+    capacity: heldAlone(quest)
+      ? emptyForm().capacity
+      : Math.min(Math.max(quest.capacity, leastOf(visibility)), MAX_CAPACITY),
     visibility,
     policy: quest.joinPolicy === 'approval' ? 'approval' : 'open',
     board: quest.board,
@@ -149,14 +154,14 @@ export function leastCapacity(holders: number, invited: number, visibility: Visi
 }
 
 // A required field left empty, which the form marks when its button is pressed.
-export type Missing = 'title' | 'description' | 'board' | 'friends';
+export type Missing = 'title' | 'description' | 'board';
 
-// What the form still waits for, in the page's order: 파티 올리기 for a title, a description and a board; 파티 만들기
-// for a title and a Friend; 수정 완료 as the first for a public Quest and for a title for a private one.
-export function missingOf(form: PartyForm, friends: number, editing: boolean): Missing[] {
+// What the form still waits for, in the page's order: 파티 올리기 and a public Quest's 수정 완료 for a title, a
+// description and a board; under 비공개 a title alone, with or without a Friend (P06 ticket 67; spec story 16).
+export function missingOf(form: PartyForm): Missing[] {
   const missing: Missing[] = form.title.trim() === '' ? ['title'] : [];
   if (form.visibility === 'private') {
-    return editing || friends > 0 ? missing : [...missing, 'friends'];
+    return missing;
   }
   return [
     ...missing,
@@ -165,11 +170,18 @@ export function missingOf(form: PartyForm, friends: number, editing: boolean): M
   ];
 }
 
-export function isReady(form: PartyForm, friends: number, editing: boolean): boolean {
-  return missingOf(form, friends, editing).length === 0;
+export function isReady(form: PartyForm): boolean {
+  return missingOf(form).length === 0;
 }
 
-export function makingOf(form: PartyForm): QuestMaking {
+// Whether the form makes, or keeps, a Quest taken alone: 비공개 with nobody invited and no event, for a new Quest or
+// one already taken alone (`canBeAlone`). Its one Holder needs no 인원 (P06 ticket 67, the user on 2026-11-28).
+export function staysAlone(form: PartyForm, friends: number, canBeAlone: boolean): boolean {
+  return canBeAlone && form.visibility === 'private' && friends === 0 && form.event === null;
+}
+
+// The Quest the form asks for; `alone`, a Quest taken alone, Closed and for one (`staysAlone`).
+export function makingOf(form: PartyForm, alone = false): QuestMaking {
   const title = form.title.trim();
   const subQuest = {
     title,
@@ -177,6 +189,9 @@ export function makingOf(form: PartyForm): QuestMaking {
     ...(form.place === undefined ? {} : { place: form.place }),
   };
   const description = form.description.trim();
+  if (alone) {
+    return { title, description, capacity: 1, joinPolicy: 'closed', takenAlone: true, subQuest };
+  }
   if (form.visibility === 'private') {
     return { title, description, capacity: form.capacity, joinPolicy: 'closed', subQuest };
   }
@@ -190,9 +205,9 @@ export function makingOf(form: PartyForm): QuestMaking {
   };
 }
 
-// What changed against the Quest: PATCH sends only that.
-export function changeOf(quest: Quest, form: PartyForm): QuestChange {
-  const wanted = makingOf(form);
+// What changed against the Quest: PATCH sends only that. A Quest that stays taken alone keeps its 인원 of one.
+export function changeOf(quest: Quest, form: PartyForm, alone = false): QuestChange {
+  const wanted = makingOf(form, alone);
   const change: QuestChange = {};
   if (wanted.title !== quest.title) {
     change.title = wanted.title;
