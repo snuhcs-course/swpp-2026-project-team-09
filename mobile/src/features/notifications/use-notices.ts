@@ -8,7 +8,7 @@
  ******************************************************************************/
 
 import { type UseQueryResult, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { apiClient } from '@/api/client';
 import {
   NOTIFICATIONS_KEY,
@@ -79,21 +79,23 @@ export function useBellCount(): number {
 export function useMarkShownRead(shown: boolean): void {
   const queryClient = useQueryClient();
   const kept = useQuery(notificationsQuery).data ?? [];
-  // The unread ones' identities, so that a new one asks again and a refetch of the same ones does not.
-  const unread = shown
-    ? unreadKept(kept, now())
-        .map(({ id }) => id)
-        .join(' ')
-    : '';
+  const unread = shown ? unreadKept(kept, now()).map(({ id }) => id) : [];
+  // The unread ones already asked for. Only one not among them asks again: a refetch of the same ones does not, nor a
+  // row deleted from among them.
+  const asked = useRef(new Set<string>());
+  const fresh = unread.filter((id) => !asked.current.has(id)).join(' ');
   const { mutate } = useMutation({
     mutationFn: () => apiClient.markNotificationsRead(),
     onSettled: () => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
   });
   useEffect(() => {
-    if (unread !== '') {
+    if (fresh !== '') {
+      for (const id of fresh.split(' ')) {
+        asked.current.add(id);
+      }
       mutate();
     }
-  }, [unread, mutate]);
+  }, [fresh, mutate]);
 }
 
 // Deletes a kept Notification by its identity. Its row, and its count on the bell, go at once, before the main server

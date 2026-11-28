@@ -51,8 +51,8 @@ export function SwipedNotice({ children, onDelete }: { children: ReactNode; onDe
   return (
     <ReanimatedSwipeable
       childrenContainerStyle={styles.row}
-      friction={1}
-      onSwipeableOpen={() => {
+      // At the release, before the row springs back to the action's width and so back under half the screen.
+      onSwipeableWillOpen={() => {
         if (fullSwiped.current) {
           onDelete();
         }
