@@ -8,10 +8,11 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useEffect, useState, useSyncExternalStore } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Presence } from '@/api/types';
@@ -39,7 +40,7 @@ import {
 import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
 import { profileLabel } from '@/features/friends/profile';
 import { useFriends } from '@/features/friends/use-friends';
-import { useHideTabBarOnMain } from '../shell/main-tab-bar';
+import { useCoverMap } from './map-cover';
 
 type Filter = Presence | 'all';
 
@@ -151,40 +152,6 @@ function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
   );
 }
 
-// Whether the friend panel is open, for the main screen: what floats over the map and the tab bar give way while it is,
-// so that only the map shows through its glass (design review of A04-06).
-let panelShown = false;
-const panelWatchers = new Set<() => void>();
-
-function setPanelShown(next: boolean): void {
-  panelShown = next;
-  for (const watcher of panelWatchers) {
-    watcher();
-  }
-}
-
-function watchPanel(watcher: () => void): () => void {
-  panelWatchers.add(watcher);
-  return (): void => {
-    panelWatchers.delete(watcher);
-  };
-}
-
-export function useFriendPanelShown(): boolean {
-  return useSyncExternalStore(watchPanel, () => panelShown);
-}
-
-// Tells the main screen that the panel is open, and hides the tab bar meanwhile.
-function useShownOnMain(open: boolean): void {
-  useHideTabBarOnMain(open);
-  useEffect(() => {
-    setPanelShown(open);
-    return (): void => {
-      setPanelShown(false);
-    };
-  }, [open]);
-}
-
 // The friend panel, the `MainFriends` frame, on glass over the map. A Friend's calendar button closes the panel and
 // opens 파티 만들기 as 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
 export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactElement {
@@ -196,7 +163,7 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
     router.push({ pathname: '/party-form', params: { friendId: id } });
   };
   const shown = friends?.filter((friend) => (filter === 'all' || friend.presence === filter) && found(friend, query));
-  useShownOnMain(open);
+  useCoverMap(open);
   return (
     <SidePanel glass label="친구" onClose={onClose} open={open}>
       <AppBar

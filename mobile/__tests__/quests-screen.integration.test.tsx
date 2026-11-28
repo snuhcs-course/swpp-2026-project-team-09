@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -55,6 +56,16 @@ describe('the Quest list on the whole screen', () => {
     await user.press(screen.getByRole('button', { name: '닫기' }));
     expect(screen.queryByRole('header', { name: '퀘스트 3' })).toBeNull();
     expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+  });
+
+  it('lies on glass over the map, whose floating parts give way until it closes (A04 ticket 08)', async () => {
+    const user = await openQuests();
+
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.8)' });
+    expect(screen.getByTestId('over-map', { includeHiddenElements: true })).toHaveStyle({ opacity: 0 });
+
+    await user.press(screen.getByRole('button', { name: '닫기' }));
+    expect(screen.getByTestId('over-map')).not.toHaveStyle({ opacity: 0 });
   });
 
   it("is closed by Android's back button", async () => {

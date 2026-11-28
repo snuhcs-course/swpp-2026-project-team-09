@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -29,6 +30,7 @@ import {
 } from '@/design-system';
 import { type QuestRowView, toQuestGroups } from '@/features/quests/adapter';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
+import { useCoverMap } from '@/screens/main/map-cover';
 import { now } from '@/clock';
 
 type Filter = 'all' | 'class' | 'party';
@@ -96,11 +98,12 @@ function Groups({ rows, onPress }: GroupsProps): ReactElement {
   );
 }
 
-// The User's Quests on the whole screen, the `MainQuests` frame: every Quest that has not ended, by the day it starts, with chips that filter classes and Parties. A Quest taken alone
+// The User's Quests on the whole screen, the `MainQuests` frame, on glass over the map (A04 ticket 08): every Quest that has not ended, by the day it starts, with chips that filter classes and Parties. A Quest taken alone
 // is under 전체 only.
 export function QuestsScreen(): ReactElement {
   const { data, isPending, refetch } = useQuestRows();
   const [filter, setFilter] = useState<Filter>('all');
+  useCoverMap(true);
   const quests = data?.filter(({ ended }) => !ended);
   const classes = quests?.filter(({ kind }) => kind === 'class') ?? [];
   const parties = quests?.filter(({ kind }) => kind === 'party') ?? [];
@@ -108,6 +111,7 @@ export function QuestsScreen(): ReactElement {
   return (
     <FullScreenPanel
       count={quests === undefined ? undefined : quests.length}
+      glass
       leave={{ kind: 'close', onPress: router.back }}
       title="퀘스트"
       under={

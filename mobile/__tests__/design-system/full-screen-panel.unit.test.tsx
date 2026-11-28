@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -75,5 +76,19 @@ describe('FullScreenPanel', () => {
 
     await hideKeyboard();
     expect(screen.getByRole('button', { name: '저장' })).toBeVisible();
+  });
+});
+
+describe('FullScreenPanel on glass', () => {
+  it('lies on the glass panel, with no white of its own, when it is shown over the map', async () => {
+    await render(
+      <FullScreenPanel glass leave={{ kind: 'close', onPress: jest.fn<void, []>() }} title="퀘스트">
+        <Text>자료구조</Text>
+      </FullScreenPanel>,
+    );
+
+    // Without Liquid Glass, as on Android, the panel is white at 80% (A04-03).
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.8)' });
+    expect(screen.getByText('자료구조')).toBeVisible();
   });
 });
