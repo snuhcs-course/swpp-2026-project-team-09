@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useMemo, useState } from 'react';
@@ -10,6 +11,7 @@ import type { AnswerDrawing } from '@/features/assistant/answer-marks';
 import { type MapCamera, type MarkerImage, type MarkerLook, useLooksSettled, useMarkerImages } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { sameCamera } from '@/map/projection';
+import { type Frame, type FrameKey, sameKey } from './framed-camera';
 
 // An answer's labels where the map comes to rest (P04 ticket 69): placed at the answer's own camera, where the camera
 // glides, and again each time the map comes to rest after that, as after the User's pan or pinch, so that the tags
@@ -21,25 +23,52 @@ function sameOwn(one: MapCamera | null, other: MapCamera | null): boolean {
 }
 
 interface Since {
-  // The answer's own camera, and the camera at rest when it was last changed.
+  // The framing event last seen (`Frame`): its key, whether its drawing was the one the map shows, and the answer's own
+  // camera then.
+  key: FrameKey;
+  active: boolean;
   own: MapCamera | null;
+  // The camera at rest when the map last came to rest, or at the event; whether it has come to rest since the event,
+  // or stood at the event's own camera already; and the view the labels were placed in then.
   camera: MapCamera | null;
+  rested: boolean;
+  room: LabelView | null;
 }
 
-// The view an answer's labels are placed at: the answer's own (`shown`) until the map comes to rest after the
-// answer's own camera last changed, as it does for another answer, another Plan, or another card's height; then the
-// camera at rest (`MainMap.camera`, which the map's `onCameraIdle` sets), with the same size and area.
-export function useRestedView(shown: LabelView | null, camera: MapCamera | null): LabelView | null {
+function cameFirst(key: FrameKey, active: boolean, shown: LabelView | null, camera: MapCamera | null): Since {
   const own = shown?.camera ?? null;
-  const [since, setSince] = useState<Since>({ own, camera });
-  const moved = !sameOwn(since.own, own);
-  if (moved) {
-    setSince({ own, camera });
+  return { key, active, own, camera, rested: camera !== null && own !== null && sameOwn(camera, own), room: shown };
+}
+
+// The view an answer's labels are placed at: the answer's own (`shown`), where the map glides, from a framing event
+// (another reply, another Plan, a press that chooses: `Frame`) until the map comes to rest after it; until then it
+// follows the card's layout, as the glide does (`useFramedCamera`). From then on, the camera at rest (`MainMap.camera`,
+// which the map's `onCameraIdle` sets), in the view as it was when the map came to rest: its size, its labels' area
+// between the cards, and the phone's font size. A card's height or fold is no framing event and moves no camera, so it
+// places no label again (P10 ticket 31, the user's phone: folding a time card away and back made the map blink, every
+// mark drawn again); the next rest, after the User's pan, or the next event places them in the room there is then.
+export function useRestedView(
+  shown: LabelView | null,
+  camera: MapCamera | null,
+  { key, active = true }: Frame,
+): LabelView | null {
+  const own = shown?.camera ?? null;
+  const [since, setSince] = useState<Since>(() => cameFirst(key, active, shown, camera));
+  const event = !sameKey(since.key, key) || (active && !since.active) || (since.own === null && own !== null);
+  const arrived = !event && camera !== null && camera !== since.camera;
+  const now = event
+    ? cameFirst(key, active, shown, camera)
+    : arrived
+      ? { ...since, active, camera, rested: true, room: shown }
+      : { ...since, active };
+  if (event || arrived || active !== since.active) {
+    setSince(now);
   }
-  const rested = !moved && camera !== null && camera !== since.camera;
+  const { rested, room } = now;
   return useMemo(
-    () => (shown === null || camera === null || !rested ? shown : { ...shown, camera }),
-    [shown, camera, rested],
+    () =>
+      shown === null || camera === null || !rested || room === null ? shown : { ...room, camera, avoid: shown.avoid },
+    [shown, camera, rested, room],
   );
 }
 

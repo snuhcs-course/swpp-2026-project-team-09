@@ -215,7 +215,7 @@ export function useDrawnMap(
     () => held ?? (base === null ? null : labelViewOf(base, framing, avoid)),
     [held, base, framing, avoid],
   );
-  const placedAt = useRestedView(shown, map.camera);
+  const placedAt = useRestedView(shown, map.camera, frame);
   const next = useMemo(() => (draw === null || placedAt === null ? base : draw(placedAt)), [draw, base, placedAt]);
   const baseKey = useMemo(() => looksKey(base), [base]);
   const { drawing, view, images } = useMadeDrawing(baseKey, next, placedAt, looks);

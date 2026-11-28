@@ -10,7 +10,7 @@ import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { MapCamera } from '@/map';
 import type { Room } from '@/screens/main/layout';
-import { useAnswerMap } from '@/screens/main/use-answer-map';
+import { type Beside, useAnswerMap } from '@/screens/main/use-answer-map';
 import { type Asked, mapOf } from './main-map-stand-in';
 import { NO_ANSWER } from './no-answer';
 
@@ -57,12 +57,35 @@ export const NOT_INVITED = {
 };
 
 export async function render(asked: Asked, given: Given = FIRST): Promise<(next: Given) => Promise<void>> {
-  const { rerender } = await renderHook(
+  const { rerender } = await drawn(asked, given);
+  return rerender;
+}
+
+// The same, with what the map draws now: each mark's id and the look its picture is made from (P10 ticket 31). Marks
+// `beside` the answer are drawn with it, as the other steps of several requests.
+export async function drawn(
+  asked: Asked,
+  given: Given = FIRST,
+  beside: Beside | null = null,
+): Promise<{ rerender: (next: Given) => Promise<void>; marks: () => string[] }> {
+  const { result, rerender } = await renderHook(
     ({ shown, room, fitZoom, camera = null }: Given) =>
-      useAnswerMap(shown, { ...mapOf(fitZoom, asked), camera }, room, { avatars: [], cards: [] }, NOT_INVITED),
+      useAnswerMap(
+        shown,
+        { ...mapOf(fitZoom, asked), camera },
+        room,
+        { avatars: [], cards: [] },
+        NOT_INVITED,
+        undefined,
+        true,
+        beside,
+      ),
     { initialProps: given },
   );
-  return async (next): Promise<void> => {
-    await rerender(next);
+  return {
+    rerender: async (next): Promise<void> => {
+      await rerender(next);
+    },
+    marks: () => (result.current?.contents.markers ?? []).map(({ id, image }) => `${id} ${image.look}`),
   };
 }
