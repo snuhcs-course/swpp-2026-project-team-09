@@ -71,7 +71,9 @@ describe("BottomNav's round tab", () => {
     await rerender(<BottomNav active={0} items={ROUND_ITEMS(true)} />);
 
     expect(screen.getByRole('tab', { name: '지도' })).not.toBeSelected();
-    expect(screen.getByRole('tab', { name: '지도' }).props.accessibilityState).not.toHaveProperty('expanded');
+    // Neither raised nor lowered: React Native's `Pressable` keeps the key, with no value.
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeExpanded();
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeCollapsed();
   });
 
   it('is filled navy while raised on its tab, and white with a navy ring otherwise', async () => {
