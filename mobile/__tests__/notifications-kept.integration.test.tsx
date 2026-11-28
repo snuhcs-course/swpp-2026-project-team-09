@@ -6,6 +6,7 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { router } from 'expo-router';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -191,5 +192,20 @@ describe('the time to leave in 알림', () => {
 
     expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
     expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
+  });
+});
+
+describe('a press on a row of 알림 that opens a card on the map', () => {
+  it('closes 알림 down to the map under it, with no second map over 알림 (P06 ticket 63)', async () => {
+    jest.setSystemTime(new Date('2026-10-06T12:17:00+09:00'));
+    server.on('GET /notifications', { status: 200, body: [LEAVE_BY] });
+    const user = await openNotifications('알림');
+
+    await user.press(screen.getByRole('button', { name: '지금 나서요 · 학생회관식당까지 걸어서 15분 · 12:18' }));
+    await pass(500);
+
+    expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
+    // Nothing is left above the tabs: neither 알림 nor a second tab navigator pushed over it.
+    expect(router.canDismiss()).toBe(false);
   });
 });

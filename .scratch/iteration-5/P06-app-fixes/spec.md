@@ -47,6 +47,7 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 39. **알림 by day.** Added by the user on 2026-11-28: "오늘, 어제, 이전으로 나눠서 알림 분류".
 40. **Deleting a row of 알림.** Added by the user on 2026-11-28: "오른쪽에서 왼쪽으로 스와이프하면 … 빨간색 배경에 흰 테두리의 쓰레기통 모양 나오게 해서 알림 지울 수 있게".
 41. **Two ways to set a place.** From fyoon46's review of PR 712 on 2026-11-28: the room's 일정 form still sets a place with the old typed field and map button, without the kind tag. The user asked for a ticket the same day.
+63. **A press in 알림 that slides a second map in.** Received by the user on 2026-11-28 as a review comment: "알림에서 뭔가를 누르면 화면 전환이 부자연스럽다" (`references/63-1-before-second-map.png`).
 
 Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 20 to 33 against 331adc64 on 2026-11-27, and items 37 to 40 against ec8337d6 on 2026-11-28: none was fixed then.
 
@@ -95,6 +96,7 @@ One ticket per item, numbered as the items:
 39. [39: 알림 is grouped into 오늘, 어제 and 이전](issues/39-notices-by-day.md)
 40. [40: A kept Notification is deleted by a swipe to the left](issues/40-swipe-to-delete-notice.md)
 41. [41: The room's 일정 form sets its place with the 파티 form's place sheet and shows the same kind tag](issues/41-room-step-place-sheet.md)
+63. [63: A row of 알림 that opens a card closes 알림 down to the map](issues/63-notice-closes-to-map.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -247,6 +249,7 @@ Decided on 2026-11-28 (37 to 40):
 - 39: a Notification whose time has not come is not listed (`GET /notifications` leaves it out). 오늘 / 어제 / 이전 by the Korea day of a Notification's time; what waits, which has no time, at the top of 오늘; an empty group is not shown.
 - 40: a swipe to the left on a kept Notification shows a red action with a white outlined trash icon; a press on it or a full swipe deletes it by `DELETE /notifications/:id`, `:id` being the list's identity. What waits does not swipe, nor anything not yet listed. No confirm and no undo. The red action is an inset button with rounded corners. 알림's app bar adds 모두 지우기, which asks "알림 N개를 지울까요?" once and then deletes, by `DELETE /notifications`, every kept Notification whose time has come; what waits stays (added 2026-11-28, from fyoon46's review of #754).
 - 41 (2026-11-28): the room's 일정 form sets 어디서 with the 파티 form's place sheet: a row with the place's words, its grey kind tag and a chevron opens the same sheet, and what is sent is unchanged. `WhereField` goes.
+- 63 (2026-11-28): a row of 알림 that opens a card on the map leaves 알림 by `dismissTo`, as a tapped push does, so that the map under it opens the card and no second tab navigator is pushed. Built on 37's branch, which changes the same function.
 
 For all tickets:
 

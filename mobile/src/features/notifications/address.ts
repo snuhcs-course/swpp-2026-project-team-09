@@ -17,7 +17,9 @@ export function cardAddress(kind: string, id: string): string {
 export const PARTY_GONE = '이미 없는 파티예요';
 
 // Opens an address as a tapped push does. Anything but a card's address opens nothing. A 파티's own news,
-// `room:<questId>`, opens its room over 알림, so that 뒤로 comes back to it.
+// `room:<questId>`, opens its room over 알림, so that 뒤로 comes back to it. Any other card closes 알림 back down to
+// the map under it, which then opens the card: `navigate` from a screen above the tabs would push a second tab
+// navigator over 알림 instead, a whole new map sliding in over it (P06 ticket 63).
 export function openAddress(address: string): void {
   const card = readCardAddress(address);
   if (card === null) {
@@ -27,5 +29,10 @@ export function openAddress(address: string): void {
     router.push(roomAddress(card.id));
     return;
   }
-  router.navigate({ pathname: '/main', params: { card: `${card.kind}:${card.id}` } });
+  const target = { pathname: '/main', params: { card: `${card.kind}:${card.id}` } } as const;
+  if (router.canDismiss()) {
+    router.dismissTo(target);
+  } else {
+    router.navigate(target);
+  }
 }
