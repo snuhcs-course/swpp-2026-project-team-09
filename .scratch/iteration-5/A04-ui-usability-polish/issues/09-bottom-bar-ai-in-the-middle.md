@@ -66,5 +66,5 @@ On 2026-11-28 the user chose the proposal's 권장: the middle is the app's home
 
 ### Agent usage (2026-11-29)
 
-- Agent time: about 55 minutes in one session (`iter5-a04-09~12`), an estimate. It leaves out the time the session spent waiting for the shared heavy-job lock and for the user's screen review, and the stretch in which the same session wrote tickets 10 to 12 ahead.
-- Tokens (Opus 5.5, the two review subagents included): input 450 and output 127,613; of the input, cache reads 55,934,434 and cache writes 464,597.
+- Agent time: about 1 hour in one session, the fixes for #798's first review included (`iter5-a04-09~12`), an estimate. It leaves out the time the session spent waiting for the shared heavy-job lock and for the user's screen review, and the stretch in which the same session wrote tickets 10 to 12 ahead.
+- Tokens (Opus 5.5, the two review subagents and the fixes for #798's first review included): input 476 and output 137,381; of the input, cache reads 62,733,389 and cache writes 481,199.
