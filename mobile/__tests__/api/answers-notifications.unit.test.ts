@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions of the check of `GET /notifications`: the documented shape, `ahead` left out, null, a text and of another
-// type, and each checked field wrong. Expected values: main-server's README (Notifications).
+// type, `read` given, left out and of another type, and each checked field wrong. Expected values: main-server's
+// README (Notifications).
 
 import { inList, omit, wrongFields } from '../support/answer-variants';
 import { isKeptNotifications } from '@/api/server/waiting-answers';
@@ -25,6 +27,13 @@ describe('isKeptNotifications', () => {
     ['a Notification with a title ahead', [LEAVE_BY]],
     ['one whose title ahead is null', [{ ...LEAVE_BY, ahead: null }]],
     ['one from a server that sends no title ahead', [omit(LEAVE_BY, 'ahead')]],
+    [
+      'one read and one unread',
+      [
+        { ...LEAVE_BY, read: true },
+        { ...LEAVE_BY, read: false },
+      ],
+    ],
     ['none', []],
   ])('%s → accepted', (_, answer) => {
     expect(isKeptNotifications(answer)).toBe(true);
@@ -33,6 +42,7 @@ describe('isKeptNotifications', () => {
   it.each([
     ['one Notification outside a list', LEAVE_BY],
     ['a title ahead that is a number', [{ ...LEAVE_BY, ahead: 1218 }]],
+    ['a read that is a text', [{ ...LEAVE_BY, read: 'true' }]],
     ...inList(LEAVE_BY, wrongFields(LEAVE_BY, { id: [1], kind: [1], title: [1], line: [1], at: [1], url: [1] })),
   ])('%s → refused', (_, answer) => {
     expect(isKeptNotifications(answer)).toBe(false);

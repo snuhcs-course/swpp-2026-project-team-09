@@ -122,10 +122,13 @@ function timeOf(at: string, now: Date): string {
 
 // The Leader's `join-asked` is the push's copy of the row 알림 composes from the requests waiting, which counts them and
 // opens the room that answers them, and `party-activated` the copy of a running Party's row: both are left out, so that
-// nothing shows twice.
+// nothing shows or counts twice.
+function shownKept(kept: readonly KeptNotification[]): KeptNotification[] {
+  return kept.filter(({ kind }) => kind !== 'join-asked' && kind !== 'party-activated');
+}
+
 function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[] {
-  return kept
-    .filter(({ kind }) => kind !== 'join-asked' && kind !== 'party-activated')
+  return shownKept(kept)
     .toSorted((one, other) => Date.parse(other.at) - Date.parse(one.at))
     .map((notification) => ({
       key: `notice-${notification.id}`,
@@ -221,6 +224,12 @@ export function toNotices({
 // The rows of what waits for the User, which the bell and the badge on 파티 count: the kept Notifications are left out.
 export function waitingNotices(notices: readonly NoticeView[]): NoticeView[] {
   return notices.filter(({ time }) => time === null);
+}
+
+// The kept Notifications the bell counts beside what waits: those shown whose time has come and that the User has not
+// read. One without `read`, from a main server that keeps no read state, is read.
+export function unreadKept(kept: readonly KeptNotification[], now: Date): KeptNotification[] {
+  return shownKept(kept).filter(({ read, at }) => read === false && Date.parse(at) <= now.getTime());
 }
 
 // Whether others ask the User to let them into the Quest: the User leads it, and it is Approval, or Open, which takes

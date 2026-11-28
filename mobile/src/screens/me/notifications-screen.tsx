@@ -30,7 +30,7 @@ import {
 } from '@/design-system';
 import { openAddress } from '@/features/notifications/address';
 import { type NoticeKind, type NoticeView, waitingNotices } from '@/features/notifications/adapter';
-import { useNotices } from '@/features/notifications/use-notices';
+import { useMarkShownRead, useNotices } from '@/features/notifications/use-notices';
 import { PartyOnButton } from './party-on-button';
 
 const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
@@ -119,9 +119,10 @@ function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement 
 }
 
 // 알림, the panel of the `Profile` frame: the Notifications the main server keeps, then what waits for the User, from
-// the lists the main server serves. The count is of the rows that wait.
+// the lists the main server serves. The count is of the rows that wait. The kept ones shown are then read.
 export function NotificationsScreen(): ReactElement {
   const { data, isPending, refetch } = useNotices();
+  useMarkShownRead(data !== undefined);
   const count = waitingNotices(data ?? []).length;
   return (
     <FullScreenPanel

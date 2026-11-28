@@ -160,6 +160,9 @@ export const serverClient: ApiClient = {
   listQuestInvitations: async () =>
     (await call('GET', '/quest-invitations', isQuestInvitations)).map((invitation) => toQuestInvitation(invitation)),
   listNotifications: () => call('GET', '/notifications', isKeptNotifications),
+  markNotificationsRead: async () => {
+    await call('POST', '/notifications/read', isNothing);
+  },
   listJoinRequests: (questId) => call('GET', `/quests/${encodeURIComponent(questId)}/join-requests`, isJoinRequests),
   listClasses: () => call('GET', '/timetable/classes', isTimetableClasses),
   // Sent once for each press of 저장, so its key is new each time unless the caller keeps one to send again.

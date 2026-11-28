@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -80,6 +81,7 @@ describe('An invited User accepting', () => {
           line: '저녁 같이',
           at: '2026-11-14T11:58:00+09:00',
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });
@@ -127,6 +129,7 @@ describe('An invited User declining', () => {
           line: '저녁 같이',
           at: '2026-11-14T11:58:00+09:00',
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });

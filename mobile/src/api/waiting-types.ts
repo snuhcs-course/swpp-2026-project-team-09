@@ -89,4 +89,6 @@ export interface KeptNotification {
   line: string;
   at: string;
   url: string;
+  // Whether the User has read it in 알림. Absent from an older main server, which keeps no read state: read.
+  read?: boolean;
 }

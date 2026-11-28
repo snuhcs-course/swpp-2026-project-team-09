@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -78,6 +79,7 @@ describe('The Leader leaving a 파티', () => {
           line: '저녁 같이 먹어요 · 홍길동님이 나갔어요',
           at: '2026-11-14T11:58:00+09:00',
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });
