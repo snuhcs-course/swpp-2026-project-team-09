@@ -13,7 +13,7 @@ Five fixes to what ticket 15 merged:
 2. "여기로" on an event never deletes the User's own 파티 for it.
 3. No count of parties counts a Quest taken alone.
 4. "다시 고르기" on a Quest already gone gives the Plan back.
-5. No one is invited into a Quest taken alone, and its settings stay.
+5. No one is invited into a seat's stay, and its settings stay. Every other Quest taken alone gathers by an invitation or a change of its settings to more than one (P05 ticket 87, the user's rule of 2026-11-28).
 
 ## Acceptance criteria
 
@@ -25,7 +25,7 @@ Five fixes to what ticket 15 merged:
   - A fifth place, found on the emulator: the Quest list's "파티" chip. Its rows now have the kind `quest` for a Quest taken alone, listed under 전체 only.
   - The tests fail before the fix.
 - [x] **4.** "다시 고르기" answered 404 `QUEST_NOT_FOUND` counts as given up: the taken card goes and the Plan shows again. The test fails before the fix.
-- [x] **5.** An invitation into a Quest taken alone and a change of its settings are refused with 409 `QUEST_TAKEN_ALONE`. Its room offers no "수정", the way into the party form, where Friends are invited and 공개 is set. The tests fail before the fix.
+- [x] **5.** An invitation into a seat's stay and a change of its settings are refused with 409 `QUEST_TAKEN_ALONE`. Since P05 ticket 87 every other Quest taken alone gathers instead, so its room may offer "수정" again.
 - [x] Each changed source file has its AI-generated row; lint, format, and type checks pass in both projects; no native file and no schema changed.
 
 ## Comments

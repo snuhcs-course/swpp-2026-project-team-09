@@ -2,7 +2,7 @@
 
 Parent: [P05 spec](../spec.md). The user's rule of 2026-11-28: a 비공개 파티 made with nobody invited is allowed and is a Quest of one's own, used as a to-do ("결국 퀘스트인데 혼자 하는 todo처럼 쓸 수도 있으니"). His decision of 2026-11-16: what one takes alone is a Quest.
 Status: ready-for-human
-Blocked by: the user's answer on a later invitation (see Comments).
+Blocked by: nothing.
 
 Native files: none. Releases: the main server; the app's form follows in its own PR. No migration: `quests.taken_alone` exists.
 
@@ -35,7 +35,7 @@ Also passing, run once each (integration): `own-quests` 19, `quest-boards` 28, `
 ## Acceptance criteria
 
 - [x] The tests above pass; lint, types and format pass.
-- [ ] The user decides how a later invitation goes (Comments).
+- [x] The user decided how a later invitation goes: ticket 88.
 - [ ] The app's form makes one with `takenAlone: true` (its own PR).
 
 ## Comments
@@ -43,6 +43,8 @@ Also passing, run once each (integration): `own-quests` 19, `quest-boards` 28, `
 - **A later invitation.** The brief said that inviting a Friend later turns the Quest into a 파티, as `gatheringFrom` does. Today it does not. P03 ticket 17 refuses any invitation into a Quest taken alone, and its settings change (`QUEST_TAKEN_ALONE`); `gatheringFrom` runs only when a Plan adds people or the party form attends a Global Event. This PR keeps that rule. The user decides between:
   - (a) a Quest made alone here gathers on a later invitation;
   - (b) it gathers nobody, as now.
+
+  He chose (a) and widened it ("초대할 수 있지 왜 없어", "어시스턴트 계획은 초대할 수도 있지 않나?"): every Quest taken alone but a seat's stay gathers. That is [ticket 88](88-solo-quests-gather.md).
 
 ### Agent usage (2026-11-28)
 
