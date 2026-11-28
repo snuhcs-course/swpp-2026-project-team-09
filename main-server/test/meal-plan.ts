@@ -8,6 +8,7 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -57,6 +58,7 @@ interface StartOptions {
   settings?: object;
   posthog?: UsageClientFactory;
   ownDatabase?: boolean;
+  tutorialFile?: string;
 }
 
 export class MealPlanStage {
@@ -75,8 +77,9 @@ export class MealPlanStage {
   private dropDatabase?: () => Promise<void>;
 
   // `settings` over the tests' own, `posthog` in PostHog's client's place, for a test of the usage events, and a
-  // database of its own (test/containers.ts) for a file that makes room requests, which a read sweeps by its clock.
-  async start({ settings = {}, posthog, ownDatabase: own = false }: StartOptions = {}): Promise<void> {
+  // database of its own (test/containers.ts) for a file that makes room requests, which a read sweeps by its clock, and
+  // a tutorial file in place of content/tutorial.yaml.
+  async start({ settings = {}, posthog, ownDatabase: own = false, tutorialFile }: StartOptions = {}): Promise<void> {
     const { model } = this.model;
     let all = { ...inject('settings'), ...settings };
     if (own) {
@@ -84,7 +87,7 @@ export class MealPlanStage {
       this.dropDatabase = database.drop;
       all = database.settings;
     }
-    this.app = await startApp(all, [], refuseKakao, model, [], this.travel, undefined, { posthog });
+    this.app = await startApp(all, [], refuseKakao, model, [], this.travel, tutorialFile, { posthog });
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockImplementation(() => this.now);
     // Imported after startApp, so that it is the class AppModule registers.
     const { RestaurantHours } = await import('../src/menus/restaurant-hours.js');

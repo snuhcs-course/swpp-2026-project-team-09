@@ -5,12 +5,14 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest, TutorialQuestStatus, TutorialState } from '@/api/tutorial-types';
 import {
   categoryOf,
   firstCategory,
+  isDone,
   kickerOf,
   nextAfter,
   rowOf,
@@ -193,6 +195,27 @@ describe('the 내 정보 row once stopped or finished', () => {
     expect(rowOf({ ...tutorialOf('finished', 'completed', 'notStarted'), eligibleByDefault: true })).toMatchObject({
       line: '모두 완료했어요 · 새 퀘스트가 있어요',
       enable: true,
+    });
+  });
+});
+
+// The served quests are the content's now: a quest taken out of it counts for nothing (P06 ticket 60).
+describe('done', () => {
+  it.each<[string, Tutorial, boolean]>([
+    ['finished', tutorialOf('finished', 'completed', 'notStarted'), true],
+    ['active with every served quest completed', tutorialOf('active', 'completed', 'completed'), true],
+    ['active with a served quest started', tutorialOf('active', 'completed', 'started'), false],
+    ['available with no quest', tutorialOf('available'), false],
+  ])('%s: %p', (_, tutorial, done) => {
+    expect(isDone(tutorial)).toBe(done);
+  });
+
+  it('shows 모두 완료했어요 on 내 정보 for an active tutorial whose served quests are all completed', () => {
+    expect(rowOf(tutorialOf('active', 'completed', 'completed'))).toEqual({
+      line: '모두 완료했어요',
+      enable: false,
+      stopLabel: null,
+      hide: false,
     });
   });
 });

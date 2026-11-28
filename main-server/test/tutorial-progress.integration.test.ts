@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -212,7 +213,7 @@ describe('Stopping and turning on again', () => {
     const again = await tutorialAfter(postTutorial(app, user, 'enable'));
 
     expect(again.state).toBe('finished');
-    expect(again.quests.map(({ status }) => status)).toEqual(Array.from({ length: 15 }, () => 'completed'));
+    expect(again.quests.map(({ status }) => status)).toEqual(Array.from({ length: 12 }, () => 'completed'));
     expect((await tutorialAfter(getTutorial(app, user))).state).toBe('finished');
   });
 

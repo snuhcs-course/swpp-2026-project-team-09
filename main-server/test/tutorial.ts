@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -64,9 +65,6 @@ export const QUEST_KEYS = [
   'lost-and-found',
   'laptop-rental',
   'kwanjeong',
-  'su-grading-option',
-  'chatgpt-edu',
-  'ms365-campus-software',
   'admin-shuttle',
   'night-shuttle',
   'health-clinic',
@@ -76,7 +74,7 @@ export const QUEST_KEYS = [
   'gwanaksan-engineering-trail',
 ];
 
-// The five quests of P06, before P13 added ten.
+// The five quests of P06, before P13 added more.
 export const P06_KEYS = ['s-card', 'kwanjeong', 'admin-shuttle', 'health-clinic', 'art-museum'];
 
 export const BUTTON_KEYS = QUEST_KEYS.filter((key) => key !== 'kwanjeong');
@@ -151,10 +149,10 @@ export async function changedTutorialFile({
   return file;
 }
 
-// A sixteenth quest, as the content might gain one later.
+// A thirteenth quest, as the content might gain one later.
 export const ADDED_QUEST = {
   key: 'student-union',
-  order: 16,
+  order: 13,
   category: 'culture',
   title: '학생회관 둘러보기',
   brief: '학생회관에 가 보세요.',
@@ -163,5 +161,20 @@ export const ADDED_QUEST = {
   completion: { kind: 'button' },
   completionMessage: '학생회관은 어떠셨나요?',
   places: [{ place: '63' }],
+  links: [],
+};
+
+// A quest done online, at no place, for the tests of such a quest: content/tutorial.yaml has none since P06 ticket 60.
+export const ONLINE_QUEST = {
+  key: 'online-quest',
+  order: 13,
+  category: 'culture',
+  title: '온라인으로 하는 퀘스트',
+  brief: '온라인으로 해 보세요.',
+  body: ['어디에도 가지 않고 할 수 있어요.'],
+  condition: '온라인으로 해 보기',
+  completion: { kind: 'button' },
+  completionMessage: '잘했어요!',
+  places: [],
   links: [],
 };

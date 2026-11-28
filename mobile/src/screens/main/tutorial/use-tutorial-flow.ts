@@ -5,12 +5,13 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useState } from 'react';
 import type { Tutorial, TutorialCompletedBy } from '@/api/tutorial-types';
 import { checkKwanjeong, type KwanjeongCheck, type ShownBooking } from '@/features/tutorial/kwanjeong-check';
-import { firstCategory, nextAfter } from '@/features/tutorial/rules';
+import { firstCategory, isDone, nextAfter } from '@/features/tutorial/rules';
 import { type TutorialActions, useTutorial, useTutorialActions } from '@/features/tutorial/use-tutorial';
 import { library } from '@/library/library';
 import { useLibrarySession } from '@/library/library-session';
@@ -74,7 +75,7 @@ type SetSheet = (change: (sheet: SheetView | null) => SheetView | null) => void;
 
 // The list once a quest is completed: on the next quest, or "n / n".
 function listAfter(after: Tutorial, key: string): ListView {
-  const next = after.state === 'finished' ? null : nextAfter(after.quests, key);
+  const next = isDone(after) ? null : nextAfter(after.quests, key);
   const quest = next === null ? undefined : after.quests[next];
   return quest === undefined
     ? { kind: 'done' }

@@ -3,20 +3,23 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type AnswerReply, type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type ReplyOffer } from '../src/assistant/dto/assistant-messages.dto.js';
 import { MealPlanStage } from './meal-plan.js';
+import { changedTutorialFile, ONLINE_QUEST } from './tutorial.js';
 
 // A Tutorial quest's facts in words first, with 가는 길 보기 under them (board q11), and the way there, the stay, and
 // the way on to the next Class once it is pressed (board q12), at the Assistant's endpoint with the scripted model,
-// the seed's Places, walking table and shuttle timing, and content/tutorial.yaml. Each date is a Tuesday.
+// the seed's Places, walking table and shuttle timing, and content/tutorial.yaml with a quest done online added. Each
+// date is a Tuesday.
 
 const stage = new MealPlanStage();
 
-beforeAll(() => stage.start());
+beforeAll(async () => stage.start({ tutorialFile: await changedTutorialFile({ extra: [ONLINE_QUEST] }) }));
 
 afterAll(() => stage.stop());
 
@@ -67,9 +70,9 @@ describe('A question about one quest (board q11)', () => {
 
     const all = await stage.send([{ tool: 'getTutorial', input: {} }, { text: '…' }], {}, '튜토리얼 뭐 있어?');
     const online = await stage.send(
-      [{ tool: 'getTutorial', input: { questKey: 'chatgpt-edu' } }, { text: '…' }],
+      [{ tool: 'getTutorial', input: { questKey: ONLINE_QUEST.key } }, { text: '…' }],
       {},
-      'ChatGPT Edu 어떻게 써?',
+      `${ONLINE_QUEST.title} 어떻게 해?`,
     );
 
     expect(all.body).not.toHaveProperty('offers');
@@ -137,7 +140,7 @@ describe("A quest's way, otherwise", () => {
     const response = await stage.send(
       [
         { tool: 'findWay', input: { quest: 'no-such-quest' } },
-        { tool: 'findWay', input: { quest: 'chatgpt-edu' } },
+        { tool: 'findWay', input: { quest: ONLINE_QUEST.key } },
         { text: '…' },
       ],
       { context: await at('301') },

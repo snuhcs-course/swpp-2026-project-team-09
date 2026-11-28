@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
@@ -85,6 +86,16 @@ function finishedRow(tutorial: Tutorial): TutorialRowView {
     : { ...NO_BUTTONS, line: '모두 완료했어요' };
 }
 
+// Whether the tutorial is done: finished, or every quest it serves completed. The served quests are the content's
+// now, so a quest taken out of it counts for nothing, even from a server that has not read it as finished (P06
+// ticket 60).
+export function isDone(tutorial: Tutorial): boolean {
+  return (
+    tutorial.state === 'finished' ||
+    (tutorial.quests.length > 0 && tutorial.quests.every(({ status }) => status === 'completed'))
+  );
+}
+
 export function rowOf(tutorial: Tutorial): TutorialRowView | null {
   const { state } = tutorial;
   if (state === 'off') {
@@ -100,5 +111,5 @@ export function rowOf(tutorial: Tutorial): TutorialRowView | null {
   if (state === 'stopped') {
     return { ...NO_BUTTONS, line: '그만두었어요 · 다시 하려면 진행하기를 눌러요', enable: true };
   }
-  return state === 'active' ? activeRow(tutorial) : finishedRow(tutorial);
+  return state === 'active' && !isDone(tutorial) ? activeRow(tutorial) : finishedRow(tutorial);
 }

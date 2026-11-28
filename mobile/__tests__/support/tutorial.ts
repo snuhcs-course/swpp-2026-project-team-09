@@ -5,8 +5,10 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { pass, screen } from './app';
 import { button } from './lists';
 import { openMain } from './main';
@@ -80,7 +82,7 @@ export async function openListAt(user: User, key: string): Promise<void> {
   await pressAndWait(user, START);
   const category = TUTORIAL_CONTENT.find((one) => one.key === key)?.category;
   const label = TUTORIAL_CATEGORIES.find((one) => one.key === category)?.label ?? '';
-  await user.press(screen.getByRole('tab', { name: label }));
+  await user.press(within(screen.getByLabelText(LIST)).getByRole('button', { name: label }));
 }
 
 // A started quest's sheet, as the main server without guides serves the tutorial: opened from its row in the list.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -44,6 +45,44 @@ describe('The tutorial state', () => {
     // The times are never compared: a stop before the enabling is still a stop.
     ['stopped before it was enabled', progress({ enabledAt: AT, stoppedAt: EARLIER }), [], 'stopped'],
     ['finished before it was enabled', progress({ enabledAt: AT, finishedAt: EARLIER }), [], 'finished'],
+  ])('is read from %s', (_, row, quests, state) => {
+    expect(tutorialState(row, quests, KEYS)).toBe(state);
+  });
+});
+
+// A quest taken out of the content after the User completed the rest (P06 ticket 60): no finishedAt was set, and a
+// row of a key no longer in the content counts for nothing.
+describe('The tutorial state with a quest taken out of the content', () => {
+  it.each<[string, Progress | null, { questKey: string; completedAt: Date | null }[], TutorialState]>([
+    [
+      'every quest of the content completed, a removed one not',
+      progress({ enabledAt: AT }),
+      [
+        { questKey: 's-card', completedAt: AT },
+        { questKey: 'kwanjeong', completedAt: AT },
+        { questKey: 'chatgpt-edu', completedAt: null },
+      ],
+      'finished',
+    ],
+    [
+      'every quest of the content completed, and a removed one too',
+      progress({ enabledAt: AT }),
+      [
+        { questKey: 's-card', completedAt: AT },
+        { questKey: 'kwanjeong', completedAt: AT },
+        { questKey: 'chatgpt-edu', completedAt: AT },
+      ],
+      'finished',
+    ],
+    [
+      'a removed quest completed and one of the content not',
+      progress({ enabledAt: AT }),
+      [
+        { questKey: 's-card', completedAt: AT },
+        { questKey: 'chatgpt-edu', completedAt: AT },
+      ],
+      'active',
+    ],
   ])('is read from %s', (_, row, quests, state) => {
     expect(tutorialState(row, quests, KEYS)).toBe(state);
   });

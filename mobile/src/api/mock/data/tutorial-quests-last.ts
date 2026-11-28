@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { TutorialContent } from './tutorial';
@@ -10,7 +11,7 @@ import type { TutorialContent } from './tutorial';
 export const LAST_QUESTS: readonly TutorialContent[] = [
   {
     key: 'admin-shuttle',
-    order: 9,
+    order: 6,
     category: 'transit',
     title: '행정관 셔틀 이용하기',
     brief: '행정관 앞에서 셔틀을 타 보세요.',
@@ -28,7 +29,7 @@ export const LAST_QUESTS: readonly TutorialContent[] = [
   },
   {
     key: 'night-shuttle',
-    order: 10,
+    order: 7,
     category: 'transit',
     title: '야간 셔틀 타기',
     brief: '밤늦게까지 공부한 날에도 셔틀을 타고 집에 갈 수 있어요.',
@@ -55,7 +56,7 @@ export const LAST_QUESTS: readonly TutorialContent[] = [
   },
   {
     key: 'health-clinic',
-    order: 11,
+    order: 8,
     category: 'health',
     title: '서울대 보건진료소 이용',
     brief: '보건진료소가 어디 있는지 알아 두세요.',
@@ -76,7 +77,7 @@ export const LAST_QUESTS: readonly TutorialContent[] = [
   },
   {
     key: 'counseling-center',
-    order: 12,
+    order: 9,
     category: 'health',
     title: '대학생활문화원 상담 알아두기',
     brief: '마음이 힘들 때 이야기할 수 있는 곳을 알아 두세요.',
@@ -93,7 +94,7 @@ export const LAST_QUESTS: readonly TutorialContent[] = [
   },
   {
     key: 'art-museum',
-    order: 13,
+    order: 10,
     category: 'culture',
     title: '서울대 미술관/파워플랜트 관람',
     brief: '캠퍼스 안의 미술관과 파워플랜트에서 전시를 봐요.',
@@ -111,7 +112,7 @@ export const LAST_QUESTS: readonly TutorialContent[] = [
   },
   {
     key: 'dure-practice-room',
-    order: 14,
+    order: 11,
     category: 'culture',
     title: '두레문예관 연습실 예약하기',
     brief: '동아리가 아니어도 혼자 악기나 춤을 연습할 방을 빌릴 수 있어요.',
@@ -133,7 +134,7 @@ export const LAST_QUESTS: readonly TutorialContent[] = [
   },
   {
     key: 'gwanaksan-engineering-trail',
-    order: 15,
+    order: 12,
     category: 'culture',
     title: '공학관 코스로 관악산 오르기',
     brief: '캠퍼스에서 바로 관악산 정상 연주대까지 올라 보세요.',

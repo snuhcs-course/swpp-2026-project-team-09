@@ -13,13 +13,13 @@ quests:
     completionMessage: 잘했어요!
     places: []
     links: []
-  - key: chatgpt-edu
+  - key: kwanjeong
     order: 2
     category: study
-    title: ChatGPT Edu 쓰기
-    brief: ChatGPT Edu에 로그인해 보세요.
-    body: [재학생은 쓸 수 있어요.]
-    condition: 로그인하기
+    title: 관정도서관 예약하기
+    brief: 관정도서관 자리를 예약해 보세요.
+    body: [열람실과 스터디룸이 있어요.]
+    condition: 예약하기
     completion: { kind: button }
     completionMessage: 잘했어요!
     places: []

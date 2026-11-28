@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -39,22 +40,25 @@ describe('what stands at the left above the AI input in no Party', () => {
   });
 
   it.each([
-    ['the start button', START, tutorialStartBottom],
-    ['the line that asks for interests', HINT, interestsHintBottom],
-    ['the line of a made Quest', MADE, madeLineBottom],
-  ] as const)("stands %s alone in the row's place, 16 above the AI input, under the credit", (_shown, left, bottom) => {
-    const room = { ...NO_PARTY, ...left };
+    ['the start button', START, tutorialStartBottom, 122],
+    ['the line that asks for interests', HINT, interestsHintBottom, 112],
+    ['the line of a made Quest', MADE, madeLineBottom, 112],
+  ] as const)(
+    "stands %s alone in the row's place, 16 above the AI input, under the credit",
+    (_shown, left, bottom, top) => {
+      const room = { ...NO_PARTY, ...left };
 
-    expect(bottom(room)).toBe(78);
-    // Its 34 and the map's own 8 put the credit 8 above it.
-    expect(mapInset(room).bottom).toBe(112);
-  });
+      expect(bottom(room)).toBe(78);
+      // Its height (the start button's 44, a line's 34) and the map's own 8 put the credit 8 above it.
+      expect(mapInset(room).bottom).toBe(top);
+    },
+  );
 
   it.each([
-    ['the start button and the line that asks for interests', { ...START, interestsHint: true }, [78, 120, null], 154],
-    ['the start button and the line of a made Quest', { ...START, madeLine: true }, [78, null, 120], 154],
+    ['the start button and the line that asks for interests', { ...START, interestsHint: true }, [78, 130, null], 164],
+    ['the start button and the line of a made Quest', { ...START, madeLine: true }, [78, null, 130], 164],
     ['both lines', { ...HINT, madeLine: true }, [null, 78, 120], 154],
-    ['all three', { tutorialStart: true, interestsHint: true, madeLine: true }, [78, 120, 162], 196],
+    ['all three', { tutorialStart: true, interestsHint: true, madeLine: true }, [78, 130, 172], 206],
   ] as const)('stacks %s in that order, 8 apart from the lowest up', (_shown, left, [start, hint, made], top) => {
     const room = { ...NO_PARTY, ...left };
 
@@ -77,14 +81,14 @@ describe('what stands at the left above the AI input in a Party', () => {
     const room = { ...IN_PARTY, ...START };
 
     expect(tutorialStartBottom(room)).toBe(134);
-    expect(mapInset(room).bottom).toBe(168);
+    expect(mapInset(room).bottom).toBe(178);
   });
 
   it('stacks all three over the row, 8 apart', () => {
     const room = { ...IN_PARTY, tutorialStart: true, interestsHint: true, madeLine: true };
 
-    expect([tutorialStartBottom(room), interestsHintBottom(room), madeLineBottom(room)]).toEqual([134, 176, 218]);
-    expect(mapInset(room).bottom).toBe(252);
+    expect([tutorialStartBottom(room), interestsHintBottom(room), madeLineBottom(room)]).toEqual([134, 186, 228]);
+    expect(mapInset(room).bottom).toBe(262);
   });
 });
 
@@ -92,7 +96,7 @@ describe('what stands at the left above the AI input in a Party', () => {
 describe('the credit and the logo over a taller AI input', () => {
   it.each([
     ['above nothing in no Party', NO_PARTY, 90, 102],
-    ['lower than the start button', { ...NO_PARTY, ...START }, 90, 112],
+    ['lower than the start button', { ...NO_PARTY, ...START }, 90, 122],
     ['higher than the start button', { ...NO_PARTY, ...START }, 130, 142],
     ['lower than the row of buttons', IN_PARTY, 90, 126],
     ['higher than the row of buttons', IN_PARTY, 130, 142],
@@ -133,8 +137,8 @@ describe('the credit and the logo while a card is shown', () => {
 describe("the friend list's window on a low screen", () => {
   it.each([
     ['in no Party with nothing at the left', NO_PARTY, 364],
-    ['in no Party with the start button', { ...NO_PARTY, ...START }, 414],
-    ['in no Party with all three', { ...NO_PARTY, tutorialStart: true, interestsHint: true, madeLine: true }, 498],
+    ['in no Party with the start button', { ...NO_PARTY, ...START }, 424],
+    ['in no Party with all three', { ...NO_PARTY, tutorialStart: true, interestsHint: true, madeLine: true }, 508],
     ['in a Party', IN_PARTY, 428],
     ['over a taller input', { ...NO_PARTY, inputHeight: 130 }, 444],
     ['over an open card', { ...NO_PARTY, cardHeight: 180 }, 554],

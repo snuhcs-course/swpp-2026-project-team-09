@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -10,10 +11,10 @@ import type { TutorialAction, TutorialGuide, TutorialKind, TutorialStep } from '
 import {
   color,
   font,
+  Glass,
   Icon,
   iconOrFlag,
   radius,
-  shadow,
   space,
   type TutorialCategoryTone,
   tutorialTone,
@@ -21,7 +22,7 @@ import {
 import { type GuidePosition, isChoosing, stepAt } from '@/features/tutorial/guide';
 import { About, Actions, Chips, LinkButton, Rows, Spots } from './guide-parts';
 
-const NUMBER = 28;
+const NUMBER = 26;
 const KIND_TILE = 44;
 
 export interface BubbleProps {
@@ -46,22 +47,24 @@ function KindOption({
   onPress: () => void;
 }): ReactElement {
   return (
-    <Pressable accessibilityLabel={kind.title} accessibilityRole="button" onPress={onPress} style={styles.kind}>
-      <View style={[styles.kindTile, { backgroundColor: tone.soft }]}>
-        <Icon color={tone.ink} name={iconOrFlag(kind.icon)} size={22} />
-      </View>
-      <View style={styles.kindWords}>
-        <Text style={styles.kindTitle}>{kind.title}</Text>
-        <View style={styles.route}>
-          {kind.route.map((stop, at) => (
-            <View key={stop} style={styles.routeStop}>
-              {at === 0 ? null : <Text style={styles.routeArrow}>→</Text>}
-              <Text style={styles.routeWords}>{stop}</Text>
-            </View>
-          ))}
+    <Pressable accessibilityLabel={kind.title} accessibilityRole="button" onPress={onPress}>
+      <Glass level="inner" style={styles.kind}>
+        <View style={[styles.kindTile, { backgroundColor: tone.soft }]}>
+          <Icon color={tone.ink} name={iconOrFlag(kind.icon)} size={22} />
         </View>
-      </View>
-      <Icon color={tutorialTone.faint} name="chevronRight" size={20} />
+        <View style={styles.kindWords}>
+          <Text style={styles.kindTitle}>{kind.title}</Text>
+          <View style={styles.route}>
+            {kind.route.map((stop, at) => (
+              <View key={stop} style={styles.routeStop}>
+                {at === 0 ? null : <Text style={styles.routeArrow}>→</Text>}
+                <Text style={styles.routeWords}>{stop}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        <Icon color={tutorialTone.faint} name="chevronRight" size={20} />
+      </Glass>
     </Pressable>
   );
 }
@@ -140,7 +143,7 @@ export function GuideBubble(props: BubbleProps): ReactElement | null {
   const shown = stepAt(guide, position);
   const about = shown?.step.about ?? guide.about;
   return (
-    <View style={[styles.bubble, { borderTopColor: tone.ink }]}>
+    <Glass level="panel" style={styles.bubble}>
       <ScrollView contentContainerStyle={styles.content} testID="guide-bubble-scroll">
         {about === undefined || choosing ? null : <About paragraphs={about} />}
         {choosing
@@ -157,21 +160,14 @@ export function GuideBubble(props: BubbleProps): ReactElement | null {
           : null}
         {!choosing && shown !== null ? <StepBody {...props} index={shown.index} step={shown.step} /> : null}
       </ScrollView>
-    </View>
+    </Glass>
   );
 }
 
 const styles = StyleSheet.create({
   content: { gap: 10, padding: 14 },
   // It shrinks, and its words scroll, on a low screen or with a large font: the panel under it stays in sight.
-  bubble: {
-    flexShrink: 1,
-    overflow: 'hidden',
-    borderTopWidth: 4,
-    borderRadius: 20,
-    backgroundColor: color.surface,
-    boxShadow: shadow.mapCard,
-  },
+  bubble: { flexShrink: 1, overflow: 'hidden', borderRadius: radius.xl },
   kind: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -180,14 +176,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.border,
     borderRadius: radius.lg,
-    backgroundColor: color.surface,
   },
   kindTile: {
     alignItems: 'center',
     justifyContent: 'center',
     width: KIND_TILE,
     height: KIND_TILE,
-    borderRadius: 14,
+    borderRadius: radius.md,
   },
   kindWords: { flex: 1, gap: space[1] },
   kindTitle: { fontFamily: font.bold, fontSize: 16, lineHeight: 22, color: color.ink },
@@ -222,13 +217,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingVertical: 2,
     paddingHorizontal: space[2],
-    borderRadius: radius.full,
-    backgroundColor: color.surfaceSubtle,
+    borderRadius: radius.sm,
+    backgroundColor: color.surfaceSunken,
     fontFamily: font.bold,
     fontSize: 11,
     lineHeight: 16,
     color: color.inkMuted,
   },
   place: { fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: color.ink },
-  sub: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkFaint },
+  sub: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
 });

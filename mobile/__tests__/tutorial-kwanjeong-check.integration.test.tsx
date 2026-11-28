@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -112,7 +113,7 @@ describe('✓ 완료 with a booking that counts', () => {
     expect(await status()).toBe('completed');
     expect(screen.queryByLabelText(SHEET)).toBeNull();
     expect(screen.getByLabelText(LIST)).toBeVisible();
-    expect(button(rowName('su-grading-option'))).toBeVisible();
+    expect(button(rowName('admin-shuttle'))).toBeVisible();
   });
 });
 
@@ -202,7 +203,7 @@ describe('✓ 완료 without a booking that counts', () => {
     expect(complete.mock.calls).toEqual([['kwanjeong', 'forced']]);
     expect(await status()).toBe('completed');
     expect(screen.getByLabelText(LIST)).toBeVisible();
-    expect(button(rowName('su-grading-option'))).toBeVisible();
+    expect(button(rowName('admin-shuttle'))).toBeVisible();
   });
 });
 

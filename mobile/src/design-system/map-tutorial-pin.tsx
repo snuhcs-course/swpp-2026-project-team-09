@@ -3,6 +3,7 @@
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,12 +18,12 @@ const HEIGHT = 40;
 const DROP =
   'M14 0C6.27 0 0 6.27 0 14c0 2.6.72 5.04 1.97 7.13L12.3 38.9a1.95 1.95 0 0 0 3.4 0L26.03 21.13A13.9 13.9 0 0 0 28 14C28 6.27 21.73 0 14 0Z';
 
-// The pin 지도에서 보기 of a tutorial quest drops on its place (P13 references/tutorial-place-pin.png): a red teardrop
-// with a white circle in its head, standing on its tip. Its words are the map's own text under it.
+// The pin 지도에서 보기 of a tutorial quest drops on its place (P13 references/tutorial-place-pin.png): a navy teardrop
+// (P06 ticket 60) with a white circle in its head, standing on its tip. Its words are the map's own text under it.
 export function MapTutorialPin(): ReactElement {
   return (
     <Svg accessibilityLabel="튜토리얼 장소" accessibilityRole="image" height={HEIGHT} viewBox="0 0 28 40" width={WIDTH}>
-      <Path d={DROP} fill={color.danger} />
+      <Path d={DROP} fill={tutorialTone.ink} />
       <Circle cx={14} cy={13.5} fill={color.surface} r={5.5} />
     </Svg>
   );
@@ -30,7 +31,7 @@ export function MapTutorialPin(): ReactElement {
 
 // How a place of a Tutorial Quest's guide stands on the map (the canvas's `MainTut*` boards): the step shown (`now`),
 // large, with a ring inside a rounded square; another step (`step`), faint while still to come (`later`); a step passed
-// (`past`), green with ✓; one of a step's several places (`spot`), or a place of a kind not chosen yet (`dot`), small;
+// (`past`), grey with ✓; one of a step's several places (`spot`), or a place of a kind not chosen yet (`dot`), small;
 // the spot shown (`spotNow`), with a ring.
 export type TutorialStepShape = 'now' | 'step' | 'past' | 'dot' | 'spot' | 'spotNow';
 
@@ -57,7 +58,7 @@ export function MapTutorialStep({ shape, ink, words, later = false }: MapTutoria
         {
           width,
           height: width,
-          backgroundColor: shape === 'past' ? tutorialTone.done : ink,
+          backgroundColor: shape === 'past' ? color.inkFaint : ink,
           opacity: later ? 0.6 : 1,
         },
       ]}

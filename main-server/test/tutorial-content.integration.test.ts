@@ -5,6 +5,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -111,13 +112,13 @@ describe('A quest removed from the content', () => {
 });
 
 describe("The tutorial's Places", () => {
-  it('are each a Place of the database, for all fifteen quests', async () => {
+  it('are each a Place of the database, for all twelve quests', async () => {
     const tutorial = await tutorialAfter(getTutorial(app, await signInUser(app)));
     const numbers = tutorial.quests.flatMap(({ places }) =>
       places.flatMap((entry) => ('place' in entry ? [entry.place] : [])),
     );
 
-    expect(tutorial.quests).toHaveLength(15);
+    expect(tutorial.quests).toHaveLength(12);
     expect(numbers.length).toBeGreaterThan(0);
     const found = await prisma.place.findMany({ where: { number: { in: numbers } }, select: { number: true } });
     expect(numbers.filter((number) => !found.some((place) => place.number === number))).toEqual([]);

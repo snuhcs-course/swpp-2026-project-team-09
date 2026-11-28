@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -16,6 +17,7 @@ import {
   LOST,
   LOST_NOTE,
   lookupOf,
+  ONLINE,
   plain,
   pointOf,
   positionOf,
@@ -125,11 +127,9 @@ describe('The three quests of board q10 on the map, and as the model is given th
 
 describe('A quest done online', () => {
   it('is named in one line of the basis, and not ordered', () => {
-    const answer = tutorialAt('13:50', [...BOARD_Q10, 'chatgpt-edu', 'ms365-campus-software']);
+    const answer = tutorialAt('13:50', [...BOARD_Q10, ONLINE.key]);
 
-    expect(lookupOf(answer).basis.at(-1)).toBe(
-      'ChatGPT Edu 무료로 쓰기, 캠퍼스 라이선스 소프트웨어 받기 · 온라인으로 할 수 있어요',
-    );
+    expect(lookupOf(answer).basis.at(-1)).toBe(`${ONLINE.title} · 온라인으로 할 수 있어요`);
     expect(lookupOf(answer).steps).toHaveLength(3);
   });
 });
@@ -167,11 +167,11 @@ describe('No order', () => {
   });
 
   it('is found when every quest with a place is completed, the online ones named', () => {
-    expect(tutorialAt('13:50', ['chatgpt-edu'])).toEqual({
+    expect(tutorialAt('13:50', [ONLINE.key])).toEqual({
       result: 'none',
       reason: 'no-quests',
       leftOut: [],
-      online: ['ChatGPT Edu 무료로 쓰기'],
+      online: [ONLINE.title],
     });
   });
 

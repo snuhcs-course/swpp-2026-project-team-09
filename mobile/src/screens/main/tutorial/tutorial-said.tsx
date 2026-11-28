@@ -3,12 +3,13 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { TutorialQuest } from '@/api/tutorial-types';
-import { color, font, Icon, radius, space, text } from '@/design-system';
+import { Badge, color, font, Icon, radius, space, text } from '@/design-system';
 import type { ShownBooking } from '@/features/tutorial/kwanjeong-check';
 import type { SheetView } from './use-tutorial-flow';
 import { FAILURE } from '../answer/line-types';
@@ -23,7 +24,7 @@ export const KWANJEONG_FAILED = '도서관 서버에 연결하지 못했어요. 
 const BOT = 32;
 const BOOK = 32;
 
-// The booking the 관정 check found, with 확인됨.
+// The booking the 관정 check found, with 확인됨 in the 행사 tab's "내 파티" colours.
 function Found({ booking }: { booking: ShownBooking }): ReactElement {
   return (
     <View style={styles.found}>
@@ -34,7 +35,9 @@ function Found({ booking }: { booking: ShownBooking }): ReactElement {
         <Text style={styles.foundTitle}>{booking.title}</Text>
         <Text style={styles.foundWhen}>{booking.when}</Text>
       </View>
-      <Text style={styles.checked}>확인됨</Text>
+      <Badge icon={false} tone="friend">
+        확인됨
+      </Badge>
     </View>
   );
 }
@@ -125,10 +128,9 @@ const styles = StyleSheet.create({
     width: BOOK,
     height: BOOK,
     borderRadius: 10,
-    backgroundColor: color.svcStudy,
+    backgroundColor: color.snuBlue,
   },
   foundWords: { flex: 1 },
   foundTitle: { ...text.label, color: color.ink },
   foundWhen: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  checked: { fontFamily: font.bold, fontSize: 12, lineHeight: 16, color: color.live },
 });

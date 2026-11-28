@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -141,7 +142,7 @@ describe('the mock build', () => {
     const tutorial = await answered(apiClient.getTutorial());
 
     expect(tutorial.quests.map(({ key }) => key)).toEqual(TUTORIAL_CONTENT.map(({ key }) => key));
-    expect(tutorial.quests).toHaveLength(15);
+    expect(tutorial.quests).toHaveLength(12);
     expect(tutorial.categories.map(({ label }) => label)).toEqual(['생활', '공부·학사', '이동', '건강', '문화·여가']);
     expect(tutorial).toMatchObject({ state: 'off', rowHidden: false, eligibleByDefault: false });
   });

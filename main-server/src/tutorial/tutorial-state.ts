@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // What the app shows of the tutorial, from the User's progress. Each time of the progress is read only as set or not,
@@ -29,14 +30,25 @@ export function questStatus(progress: QuestProgress | undefined): QuestStatus {
   return progress.completedAt === null ? 'started' : 'completed';
 }
 
+// Whether every quest of the content is completed. Rows of keys no longer in the content count for nothing, so that a
+// User who completed what the content holds now is done, whatever was taken out of it (P06 ticket 60).
+export function allCompleted(quests: readonly QuestProgress[], questKeys: readonly string[]): boolean {
+  return (
+    questKeys.length > 0 &&
+    questKeys.every((key) => quests.some(({ questKey, completedAt }) => questKey === key && completedAt !== null))
+  );
+}
+
 // The first that holds. `progress` is null for a User without a row; `questKeys` are the content's keys, so that a
-// started quest no longer in the content does not count.
+// started quest no longer in the content does not count. A User is finished once `finishedAt` is set, or once every
+// quest of the content is completed: a quest taken out of the content after the User completed the rest leaves no
+// `finishedAt`, since none was set by a completion.
 export function tutorialState(
   progress: Progress | null,
   quests: readonly QuestProgress[],
   questKeys: readonly string[],
 ): TutorialState {
-  if (progress !== null && progress.finishedAt !== null) {
+  if (progress !== null && (progress.finishedAt !== null || allCompleted(quests, questKeys))) {
     return 'finished';
   }
   if (progress !== null && progress.stoppedAt !== null) {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Fragment, type ReactElement } from 'react';
@@ -9,6 +10,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TutorialAction, TutorialChip, TutorialRow, TutorialSpot } from '@/api/tutorial-types';
 import {
   color,
+  eventTone,
   font,
   Icon,
   iconOrFlag,
@@ -57,9 +59,7 @@ function RowLine({
       </Text>
       {url === undefined ? null : <Icon color={tutorialTone.link} name="globe" size={16} />}
       <Text style={[styles.rowWords, url !== undefined && styles.rowLink]}>{row.words}</Text>
-      {row.note === undefined ? null : (
-        <Text style={[styles.note, { backgroundColor: tone.soft, color: tone.ink }]}>{row.note}</Text>
-      )}
+      {row.note === undefined ? null : <Text style={[styles.note, { color: tone.ink }]}>{row.note}</Text>}
     </>
   );
   const look = [styles.row, last ? { borderWidth: 2, borderColor: tone.ink } : styles.rowIdle];
@@ -98,7 +98,7 @@ export function Chips({ chips }: { chips: readonly TutorialChip[] }): ReactEleme
     <View style={styles.wrap}>
       {chips.map(({ icon, words }) => (
         <View key={`${icon}-${words}`} style={styles.chip}>
-          <Icon color={color.inkMuted} name={iconOrFlag(icon)} size={15} />
+          <Icon color={eventTone.words} name={iconOrFlag(icon)} size={15} />
           <Text style={styles.chipWords}>{words}</Text>
         </View>
       ))}
@@ -131,12 +131,7 @@ export function Spots({ spots, shown, tone, onPick }: SpotsProps): ReactElement 
               styles.spot,
               on
                 ? { backgroundColor: tone.ink }
-                : {
-                    backgroundColor: tone.soft,
-                    borderWidth: 1,
-                    borderColor: `${tone.ink}66`,
-                    borderStyle: spot.place === undefined ? 'dashed' : 'solid',
-                  },
+                : { ...styles.spotOff, borderStyle: spot.place === undefined ? 'dashed' : 'solid' },
             ]}
           >
             <Text style={[styles.spotWords, { color: on ? color.onPrimary : tone.ink }]}>{spot.name}</Text>
@@ -179,7 +174,7 @@ interface ActionsProps {
   onAsk: (words: string) => void;
 }
 
-// The step's buttons side by side: 길찾기 and the Assistant's in the category's colours, a site's in navy.
+// The step's buttons side by side: 길찾기 and the Assistant's white with a grey line, a site's in navy.
 export function Actions({ actions, tone, onRoute, onAsk }: ActionsProps): ReactElement {
   return (
     <View style={styles.actions}>
@@ -200,10 +195,7 @@ export function Actions({ actions, tone, onRoute, onAsk }: ActionsProps): ReactE
                 onRoute();
               }
             }}
-            style={[
-              styles.action,
-              site ? styles.actionSite : { borderWidth: 1, borderColor: tone.ink, backgroundColor: tone.soft },
-            ]}
+            style={[styles.action, site ? styles.actionSite : styles.actionOther]}
           >
             <Icon color={ink} name={ACTION_ICON[action.kind]} size={18} />
             <Text style={[styles.actionWords, { color: ink }]}>{action.words}</Text>
@@ -215,7 +207,7 @@ export function Actions({ actions, tone, onRoute, onAsk }: ActionsProps): ReactE
 }
 
 const styles = StyleSheet.create({
-  about: { gap: 6, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: tutorialTone.idle },
+  about: { gap: 6, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: color.border },
   aboutWords: { fontFamily: font.medium, fontSize: 14, lineHeight: 21, color: color.inkMuted },
   rows: { padding: 10, borderRadius: 14, backgroundColor: tutorialTone.rowsGround },
   joint: { width: 2, height: space[2], marginLeft: 15, backgroundColor: tutorialTone.rowsLine },
@@ -223,7 +215,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
-    height: 34,
+    minHeight: 36,
+    paddingVertical: 6,
     paddingRight: 10,
     paddingLeft: 6,
     borderRadius: 10,
@@ -247,7 +240,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingVertical: 2,
     paddingHorizontal: space[2],
-    borderRadius: radius.full,
+    borderRadius: radius.sm,
+    backgroundColor: color.blue100,
     fontFamily: font.bold,
     fontSize: 11,
     lineHeight: 16,
@@ -257,29 +251,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    height: 30,
+    minHeight: 30,
+    paddingVertical: 5,
     paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: color.border,
     borderRadius: 10,
     backgroundColor: color.surface,
   },
-  chipWords: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  spot: { justifyContent: 'center', height: 30, paddingHorizontal: 10, borderRadius: radius.full },
+  chipWords: { flexShrink: 1, fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: eventTone.words },
+  spot: {
+    justifyContent: 'center',
+    minHeight: 32,
+    paddingVertical: space[1],
+    paddingHorizontal: space[3],
+    borderRadius: radius.full,
+  },
+  spotOff: { borderWidth: 1, borderColor: color.borderStrong },
   spotWords: { fontFamily: font.bold, fontSize: 13, lineHeight: 18 },
   link: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
     minHeight: 48,
+    paddingVertical: space[2],
     paddingHorizontal: 14,
-    borderWidth: 1.5,
-    borderColor: color.focusRing,
-    borderRadius: 14,
-    backgroundColor: color.blue50,
+    borderWidth: 1,
+    borderColor: color.borderStrong,
+    borderRadius: radius.md,
+    backgroundColor: color.surface,
   },
-  linkWords: { flex: 1, fontFamily: font.bold, fontSize: 15, lineHeight: 20, color: color.snuBlue },
-  linkHost: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16, color: color.focusRing },
+  linkWords: { flex: 1, fontFamily: font.semiBold, fontSize: 15, lineHeight: 20, color: color.snuBlue },
+  linkHost: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   actions: { flexDirection: 'row', gap: space[2] },
   action: {
     flex: 1,
@@ -287,9 +290,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 44,
+    minHeight: 44,
+    paddingVertical: space[1],
+    paddingHorizontal: space[2],
     borderRadius: radius.md,
   },
   actionSite: { backgroundColor: color.snuBlue },
-  actionWords: { fontFamily: font.bold, fontSize: 15, lineHeight: 22 },
+  actionOther: { borderWidth: 1, borderColor: color.borderStrong, backgroundColor: color.surface },
+  actionWords: { flexShrink: 1, fontFamily: font.semiBold, fontSize: 15, lineHeight: 20 },
 });
