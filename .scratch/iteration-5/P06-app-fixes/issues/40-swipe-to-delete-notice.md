@@ -47,3 +47,4 @@ Estimates: agent time is the gaps under 5 minutes between transcript entries, su
 | Work | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
 | Build, code review and its fixes, emulator check of the swipe, PR #754 | about 14 minutes | 21,461,196 | 21,320,272 | 140,782 | 142 | 48,807 |
+| fyoon46's review of #754: the inset red button and 모두 지우기 with `DELETE /notifications`, emulator screens | about 11 minutes | 9,595,688 | 9,387,516 | 208,004 | 168 | 40,560 |
