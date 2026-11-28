@@ -7,6 +7,7 @@
 import type { AssistantReply } from '@/api/assistant-types';
 import type { Place } from '@/api/types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { severalAnswersReplyTo } from '@/api/mock/data/several-answers';
 import { useMemo } from 'react';
 import * as cameraMoves from '@/screens/main/use-camera-moves';
@@ -199,6 +200,33 @@ describe('A meal answer on the map, once framed', () => {
     await ask(user, '다른 데 없어?');
 
     expect(moves()).toBeGreaterThan(framed);
+  });
+});
+
+// Partitions: the menu of the place shown opened from its row, which raises a low card, and the list again, each a press
+// that opens something (TaeHyun79's review of #728). Expected values: a move for each.
+describe("A meal answer's menu, once the answer was framed", () => {
+  beforeEach(async () => {
+    await answering(MEAL_ANSWER_MENUS_REPLY);
+  });
+
+  it('frames again when the menu of the place shown opens, and when the list comes back', async () => {
+    const moves = countMoves();
+    const user = await openMain();
+    await ask(user, '배고파');
+    const framed = moves();
+
+    await user.press(within(screen.getByTestId('meal-list')).getByTestId('meal-row-1'));
+    await pass(1000);
+    expect(screen.getByTestId('meal-menu')).toBeOnTheScreen();
+    const opened = moves();
+    expect(opened).toBeGreaterThan(framed);
+
+    await user.press(within(screen.getByTestId('meal-menu')).getByRole('button', { name: /^‹ \d+곳 목록$/u }));
+    await pass(1000);
+
+    expect(screen.queryByTestId('meal-menu')).toBeNull();
+    expect(moves()).toBeGreaterThan(opened);
   });
 });
 

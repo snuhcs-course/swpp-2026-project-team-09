@@ -235,16 +235,16 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
   return { contents: { markers, lines, avatars: NO_AVATARS }, onPress: ignorePress, ...ANSWER_LIMITS };
 }
 
-// A Plan's framing: for the reply, and again for the Plan chosen, made, or left as it is, and for a recalculation
-// that brings other places; one that keeps the places frames nothing.
+// A Plan's framing: for the reply, and again for the Plan chosen, its menu opened or closed, the Plan made or left as
+// it is, and a recalculation that brings other places; one that keeps the places frames nothing.
 function planFrame(
-  { source, answer, index }: ShownAnswer,
+  { source, answer, index, menuFor }: ShownAnswer,
   settled: boolean,
   leftAlone: boolean,
   active: boolean,
 ): Frame {
   const plan = answer?.plans[index];
-  const chosen = [plan?.id ?? index, sceneKeyOf(plan?.scene ?? null), settled, leftAlone];
+  const chosen = [plan?.id ?? index, sceneKeyOf(plan?.scene ?? null), menuFor, settled, leftAlone];
   return { key: { reply: source, chosen }, from: answer, active };
 }
 
