@@ -2237,7 +2237,9 @@ on that line (`grid-mapping.ts`). A block whose text was read at a start more th
 read again on its placed day and time. When the fit or the days do not hold, or no grid was sent, the model reads the whole
 picture instead, hour axis included. Code checks the answer (`reading-checks.ts`): a name must be its printed lines
 joined, a room must match the room pattern, a 12-hour axis becomes 24-hour, times snap to five minutes, and blocks
-whose names are equal after NFC and space normalisation are one class, each time with its own room. Blocks whose names
+whose names are equal after NFC and space normalisation are one class, each time with its own room. A block may have
+up to 12 name lines, and a name past 30 characters is cut to 30 without its `…`, as the phone's reader cuts it (P05
+ticket 90). Blocks whose names
 are one or two characters apart (and of one colour) are read once more on their own before they are grouped
 (`second-look.ts`). A fading block keeps the end where its colour is last seen only when the end the model read agrees
 with it within 5 minutes, with the layout or when asked once more about that block alone; otherwise it is left out. What fails a check is left out and counted:
