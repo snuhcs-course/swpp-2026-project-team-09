@@ -46,14 +46,14 @@ describe('a slot of the bottom navigation', () => {
   it.each([
     ['파티', /^파티/u],
     ['행사', '행사'],
-    ['알림', /^알림/u],
+    ['오늘', /^오늘/u],
     ['내 정보', '내 정보'],
   ] as const)('%s opens its screen, with its slot as the current one', async (title, slot) => {
     const user = await openMain();
 
     await user.press(screen.getByRole('tab', { name: slot }));
 
-    expect(screen.getByRole('header', { name: title === '알림' ? /^알림/u : title })).toBeVisible();
+    expect(screen.getByRole('header', { name: title })).toBeVisible();
     expect(screen.getByRole('tab', { name: slot })).toBeSelected();
     expect(screen.getByRole('tab', { name: '지도' })).not.toBeSelected();
   });
@@ -69,12 +69,12 @@ describe('a slot of the bottom navigation', () => {
   });
 });
 
-// The bar of A04 ticket 09: 파티, 행사, the map's round tab in the middle, 알림 and 내 정보, with no 올리기.
+// The bar of A04 tickets 09 and 10: 파티, 행사, the map's round tab in the middle, 오늘 and 내 정보, with no 올리기.
 describe('the bottom bar', () => {
-  it('reads 파티, 행사, 지도, 알림 and 내 정보, with 지도 in the middle, and has no 올리기', async () => {
+  it('reads 파티, 행사, 지도, 오늘 and 내 정보, with 지도 in the middle, and has no 올리기', async () => {
     await openMain();
 
-    const slots = ['파티', '행사', '지도', '알림', '내 정보'];
+    const slots = ['파티', '행사', '지도', '오늘', '내 정보'];
     const names = screen
       .getAllByRole('tab')
       .map((tab) => String(tab.props.accessibilityLabel).split(',')[0] ?? '')
@@ -126,29 +126,19 @@ describe('the middle on another tab', () => {
   });
 });
 
-describe('알림 in the tabs', () => {
+describe('오늘 in the tabs', () => {
   it('is a tab with no 뒤로, and 내 정보 has no bell', async () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: '내 정보' }));
 
     expect(screen.queryByRole('button', { name: /^알림/u })).toBeNull();
 
-    await user.press(screen.getByRole('tab', { name: /^알림/u }));
+    await user.press(screen.getByRole('tab', { name: /^오늘/u }));
 
-    expect(screen.getByRole('header', { name: /^알림/u })).toBeVisible();
-    expect(screen.getByRole('tab', { name: /^알림/u })).toBeSelected();
+    expect(screen.getByRole('header', { name: '오늘' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: /^오늘/u })).toBeSelected();
     expect(screen.queryByRole('button', { name: '뒤로' })).toBeNull();
-    expect(shownAddress()).toBe('/notifications');
-  });
-
-  it('is what the address /notifications opens', async () => {
-    await openMain();
-
-    await act(() => {
-      router.navigate('/notifications');
-    });
-
-    expect(screen.getByRole('tab', { name: /^알림/u })).toBeSelected();
+    expect(shownAddress()).toBe('/today');
   });
 });
 

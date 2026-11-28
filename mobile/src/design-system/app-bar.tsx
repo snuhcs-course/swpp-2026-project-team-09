@@ -5,13 +5,14 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useInsets } from './insets';
 import { Icon, type IconName } from './icon';
-import { color, font, size, space } from './tokens';
+import { color, font, size, space, text } from './tokens';
 
 interface IconButtonProps {
   icon: IconName;
@@ -51,6 +52,8 @@ interface AppBarProps {
   title: string;
   // A number after the title, such as the 12 of "퀘스트 12".
   count?: number;
+  // Muted words after a tab's title in its row, such as 오늘's date "12월 1일 화요일" (A04 ticket 10).
+  aside?: string;
   // A sub-screen's way out at the left: "뒤로" with a chevron for a screen pushed from the right, "닫기" with ✕ for
   // one that came up from the bottom or a panel. Without it the bar is a tab's.
   leave?: { kind: 'back' | 'close'; onPress: () => void };
@@ -64,22 +67,24 @@ interface AppBarProps {
 
 // The bar at the top of a screen, under the phone's status bar, in the frames' two forms, both in the tab's row. A tab's
 // has its title in 25/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
-export function AppBar({ title, count, leave, actions, line = true, clear = false }: AppBarProps): ReactElement {
+export function AppBar({ title, count, aside, leave, actions, line = true, clear = false }: AppBarProps): ReactElement {
   const { top } = useInsets();
+  const titleStyle = leave === undefined ? styles.tabTitle : styles.subTitle;
   return (
     <View style={[!clear && styles.bar, { paddingTop: top }, line && styles.lined]}>
       <View style={[styles.row, leave === undefined ? styles.tab : styles.sub]}>
         {leave === undefined ? null : (
           <IconButton icon={LEAVE[leave.kind].icon} label={LEAVE[leave.kind].label} onPress={leave.onPress} />
         )}
-        <Text
-          accessibilityRole="header"
-          numberOfLines={1}
-          style={leave === undefined ? styles.tabTitle : styles.subTitle}
-        >
+        <Text accessibilityRole="header" numberOfLines={1} style={[titleStyle, aside !== undefined && styles.fit]}>
           {title}
           {count === undefined ? null : <Text style={styles.count}>{` ${count}`}</Text>}
         </Text>
+        {aside === undefined ? null : (
+          <Text numberOfLines={1} style={styles.aside}>
+            {aside}
+          </Text>
+        )}
         {actions}
       </View>
     </View>
@@ -97,6 +102,9 @@ const styles = StyleSheet.create({
   tabTitle: { flex: 1, fontFamily: font.bold, fontSize: 25, lineHeight: 32, letterSpacing: -0.4, color: color.ink },
   // The frames' sub-screen title: between the two titles of the design system.
   subTitle: { flex: 1, fontFamily: font.bold, fontSize: 20, lineHeight: 28, letterSpacing: -0.3, color: color.ink },
+  // With words after it, the title is as wide as it reads, and the words take the rest of the row.
+  fit: { flex: 0, flexShrink: 0, marginRight: space[1] },
+  aside: { ...text.label, flex: 1, paddingTop: 4, fontFamily: font.medium, color: color.inkMuted },
   count: { fontFamily: font.medium, color: color.inkMuted },
   iconButton: {
     alignItems: 'center',

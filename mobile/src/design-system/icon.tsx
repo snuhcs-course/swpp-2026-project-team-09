@@ -35,6 +35,9 @@ const ICONS = {
     { path: 'M8 5.7v12.3M14 7.5v6' },
     { path: 'M18.5 9.5l.9 2.2 2.2.9-2.2.9-.9 2.2-.9-2.2-2.2-.9 2.2-.9z' },
   ],
+  // Not the design system's: the bottom bar's 오늘 (A04 ticket 10), a rounded square with a check, as the proposal's
+  // 권장 boards draw it.
+  today: [{ rect: [4, 4.5, 16, 16, 3.5] }, { path: 'M8.5 12.5l2.5 2.5 4.5-5' }],
   chat: [{ path: 'M4 5h16v11H9l-5 4z' }],
   users: [
     { circle: [9, 8, 3] },

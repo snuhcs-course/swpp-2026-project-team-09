@@ -70,7 +70,7 @@ async function restart(): Promise<void> {
 }
 
 // In the bar's order (A04 ticket 09): the map's round tab is the middle.
-const TITLES = ['파티', '행사', '지도와 AI', '알림', '내 정보'];
+const TITLES = ['파티', '행사', '지도와 AI', '오늘', '내 정보'];
 
 // The title of the tour's step on screen, or null without the tour.
 function stepShown(): string | null {
@@ -110,7 +110,7 @@ describe('the tour after Onboarding', () => {
     await press(user, '다음');
     expect(stepShown()).toBe('지도와 AI');
     await press(user, '다음');
-    expect(stepShown()).toBe('알림');
+    expect(stepShown()).toBe('오늘');
     await press(user, '다음');
     expect(stepShown()).toBe('내 정보');
     expect(screen.getByText('5/5')).toBeVisible();

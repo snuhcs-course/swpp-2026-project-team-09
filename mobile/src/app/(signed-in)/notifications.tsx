@@ -8,7 +8,7 @@
 import type { ReactElement } from 'react';
 import { NotificationsScreen } from '@/screens/me/notifications-screen';
 
-// The 알림 tab (A04 ticket 09): what waits for the User and the kept Notifications.
+// 알림, above the tabs: every row of 알림, which 오늘's "알림 모두 보기" opens (A04 ticket 10).
 export default function NotificationsRoute(): ReactElement {
   return <NotificationsScreen />;
 }

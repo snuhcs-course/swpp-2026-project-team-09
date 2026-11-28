@@ -65,7 +65,9 @@ afterEach(() => {
 
 async function openNotifications(): Promise<Awaited<ReturnType<typeof openMain>>> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: '알림, 새 소식 1개' }));
+  await user.press(screen.getByRole('tab', { name: '오늘, 새 소식 1개' }));
+  await pass(500);
+  await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
   await pass(500);
   return user;
 }

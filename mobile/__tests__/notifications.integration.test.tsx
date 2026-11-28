@@ -12,7 +12,6 @@
  * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -84,19 +83,27 @@ function shownRows(): string[] {
     .filter((label) => label.includes(' · '));
 }
 
-async function openNotifications(bell = '알림, 새 소식 4개'): Promise<Awaited<ReturnType<typeof openMain>>> {
-  const user = await openMain();
+type User = Awaited<ReturnType<typeof openMain>>;
+
+// Every row of 알림, from 오늘's "알림 모두 보기", in the app already started.
+async function openFrom(user: User, bell: string): Promise<User> {
   await user.press(screen.getByRole('tab', { name: bell }));
+  await pass(500);
+  await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
   await pass(500);
   return user;
 }
 
+async function openNotifications(bell = '오늘, 새 소식 4개'): Promise<User> {
+  return openFrom(await openMain(), bell);
+}
+
 describe('알림', () => {
   it("lists what waits for the User in the frame's order, and counts it on the bell and on 파티", async () => {
-    await openMain();
+    const user = await openMain();
 
     expect(screen.getByRole('tab', { name: '파티, 새 소식 3개' })).toBeVisible();
-    await openNotifications();
+    await openFrom(user, '오늘, 새 소식 4개');
 
     expect(screen.getByRole('header', { name: '알림 4' })).toBeVisible();
     expect(shownRows()).toEqual(ROWS);
@@ -106,7 +113,7 @@ describe('알림', () => {
     const { leader: _leader, ...withoutLeader } = DINNER_PARTY;
     server.on('GET /parties', { status: 200, body: [withoutLeader] });
     // The bell counts nothing until the malformed answer is asked for once more and fails.
-    await openNotifications('알림');
+    await openNotifications('오늘');
     await pass(5000);
 
     expect(shownRows()).toEqual(ROWS.slice(1));
@@ -172,7 +179,7 @@ describe("a row of 알림's press", () => {
   });
 });
 
-// A04 ticket 09: 알림 is a tab, and a screen it opens lies over it.
+// A04 ticket 09: a screen 알림 opens lies over it.
 describe('a screen a row of 알림 opened', () => {
   it('comes back to 알림 with its rows from what it opened above the tabs', async () => {
     const user = await openNotifications();
@@ -184,18 +191,6 @@ describe('a screen a row of 알림 opened', () => {
 
     expect(shownAddress()).toBe('/notifications');
     expect(shownRows()).toEqual(ROWS);
-  });
-
-  it('shows the map in one move, with no screen slid over it, for a row of a card', async () => {
-    const user = await openNotifications();
-
-    await user.press(screen.getByRole('button', { name: ROWS[2] }));
-    await pass(500);
-
-    // The map's tab, which may hide the bar while it says the invitation ended: read by the address.
-    expect(shownAddress()).toMatch(/^\/main(?:\?card=undefined)?$/u);
-    expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
-    expect(router.canDismiss()).toBe(false);
   });
 
   it.each([
@@ -216,7 +211,7 @@ describe('알림 without rows', () => {
     answerMainScreen(server);
     server.on('GET /quests', { status: 200, body: [DINNER] });
 
-    await openNotifications('알림');
+    await openNotifications('오늘');
 
     expect(screen.getByText('새 알림이 없어요')).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티', includeHiddenElements: true })).toBeOnTheScreen();
@@ -225,7 +220,7 @@ describe('알림 without rows', () => {
   it('leaves out a list that failed', async () => {
     server.on('GET /friend-requests', refusal(404));
 
-    await openNotifications('알림, 새 소식 3개');
+    await openNotifications('오늘, 새 소식 3개');
 
     expect(shownRows()).toEqual([ROWS[0], ROWS[2], ROWS[3]]);
   });
@@ -234,7 +229,7 @@ describe('알림 without rows', () => {
     for (const route of ['GET /parties', 'GET /friend-requests', 'GET /quest-invitations', 'GET /quests']) {
       server.on(route, refusal(404));
     }
-    const user = await openNotifications('알림');
+    const user = await openNotifications('오늘');
 
     expect(screen.getByText('불러오지 못했어요')).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티', includeHiddenElements: true })).toBeOnTheScreen();
@@ -255,7 +250,7 @@ describe("알림's count and signals", () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('tab', { name: '알림, 새 소식 10개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 새 소식 10개' })).toBeVisible();
     expect(screen.getByText('9+')).toBeVisible();
   });
 

@@ -442,8 +442,8 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
 `PositionSending` inside it (see "The User's position"), and a stack:
 
 - **The tabs** (`(signed-in)/(tabs)/`): Expo Router's `Tabs`, with `TabBar` (`src/screens/shell/tab-bar.tsx`)
-  drawing the design system's `BottomNav`. The bar reads 파티 (`/party`), 행사 (`/events`), the map in the middle, 알림
-  (`/notifications`) and 내 정보 (`/me`) (A04 ticket 09). The middle is the main screen's tab at `/main`, a round tab
+  drawing the design system's `BottomNav`. The bar reads 파티 (`/party`), 행사 (`/events`), the map in the middle, 오늘
+  (`/today`) and 내 정보 (`/me`) (A04 tickets 09 and 10). The middle is the main screen's tab at `/main`, a round tab
   whose name, "지도", is not drawn; the map stays the first route, so Android's back and the edge swipe on another tab
   show it. On the map the middle raises and lowers the AI: lowered, the AI input and the lines over it ("이어서 · …"
   and a made Quest's line) are gone, the input mounted and hidden so that what was typed comes back; on another tab
@@ -455,9 +455,9 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   lists. The bar has no line on top but the frames' shadow (`shadow.nav`), and under its items 16 or the phone's own
   inset, whichever is larger (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is
   `usePartyBadge()`: the rows of 알림 that wait for the User and concern 파티, every row but the kept Notifications and
-  the Friend Requests. The number on 알림 is `useBellCount()`: the rows that wait and the kept Notifications unread.
+  the Friend Requests. The number on 오늘 is `useBellCount()`: the rows that wait and the kept Notifications unread.
   While the lists load, and when every one failed, there is no badge.
-- 파티, 행사, 알림 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
+- 파티, 행사, 오늘 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
   A tab with a search gives `TabScreen` its `search`: the magnifier at the bar's top right, which turns the title's
   row into the field, focused at once so the keyboard rises, and ✕ "검색 닫기". The field is `SearchField`'s `bare`
   variant: no box, the magnifier and the words (18 SemiBold, `text.title`) in the title's place on the bar's white,
@@ -469,7 +469,8 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   above the button); its address names the tab (`/party?tab=invites`). 내 정보's
   address can ask for its 위치 공유 card (`/me?show=sharing`), and 행사's marks one Global Event (`/events?focus=<id>`).
   파티, 행사 and 내 정보 are described below.
-- **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
+- **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), every row of 알림
+  (`/notifications`, from 오늘's "알림 모두 보기"), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
   (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 파티
   모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
   `/party-form?questId=<id>` for its edit mode). Each is a `FullScreenPanel`
@@ -992,8 +993,8 @@ title, the place and the time. A class's row closes the screen and goes back to 
 Quest list on the map carries out as a press of its own row; any other row opens the Quest's room above it. Without a
 Quest it says "퀘스트가 없어요"; while the Quests load and after a failure it shows the shared states.
 
-**내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has four cards from the top; its bell went with
-알림 into the tabs (A04 ticket 09):
+**내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has four cards from the top; its bell went, and its
+count is on 오늘 (A04 tickets 09 and 10):
 
 - the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
   admission year), "SNU 계정 인증됨" and "프로필 편집";
@@ -1081,7 +1082,19 @@ phone over that list, so a syllable still being typed narrows it). The timetable
 A plan with a Friend is a 비공개 파티: the Meetup of Iteration 1, with its form and its invitations, was retired in
 Iteration 2 (P06), and commit `2f4f201` holds its code.
 
-알림 (`notifications-screen.tsx`), a tab with no 뒤로, is drawn while it is in front, each time anew, and is composed from the main server's lists (`useNotices()` of the notifications
+**오늘** (`src/screens/today/today-screen.tsx`, A04 ticket 10) is a tab with the date after its title ("12월 1일
+화요일") and one page that scrolls once, drawn anew each time it comes to the front: 답할 것 N, the rows of what waits
+as 알림 lists them, the invitations first and three at most with "답할 것 N개 모두 보기 ›" to the rest, an invitation
+with 거절 and 수락 through 파티 > 초대's calls, hidden when nothing waits; 오늘 일정,
+today's rows of `useQuestRows()` in time order, those over by now folded into "지난 일정 N개 ▾" above a "지금
+HH:MM" mark, and one line for tomorrow, "내일 N개 · 강의 1, 파티 1", or "오늘 일정 없음" (a press does what the map's
+Quest row does, by the main screen's address for a class). The main server leaves out a Quest whose every step ended
+and sends today's Class Quests only, so the classes already over and tomorrow's classes come from the timetable
+(`useWeek()`); a 파티 already over is not listed; and 지난 알림, the newest five kept Notifications,
+with "알림 모두 보기 ›", which stays while the lists load or fail. The main server marks every kept Notification read at once, so 오늘 marks them read only
+while every unread one is among the five it shows; otherwise "알림 모두 보기" does.
+
+알림 (`notifications-screen.tsx`), every row, above the tabs, is composed from the main server's lists (`useNotices()` of the notifications
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
 time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A Notification whose time is still to
 come shows its title for that (`ahead`), such as "12:18 나설 시각" for the time to leave (`leave-by`, a clock on the

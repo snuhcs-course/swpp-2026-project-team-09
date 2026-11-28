@@ -105,7 +105,9 @@ describe('what waits for the User', () => {
   it('shows in 알림 no invitation but the Quest invitation', async () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-    await user.press(screen.getByRole('tab', { name: /^알림/u }));
+    await user.press(screen.getByRole('tab', { name: /^오늘/u }));
+    await pass(500);
+    await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
     await pass(500);
 
     const invitations = screen.getAllByRole('button', { name: /파티 초대/u });
