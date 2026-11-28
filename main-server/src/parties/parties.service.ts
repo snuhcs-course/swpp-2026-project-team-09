@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -45,8 +46,9 @@ export class PartiesService {
     private readonly questParty: QuestParty,
   ) {}
 
+  // Opening a Quest's Party rings its other Holders (P06 ticket 21).
   async open(userId: string, { title, capacity, joinPolicy, questId }: OpenPartyDto): Promise<PartyDto> {
-    const audience = await this.prisma.$transaction(async (tx) => {
+    const { audience, activated } = await this.prisma.$transaction(async (tx) => {
       await this.users.lock(userId, tx);
       await this.refuseMember(userId, tx);
       if (questId !== null) {
@@ -56,9 +58,13 @@ export class PartiesService {
         data: { title, capacity, joinPolicy, questId, leaderId: userId, members: { create: { userId } } },
       });
       await this.endWaiting(userId, tx);
-      return this.audienceOf(party, tx);
+      return {
+        audience: await this.audienceOf(party, tx),
+        activated: questId === null ? [] : await this.questParty.activationTold(questId, userId, tx),
+      };
     });
     this.signals.send(audience, 'party-changed');
+    this.questParty.tellActivated(activated);
     return this.read(userId);
   }
 
