@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -32,8 +33,9 @@ function Header(): ReactElement {
   );
 }
 
-// The sheet: what is under the pin, and `이 위치로 정하기`, which gives it back.
-function Sheet({ at }: { at: PlaceAtView | undefined }): ReactElement {
+// The sheet: what is under the pin, and `이 위치로 정하기`, which gives it back. It keeps the last place's words while
+// the next is asked, so it stays still as the map moves; a press waits for the place under the pin now.
+function Sheet({ at, chosen }: { at: PlaceAtView | undefined; chosen: PlaceAtView | undefined }): ReactElement {
   const { bottom } = useInsets();
   return (
     <View style={[styles.sheet, { paddingBottom: space[6] + bottom }]}>
@@ -51,8 +53,8 @@ function Sheet({ at }: { at: PlaceAtView | undefined }): ReactElement {
         accessibilityState={{ disabled: at === undefined }}
         disabled={at === undefined}
         onPress={() => {
-          if (at !== undefined) {
-            givePlace(at.choice);
+          if (chosen !== undefined) {
+            givePlace(chosen.choice);
             router.back();
           }
         }}
@@ -71,7 +73,7 @@ function Sheet({ at }: { at: PlaceAtView | undefined }): ReactElement {
 export function PlaceMapScreen(): ReactElement {
   const [point, setPoint] = useState<LatLng | null>(null);
   const [moving, setMoving] = useState(false);
-  const at = usePlaceAt(point);
+  const { shown, chosen } = usePlaceAt(point);
   const { position } = usePosition();
   const map = useRef<MapHandle>(null);
   const opened = useRef(false);
@@ -108,7 +110,7 @@ export function PlaceMapScreen(): ReactElement {
         </View>
       </View>
       <Header />
-      <Sheet at={at} />
+      <Sheet at={shown} chosen={chosen} />
     </View>
   );
 }
