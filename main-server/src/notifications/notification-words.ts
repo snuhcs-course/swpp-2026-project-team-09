@@ -8,6 +8,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf } from '../assistant/free-time/free-time.js';
@@ -119,9 +120,10 @@ function stepLine({ stepTitle, startsAt, cancelled }: Of<'step-changed'>): strin
 function memberWords(told: Of<'step-changed'> | Of<'arrived'> | Of<'late'>): NotificationWords {
   const card = { kind: 'party', id: told.questId };
   if (told.kind === 'step-changed') {
-    const line = stepLine(told);
+    // The title says what happened, and the line starts with the 파티, as every 파티 Notification's does.
+    const line = `${told.questTitle} · ${stepLine(told)}`;
     return {
-      title: `${told.questTitle} · ${withSubject(told.byName)} 일정을 바꿨어요`,
+      title: `${withSubject(told.byName)} 일정을 바꿨어요`,
       ahead: null,
       line,
       card,

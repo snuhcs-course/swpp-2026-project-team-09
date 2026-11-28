@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { cardAddress } from '../src/notifications/card-address.js';
@@ -123,21 +124,25 @@ describe('The words of a changed step', () => {
 
   it('name the 파티 and who changed it, and the date, the time and the step it became; it rings', () => {
     expect(wordsOf(changed, AT)).toEqual({
-      title: '저녁 같이 · 민수가 일정을 바꿨어요',
+      title: '민수가 일정을 바꿨어요',
       ahead: null,
-      line: '11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요',
+      line: '저녁 같이 · 11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요',
       card: { kind: 'party', id: QUEST_ID },
       about: FRIEND_ID,
       rings: true,
-      body: '11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요.',
+      body: '저녁 같이 · 11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요.',
     });
   });
 
   it.each([
-    ['a step without a start', { startsAt: null }, '정문 앞에서 만나기로 바뀌었어요'],
-    ['a step whose title ends in a consonant', { stepTitle: '점심' }, '11/18(수) 14:10 점심으로 바뀌었어요'],
-    ['a step whose title ends in ㄹ', { stepTitle: '산책길' }, '11/18(수) 14:10 산책길로 바뀌었어요'],
-    ['a cancelled step, as before', { cancelled: true }, "'정문 앞에서 만나기' 취소"],
+    ['a step without a start', { startsAt: null }, '저녁 같이 · 정문 앞에서 만나기로 바뀌었어요'],
+    [
+      'a step whose title ends in a consonant',
+      { stepTitle: '점심' },
+      '저녁 같이 · 11/18(수) 14:10 점심으로 바뀌었어요',
+    ],
+    ['a step whose title ends in ㄹ', { stepTitle: '산책길' }, '저녁 같이 · 11/18(수) 14:10 산책길로 바뀌었어요'],
+    ['a cancelled step, as before', { cancelled: true }, "저녁 같이 · '정문 앞에서 만나기' 취소"],
   ])('word %s', (_case, change, line) => {
     expect(wordsOf({ ...changed, ...change }, AT).line).toBe(line);
   });
