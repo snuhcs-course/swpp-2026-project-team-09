@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by TaeHyun79
+# 2026-11-29  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # A first run, from the sign-in screen to the map: the mock's sign-in, the consent, and Onboarding with the mock's
@@ -14,6 +15,12 @@ appId: com.bonnieandclaude.snunow
 - tapOn: '서울대학교 구글 계정(@snu.ac.kr)으로 로그인'
 - assertVisible: '약관에 동의해 주세요'
 - takeScreenshot: ${SHOTS}-consent
+# "동의하고 시작" waits for an answer on usage data (P08 ticket 17); the flows answer X. The selector is a regular
+# expression, so the label's parentheses are escaped.
+- scrollUntilVisible:
+    element: 'X \(사용 기록 보내지 않기\)'
+    direction: DOWN
+- tapOn: 'X \(사용 기록 보내지 않기\)'
 - tapOn: '동의하고 시작'
 - assertVisible: '프로필 만들기'
 - assertVisible: '안진영'

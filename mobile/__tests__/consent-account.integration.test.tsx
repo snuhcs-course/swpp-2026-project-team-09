@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -93,6 +94,11 @@ async function press(user: User, name: string): Promise<void> {
   await pass(1000);
 }
 
+// One of the usage item's two answers.
+function answer(usage: boolean): ReturnType<typeof screen.getByRole> {
+  return screen.getByRole('radio', { name: usage ? USAGE_ITEM.yesLabel : USAGE_ITEM.noLabel });
+}
+
 function consentSent(): unknown[] {
   return server.received('PUT /users/me/consent').map(({ body }) => body);
 }
@@ -159,12 +165,34 @@ describe('whether the consent screen asks, at a start with a kept Session', () =
 });
 
 describe('"동의하고 시작"', () => {
-  it('has the box not ticked at first, and sends version 1 without usage data', async () => {
+  it('waits for an answer on usage data: neither is chosen at first, and the button takes no press', async () => {
     server.on('PUT /users/me/consent', { status: 204 });
     const user = await signInWith(NO_CONSENT);
 
-    expect(screen.getByRole('checkbox', { name: USAGE_ITEM.label })).not.toBeChecked();
+    expect(screen.getByLabelText(USAGE_ITEM.title)).toHaveProp('accessibilityRole', 'radiogroup');
     expect(screen.getByText(USAGE_ITEM.sentence)).toBeVisible();
+    expect(answer(true)).not.toBeChecked();
+    expect(answer(false)).not.toBeChecked();
+    expect(screen.getByRole('button', { name: AGREE })).toBeDisabled();
+    expect(screen.getByText(USAGE_ITEM.hint)).toBeVisible();
+    expect(screen.getByRole('button', { name: '로그아웃' })).toBeVisible();
+
+    await press(user, AGREE);
+    expect(consentSent()).toHaveLength(0);
+    expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
+  });
+});
+
+describe("the usage item's answers", () => {
+  it('sends usage data off on X', async () => {
+    server.on('PUT /users/me/consent', { status: 204 });
+    const user = await signInWith(NO_CONSENT);
+
+    await user.press(answer(false));
+    expect(answer(false)).toBeChecked();
+    expect(answer(true)).not.toBeChecked();
+    expect(screen.getByRole('button', { name: AGREE })).toBeEnabled();
+    expect(screen.queryByText(USAGE_ITEM.hint)).toBeNull();
     await press(user, AGREE);
 
     expect(consentSent()).toEqual([{ version: 1, usage: false }]);
@@ -172,15 +200,33 @@ describe('"동의하고 시작"', () => {
     expect((await readKept()).consent).toEqual({ version: 1, usage: false });
   });
 
-  it('sends the ticked box, and the next start does not ask again', async () => {
+  it('sends the answer last chosen, after a change of mind', async () => {
+    server.on('PUT /users/me/consent', { status: 204 });
+    const user = await signInWith(NO_CONSENT);
+
+    await user.press(answer(true));
+    await user.press(answer(false));
+    expect(answer(false)).toBeChecked();
+    expect(answer(true)).not.toBeChecked();
+    await user.press(answer(true));
+    expect(answer(true)).toBeChecked();
+    expect(answer(false)).not.toBeChecked();
+    await press(user, AGREE);
+
+    expect(consentSent()).toEqual([{ version: 1, usage: true }]);
+  });
+});
+
+describe('확인', () => {
+  it('sends usage data on, and the next start does not ask again', async () => {
     await keep({ signedIn: true, onboardingCompleted: true });
     const user = await startSignedIn();
     server.on('PUT /users/me/consent', { status: 204 });
     // The account as it holds the consent from then on.
     server.on('POST /lobby', { status: 200, body: { ...LOBBY, consent: { version: 1, usage: true } } });
 
-    await user.press(screen.getByRole('checkbox', { name: USAGE_ITEM.label }));
-    expect(screen.getByRole('checkbox', { name: USAGE_ITEM.label })).toBeChecked();
+    await user.press(answer(true));
+    expect(answer(true)).toBeChecked();
     await press(user, AGREE);
     expect(consentSent()).toEqual([{ version: 1, usage: true }]);
     expect((await readKept()).consent).toEqual({ version: 1, usage: true });
@@ -203,6 +249,7 @@ describe('a failed "동의하고 시작"', () => {
     server.on('PUT /users/me/consent', reply);
     const user = await signInWith(NO_CONSENT);
 
+    await user.press(answer(false));
     await press(user, AGREE);
     expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
     expect(screen.getByText(CONSENT_NOT_SAVED)).toBeVisible();
@@ -215,7 +262,7 @@ describe('a failed "동의하고 시작"', () => {
     expect((await readKept()).consent).toEqual(AGREED);
   });
 
-  it('leaves "로그아웃" as it was: the User signs out, and nothing is sent', async () => {
+  it('leaves "로그아웃" as it was before any answer: the User signs out, and nothing is sent', async () => {
     server.on('POST /auth/sign-out', { status: 204 });
     const user = await signInWith(NO_CONSENT);
 

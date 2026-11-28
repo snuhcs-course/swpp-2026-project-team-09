@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, userEvent } from '@testing-library/react-native';
@@ -63,17 +64,20 @@ afterEach(() => {
 });
 
 describe('the item on usage data', () => {
-  it('offers usage data below the documents, not ticked', async () => {
+  it('offers usage data below the documents as two answers, neither chosen, and one at a time', async () => {
     const user = await signInFresh();
 
-    expect(screen.getByRole('checkbox', { name: USAGE_ITEM.label })).not.toBeChecked();
+    expect(screen.getByLabelText(USAGE_ITEM.title)).toHaveProp('accessibilityRole', 'radiogroup');
+    expect(screen.getByRole('radio', { name: USAGE_ITEM.yesLabel })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: USAGE_ITEM.noLabel })).not.toBeChecked();
     expect(screen.getByText(USAGE_ITEM.sentence)).toBeVisible();
     expect(screen.getByRole('link', { name: USAGE_ITEM.link })).toBeVisible();
 
-    await user.press(screen.getByRole('checkbox', { name: USAGE_ITEM.label }));
-    expect(screen.getByRole('checkbox', { name: USAGE_ITEM.label })).toBeChecked();
-    await user.press(screen.getByRole('checkbox', { name: USAGE_ITEM.label }));
-    expect(screen.getByRole('checkbox', { name: USAGE_ITEM.label })).not.toBeChecked();
+    await user.press(screen.getByRole('radio', { name: USAGE_ITEM.yesLabel }));
+    expect(screen.getByRole('radio', { name: USAGE_ITEM.yesLabel })).toBeChecked();
+    await user.press(screen.getByRole('radio', { name: USAGE_ITEM.noLabel }));
+    expect(screen.getByRole('radio', { name: USAGE_ITEM.noLabel })).toBeChecked();
+    expect(screen.getByRole('radio', { name: USAGE_ITEM.yesLabel })).not.toBeChecked();
   });
 });
 
@@ -113,9 +117,9 @@ describe('when the screen asks', () => {
 });
 
 describe('the mock build', () => {
-  it('keeps the consent with the ticked box on the phone in place of the account', async () => {
+  it('keeps the consent with 확인 on the phone in place of the account', async () => {
     const user = await signInFresh();
-    await user.press(screen.getByRole('checkbox', { name: USAGE_ITEM.label }));
+    await user.press(screen.getByRole('radio', { name: USAGE_ITEM.yesLabel }));
     await press(user, AGREE);
 
     expect(await readKept()).toMatchObject({
@@ -127,6 +131,7 @@ describe('the mock build', () => {
   it('keeps the User on the screen when the consent was not kept, and agrees on a second press', async () => {
     process.env.EXPO_PUBLIC_MOCK_FAIL = 'agreeToConsent';
     const user = await signInFresh();
+    await user.press(screen.getByRole('radio', { name: USAGE_ITEM.noLabel }));
     await press(user, AGREE);
 
     expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
@@ -143,7 +148,7 @@ describe("the mock build's switch in 내 정보", () => {
   it('keeps the choice of "사용 기록 보내기" on the phone, and it holds after a sign-out and a sign-in', async () => {
     await keep({ onboardingCompleted: true });
     const user = await signInFresh();
-    await user.press(screen.getByRole('checkbox', { name: USAGE_ITEM.label }));
+    await user.press(screen.getByRole('radio', { name: USAGE_ITEM.yesLabel }));
     await press(user, AGREE, 1000);
     await user.press(screen.getByRole('tab', { name: '내 정보' }));
     await pass(500);

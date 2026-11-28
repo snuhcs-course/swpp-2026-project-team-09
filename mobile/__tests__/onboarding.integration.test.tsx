@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -127,6 +128,7 @@ describe('around Onboarding', () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await user.press(button(SIGN_IN));
     await pass(400);
+    await user.press(screen.getByRole('radio', { name: 'X (사용 기록 보내지 않기)' }));
     await user.press(button('동의하고 시작'));
     await pass(400);
 
