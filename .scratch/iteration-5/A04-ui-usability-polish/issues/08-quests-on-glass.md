@@ -40,3 +40,8 @@ The user chose a whole screen of glass over the map, rather than a side panel li
 - [x] No native file changes; lint (type-aware) and format pass on the changed files. jest and tsc run in CI.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 15 minutes, an estimate (gaps under 5 minutes between transcript entries, summed; the emulator's boot and the waits are left out). The ticket, the code, the tests, the emulator check and screens, and the pull request, in one session.
+- Tokens: input 29,682,475 (cache reads 28,859,600, cache writes 822,799, uncached 76); output 29,084. No subagents. Counted up to the opening of the pull request.
