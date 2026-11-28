@@ -1653,6 +1653,7 @@ its own layout (size, padding, radius) and never a colour, a border or a strengt
 | Level      | Takes                                                                                        | Look                                                                                            |
 | ---------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `panel`    | the outer bars, the bottom sheets and the cards over the map                                 | a blur, or white at 80% where nothing blurs; a thin light line along its top, a floating shadow |
+| `screen`   | a whole screen over the map, such as the Quest list opened from the map                      | blurred as a panel, or white at 85% where nothing blurs; no shadow                              |
 | `inner`    | the chips, boxes, white buttons and light coloured chips inside a panel                      | white at 90%                                                                                    |
 | `field`    | a grey input field inside a panel                                                            | navy at 5%                                                                                      |
 | `mapChip`  | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow                                                   |

@@ -8,6 +8,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useLocalSearchParams } from 'expo-router';
@@ -178,7 +179,7 @@ export function QuestList({ map, selection, room }: QuestListProps): ReactElemen
         <QuestPill
           count={rows === undefined ? null : rows.length}
           onFullScreen={() => {
-            router.push('/quests');
+            router.push({ pathname: '/quests', params: { over: 'map' } });
           }}
         />
       </View>
