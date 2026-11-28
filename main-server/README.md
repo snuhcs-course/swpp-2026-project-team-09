@@ -2771,6 +2771,13 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
   `planMeal` calls (`src/assistant/gathering/meal-plan.service.ts`), so the `input` of an answer posted back unchanged at
   the same time gives the same answer. The model is not called, and the User's daily messages are not counted.
 
+  A window's `from` and `until` may run past midnight (P05 ticket 91): an hour past 23 is the next day's, counted from
+  the input's `date`, up to `47:59` (`windowClock`), so a band dragged to 00:30 after midnight sends `"24:30"`. Every
+  reading of a window clock goes through `onDay`, which adds the day. Every place a window clock is said shows it on
+  its own day (`shownClock`): the chips, the answer's lines, and the model's `[Plan on screen]`, so the model never
+  reads or writes an hour past 23. Its tools keep `clockTime` (up to `24:00`). An app before this sends no hour past
+  23, so it keeps working; deploy the main server before the app that sends one.
+
   - **What the User fixed.** `window.from` and `window.until` narrow the meal's window; a plan that starts later than
     `from` or ends earlier than `until` says what holds it: who arrives last or leaves first, and when, or the meal's
     own serving time. `placeId` plans only the open Restaurants at that Place, and the answer says `그곳에는 여는 식당이 없어요`

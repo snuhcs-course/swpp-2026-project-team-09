@@ -18,7 +18,7 @@ import {
   type StudyInput,
   type TimeBand,
 } from '../dto/answer.dto.js';
-import { byStart, clockOf, type DayItem, endOfDay, onDay, startOfDay } from '../free-time/free-time.js';
+import { byStart, clockOf, type DayItem, endOfDay, onDay, shownClock, startOfDay } from '../free-time/free-time.js';
 import { earliest, type Interval, latest } from '../free-time/meal-fit.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
@@ -297,8 +297,8 @@ const chip = (kind: ConditionChip['kind'], text: string, userId: string | null =
 function chipsOf({ people, input: { window } }: GroupAnswerArgs): ConditionChip[] {
   return [
     ...people.filter(({ me }) => !me).map(({ userId, name }) => chip('person', name, userId)),
-    ...(window.from === null ? [] : [chip('from', `${window.from}부터`)]),
-    ...(window.until === null ? [] : [chip('until', `${window.until}까지`)]),
+    ...(window.from === null ? [] : [chip('from', `${shownClock(window.from)}부터`)]),
+    ...(window.until === null ? [] : [chip('until', `${shownClock(window.until)}까지`)]),
   ];
 }
 
