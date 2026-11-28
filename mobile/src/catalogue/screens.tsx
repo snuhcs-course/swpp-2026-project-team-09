@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -143,7 +144,7 @@ export function Filters(): ReactElement {
         onSelect={setChip}
         selected={chip}
       />
-      <SearchField label="친구 검색" onChangeText={setQuery} placeholder="이름, 학과 검색" value={query} />
+      <SearchField label="친구 검색" onChangeText={setQuery} placeholder="친구 검색" value={query} />
       <View style={styles.row}>
         {DAYS.map(([date, top, weekday]) => (
           <DayTile

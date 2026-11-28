@@ -919,7 +919,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
 screen, on the glass layer's `inner` level over the map; while it is open, what floats over the map and the tab bar
-give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department as `matchesWords` matches, with
+give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "친구 검색", by name only as `matchesWords` matches, with
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
 and the department, the detail (or the line where the app has no detail), and the round glass calendar button
@@ -932,7 +932,7 @@ own status says.
 **The friend screens** (`src/screens/friends/`, the `Friends` and `FriendsAdd` frames) are screens above the tabs that
 slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to where it was opened from:
 
-- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department as `matchesWords` matches, with "결과 없음"; the row
+- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name only as `matchesWords` matches, with "결과 없음"; the row
   "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
   order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and no level or 위치 공유 line:
   each Friend's level is chosen on 위치 공유. A press on a Friend opens a bottom sheet with

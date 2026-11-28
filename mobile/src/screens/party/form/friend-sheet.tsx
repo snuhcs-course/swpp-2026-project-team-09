@@ -9,7 +9,7 @@ import { type ReactElement, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Friend } from '@/api/types';
 import { BottomSheet, Button, color, EmptyState, font, NO_RESULTS, radius, SearchField, space } from '@/design-system';
-import { matchesFriend } from '@/features/friends/matches-friend';
+import { FRIEND_SEARCH, matchesFriend } from '@/features/friends/matches-friend';
 import { FriendRow } from './friend-picker';
 
 interface FriendSheetProps {
@@ -77,7 +77,7 @@ export function FriendSheet({ open, friends, chosen, most, onClose, onChosen }: 
         <Text accessibilityRole="header" style={styles.title}>
           친구 초대
         </Text>
-        <SearchField label="친구 검색" onChangeText={setSearch} placeholder="친구 검색" value={search} />
+        <SearchField label={FRIEND_SEARCH} onChangeText={setSearch} placeholder={FRIEND_SEARCH} value={search} />
         <FriendList checked={checked} friends={friends} most={most} onChecked={setChecked} search={search} />
         <Text style={styles.left}>{`남은 자리 ${String(most)}명까지 초대할 수 있어요`}</Text>
         <Button
