@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -120,6 +121,7 @@ describe('an Invite Link that starts the stopped app on Android', () => {
 
     await user.press(screen.getByRole('button', { name: SIGN_IN }));
     await pass(400);
+    await user.press(screen.getByRole('radio', { name: 'X (사용 기록 보내지 않기)' }));
     await user.press(screen.getByRole('button', { name: '동의하고 시작' }));
     await pass(400);
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();

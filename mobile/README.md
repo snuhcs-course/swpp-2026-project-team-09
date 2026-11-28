@@ -498,12 +498,14 @@ true any more) and whose account holds no version is not asked again: at the sig
 current version with usage data off, quietly (`consentScreenAsks` in `src/consent/choices.ts`), and goes on. A failed
 send asks nothing and is tried again at the next start; until then the copy holds no version, which counts as off.
 
-The screen lists the three documents and the sentence on error reports, and below them, under a divider, an optional
-item: a checkbox "사용 기록 보내기 (선택)" (`src/screens/check-box.tsx`, the box the room book card's 서약서 uses),
-not ticked at first, its sentence and a link to the privacy policy's part "사용 기록". "동의하고 시작" sends
-`PUT /users/me/consent` with `CONSENT_VERSION` and the checkbox, keeps the account's answer on the phone and calls
-`agree`; a failed send keeps the User on the screen with a toast, keeps nothing, and the button sends again.
-"로그아웃" signs out.
+The screen lists the three documents and the sentence on error reports, and below them, in a soft box, the optional
+item (선택) on usage data: its title "사용 기록을 앱 개선에 이용해요", one sentence, a link to the privacy policy's part
+"사용 기록", and two answers side by side, X on the left and 확인 on the right, a radio group with neither chosen at
+first (P08 ticket 17). The item is optional, since either answer starts the app, but an answer is required: until
+one is chosen "동의하고 시작" takes no press and a line under it says "사용 기록을 고르면 시작할 수 있어요".
+"동의하고 시작" sends `PUT /users/me/consent` with `CONSENT_VERSION` and the answer, keeps the account's answer on the
+phone and calls `agree`; a failed send keeps the User on the screen with a toast, keeps nothing, and the button sends
+again. "로그아웃" signs out, with an answer or without.
 
 In the mock build the phone keeps the account's consent too, as `mockAccountConsent`, which a sign-out leaves and the
 mock's sign-in copies, so the screen asks once on the phone; the mock's Lobby leaves the copy as it is.

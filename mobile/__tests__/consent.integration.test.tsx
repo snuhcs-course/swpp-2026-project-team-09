@@ -6,6 +6,7 @@
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, userEvent } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import { ScrollView } from 'react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
 import { ONBOARDING } from './support/onboarding';
-import { CONSENT_ERROR_REPORTS } from '@/screens/consent-screen';
+import { CONSENT_ERROR_REPORTS, USAGE_ITEM } from '@/screens/consent-screen';
 import { keep, readKept } from '@/storage/kept';
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -32,6 +33,12 @@ type User = ReturnType<typeof userEvent.setup>;
 async function press(user: User, name: string, wait = 400): Promise<void> {
   await user.press(screen.getByRole('button', { name }));
   await pass(wait);
+}
+
+// Answers X on usage data, then presses "동의하고 시작", which takes no press before an answer.
+async function agree(user: User, wait = 400): Promise<void> {
+  await user.press(screen.getByRole('radio', { name: USAGE_ITEM.noLabel }));
+  await press(user, AGREE, wait);
 }
 
 // The app in front of a User who has just signed in.
@@ -75,7 +82,7 @@ describe('the consent screen', () => {
 
   it('leads a new User on to Onboarding on "동의하고 시작", and the phone keeps the answer', async () => {
     const user = await signInFresh();
-    await press(user, AGREE);
+    await agree(user);
 
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.queryByRole('header', { name: TITLE })).toBeNull();
@@ -90,7 +97,7 @@ describe('the consent screen', () => {
     const user = await signInFresh();
     expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
 
-    await press(user, AGREE, 1000);
+    await agree(user, 1000);
     expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
   });
 
@@ -106,7 +113,7 @@ describe('the consent screen', () => {
 describe('consent, once on a phone', () => {
   it('is not asked again after a sign-out and a new sign-in', async () => {
     const user = await signInFresh();
-    await press(user, AGREE);
+    await agree(user);
     await press(user, '로그아웃');
 
     await press(user, SIGN_IN, 400);
@@ -121,7 +128,7 @@ describe('consent, once on a phone', () => {
     expect(screen.getByRole('header', { name: TITLE })).toBeVisible();
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    await press(user, AGREE, 1000);
+    await agree(user, 1000);
     expect(screen.getByRole('tab', { name: '지도' })).toBeVisible();
   });
 
