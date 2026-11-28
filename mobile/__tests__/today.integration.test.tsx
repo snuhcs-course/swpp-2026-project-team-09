@@ -237,16 +237,16 @@ describe('지난 알림', () => {
     const user = await openToday();
     const kept = section('kept');
 
-    expect(kept.getByText('알림 7')).toBeVisible();
-    expect(kept.getByText('알림 3')).toBeVisible();
-    expect(kept.queryByText('알림 2')).toBeNull();
+    expect(kept.getByText('소식 7')).toBeVisible();
+    expect(kept.getByText('소식 3')).toBeVisible();
+    expect(kept.queryByText('소식 2')).toBeNull();
 
     await user.press(kept.getByRole('button', { name: '알림 모두 보기' }));
     await pass(500);
 
     expect(screen.getByRole('header', { name: /^알림/u })).toBeVisible();
     // Read inside 알림's panel: 오늘 stays mounted under it.
-    expect(within(screen.getByTestId('full-screen-panel')).getByText('알림 1')).toBeVisible();
+    expect(within(screen.getByTestId('full-screen-panel')).getByText('소식 1')).toBeVisible();
     expect(shownAddress()).toBe('/notifications');
     await user.press(screen.getByRole('button', { name: '뒤로' }));
     expect(screen.getByRole('tab', { name: /^오늘/u })).toBeSelected();
@@ -256,7 +256,7 @@ describe('지난 알림', () => {
   it('shows the map in one move for a row of a card', async () => {
     const user = await openToday();
 
-    await user.press(section('kept').getByRole('button', { name: /^알림 7/u }));
+    await user.press(section('kept').getByRole('button', { name: /^소식 7/u }));
     await pass(500);
 
     // The map's tab, which may hide the bar while its card is open: read by the address.
