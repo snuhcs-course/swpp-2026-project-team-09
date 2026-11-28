@@ -35,3 +35,8 @@ App only: the starred list is the `favorite` of `GET /global-events`, and no ser
 - [ ] The search within the starred events (integration test, failing before).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 9 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 5k; input 13.2M, of which 13.2M cache reads, 20k cache writes and 40 uncached. No subagents.

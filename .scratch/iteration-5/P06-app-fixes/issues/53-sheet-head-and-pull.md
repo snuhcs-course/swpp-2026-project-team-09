@@ -41,3 +41,8 @@ The user amended ticket 35's rule on 2026-11-28, with a teammate's agreement: "ì
 - [ ] On a phone: the event sheet's content scrolled to the top, pulled once more, lowers the sheet.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 29 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 48k; input 45.6M, of which 45.5M cache reads, 76k cache writes and 150 uncached. One Explore subagent (the survey of every sheet) is included.

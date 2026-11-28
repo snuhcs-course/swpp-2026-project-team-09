@@ -34,3 +34,8 @@ The user on 2026-11-28, on the 행사 tab: "별 위치가 아쉬운데 텍스트
 - [ ] The 행사 row's ☆ and the detail sheet's ☆ are centred on their title's first line box (integration test, failing before).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 18 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 41k; input 41.2M, of which 41.2M cache reads, 78k cache writes and 144 uncached. No subagents.
