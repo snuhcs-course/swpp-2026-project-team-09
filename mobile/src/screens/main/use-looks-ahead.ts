@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useState } from 'react';
@@ -14,7 +15,8 @@ import { type MarkerLook, useMarkerImages } from '@/map';
 export const LOOKS_AHEAD: readonly MarkerLook[] = [
   ...Array.from({ length: 12 }, (_, at): MarkerLook => ({
     kind: 'answer',
-    symbol: { type: 'dot', role: 'candidate', number: at + 1, meal: true },
+    // In the meal's kind, as a meal answer's candidates carry it (`inKind`), whose name the picture is kept under.
+    symbol: { type: 'dot', role: 'candidate', number: at + 1, meal: true, kind: 'meal' },
     label: null,
   })),
   { kind: 'answer', symbol: { type: 'dot', role: 'stop', number: null }, label: null },

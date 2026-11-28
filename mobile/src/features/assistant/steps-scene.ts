@@ -160,6 +160,20 @@ export function stepsScene(steps: readonly ReplyStep[], me: LatLng | null): MapS
   return { people: mine, places: [], routes: [...walk, ...between], flags: [] };
 }
 
+// The user's choices for the steps' marks, awaiting his decision from use (2026-11-28, P03 ticket 24), one function
+// each. Their colour is `stepTone`'s, the one table of each kind's colour (`kindTone`), as the same answer's mark alone;
+// choice 2, a room's step in the study colour as a seat's, is that table's (`answerTone`).
+// Choice 1: what a seat's or a room's round holds: its number, as every step's, not the 관정 booking pick's book.
+export function bookingStepHolds(): 'number' | 'book' {
+  return 'number';
+}
+
+// Choice 3: how a step's round is drawn: solid, as a pick, for every step done, the chosen one or not; grey for one
+// not done.
+export function stepMarkRole({ status }: Pick<ReplyStep, 'status'>): 'pick' | 'dropped' {
+  return status === 'shown' ? 'pick' : 'dropped';
+}
+
 // Each step with a place as a numbered flag: ① ② by the steps' order, its title with "›" when a press does something,
 // its line, and faded when it was not done.
 export function stepDrafts(
@@ -175,7 +189,8 @@ export function stepDrafts(
       return [];
     }
     const number = index + 1;
-    const done = step.status === 'shown';
+    const role = stepMarkRole(step);
+    const book = (step.kind === 'seat' || step.kind === 'room') && bookingStepHolds() === 'book';
     const title = (opens[index] ?? true) ? `${titles[index] ?? step.title} ›` : (titles[index] ?? step.title);
     const line = lines[index] ?? null;
     const draft: Draft = {
@@ -183,9 +198,9 @@ export function stepDrafts(
       name: `${String(number)} ${title} · ${line ?? ''}`,
       position: { latitude: place.latitude, longitude: place.longitude },
       planId: null,
-      group: done ? 'pick' : 'dropped',
-      symbol: { type: 'dot', role: done ? 'pick' : 'dropped', number },
-      tone: done ? 'pick' : 'dropped',
+      group: role,
+      symbol: { type: 'dot', role, number: book ? null : number, ...(book ? { study: true } : {}) },
+      tone: role,
       title,
       line,
       number,
