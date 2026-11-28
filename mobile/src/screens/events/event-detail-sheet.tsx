@@ -69,7 +69,7 @@ function Head({ event }: { event: EventView }): ReactElement {
       <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
         {event.title}
       </Text>
-      <FavoriteToggle eventId={event.id} style={styles.favorite} />
+      <FavoriteToggle besideLine={eventText.sheetTitle.lineHeight} eventId={event.id} style={styles.favorite} />
     </View>
   );
 }
@@ -190,7 +190,6 @@ const BOX_GAP = 10;
 const BOX_PADDING = 14;
 const FACT_ICON = 18;
 const ICON_DROP = (eventText.value.lineHeight - FACT_ICON) / 2;
-const FAVORITE_REACH = { marginTop: -6, marginRight: -10 };
 const LINE_GAP = 7;
 const PARAGRAPH_GAP = 14;
 
@@ -200,7 +199,7 @@ const styles = StyleSheet.create({
   details: { gap: space[4] },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], paddingHorizontal: space[5] },
   title: { ...eventText.sheetTitle, flex: 1, minWidth: 0, color: color.ink },
-  favorite: FAVORITE_REACH,
+  favorite: { marginRight: -10 },
   facts: {
     gap: BOX_GAP,
     paddingVertical: BOX_PADDING,
