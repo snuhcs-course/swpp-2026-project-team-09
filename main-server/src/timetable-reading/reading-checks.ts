@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { axisHours, blockTimes, clock, dayOf, minutesOf, tidy, type Weekday, WEEKDAYS } from './labels.js';
@@ -14,11 +15,13 @@ import { type ModelAnswer } from './reading-model.js';
 // A room as SNUTT and 에브리타임 print it: a building number and up to three more parts (`302-311-1`, `43-2-B101`,
 // `500-L308`, `43-1`, `26-404`). The phone's reader uses the same (`block-text.ts`).
 export const ROOM_PATTERN = /^\d{1,3}(?:-[A-Z]?\d{1,4}){0,3}$/u;
-// The main server's limits on a class: its name's length and its times.
+// The main server's limits on a class: its name's length and its times. A longer name is cut to it, as the phone's
+// reader cuts it (`block-text.ts`): a timetable prints a long name cut with `…` anyway (P05 ticket 90).
 export const NAME_LENGTH = 30;
 // The most a block's text may be before it is left out unread: name lines, characters in one line or in the room. A
-// timetable block holds two or three short lines; the bounds keep a crafted answer from costing the server time.
-export const MOST_NAME_LINES = 6;
+// block of an hour or so holds two or three short lines, one of three hours a long name over seven or eight (에브리타임,
+// P05 ticket 90); the bounds keep a crafted answer from costing the server time.
+export const MOST_NAME_LINES = 12;
 export const LINE_LENGTH = 60;
 // More blocks than a week of classes has; the rest are left out unread.
 export const MOST_BLOCKS = 80;
@@ -49,7 +52,7 @@ export type LeftOutReason =
   | 'time-unreadable'
   // Its start is not before its end, or it is shorter than a slot.
   | 'outside-day'
-  // No name, or a name longer than a class may have.
+  // No name, or one without a letter or a digit.
   | 'no-name'
   // More name lines, or longer ones, than a block holds.
   | 'too-long'
@@ -143,7 +146,7 @@ function checkedBlock(
   hours: readonly number[],
 ): { name: string; time: ReadTime } | LeftOut {
   if (tooLong(block)) {
-    return { weekday: null, name: '', start: null, end: null, reason: 'too-long' };
+    return { weekday: dayOf(block.day.slice(0, LINE_LENGTH)), name: '', start: null, end: null, reason: 'too-long' };
   }
   const weekday = dayOf(block.day);
   const name = checkedName(block.name, block.nameLines);
@@ -174,7 +177,7 @@ function checkedBlock(
   if (name === null) {
     return leftOut(block.name.trim() === '' ? 'no-name' : 'name-unchecked');
   }
-  if (Array.from(name).length > NAME_LENGTH || !/[\p{L}\p{N}]/u.test(name)) {
+  if (!/[\p{L}\p{N}]/u.test(name)) {
     return leftOut('no-name');
   }
   return { name, time: { weekday, start: clock(start), end: clock(end), room: checkedRoom(block.room) } };
@@ -188,6 +191,13 @@ const CUT_MARK = /\s*(?:…|\.{3})$/u;
 // A name without its spaces.
 function bare(text: string): string {
   return text.replaceAll(/\s+/gu, '');
+}
+
+// A name as a class may have it: past NAME_LENGTH characters, its first ones without the `…` it was printed cut with.
+export function fittedName(name: string): string {
+  return Array.from(name).length <= NAME_LENGTH
+    ? name
+    : Array.from(name.replace(CUT_MARK, '')).slice(0, NAME_LENGTH).join('').trim();
 }
 
 export function completedNames(names: readonly string[]): string[] {
@@ -224,7 +234,7 @@ export function checkedReading(answer: ModelAnswer): TimetableReading {
     }
   }
   const names = completedNames(read.map(({ name }) => name));
-  const named = read.map((one, index) => ({ name: names[index] ?? one.name, time: one.time }));
+  const named = read.map((one, index) => ({ name: fittedName(names[index] ?? one.name), time: one.time }));
   for (const { name, time } of named.toSorted((one, other) => compareTimes(one.time, other.time))) {
     const times = classes.get(name) ?? [];
     if (times.length >= MOST_TIMES || times.some((other) => crosses(other, time))) {

@@ -2,9 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { Logger } from '@nestjs/common';
 import { MockLanguageModelV4 } from 'ai/test';
+import { vi } from 'vitest';
 import { type GridFound } from '../src/timetable-reading/grid-mapping.js';
 import { readGrid } from '../src/timetable-reading/grid-reading.js';
 
@@ -159,5 +162,31 @@ describe('a failed call of a grid reading', () => {
     expect(await reading).toBeNull();
     await flush();
     expect(unhandled).toEqual([]);
+  });
+});
+
+// The text read with the layout, both starts put at 13:00, two hours off the layout's.
+const OFF_STARTS = {
+  title: TEXT.title,
+  blocks: TEXT.blocks.map(({ number, nameLines, name, room }) => ({ number, nameLines, name, room, start: '13:00' })),
+};
+
+// P05 ticket 90: a drop is never silent. The text read with the layout puts both starts two hours off, so both blocks
+// are read again; that call fails, so both are left out without text, and the log says so.
+describe('a failed re-read of a grid reading', () => {
+  it('(d) the re-read of blocks whose start did not agree fails: they are left out, with a warning that says why', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn');
+    const { model, pending } = waitingModel();
+    const reading = readGrid(model, IMAGE, GRID, LIMITS, OPTIONS);
+    await flush();
+    settleAll(pending, 'layout', LAYOUT);
+    settleAll(pending, 'id', OFF_STARTS);
+    await flush();
+    settleAll(pending, 'text', new Error('The provider failed'));
+    const done = await reading;
+
+    expect(done?.answer.blocks.map(({ name }) => name)).toEqual(['', '']);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('blocks left out without text: 2.'));
+    warn.mockRestore();
   });
 });

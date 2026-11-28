@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { HttpException, HttpStatus, Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { type Settings } from '../common/settings.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { LETTERS, type Weekday } from './labels.js';
 import { checkedReading, type TimetableReading } from './reading-checks.js';
+import { leftOutLine, readingLogger } from './reading-log.js';
 import { blocksAnswer, listedBlocks, nearMissGroups, withoutNames, withSecondLook } from './second-look.js';
 import { UnreadableImageException } from './unreadable-image.exception.js';
 import { type GridFound } from './grid-mapping.js';
@@ -120,7 +122,17 @@ export class TimetableReadingService {
           ? `${reading.classes.length} classes, ${reading.leftOut.length} blocks left out`
           : 'no timetable';
       const how = grid === null ? 'the whole picture' : mapped === true ? 'the grid' : 'the grid, its mapping refused';
-      this.logger.log(`A timetable was read from ${how}: ${counts}`);
+      const leftOut = reading.kind === 'read' ? reading.leftOut : [];
+      for (const one of leftOut) {
+        this.logger.warn(leftOutLine(one));
+      }
+      // Anything left out makes the summary a warning too (P05 ticket 90).
+      const summary = `A timetable was read from ${how}: ${counts}`;
+      if (leftOut.length > 0) {
+        this.logger.warn(summary);
+      } else {
+        this.logger.log(summary);
+      }
       return reading.kind === 'read' ? { ...reading, usedGrid: mapped === true } : reading;
     } catch (error) {
       this.logger.warn(`A timetable was not read: ${causeOf(error)}`);
@@ -199,7 +211,12 @@ export async function readAnswer(
   // split by a guess (P15-52 review).
   const second = await askForBlockText(model, image, again, limits).then(
     (call) => call.answer,
-    () => null,
+    (error: unknown) => {
+      readingLogger.warn(
+        `A timetable reading's second look failed; blocks of near-equal names left out: ${again.length}. ${causeOf(error)}`,
+      );
+      return null;
+    },
   );
   return {
     answer: second === null ? withoutNames(answer, indexes) : withSecondLook(answer, indexes, second),
