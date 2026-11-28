@@ -33,14 +33,10 @@ import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { CROWDED_ASKED, crowdedMealAnswer, crowdedMealReply, crowdedWithFriend } from './data/crowded-meal';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
-import { skippedReplyTo } from './data/skipped-classes';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
 import { pricedCopy, priceReplyOf } from './data/meal-price-answer';
 import { asksUnnamedCompany, UNNAMED_COMPANY_REPLY } from './data/unnamed-company';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
-import { cancelReplyTo } from './data/cancel-quest';
-import { partyChangeReplyTo } from './data/party-change';
-import { pickReplyTo } from './data/pick';
 import { MENU_ANSWER_REPLY, MENU_CLOSED_REPLY } from './data/menu-answer';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
@@ -59,6 +55,7 @@ import {
 } from './data/meal-answers';
 import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
+import { changedReplyTo } from './changed-replies';
 import { isLibraryAsk, libraryReply } from './library-replies';
 import { withMealSet } from './meal-set';
 import { mockMadeQuests } from './plan-quest';
@@ -265,7 +262,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes(NOT_NOW_ASKED)) {
     return NOT_NOW_REPLY;
   }
-  const changed = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last) ?? skippedReplyTo(last);
+  const changed = changedReplyTo(last, context);
   const cancel = changed ?? severalAnswersReplyTo(last, koreaDateKey(now()));
   if (cancel !== null) {
     return cancel;
