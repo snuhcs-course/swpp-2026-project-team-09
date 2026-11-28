@@ -7,7 +7,7 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, space, text } from '@/design-system';
+import { BottomSheet, Button, color, SheetTitle, space, text } from '@/design-system';
 
 // A question the room asks before a step: its words, "취소", and the step's button, red for one that stops something.
 export interface Ask {
@@ -29,13 +29,7 @@ interface ConfirmSheetProps {
 export function ConfirmSheet({ ask, label, onClose }: ConfirmSheetProps): ReactElement {
   return (
     <BottomSheet
-      head={
-        ask === null ? undefined : (
-          <Text accessibilityRole="header" style={[styles.title, styles.head]}>
-            {ask.title}
-          </Text>
-        )
-      }
+      head={ask === null ? undefined : <SheetTitle>{ask.title}</SheetTitle>}
       label={label}
       onClose={onClose}
       open={ask !== null}
@@ -70,9 +64,7 @@ export function ConfirmSheet({ ask, label, onClose }: ConfirmSheetProps): ReactE
 }
 
 const styles = StyleSheet.create({
-  head: { paddingHorizontal: space[5] },
   body: { gap: space[3], paddingHorizontal: space[5] },
-  title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[1] },
   button: { flex: 1 },

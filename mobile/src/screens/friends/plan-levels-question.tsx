@@ -11,7 +11,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { onAskLevels } from '@/api/plan-asks';
 import type { AskLevel } from '@/api/plan-quest-types';
 import type { FriendLevel } from '@/api/types';
-import { BottomSheet, Button, color, Icon, radius, size, space, text, useToast } from '@/design-system';
+import { BottomSheet, Button, color, Icon, radius, SheetTitle, size, space, text, useToast } from '@/design-system';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { LevelTrack } from './level-track';
 import { NOT_CHANGED } from './use-levels';
@@ -106,7 +106,7 @@ function PlanLevelsSheet({ asking: { named, left, open }, onRemove, onFinish }: 
       head={
         <View style={styles.head}>
           <Text style={styles.kicker}>처음 초대한 친구예요</Text>
-          <Text accessibilityRole="header" style={styles.title}>{`${names(left)}에게 평소에 어디까지 보일까요?`}</Text>
+          <SheetTitle>{`${names(left)}에게 평소에 어디까지 보일까요?`}</SheetTitle>
         </View>
       }
       label="친구에게 보일 위치"
@@ -192,10 +192,9 @@ export function PlanLevelsQuestion(): ReactElement | null {
 }
 
 const styles = StyleSheet.create({
-  head: { gap: space[3], paddingHorizontal: space[5] },
+  head: { gap: space[3] },
   body: { gap: space[3], paddingHorizontal: space[5] },
   kicker: { ...text.caption, color: color.snuBlue },
-  title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },
   cells: { gap: space[2] },
   pair: { flexDirection: 'row', gap: space[2] },

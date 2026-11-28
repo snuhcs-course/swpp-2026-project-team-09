@@ -19,6 +19,7 @@ import {
   radius,
   SearchField,
   SheetScroll,
+  SheetTitle,
   space,
 } from '@/design-system';
 import { usePlaceSearch } from '@/features/places/use-place-search';
@@ -204,9 +205,7 @@ export function PlaceSheet({ sheet }: { sheet: PlaceSheetState }): ReactElement 
       head={
         <View style={styles.headBlock}>
           <View style={styles.head}>
-            <Text accessibilityRole="header" style={styles.title}>
-              장소
-            </Text>
+            <SheetTitle>장소</SheetTitle>
             <HelpButton help={PLACE_HELP} size={18} />
           </View>
           <SearchField
@@ -241,10 +240,9 @@ export function PlaceSheet({ sheet }: { sheet: PlaceSheetState }): ReactElement 
 const LEAD = 34;
 
 const styles = StyleSheet.create({
-  body: { flexShrink: 1, gap: space[3], paddingHorizontal: space[4] },
-  headBlock: { gap: space[3], paddingHorizontal: space[4] },
+  body: { flexShrink: 1, gap: space[3], paddingHorizontal: space[5] },
+  headBlock: { gap: space[3] },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  title: { fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
   scroll: { flexShrink: 1 },
   lists: { gap: space[3] },
   list: { overflow: 'hidden', borderWidth: 1, borderColor: color.border, borderRadius: radius.md },

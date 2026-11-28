@@ -61,6 +61,19 @@ describe('the head', () => {
   });
 });
 
+describe('a sheet with no head', () => {
+  it('draws no rule under its handle', async () => {
+    await render(
+      <BottomSheet label="시간표 읽기" onClose={jest.fn<void, []>()} open>
+        <Text>읽는 중</Text>
+      </BottomSheet>,
+    );
+
+    expect(screen.getByTestId('sheet-handle')).toBeVisible();
+    expect(screen.queryByTestId('sheet-rule')).toBeNull();
+  });
+});
+
 describe("the body's pull", () => {
   it('closes the sheet by a pull down while the content is at its top', async () => {
     const onClose = jest.fn<void, []>();

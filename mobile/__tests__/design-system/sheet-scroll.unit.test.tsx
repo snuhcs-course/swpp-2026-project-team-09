@@ -50,4 +50,15 @@ describe('the sheets of the app', () => {
     expect(sheets.length).toBeGreaterThan(10);
     expect(plainScroll).toEqual([]);
   });
+
+  // The user (2026-11-28): "어떤 부분은 타이틀 밑에 가로줄이 들어가고 어떤 데는 가로 작대기 바로 밑에 들어가고." Every
+  // sheet reads grip, title, rule, content: its title is its head. Only a sheet with no title has no head, and so no rule.
+  it('give their title to the sheet as its head, but the two that have none', () => {
+    const headless = sourceFiles(SOURCE)
+      .map((path) => ({ path: relative(SOURCE, path), source: readFileSync(path, 'utf8') }))
+      .filter(({ source }) => /<BottomSheet[\s>]/u.test(source) && !/<BottomSheet[^>]*\shead=\{/su.test(source))
+      .map(({ path }) => path);
+
+    expect(headless).toEqual(['catalogue/screens.tsx', 'screens/me/week-card.tsx']);
+  });
 });

@@ -8,7 +8,7 @@
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, font, radius, space } from '@/design-system';
+import { BottomSheet, Button, color, font, radius, SheetTitle, space } from '@/design-system';
 import { now } from '@/clock';
 import {
   koreaClock,
@@ -196,7 +196,7 @@ export function DateTimeSheet({ open, title = '언제', value, onClose, onPick }
     <BottomSheet
       head={
         <View style={styles.head}>
-          <Text style={styles.title}>{title}</Text>
+          <SheetTitle>{title}</SheetTitle>
           <Text style={styles.preview}>{whenWords(picked)}</Text>
         </View>
       }
@@ -229,14 +229,12 @@ const LIST_HEIGHT = 200;
 const CELL_HEIGHT = 44;
 
 const styles = StyleSheet.create({
-  body: { gap: 14, paddingHorizontal: space[4] },
+  body: { gap: 14, paddingHorizontal: space[5] },
   head: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    paddingHorizontal: space[4],
   },
-  title: { fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
   preview: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.snuBlue },
   days: { gap: space[2] },
   day: {

@@ -6,8 +6,8 @@
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, color, font, Icon, radius, space } from '@/design-system';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { BottomSheet, color, Icon, radius, SheetTitle, space } from '@/design-system';
 import type { PointOnMap } from '@/features/places/point-on-map';
 import { CAMPUS_CAMERA, Map, type MapHandle, type MarkerLook, useMarkerImages } from '@/map';
 
@@ -49,16 +49,25 @@ function PinMap({ point }: { point: PointOnMap }): ReactElement {
 
 function PlaceOnMapSheet({ point, onClose }: { point: PointOnMap | null; onClose: () => void }): ReactElement {
   return (
-    <BottomSheet label="장소" onClose={onClose} open={point !== null} pullBody={false}>
-      {point === null ? null : (
-        <View style={styles.body}>
-          <PinMap point={point} />
+    <BottomSheet
+      head={
+        point === null ? undefined : (
           <View style={styles.spot}>
             <View style={styles.round}>
               <Icon color={color.party} name="pin" size={20} />
             </View>
-            <Text style={styles.words}>{point.label}</Text>
+            <SheetTitle>{point.label}</SheetTitle>
           </View>
+        )
+      }
+      label="장소"
+      onClose={onClose}
+      open={point !== null}
+      pullBody={false}
+    >
+      {point === null ? null : (
+        <View style={styles.body}>
+          <PinMap point={point} />
         </View>
       )}
     </BottomSheet>
@@ -123,7 +132,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: color.partySoft,
   },
-  words: { flex: 1, fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   grow: { flex: 1 },
   pressed: { opacity: 0.6 },

@@ -7,7 +7,7 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, space, text } from '@/design-system';
+import { BottomSheet, Button, color, SheetTitle, space, text } from '@/design-system';
 
 export type OffAnswer = 'off' | 'building' | 'cancel';
 
@@ -31,11 +31,7 @@ export function OffQuestion({ name, open, onAnswer }: OffQuestionProps): ReactEl
   const whom = name ?? '모든 친구';
   return (
     <BottomSheet
-      head={
-        <Text accessibilityRole="header" style={[styles.title, styles.head]}>
-          {`${whom}에게는 지금 있는 건물만 보여 줄 수도 있어요.`}
-        </Text>
-      }
+      head={<SheetTitle>{`${whom}에게는 지금 있는 건물만 보여 줄 수도 있어요.`}</SheetTitle>}
       label="위치 끄기"
       onClose={() => {
         onAnswer('cancel');
@@ -66,9 +62,7 @@ export function OffQuestion({ name, open, onAnswer }: OffQuestionProps): ReactEl
 }
 
 const styles = StyleSheet.create({
-  head: { paddingHorizontal: space[5] },
   body: { gap: space[3], paddingHorizontal: space[5] },
-  title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },
   answers: { flexDirection: 'row', gap: space[2], marginTop: space[1] },
   answer: { flex: 1 },

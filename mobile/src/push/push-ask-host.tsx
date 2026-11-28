@@ -7,7 +7,7 @@
 
 import { createContext, type ReactElement, type ReactNode, use, useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, space, text } from '@/design-system';
+import { BottomSheet, Button, color, SheetTitle, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
 import { keep, readKeptAfterChanges } from '@/storage/kept';
 import { askPushPermission, pushPermission } from './device';
@@ -54,11 +54,7 @@ function PushSheet({ open, onClose }: { open: boolean; onClose: () => void }): R
   };
   return (
     <BottomSheet
-      head={
-        <Text accessibilityRole="header" style={[styles.title, styles.head]}>
-          나설 시각을 휴대폰으로 알려 드릴까요?
-        </Text>
-      }
+      head={<SheetTitle>나설 시각을 휴대폰으로 알려 드릴까요?</SheetTitle>}
       label="푸시 알림"
       onClose={onClose}
       open={open}
@@ -113,9 +109,7 @@ export function PushAskHost({ children }: { children: ReactNode }): ReactElement
 }
 
 const styles = StyleSheet.create({
-  head: { paddingHorizontal: space[5] },
   body: { gap: space[3], paddingHorizontal: space[5] },
-  title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },
   buttons: { gap: space[2], marginTop: space[1] },
   footer: { ...text.caption, color: color.inkMuted, textAlign: 'center' },

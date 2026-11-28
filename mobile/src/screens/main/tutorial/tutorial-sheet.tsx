@@ -239,7 +239,7 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
 }
 
 const styles = StyleSheet.create({
-  headBlock: { gap: 14, paddingHorizontal: space[5] },
+  headBlock: { gap: 14 },
   body: { gap: 14, paddingHorizontal: space[5], paddingBottom: space[2] },
   head: {
     flexDirection: 'row',

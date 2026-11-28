@@ -18,6 +18,7 @@ import {
   radius,
   SearchField,
   SheetScroll,
+  SheetTitle,
   space,
 } from '@/design-system';
 import { FRIEND_SEARCH, matchesFriend } from '@/features/friends/matches-friend';
@@ -86,9 +87,7 @@ export function FriendSheet({ open, friends, chosen, most, onClose, onChosen }: 
     <BottomSheet
       head={
         <View style={styles.head}>
-          <Text accessibilityRole="header" style={styles.title}>
-            친구 초대
-          </Text>
+          <SheetTitle>친구 초대</SheetTitle>
           <SearchField label={FRIEND_SEARCH} onChangeText={setSearch} placeholder={FRIEND_SEARCH} value={search} />
         </View>
       }
@@ -115,9 +114,8 @@ export function FriendSheet({ open, friends, chosen, most, onClose, onChosen }: 
 }
 
 const styles = StyleSheet.create({
-  head: { gap: space[3], paddingHorizontal: space[4] },
-  body: { flexShrink: 1, gap: space[3], paddingHorizontal: space[4] },
-  title: { fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
+  head: { gap: space[3] },
+  body: { flexShrink: 1, gap: space[3], paddingHorizontal: space[5] },
   scroll: { flexShrink: 1 },
   list: { overflow: 'hidden', borderWidth: 1, borderColor: color.border, borderRadius: radius.md },
   left: { fontFamily: font.regular, fontSize: 12, lineHeight: 16, color: color.inkMuted },

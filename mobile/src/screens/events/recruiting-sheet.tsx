@@ -24,6 +24,7 @@ import {
   Icon,
   LoadingState,
   SheetScroll,
+  SheetTitle,
   space,
   text,
 } from '@/design-system';
@@ -67,6 +68,19 @@ function Row({ row, onPress }: { row: RecruitRowView; onPress: () => void }): Re
   );
 }
 
+// The sheet's head: the event's name, then "모집 중인 파티 n", the 파티 the User could enter, as the event's row counts
+// them (the User's own and the full ones are rows too); the count waits for the list.
+function RecruitHead({ event }: { event: { id: string; title: string } }): ReactElement {
+  const recruiting = useQuery(eventRecruitingQuery(event.id));
+  const count = recruiting.data === undefined ? null : (recruitingCounts(recruiting.data).get(event.id) ?? 0);
+  return (
+    <View style={styles.head}>
+      <Text style={styles.event}>{event.title}</Text>
+      <SheetTitle>{count === null ? '모집 중인 파티' : `모집 중인 파티 ${String(count)}`}</SheetTitle>
+    </View>
+  );
+}
+
 function Rows({
   event,
   quests,
@@ -82,13 +96,8 @@ function Rows({
     return <ErrorState onRetry={() => void recruiting.refetch()} />;
   }
   const rows = toRecruitRows(event.id, quests, recruiting.data, myUserId(), now());
-  // The 파티 the User could enter, as the event's row counts them; the User's own and the full ones are rows too.
-  const count = recruitingCounts(recruiting.data).get(event.id) ?? 0;
   return (
     <>
-      <Text accessibilityRole="header" style={styles.count}>
-        {`모집 중인 파티 ${String(count)}`}
-      </Text>
       {rows.length === 0 ? (
         <EmptyState words="아직 모집 중인 파티가 없어요" />
       ) : (
@@ -113,7 +122,7 @@ function Rows({
 export function RecruitingSheet({ event, quests, onClose, onRow, onRecruit }: RecruitingSheetProps): ReactElement {
   return (
     <BottomSheet
-      head={event === null ? undefined : <Text style={[styles.event, styles.head]}>{event.title}</Text>}
+      head={event === null ? undefined : <RecruitHead event={event} />}
       label="파티 찾기/모집"
       onClose={onClose}
       open={event !== null}
@@ -139,9 +148,8 @@ export function RecruitingSheet({ event, quests, onClose, onRow, onRecruit }: Re
 
 const styles = StyleSheet.create({
   body: { gap: space[3], paddingHorizontal: space[5] },
-  head: { paddingHorizontal: space[5] },
+  head: { gap: space[1] },
   event: { ...text.caption, color: color.inkMuted },
-  count: { ...text.title, fontFamily: font.bold, color: color.ink },
   list: { flexGrow: 0, maxHeight: 360 },
   row: {
     flexDirection: 'row',

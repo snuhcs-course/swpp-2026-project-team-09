@@ -12,7 +12,7 @@ import { BottomSheet, EmptyState, ErrorState, LoadingState, SheetScroll, space }
 import type { PostView } from '@/features/party/posts';
 import { usePost } from '@/features/party/use-party';
 import type { Ask } from '../room/confirm-sheet';
-import { PostContent } from './post-content';
+import { PostContent, PostHead } from './post-content';
 import { PostFooter } from './post-footer';
 
 interface PostSheetProps {
@@ -23,6 +23,12 @@ interface PostSheetProps {
   onJoin: (post: PostView) => void;
   // What `신청 취소` and `없애기` ask, for the confirm sheet.
   onAsk: (ask: Ask) => void;
+}
+
+// The board, the fill and the title over the rule, once the post is there.
+function SheetHead({ questId }: { questId: string }): ReactElement | null {
+  const post = usePost(questId).data?.post;
+  return post === undefined ? null : <PostHead post={post} />;
 }
 
 function SheetBody({ questId, onClose, onJoin, onAsk }: PostSheetProps & { questId: string }): ReactElement {
@@ -37,7 +43,7 @@ function SheetBody({ questId, onClose, onJoin, onAsk }: PostSheetProps & { quest
   return (
     <View style={styles.body}>
       <SheetScroll contentContainerStyle={styles.content} style={styles.scroll}>
-        <PostContent post={post} reasons={detail.reasons} />
+        <PostContent headed={false} post={post} reasons={detail.reasons} />
       </SheetScroll>
       <PostFooter
         onAsk={onAsk}
@@ -55,7 +61,12 @@ function SheetBody({ questId, onClose, onJoin, onAsk }: PostSheetProps & { quest
 // content and buttons. The top scrolls when it is long, the buttons staying under it.
 export function PostSheet({ questId, onClose, onJoin, onAsk }: PostSheetProps): ReactElement {
   return (
-    <BottomSheet label="파티 모집글" onClose={onClose} open={questId !== null}>
+    <BottomSheet
+      head={questId === null ? undefined : <SheetHead questId={questId} />}
+      label="파티 모집글"
+      onClose={onClose}
+      open={questId !== null}
+    >
       {questId === null ? null : <SheetBody onAsk={onAsk} onClose={onClose} onJoin={onJoin} questId={questId} />}
     </BottomSheet>
   );

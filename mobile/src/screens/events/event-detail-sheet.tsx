@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   body: { flexShrink: 1, gap: space[4], paddingHorizontal: space[5], paddingBottom: space[1] },
   scroll: { flexGrow: 0, flexShrink: 1 },
   details: { gap: space[4] },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], paddingHorizontal: space[5] },
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
   title: { ...eventText.sheetTitle, flex: 1, minWidth: 0, color: color.ink },
   favorite: { marginRight: -10 },
   facts: {

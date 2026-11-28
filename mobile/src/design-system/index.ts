@@ -29,7 +29,7 @@ export { NOT_AUTOFILLED } from './autofill';
 export { Avatar, initials, type PresenceStatus } from './avatar';
 export { Badge, type BadgeTone } from './badge';
 export { BottomNav, type BottomNavItem } from './bottom-nav';
-export { BottomSheet } from './bottom-sheet';
+export { BottomSheet, SheetTitle } from './bottom-sheet';
 export { SheetScroll } from './sheet-scroll';
 export { Button } from './button';
 export { cardStyles } from './card';
