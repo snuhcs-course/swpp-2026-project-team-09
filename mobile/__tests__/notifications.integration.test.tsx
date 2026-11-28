@@ -11,7 +11,6 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -137,6 +136,18 @@ describe('a running Party in 알림', () => {
   });
 });
 
+// The user (2026-11-28): "각 셀 하단에 미세하게 가로줄이 있는데 이것도 별로야." Each row of 알림 drew a line at its card's foot.
+describe("알림's day cards", () => {
+  it('draw no line under a row, and give its press the whole card', async () => {
+    await openNotifications();
+
+    for (const name of ROWS) {
+      expect(screen.getByRole('button', { name })).not.toHaveStyle({ borderBottomWidth: 1 });
+      expect(screen.getByRole('button', { name })).toHaveStyle({ paddingHorizontal: 16 });
+    }
+  });
+});
+
 describe("a row of 알림's press", () => {
   // Since the switch went (P02-04) every known invitation is a card of the map, so one the map does not hold has ended
   // (P02-06): the main screen says so instead of opening 파티 at 초대.
@@ -148,19 +159,6 @@ describe("a row of 알림's press", () => {
     expect(await screen.findByText('이미 끝난 초대예요')).toBeVisible();
     // The test router still prints the main screen's cleared parameter's name, as `card=undefined`.
     expect(shownAddress()).toMatch(/^\/main(?:\?card=undefined)?$/u);
-  });
-
-  // The user (2026-11-28): "알림을 클릭하면 화면이 부드럽게 넘어가지지 않고 순간적으로..." A second map was pushed over
-  // 알림, its rows showing through while it slid in, and 뒤로 then came back to 알림.
-  it('closes 알림 to show its card on the map, with no second map stacked over it', async () => {
-    const user = await openNotifications();
-    expect(screen.getByRole('button', { name: ROWS[2] })).not.toHaveStyle({ borderBottomWidth: 1 });
-
-    await user.press(screen.getByRole('button', { name: ROWS[2] }));
-    await pass(500);
-
-    expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
-    expect(router.canGoBack()).toBe(false);
   });
 
   it('opens 친구 요청 from a Friend Request', async () => {
