@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -22,6 +23,7 @@ import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { addClass } from './timetable.js';
 import { refuseKakao } from './walking-route.js';
+import { keptNotifications } from './kept-notifications.js';
 
 // The stage of a study group's time picked by the Assistant, at its endpoint with the scripted model, on the design's
 // example week: Tuesday 2026-11-03 at 10:00 in Korea, so that a room can be booked up to Friday 2026-11-06. Thursday's
@@ -187,10 +189,9 @@ export class StudyStage {
     return { cards: libraryCards(response.body), result: this.model.toolResults()[3] };
   }
 
+  // Every Notification kept for the User, those ahead of their time included, such as the window's opening.
   async notifications(user: TestUser): Promise<NotificationsBody> {
-    const response = await withAccessToken(request(this.app.getHttpServer()).get('/notifications'), user.accessToken);
-    expect(response.status).toBe(200);
-    return notificationsSchema.parse(response.body);
+    return notificationsSchema.parse(await keptNotifications(this.app, user.id));
   }
 
   async kinds(user: TestUser): Promise<string[]> {

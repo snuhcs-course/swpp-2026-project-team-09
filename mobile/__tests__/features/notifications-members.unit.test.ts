@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: what a party's members would have said, for the room has no chat: a step changed, a member arrived, a
@@ -41,6 +42,7 @@ describe('toNotices of what a party’s members would have said', () => {
         questId: null,
         address: '/main?card=party:q1',
         time: '13:58',
+        at: '2026-11-19T13:58:00+09:00',
       },
     ]);
   });

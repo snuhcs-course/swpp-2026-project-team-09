@@ -24,12 +24,14 @@ import {
   LoadingState,
   noticeTone,
   RoundIcon,
+  SectionHeader,
   space,
   text,
   useNotReadyToast,
 } from '@/design-system';
 import { openAddress } from '@/features/notifications/address';
-import { type NoticeKind, type NoticeView, waitingNotices } from '@/features/notifications/adapter';
+import { now } from '@/clock';
+import { type NoticeKind, type NoticeView, noticeDays, waitingNotices } from '@/features/notifications/adapter';
 import { useMarkShownRead, useNotices } from '@/features/notifications/use-notices';
 import { PartyOnButton } from './party-on-button';
 
@@ -77,11 +79,19 @@ function usePress(): (notice: NoticeView) => void {
   };
 }
 
-function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }): ReactElement {
+interface NoticeProps {
+  notice: NoticeView;
+  // Unread when 알림 showed it: a small red dot before its time, and "새 알림" first in its label.
+  fresh: boolean;
+  onPress: () => void;
+}
+
+function Notice({ notice, fresh, onPress }: NoticeProps): ReactElement {
   const { ink, ground } = noticeTone[TONE[notice.kind]];
+  const words = [notice.title, notice.sub, ...(notice.time === null ? [] : [notice.time])];
   return (
     <ListRow
-      label={[notice.title, notice.sub, ...(notice.time === null ? [] : [notice.time])].join(' · ')}
+      label={[...(fresh ? ['새 알림'] : []), ...words].join(' · ')}
       leading={<RoundIcon fill={ground} icon={notice.icon} ink={ink} />}
       lines={[notice.sub]}
       onPress={onPress}
@@ -91,7 +101,10 @@ function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }
           <Icon color={color.inkFaint} name="chevronRight" size={16} />
         ) : (
           <View style={styles.aside}>
-            <Text style={styles.time}>{notice.time}</Text>
+            <View style={styles.timeLine}>
+              {fresh ? <View style={styles.dot} /> : null}
+              <Text style={styles.time}>{notice.time}</Text>
+            </View>
             {notice.kind === 'leave-by' && notice.questId !== null ? <PartyOnButton questId={notice.questId} /> : null}
           </View>
         )
@@ -100,29 +113,45 @@ function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }
   );
 }
 
-function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement {
+// The rows under 오늘, 어제 and 이전, each group in its own card. `fresh` holds the keys of the rows marked new.
+function Notices({ notices, fresh }: { notices: readonly NoticeView[]; fresh: ReadonlySet<string> }): ReactElement {
   const press = usePress();
+  if (notices.length === 0) {
+    return (
+      <View style={[cardStyles.card, styles.card]}>
+        <EmptyState words="새 알림이 없어요" />
+      </View>
+    );
+  }
   return (
-    <View style={[cardStyles.card, styles.card]}>
-      {notices.length === 0 ? <EmptyState words="새 알림이 없어요" /> : null}
-      {notices.map((notice) => (
-        <Notice
-          key={notice.key}
-          notice={notice}
-          onPress={() => {
-            press(notice);
-          }}
-        />
+    <View style={styles.days}>
+      {noticeDays(notices, now()).map((day) => (
+        <View key={day.title}>
+          <SectionHeader>{day.title}</SectionHeader>
+          <View style={[cardStyles.card, styles.card]}>
+            {day.notices.map((notice) => (
+              <Notice
+                fresh={fresh.has(notice.key)}
+                key={notice.key}
+                notice={notice}
+                onPress={() => {
+                  press(notice);
+                }}
+              />
+            ))}
+          </View>
+        </View>
       ))}
     </View>
   );
 }
 
 // 알림, the panel of the `Profile` frame: the Notifications the main server keeps, then what waits for the User, from
-// the lists the main server serves. The count is of the rows that wait. The kept ones shown are then read.
+// the lists the main server serves. The count is of the rows that wait. The kept ones shown are then read, and those
+// that were unread stay marked new while 알림 is open.
 export function NotificationsScreen(): ReactElement {
   const { data, isPending, refetch } = useNotices();
-  useMarkShownRead(data !== undefined);
+  const fresh = useMarkShownRead(data !== undefined);
   const count = waitingNotices(data ?? []).length;
   return (
     <FullScreenPanel
@@ -132,7 +161,7 @@ export function NotificationsScreen(): ReactElement {
       title="알림"
     >
       <View style={styles.body}>
-        {data === undefined ? null : <Notices notices={data} />}
+        {data === undefined ? null : <Notices fresh={fresh} notices={data} />}
         {data === undefined && isPending ? <LoadingState /> : null}
         {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       </View>
@@ -143,6 +172,9 @@ export function NotificationsScreen(): ReactElement {
 const styles = StyleSheet.create({
   body: { padding: space[4] },
   card: { paddingVertical: 0 },
+  days: { gap: space[2] },
   aside: { alignItems: 'flex-end', gap: space[1], paddingVertical: space[2] },
+  timeLine: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.danger },
   time: { ...text.label, color: color.inkFaint },
 });
