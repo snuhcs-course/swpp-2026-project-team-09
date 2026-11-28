@@ -17,7 +17,7 @@ import type { MainMap } from './use-main-map';
 // 움직일 수 있어야 하는거야"). The events are a new reply, and a press that opens or chooses something: a candidate, a
 // mark, a step, a place opened, the list again. Nothing else frames: not the phone's position, a poll, the card's height,
 // the keyboard, or a recalculation that keeps the places. A card's first height, told after the map has rested, frames
-// the event's drawing once more: the framing had not counted it (P01 ticket 46).
+// the event's drawing once more: the framing had not counted it (P01 ticket 47).
 
 // What a framing is of, part by part, each compared with `Object.is`: the reply or answer drawn (`reply`), and what was
 // opened or chosen in it (`chosen`).
@@ -139,7 +139,7 @@ function framedAgain(now: FramingState, here: boolean, { key, from }: Frame, mov
 
 // A card that had told no height when the drawing was last framed tells one: the time card, whose layout can come after
 // the map has rested from the glide on a cold start or at a larger font, or the chat card. A height told again, as a
-// card folds, opens, or rises, is no such arrival (P01 ticket 46).
+// card folds, opens, or rises, is no such arrival (P01 ticket 47).
 function arrived(framed: Framing | null, framing: Framing): boolean {
   return (
     framed !== null &&

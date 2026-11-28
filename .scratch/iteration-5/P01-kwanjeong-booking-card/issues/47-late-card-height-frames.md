@@ -1,4 +1,4 @@
-# 46: A card's height told after the map rests frames the answer once more
+# 47: A card's height told after the map rests frames the answer once more
 
 Parent: P10 ticket 30 (one framing per event).
 Status: ready-for-human

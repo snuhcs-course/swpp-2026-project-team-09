@@ -223,7 +223,7 @@ describe("the answer's marks and a change of the cards, once the map has rested"
 // The emulator and a teammate's phone, 2026-11-28: on the first answer after a cold start, and at font 1.3, the map
 // framed the answer with the pick and its marks under the time card. The time card tells its height from its own
 // layout, which can come after the map has rested from the answer's glide; the framing had closed by then and never
-// counted it (P01 ticket 46). Partitions: the time card's first height told after that rest, at the usual font and at a
+// counted it (P01 ticket 47). Partitions: the time card's first height told after that rest, at the usual font and at a
 // larger one; the chat card's first height told after it; the User's pan before the time card's height; a height told
 // before the rest. Expected values: one move more, to the camera the answer gets when it comes with its cards laid out,
 // and none after a later fold; none after the pan (P10 ticket 30: the camera is the User's), and none for a height told
