@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
@@ -43,6 +44,10 @@ const LUNCH_ALONE = {
   proposal: null,
   answer: MEAL_ANSWER_ALONE,
 };
+
+// The same, to an app that says `answers`: the answer under its request's key.
+const LUNCH_KEY = 'lunch tomorrow';
+const KEYED_LUNCH = { ...LUNCH_ALONE, answers: [{ ...MEAL_ANSWER_ALONE, key: LUNCH_KEY }] };
 
 const REFUSED = {
   text: '다다음주 월요일은 일주일보다 뒤라 계획할 수 없어요.',
@@ -105,6 +110,37 @@ describe('A reply after a meal answer that could plan nothing', () => {
     server.on('POST /assistant/messages', { status: 200, body: REFUSED, afterMs: 500 });
 
     await ask(user, '왜 302동은 없어?');
+
+    expect(screen.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
+  });
+});
+
+// P03 ticket 22, P05 ticket 79: to the app, which says `answers`, the main server names what leaves in `withdrawn`, and
+// says `clears` only once nothing stays. The answer's key is opaque. Partitions: the answer on screen among what leaves
+// (A); only the request that ended with none (B).
+describe('A reply after a meal answer kept by key that could plan nothing', () => {
+  it('takes it off when the reply names it among what leaves and says nothing stays (A)', async () => {
+    server.on('POST /assistant/messages', { status: 200, body: KEYED_LUNCH, afterMs: 500 });
+    const user = await openMain();
+    await ask(user, '내일 점심');
+    expect(screen.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
+    const withdrawn = { ...REFUSED, answers: [], withdrawn: [LUNCH_KEY], clears: true };
+    server.on('POST /assistant/messages', { status: 200, body: withdrawn, afterMs: 500 });
+
+    await ask(user, '다다음주 월요일 점심');
+
+    expect(screen.getByText(REFUSED.text)).toBeVisible();
+    expect(screen.queryByRole('button', { name: '일정에 넣기' })).toBeNull();
+  });
+
+  it('keeps it when the reply names only the request that ended with none (B)', async () => {
+    server.on('POST /assistant/messages', { status: 200, body: KEYED_LUNCH, afterMs: 500 });
+    const user = await openMain();
+    await ask(user, '내일 점심');
+    const dinner = { ...REFUSED, text: '오늘 저녁은 끝났어요.', answers: [], withdrawn: ['dinner today'] };
+    server.on('POST /assistant/messages', { status: 200, body: dinner, afterMs: 500 });
+
+    await ask(user, '오늘 저녁도');
 
     expect(screen.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
   });

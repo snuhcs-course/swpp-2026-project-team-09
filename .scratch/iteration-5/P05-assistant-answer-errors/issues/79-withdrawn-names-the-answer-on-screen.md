@@ -49,3 +49,8 @@ Nothing: they do not say `answers`, so they still get `clears` and never `withdr
 - [x] An app before `answers` gets `clears` as before, and no `withdrawn`. (Unit tests, `failed-plan-clears`, `taken-off`.)
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 24 minutes, an estimate from the session's transcript between the go (01:07 UTC) and the README fix (01:31 UTC). It counts gaps under five minutes and leaves out time spent waiting for a person. #735 was in the merge queue when this was measured, so it is recorded here by P03 ticket 22's PR.
+- Tokens: input 30,768,973, of which 30,579,409 were cache reads, 189,332 cache writes and 232 uncached. Output 110,540. No subagents.

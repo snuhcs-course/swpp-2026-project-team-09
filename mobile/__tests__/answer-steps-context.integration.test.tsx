@@ -6,7 +6,6 @@
 
 import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
-import type * as Capabilities from '@/api/capabilities';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -18,13 +17,9 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P03 ticket 20, against the fake main server: with steps on screen, a follow-up of an app that says `answers` tells
-// the main server every answer's conditions in the order of the steps and the steps whole.
+// P03 tickets 20 and 22, against the fake main server: with steps on screen, a follow-up of the app, which says
+// `answers`, tells the main server every answer's conditions in the order of the steps and the steps whole.
 
-jest.mock('@/api/capabilities', () => ({
-  ...jest.requireActual<typeof Capabilities>('@/api/capabilities'),
-  saysAnswers: true,
-}));
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
