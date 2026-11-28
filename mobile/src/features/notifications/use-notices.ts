@@ -96,6 +96,21 @@ export function useMarkShownRead(shown: boolean): void {
   }, [unread, mutate]);
 }
 
+// Deletes a kept Notification by its identity. Its row, and its count on the bell, go at once, before the main server
+// answers; the list is fetched again after, so that one the main server kept comes back.
+export function useDeleteNotice(): (keptId: string) => void {
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation({
+    mutationFn: (keptId: string) => apiClient.deleteNotification(keptId),
+    onMutate: async (keptId) => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_KEY });
+      queryClient.setQueryData(notificationsQuery.queryKey, (kept) => kept?.filter(({ id }) => id !== keptId));
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
+  });
+  return mutate;
+}
+
 // The number on the bottom navigation's 파티: the rows of 알림 that wait for the User and concern 파티. It never fails a screen: while
 // the lists load, and when every one failed, there is no badge.
 export function usePartyBadge(): number {

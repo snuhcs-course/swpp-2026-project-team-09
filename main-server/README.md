@@ -4360,6 +4360,10 @@ only what has come. `read` is whether the User has read it.
 still unread. One whose time is still to come stays unread, to be counted when it rings. The migration that added
 `read_at` marked read the rows kept before it whose time had come.
 
+`DELETE /notifications/{id}` deletes one of the signed-in User's Notifications by its `id` in the list, URL-encoded,
+and sends `notice` when it deleted one. It answers 204 whether or not one was deleted: an `id` of another User's, of
+one gone or of no Notification deletes nothing. 401 without a sign-in. 알림 calls it on a swipe of a row.
+
 **A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card,
 whom it is about, whether it rings and its push's body to `wordsOf()` in `src/notifications/notification-words.ts`,
 its kind to the kinds the list reads in `src/notifications/notifications.service.ts`, and its caller in the feature it

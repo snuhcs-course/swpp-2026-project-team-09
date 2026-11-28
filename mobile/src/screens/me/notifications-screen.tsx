@@ -32,8 +32,9 @@ import {
 import { openAddress } from '@/features/notifications/address';
 import { now } from '@/clock';
 import { type NoticeKind, type NoticeView, noticeDays, waitingNotices } from '@/features/notifications/adapter';
-import { useMarkShownRead, useNotices } from '@/features/notifications/use-notices';
+import { useDeleteNotice, useMarkShownRead, useNotices } from '@/features/notifications/use-notices';
 import { PartyOnButton } from './party-on-button';
+import { SwipedNotice } from './swiped-notice';
 
 const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   party: 'navy',
@@ -102,9 +103,35 @@ function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }
   );
 }
 
+// A row of 알림. A kept Notification's swipes to the left to be deleted; a row of what waits does not.
+function Row({ notice }: { notice: NoticeView }): ReactElement {
+  const press = usePress();
+  const deleteNotice = useDeleteNotice();
+  const row = (
+    <Notice
+      notice={notice}
+      onPress={() => {
+        press(notice);
+      }}
+    />
+  );
+  const { keptId } = notice;
+  if (keptId === null) {
+    return row;
+  }
+  return (
+    <SwipedNotice
+      onDelete={() => {
+        deleteNotice(keptId);
+      }}
+    >
+      {row}
+    </SwipedNotice>
+  );
+}
+
 // The rows under 오늘, 어제 and 이전, each group in its own card.
 function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement {
-  const press = usePress();
   if (notices.length === 0) {
     return (
       <View style={[cardStyles.card, styles.card]}>
@@ -119,13 +146,7 @@ function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement 
           <SectionHeader>{day.title}</SectionHeader>
           <View style={[cardStyles.card, styles.card]}>
             {day.notices.map((notice) => (
-              <Notice
-                key={notice.key}
-                notice={notice}
-                onPress={() => {
-                  press(notice);
-                }}
-              />
+              <Row key={notice.key} notice={notice} />
             ))}
           </View>
         </View>

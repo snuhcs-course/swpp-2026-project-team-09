@@ -50,9 +50,13 @@ function kept(told: Told, at: Date): Kept {
   return { kind: told.kind, at, ...words };
 }
 
+function isKind(kind: string): kind is NotificationKind {
+  return KINDS.has(kind);
+}
+
 // A row of a kind this version does not know, such as one a later version kept, is left out of the list.
 function isKnown(row: Notification): row is Notification & { kind: NotificationKind } {
-  return KINDS.has(row.kind);
+  return isKind(row.kind);
 }
 
 // The one place that keeps a Notification, writes its words and gives it its address. The caller gives the time.
@@ -95,6 +99,16 @@ export class NotificationsService {
   // Those whose time has come: one kept ahead is read when it has rung and 알림 is opened again.
   async markRead(userId: string): Promise<void> {
     await this.store.markRead(userId, this.clock.now());
+  }
+
+  // One of the User's by the list's identity, `<kind>:<card kind>:<card id>[:<about>]`, as a swipe in 알림 deletes it.
+  // An identity that names none of the User's deletes nothing.
+  async delete(userId: string, id: string): Promise<void> {
+    const [kind, cardKind, cardId, about, ...more] = id.split(':');
+    if (kind === undefined || !isKind(kind) || cardKind === undefined || cardId === undefined || more.length > 0) {
+      return;
+    }
+    await this.cancel(userId, kind, { kind: cardKind, id: cardId }, about ?? null);
   }
 
   // Those whose time has come by `until`, now by default: one kept ahead, such as tomorrow's 지금 나서요, is listed when

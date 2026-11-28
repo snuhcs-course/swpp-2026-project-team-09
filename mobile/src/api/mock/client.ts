@@ -38,6 +38,7 @@ import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
+import type { KeptNotification } from '../waiting-types';
 import { KEPT_NOTIFICATIONS, questInvitationsAt } from './data/waiting';
 import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
@@ -67,6 +68,19 @@ let libraryDetails = NO_LIBRARY_DETAILS;
 // The kept Notifications the User has read in 알림, which the main server keeps on each row. Kept in memory, like the
 // Master Switch.
 const readNotifications = new Set<string>();
+// And those the User deleted by a swipe.
+const deletedNotifications = new Set<string>();
+
+// The kept Notifications as the main server lists them: those deleted left out, those read marked.
+function keptListed(): KeptNotification[] {
+  const listed: KeptNotification[] = [];
+  for (const kept of KEPT_NOTIFICATIONS) {
+    if (!deletedNotifications.has(kept.id)) {
+      listed.push(readNotifications.has(kept.id) ? Object.assign({}, kept, { read: true }) : kept);
+    }
+  }
+  return listed;
+}
 
 // For the tests: a new start of the app.
 export function forgetMockSwitch(): void {
@@ -74,6 +88,7 @@ export function forgetMockSwitch(): void {
   masterOffAsked = false;
   libraryDetails = NO_LIBRARY_DETAILS;
   readNotifications.clear();
+  deletedNotifications.clear();
 }
 
 // As the main server: a 학번 such as 2026-12345, with the hyphen or not, is kept as its nine digits, and an empty
@@ -233,12 +248,12 @@ export const mockClient: ApiClient = {
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
   listQuests: () => answer('listQuests', () => [...QUESTS, ...mockMadeQuests()], []),
   listQuestInvitations: () => answer('listQuestInvitations', () => questInvitationsAt(now()), []),
-  listNotifications: () =>
-    answer(
-      'listNotifications',
-      () => KEPT_NOTIFICATIONS.map((kept) => (readNotifications.has(kept.id) ? { ...kept, read: true } : kept)),
-      [],
-    ),
+  listNotifications: () => answer('listNotifications', () => keptListed(), []),
+  deleteNotification: async (id) => {
+    await answer('deleteNotification', () => {
+      deletedNotifications.add(id);
+    });
+  },
   markNotificationsRead: async () => {
     await answer('markNotificationsRead', () => {
       for (const { id, at } of KEPT_NOTIFICATIONS) {

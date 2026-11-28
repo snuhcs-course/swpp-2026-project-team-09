@@ -64,6 +64,9 @@ export interface NoticeView {
   time: string | null;
   // The same time as an instant, by which the rows are grouped. Null for a row of what waits.
   at: string | null;
+  // The kept Notification's identity, by which a swipe deletes it. Null for a row of what waits, which leaves when it
+  // is answered.
+  keptId: string | null;
 }
 
 // The lists 알림 is composed from. A list that failed is null and gives no rows.
@@ -137,6 +140,7 @@ function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[]
       address: notification.url,
       time: timeOf(notification.at, now),
       at: notification.at,
+      keptId: notification.id,
     }));
 }
 
@@ -154,6 +158,7 @@ function partyNotices(parties: readonly Party[]): NoticeView[] {
       address: null,
       time: null,
       at: null,
+      keptId: null,
     }));
 }
 
@@ -168,6 +173,7 @@ function friendRequestNotices({ received }: FriendRequests): NoticeView[] {
     address: null,
     time: null,
     at: null,
+    keptId: null,
   }));
 }
 
@@ -185,6 +191,7 @@ function invitationNotices(invitations: readonly NoticedInvitation[]): NoticeVie
     address: cardAddress('invitation', id),
     time: null,
     at: null,
+    keptId: null,
   }));
 }
 
@@ -201,6 +208,7 @@ function joinRequestNotices(joinRequests: NonNullable<NoticeSources['joinRequest
       address: null,
       time: null,
       at: null,
+      keptId: null,
     }));
 }
 

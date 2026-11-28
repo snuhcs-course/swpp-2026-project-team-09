@@ -12,6 +12,8 @@ export interface KeptNotificationsClient {
   listNotifications: () => Promise<KeptNotification[]>;
   // Marks read the User's kept Notifications whose time has come.
   markNotificationsRead: () => Promise<void>;
+  // Deletes one of the User's by its `id` in the list. One that is gone deletes nothing.
+  deleteNotification: (id: string) => Promise<void>;
 }
 
 // The operations of the client `chosen` gives at each call.
@@ -19,5 +21,6 @@ export function keptNotificationsOf(chosen: () => KeptNotificationsClient): Kept
   return {
     listNotifications: () => chosen().listNotifications(),
     markNotificationsRead: () => chosen().markNotificationsRead(),
+    deleteNotification: (id) => chosen().deleteNotification(id),
   };
 }
