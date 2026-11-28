@@ -1,7 +1,7 @@
 # 33: A full 파티's 모집글 says so on its button
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -24,8 +24,8 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] A full 파티's 모집글 shows the disabled "정원이 다 찼어요". (App integration test, which fails before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] A full 파티's 모집글 shows the disabled "정원이 다 찼어요". (App integration test, which fails before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

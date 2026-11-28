@@ -1,7 +1,7 @@
 # 32: The member who becomes Leader is told, in 알림
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: 22 (the gone kinds sit beside it).
 
 Native files: none. Releases: a main server Release and an app OTA update.
@@ -23,8 +23,8 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] A hand-over keeps one non-ringing Notification for the new Leader. (Main server integration test, which fails before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] A hand-over keeps one non-ringing Notification for the new Leader. (Main server integration test, which fails before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 
@@ -32,3 +32,7 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 - Agent time: about 10 minutes (#704), an estimate. One session built tickets 20, 22, 23 and 32 in turn, from 22:39 to about 23:50 in Korea, review fixes included; time spent waiting for reviewers is left out.
 - Tokens, for that whole session and its eight review subagents together (they cannot be split by ticket): input 842, output 267,875; the input's cache reads 100,145,357 and cache writes 1,223,032 (main session: input 664, output 225,844, cache reads 95,302,985, cache writes 647,322; subagents: input 178, output 42,031, cache reads 4,842,372, cache writes 575,710).
+
+### Agent usage, added (2026-11-28)
+
+- The session's later work on the stacked branches of 23, 32 and 21 (merging `5.0/Main`, the integration tests, the `quest-leader` test) is counted once, in ticket 23's added entry.

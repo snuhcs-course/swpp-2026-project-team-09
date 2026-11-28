@@ -1,7 +1,7 @@
 # 21: Activating a 파티 rings its members (a change to ticket 19's decision)
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: 19 (PR 688, the room as one page). Its owner agreed to this change on 2026-11-28.
 
 Native files: none. Releases: a main server Release and an app OTA update.
@@ -31,9 +31,9 @@ This ticket proposes adding the push that ticket 19 leaves out. The user asked o
 
 ## Acceptance criteria
 
-- [ ] Opening keeps one ringing Notification per other Holder, replaced on opening again and forgotten on closing. (Main server integration test, which fails before the change.)
-- [ ] The ask says members are told. (App integration test.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] Opening keeps one ringing Notification per other Holder, replaced on opening again and forgotten on closing. (Main server integration test, which fails before the change.)
+- [x] The ask says members are told. (App integration test.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 
@@ -41,3 +41,7 @@ This ticket proposes adding the push that ticket 19 leaves out. The user asked o
 
 - Agent time: about 30 minutes (#708), an estimate, from 00:05 in Korea; time spent waiting for the shared emulator lock and for reviewers is left out.
 - Tokens, the session and its two review subagents, counted from the session's log when this was written (the last minutes may not be in it yet): input 144, output 39,895; the input's cache reads 27,676,951 and cache writes 188,665 (main session: input 98, output 30,304, cache reads 26,476,405, cache writes 53,905; subagents: input 46, output 9,591, cache reads 1,200,546, cache writes 134,760).
+
+### Agent usage, added (2026-11-28)
+
+- The session's later work on the stacked branches of 23, 32 and 21 (merging `5.0/Main`, the integration tests, the `quest-leader` test) is counted once, in ticket 23's added entry.

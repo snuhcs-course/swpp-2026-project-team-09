@@ -1,7 +1,7 @@
 # 28: Joining another 파티 of an event says the User's own goes, and + 파티 모집 opens the one held alone
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -25,9 +25,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] The warning shows only when a 파티 held alone would go. (App integration test, which fails before the change.)
-- [ ] `+ 파티 모집` opens the held-alone 파티's edit form. (App integration test, which fails before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] The warning shows only when a 파티 held alone would go. (App integration test, which fails before the change.)
+- [x] `+ 파티 모집` opens the held-alone 파티's edit form. (App integration test, which fails before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

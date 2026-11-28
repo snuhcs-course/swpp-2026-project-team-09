@@ -1,7 +1,7 @@
 # 11a: Two time slots may share a day
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None. A change to [11](11-class-time-slots.md) (PR #594, merged).
 
 Native files: none. Releases: an app OTA update only.
@@ -34,3 +34,8 @@ Positions are as of `origin/5.0/Main` ebb9ac55.
 - [x] No native file changes; lint (type-aware) and format pass on the changed files. jest and tsc run in CI.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 25 minutes, an estimate (gaps under 5 minutes between transcript entries, summed). The ticket, the code, the tests, the emulator screens and the pull request, in one session on 2026-11-27, 19:04 to 19:40 KST.
+- Tokens: input 14,379,666 (cache reads 14,166,994, cache writes 212,522, uncached 150); output 34,933. No subagents.

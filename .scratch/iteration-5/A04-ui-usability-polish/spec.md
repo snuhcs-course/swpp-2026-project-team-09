@@ -1,6 +1,6 @@
 # A04: The app's UI and usability polish
 
-Status: ready-for-agent
+Status: in progress (01 and 03 to 07 are done; 02 waits for P04's work, see its ticket)
 
 ## Problem Statement
 
