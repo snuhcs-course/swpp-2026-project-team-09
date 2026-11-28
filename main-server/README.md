@@ -2575,10 +2575,21 @@ Anthropic API as the AI's key says
     `key`, the server's name for its request: its kind and day, a meal's meal, a study plan alone or together, the
     Quests of one Global Event. The key is opaque: the app compares keys and never builds one. An answer replaces the
     one of the same key on screen and is added otherwise, and an answer on screen the reply does not name stays.
-  - `withdrawn`: the keys of the requests that ended with no answer (a meal over for today, one the User was only
-    invited to). The app takes those answers off. It is left out when there is none.
+  - `withdrawn`: the keys of the answers that leave. They come from a request that ended with none, on any of the
+    paths `clears` lists above (P05 ticket 79, `src/assistant/taken-off.ts`):
+    - the request's own key, for a meal over for today or one the User was only invited to;
+    - the keys of the answers on screen it stood for, by `takenOff`: the same request on another day or with other
+      conditions (the same kind, the same meal, the same alone or together). Answers of other requests stay, so
+      dinner over for today keeps tomorrow's lunch;
+    - every answer on screen, for a refusal plainly not about them.
+
+    The keys on screen are those of `context.steps`, or, with no steps, the key of the answer open (`conditions`). The
+    app takes those answers off. It is left out when there is none.
+
   - `select.key`: the request whose answer holds the plan chosen in words, when one of `answers` does.
-  - `clears` is never sent to it: the answers on screen may be of requests other than the one that ended with none.
+  - `clears` only when nothing stays on screen. That is when every step on screen is among `withdrawn` (a booking
+    step never is), or, with no steps, the answer open is; a refusal plainly not about the plans always clears. While
+    another answer or a booking stays, it is left out, and the app takes off only the keys `withdrawn` names.
   - `POST /assistant/answers` from it answers with `key` too. A changed condition may make the answer another request
     (a Friend added makes a study place one together, the bar's other meal makes lunch dinner), and the app keeps the
     answer under that key from then on.
