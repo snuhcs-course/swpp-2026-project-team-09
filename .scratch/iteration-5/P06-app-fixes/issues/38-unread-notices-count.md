@@ -37,3 +37,11 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 - [ ] The migration runs on the Dev Server; no native file changes; lint, format and types pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person or for CI is left out. Tokens include the two code-review subagents.
+
+| Work | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Build, code review, emulator screens, PR #752 | about 36 minutes | 45,769,006 | 45,193,504 | 575,126 | 376 | 104,449 |
