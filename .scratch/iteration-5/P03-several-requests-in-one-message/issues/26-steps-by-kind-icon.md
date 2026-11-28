@@ -1,8 +1,8 @@
 # 26: Steps are marked by kind; numbers mean candidates alone
 
-Parent: [P03 spec](../spec.md). Builds on ticket 25 (#739), which it is stacked on, and ticket 24 (the steps' colours).
+Parent: [P03 spec](../spec.md). Builds on ticket 25 (#739, merged) and ticket 24 (the steps' colours).
 Status: ready-for-human
-Blocked by: #739.
+Blocked by: nothing.
 
 Native files: none. Releases: an app OTA update.
 
