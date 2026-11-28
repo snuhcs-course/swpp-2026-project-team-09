@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -33,5 +34,13 @@ describe('SearchField', () => {
 
     expect(screen.getByLabelText('친구 검색')).toHaveDisplayValue('');
     expect(screen.queryByRole('button', { name: '지우기' })).toBeNull();
+  });
+
+  // On Android `autoCorrect={false}` sets TYPE_TEXT_FLAG_NO_SUGGESTIONS, under which Samsung Keyboard types Hangul as
+  // loose letters: 'ㄱㅗㅇㅎㅏㄱ' for 공학 (P06 ticket 34, reviewed on 2026-11-28).
+  it('leaves the keyboard its suggestions, so that Hangul is composed', async () => {
+    await render(<Search />);
+
+    expect(screen.getByLabelText('친구 검색').props.autoCorrect).not.toBe(false);
   });
 });

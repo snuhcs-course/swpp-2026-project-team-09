@@ -2,14 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
 
 import { type AnswerLabel, color, MapAnswerMark } from '@/design-system';
 
-// A meal answer's marks in coral (P04 ticket 85, the user's "3안"): a flag of the meal's rounds and of a meal pick's
-// label, so that every other answer's pick stays gold.
+// A meal answer's marks in coral (P04 ticket 85, the user's "3안"): a flag of the meal's rounds and its kind on a meal
+// pick's label; every other answer's pick takes its own kind, the Quest's navy when none is said (the user's rule of
+// 2026-11-28).
 
 // Partitions: a meal answer's pick and candidate, and the pick of any other answer. Expected values: P04 ticket 85,
 // the user's "3안".
@@ -23,10 +25,10 @@ describe('MapAnswerMark: a meal answer in coral', () => {
     expect(screen.getByText('1')).toHaveStyle({ color: color.onPrimary });
   });
 
-  it('keeps every other pick gold', async () => {
+  it("draws every other pick in the Quest's navy", async () => {
     await render(<MapAnswerMark label={null} symbol={{ type: 'dot', role: 'pick', number: 1 }} testID="m" />);
 
-    expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.quest });
+    expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.snuBlue });
   });
 
   it("draws a meal candidate's round with a coral rim, a soft ground, and a coral number", async () => {
@@ -48,6 +50,7 @@ describe("MapAnswerMark: a meal answer's labels in coral", () => {
       note: '12:15',
       line: null,
       number: null,
+      kind: 'meal',
     };
     await render(<MapAnswerMark label={label} symbol={null} testID="m" />);
 
@@ -71,6 +74,7 @@ describe("MapAnswerMark: a meal answer's labels in coral", () => {
       note: '12:15',
       line: null,
       number: 1,
+      kind: 'meal',
     };
     await render(<MapAnswerMark label={label} symbol={null} testID="m" />);
 

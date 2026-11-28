@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from './icon';
 import { seeThrough } from './see-through';
-import { color, halo, radius } from './tokens';
+import { color, halo, kindTone, radius } from './tokens';
 
 interface RoundPinProps {
   name: string;
@@ -40,12 +41,12 @@ function RoundPin({ name, fill, glyph, selected, muted = false }: RoundPinProps)
   );
 }
 
-// A restaurant on the map: the 식당 layer's coral round with a white fork and knife.
+// A restaurant on the map: the meal's round (`kindTone`) with a white fork and knife.
 export function MapRestaurant({ selected = false }: { selected?: boolean }): ReactElement {
   return (
     <RoundPin
-      fill={color.pinDining}
-      glyph={<Icon color={color.onPrimary} name="meal" size={GLYPH} />}
+      fill={kindTone.meal.ink}
+      glyph={<Icon color={color.onPrimary} name={kindTone.meal.icon} size={GLYPH} />}
       name="식당"
       selected={selected}
     />
@@ -64,8 +65,8 @@ interface StudyPinProps {
 export function MapStudyPin({ name, selected = false, muted = false }: StudyPinProps): ReactElement {
   return (
     <RoundPin
-      fill={muted ? color.inkSubtle : color.svcStudy}
-      glyph={<Icon color={color.onPrimary} name="bookOpen" size={GLYPH} />}
+      fill={muted ? color.inkSubtle : kindTone.study.ink}
+      glyph={<Icon color={color.onPrimary} name={kindTone.study.icon} size={GLYPH} />}
       muted={muted}
       name={name}
       selected={selected}

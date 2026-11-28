@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, use, useCallback, useEffect, useState } from 'react';
@@ -17,8 +18,7 @@ import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_TOP } from '../layout';
 import type { ChatSheetControl } from '../chat-sheet';
-import { barTop, PlanBar } from './time-bar';
-import type { BandFocus } from './use-corrections';
+import { barTop } from './time-bar';
 import { SheetLinkContext } from './sheet-link';
 import { StepsStrip } from './steps-strip';
 import { TUCK_STRIP } from './time-card-grip';
@@ -218,76 +218,62 @@ const styles = StyleSheet.create({
   day: { ...text.caption, color: color.inkMuted },
 });
 
-interface StepsTopProps {
-  control: ChatSheetControl;
-  focus: BandFocus;
-  onClose: () => void;
+// Where the chosen step's top card stands under the steps card: how far below its place, where its caret points (P01
+// ticket 23), and the height it tells.
+export interface CardPlace {
+  offset: number;
+  caret: number | undefined;
   onHeight: (height: number) => void;
 }
 
-// The bar of several requests, and under it, while the step shown is the reply's Plan, that Plan's bar with its
-// handles and its meal's tick, as on a reply to one request (PR 462's review). The height told is what stands at the top.
-// The top folds in stops (P01 ticket 22, `top-stops.tsx`): the Plan's bar folds behind the steps card to its grip
+interface StepsTopProps {
+  control: Pick<ChatSheetControl, 'steps' | 'activeStep' | 'setActiveStep'>;
+  // The chosen step's top card, drawn where it is placed; null for a step with none (`stepTopCardOf`).
+  drawCard: ((place: CardPlace) => ReactElement | null) | null;
+  onHeight: (height: number) => void;
+}
+
+// The bar of several requests, and under it the chosen step's top card, the one its answer draws alone (P03 ticket 23):
+// a Plan's bar with its handles and its meal's tick, or a seat's booking card. The height told is what stands at the
+// top. The top folds in stops (P01 ticket 22, `top-stops.tsx`): the card folds behind the steps card to its grip
 // strip, then takes the steps card up with it to the stage's top, out of sight above it; both stay mounted, moved on
-// the UI thread. A step with
-// no Plan's bar (a seat or a room) has a strip of its own in that place (`steps-strip.tsx`), which folds the same way
-// and opens nothing downward.
-export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): ReactElement | null {
+// the UI thread. A step with no top card has a strip of its own in that place (`steps-strip.tsx`), which folds the
+// same way and opens nothing downward.
+export function StepsTop({ control, drawCard, onHeight }: StepsTopProps): ReactElement | null {
   const stops = use(SheetLinkContext).top;
-  const { heights, onSteps, onPlan } = useHeights(stops?.setStepsHeight);
-  const { steps, activeStep, setActiveStep, answer: shown, invitation } = control;
-  const { answer, plan } = shown;
-  const withPlan = planStepShown(control) && answer !== null && plan !== null;
-  useTold(toldOf(stops?.stop ?? 2, heights, withPlan), onHeight);
+  const { heights, onSteps, onCard } = useHeights(stops?.setStepsHeight);
+  const { steps, activeStep, setActiveStep } = control;
+  useTold(toldOf(stops?.stop ?? 2, heights, drawCard !== null), onHeight);
   if (steps === null) {
     return null;
   }
+  const place = { offset: heights.steps + space[2], caret: caretOf(steps.steps, activeStep), onHeight: onCard };
   return (
     <View style={styles.stage} testID="steps-top">
       <StepsBar active={activeStep} onHeight={onSteps} onStep={setActiveStep} steps={steps.steps} stops={stops} />
-      {withPlan ? (
-        <PlanBar
-          answer={answer}
-          focus={focus}
-          invitation={invitation}
-          caret={caretOf(steps.steps, activeStep)}
-          offset={heights.steps + space[2]}
-          onClose={onClose}
-          onHeight={onPlan}
-          plan={plan}
-          shown={shown}
-        />
-      ) : stops === undefined ? null : (
-        <StepsStrip stops={stops} />
-      )}
+      {drawCard === null ? stops === undefined ? null : <StepsStrip stops={stops} /> : drawCard(place)}
     </View>
   );
 }
 
-// Whether the step shown is the reply's Plan, which has a time card: a seat or a room has none.
-function planStepShown({ steps, activeStep }: ChatSheetControl): boolean {
-  const step = steps?.steps[activeStep];
-  return step !== undefined && step.status === 'shown' && step.kind !== 'seat' && step.kind !== 'room';
-}
-
-// What stands at the top, told: the strip alone at 0; the steps card with the Plan's bar under it at 2, else with the
+// What stands at the top, told: the strip alone at 0; the steps card with the top card under it at 2, else with the
 // strip under it.
-function toldOf(stop: TopStop, heights: { steps: number; plan: number }, withPlan: boolean): number {
+function toldOf(stop: TopStop, heights: { steps: number; card: number }, withCard: boolean): number {
   if (stop === 0) {
     return TUCK_STRIP;
   }
-  return heights.steps + (stop === 2 && withPlan ? heights.plan + space[2] : TUCK_STRIP);
+  return heights.steps + (stop === 2 && withCard ? heights.card + space[2] : TUCK_STRIP);
 }
 
 // The two cards' heights as laid out, kept by callbacks that stay the same from render to render and keep the same
-// state for the same height: the Plan's bar tells its height in an effect whenever its callback changes
+// state for the same height: the top card tells its height in an effect whenever its callback changes
 // (`folded-height.ts`), so a new callback or a new state each render told it again without end.
 function useHeights(setStepsHeight?: (height: number) => void): {
-  heights: { steps: number; plan: number };
+  heights: { steps: number; card: number };
   onSteps: (height: number) => void;
-  onPlan: (height: number) => void;
+  onCard: (height: number) => void;
 } {
-  const [heights, setHeights] = useState({ steps: 0, plan: 0 });
+  const [heights, setHeights] = useState({ steps: 0, card: 0 });
   const onSteps = useCallback(
     (height: number): void => {
       setHeights((last) => (last.steps === height ? last : { ...last, steps: height }));
@@ -295,10 +281,10 @@ function useHeights(setStepsHeight?: (height: number) => void): {
     },
     [setStepsHeight],
   );
-  const onPlan = useCallback((height: number): void => {
-    setHeights((last) => (last.plan === height ? last : { ...last, plan: height }));
+  const onCard = useCallback((height: number): void => {
+    setHeights((last) => (last.card === height ? last : { ...last, card: height }));
   }, []);
-  return { heights, onSteps, onPlan };
+  return { heights, onSteps, onCard };
 }
 
 function useTold(told: number, onHeight: (height: number) => void): void {

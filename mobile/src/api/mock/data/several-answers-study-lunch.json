@@ -1,0 +1,3781 @@
+{
+  "text": "아침 7시에 중앙도서관에서 공부하고, 점심은 그다음에 먹어요.",
+  "mapButtons": [],
+  "cards": [],
+  "proposal": null,
+  "answer": {
+    "input": {
+      "kind": "meal",
+      "date": "2088-03-09",
+      "meal": "lunch",
+      "people": [
+        {
+          "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+          "constraints": [
+            {
+              "kind": "from",
+              "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+              "source": "step"
+            },
+            {
+              "kind": "notBefore",
+              "time": "10:00",
+              "source": "step"
+            }
+          ]
+        }
+      ],
+      "window": {
+        "from": null,
+        "until": null
+      },
+      "placeId": null
+    },
+    "chips": [
+      {
+        "kind": "origin",
+        "text": "62동에서",
+        "userId": null
+      }
+    ],
+    "plans": [
+      {
+        "id": "학생회관식당",
+        "title": "학생회관식당에서 점심",
+        "place": {
+          "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+          "label": "학생회관식당",
+          "latitude": 37.45932,
+          "longitude": 126.95058
+        },
+        "startAt": "2088-03-09T11:00:00+09:00",
+        "endAt": "2088-03-09T12:00:00+09:00",
+        "togetherMinutes": 60,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+            "name": "유상",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                "label": "62동",
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2088-03-09T10:58:00+09:00",
+            "walkMinutes": 2,
+            "arriveAt": "2088-03-09T10:02:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2088-03-09T11:00:00+09:00",
+            "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+            "title": "학생회관식당에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "학생회관식당",
+              "strong": true
+            },
+            {
+              "text": "이 가장 가까워요",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "제육볶음",
+              "strong": true
+            }
+          ]
+        ],
+        "basis": [
+          "시간표가 없어 가까운 순서로 넘겨 봐요",
+          "62동 → 학생회관식당 걸어서 2분",
+          "제육볶음 6,000원",
+          "메뉴: 오늘의 식단"
+        ],
+        "scene": {
+          "people": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "유상",
+              "me": true,
+              "at": {
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "source": "timetable",
+              "tag": "나 · 2분"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "pick",
+              "tag": "학생회관식당"
+            },
+            {
+              "place": {
+                "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                "label": "자하연식당 2층",
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "role": "candidate",
+              "tag": "자하연식당 2층"
+            },
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "candidate",
+              "tag": "301동식당"
+            }
+          ],
+          "routes": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "role": "me",
+              "from": {
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "to": {
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "minutes": 2
+            }
+          ],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "text": "11:00 점심",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2088-03-09T10:00:00+09:00",
+            "endAt": "2088-03-09T12:30:00+09:00"
+          },
+          "now": "2088-03-09T01:20:00+09:00",
+          "lanes": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "others": [],
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "text": "11:00–12:00 · 식사 60분"
+        },
+        "menu": {
+          "price": null,
+          "dishes": [
+            {
+              "name": "제육볶음",
+              "price": 6000,
+              "cuisine": null
+            }
+          ],
+          "others": 0
+        }
+      },
+      {
+        "id": "자하연식당 2층",
+        "title": "자하연식당 2층에서 점심",
+        "place": {
+          "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+          "label": "자하연식당 2층",
+          "latitude": 37.46098,
+          "longitude": 126.95252
+        },
+        "startAt": "2088-03-09T11:00:00+09:00",
+        "endAt": "2088-03-09T12:00:00+09:00",
+        "togetherMinutes": 60,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+            "name": "유상",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                "label": "62동",
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2088-03-09T10:56:00+09:00",
+            "walkMinutes": 4,
+            "arriveAt": "2088-03-09T10:04:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2088-03-09T11:00:00+09:00",
+            "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+            "title": "자하연식당 2층에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "점심 ",
+              "strong": false
+            },
+            {
+              "text": "자하연식당 2층",
+              "strong": true
+            },
+            {
+              "text": " · 식사 60분",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "제육볶음",
+              "strong": true
+            }
+          ],
+          [
+            {
+              "text": "걸어서 4분이에요",
+              "strong": false
+            }
+          ]
+        ],
+        "basis": [
+          "시간표가 없어 가까운 순서로 넘겨 봐요",
+          "62동 → 자하연식당 2층 걸어서 4분",
+          "제육볶음 6,000원",
+          "메뉴: 오늘의 식단"
+        ],
+        "scene": {
+          "people": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "유상",
+              "me": true,
+              "at": {
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "source": "timetable",
+              "tag": "나 · 4분"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                "label": "자하연식당 2층",
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "role": "pick",
+              "tag": "자하연식당 2층"
+            },
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "candidate",
+              "tag": "학생회관식당"
+            },
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "candidate",
+              "tag": "301동식당"
+            }
+          ],
+          "routes": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "role": "me",
+              "from": {
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "to": {
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "minutes": 4
+            }
+          ],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "text": "11:00 점심",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2088-03-09T10:00:00+09:00",
+            "endAt": "2088-03-09T12:30:00+09:00"
+          },
+          "now": "2088-03-09T01:20:00+09:00",
+          "lanes": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "others": [],
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "text": "11:00–12:00 · 식사 60분"
+        },
+        "menu": {
+          "price": null,
+          "dishes": [
+            {
+              "name": "제육볶음",
+              "price": 6000,
+              "cuisine": null
+            }
+          ],
+          "others": 0
+        }
+      },
+      {
+        "id": "301동식당",
+        "title": "301동식당에서 점심",
+        "place": {
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "label": "301동식당",
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "startAt": "2088-03-09T11:00:00+09:00",
+        "endAt": "2088-03-09T12:00:00+09:00",
+        "togetherMinutes": 60,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+            "name": "유상",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                "label": "62동",
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2088-03-09T10:45:00+09:00",
+            "walkMinutes": 15,
+            "arriveAt": "2088-03-09T10:15:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2088-03-09T11:00:00+09:00",
+            "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+            "title": "301동식당에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "점심 ",
+              "strong": false
+            },
+            {
+              "text": "301동식당",
+              "strong": true
+            },
+            {
+              "text": " · 식사 60분",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "제육볶음",
+              "strong": true
+            }
+          ],
+          [
+            {
+              "text": "걸어서 15분이에요",
+              "strong": false
+            }
+          ]
+        ],
+        "basis": [
+          "시간표가 없어 가까운 순서로 넘겨 봐요",
+          "62동 → 301동식당 걸어서 15분",
+          "제육볶음 6,000원",
+          "메뉴: 오늘의 식단"
+        ],
+        "scene": {
+          "people": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "유상",
+              "me": true,
+              "at": {
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "source": "timetable",
+              "tag": "나 · 15분"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "pick",
+              "tag": "301동식당"
+            },
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "candidate",
+              "tag": "학생회관식당"
+            },
+            {
+              "place": {
+                "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                "label": "자하연식당 2층",
+                "latitude": 37.46098,
+                "longitude": 126.95252
+              },
+              "role": "candidate",
+              "tag": "자하연식당 2층"
+            }
+          ],
+          "routes": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "role": "me",
+              "from": {
+                "latitude": 37.4594,
+                "longitude": 126.95199
+              },
+              "to": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "minutes": 15
+            }
+          ],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "text": "11:00 점심",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2088-03-09T10:00:00+09:00",
+            "endAt": "2088-03-09T12:30:00+09:00"
+          },
+          "now": "2088-03-09T01:20:00+09:00",
+          "lanes": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "others": [],
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "text": "11:00–12:00 · 식사 60분"
+        },
+        "menu": {
+          "price": null,
+          "dishes": [
+            {
+              "name": "제육볶음",
+              "price": 6000,
+              "cuisine": null
+            }
+          ],
+          "others": 0
+        }
+      }
+    ],
+    "dropped": [],
+    "noPlan": null,
+    "offers": [
+      {
+        "kind": "open",
+        "label": "시간표 넣기",
+        "screen": "timetable",
+        "hint": "시간표를 넣으면 나설 시각까지 알려 드려요"
+      }
+    ],
+    "note": "시간표를 넣으면 나설 시각까지 알려 드려요",
+    "choosable": true,
+    "otherMeal": null,
+    "planSet": null,
+    "related": [],
+    "mealSet": null
+  },
+  "answers": [
+    {
+      "input": {
+        "kind": "study",
+        "date": "2088-03-09",
+        "what": "any",
+        "people": [
+          {
+            "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+            "constraints": []
+          }
+        ],
+        "together": false,
+        "window": {
+          "from": "07:00",
+          "until": null
+        },
+        "area": null,
+        "minutes": null,
+        "chosen": {
+          "seatSpaceId": null,
+          "roomSpaceId": null
+        }
+      },
+      "chips": [
+        {
+          "kind": "from",
+          "text": "07:00부터",
+          "userId": null
+        },
+        {
+          "kind": "what",
+          "text": "공부할 곳",
+          "userId": null
+        }
+      ],
+      "plans": [
+        {
+          "id": "중앙도서관",
+          "title": "중앙도서관에서 공부",
+          "place": {
+            "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+            "label": "중앙도서관(62동)",
+            "latitude": 37.4594,
+            "longitude": 126.95199
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T10:00:00+09:00",
+          "togetherMinutes": 180,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+              "title": "중앙도서관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "중앙도서관",
+                "strong": true
+              },
+              {
+                "text": " · 24시간",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "중앙도서관: 3A열람실 24시간 · 3B열람실 07:00–23:00 · 정보검색실·자료실 평일 09:00–21:00 · 토 10:00–17:00 · 일 13:00–17:00",
+            "24시간 여는 곳이라 세 시간 머무는 것으로 잡았어요",
+            "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"
+          ],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "pick",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T10:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T10:00:00+09:00",
+            "text": "07:00–10:00 · 3시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "central-library",
+                "name": "중앙도서관",
+                "kind": "library",
+                "hours": "3A열람실 24시간 · 3B열람실 07:00–23:00 · 정보검색실·자료실 평일 09:00–21:00 · 토 10:00–17:00 · 일 13:00–17:00",
+                "open": "open",
+                "closesAt": null
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "관정관",
+          "title": "관정관에서 공부",
+          "place": {
+            "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+            "label": "관정관(62-1동)",
+            "latitude": 37.45903,
+            "longitude": 126.95247
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T23:00:00+09:00",
+          "togetherMinutes": 960,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+              "title": "관정관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "관정관",
+                "strong": true
+              },
+              {
+                "text": " · 23:00까지",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "관정관: 7A·7B·8A열람실 07:00–23:00 · 8B열람실 대학원생 전용 07:00–23:00 · 그룹스터디룸·정보검색실 09:00–23:00",
+            "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"
+          ],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "pick",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T23:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T23:00:00+09:00",
+            "text": "07:00–23:00 · 16시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "kwanjeong",
+                "name": "관정관",
+                "kind": "reading",
+                "hours": "7A·7B·8A열람실 07:00–23:00 · 8B열람실 대학원생 전용 07:00–23:00 · 그룹스터디룸·정보검색실 09:00–23:00",
+                "open": "open",
+                "closesAt": "23:00"
+              }
+            ],
+            "book": {
+              "spaceId": "7F-7A-zone2",
+              "card": {
+                "space": {
+                  "id": "7F-7A-zone2",
+                  "name": "7A 열람실 2 구역",
+                  "floor": 7,
+                  "kind": "reading-room",
+                  "placeNumber": "62-1",
+                  "unit": "seat",
+                  "roomNo": 172,
+                  "sectorNo": 17202,
+                  "seatNos": [],
+                  "mapImage": {
+                    "width": 2529,
+                    "height": 1198
+                  },
+                  "hours": {
+                    "open": "07:00",
+                    "close": "23:00"
+                  },
+                  "minMinutes": 30,
+                  "maxMinutes": 360,
+                  "stepMinutes": 30
+                },
+                "date": "2088-03-09",
+                "start": "07:00",
+                "minutes": 360,
+                "seat": null,
+                "useDesc": null,
+                "useDescOptions": null,
+                "pledge": null,
+                "companions": [],
+                "questId": null,
+                "notes": [
+                  "예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해야 해요. 확인하지 않으면 자동으로 반납돼요.",
+                  "확인하지 않거나 반납하지 않은 일이 한 달에 5번이면 10일 동안 예약할 수 없어요.",
+                  "사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!"
+                ],
+                "until": null,
+                "target": null,
+                "key": "book:7F-7A-zone2:2088-03-09:0700:360",
+                "action": "book"
+              }
+            },
+            "liveSeats": "kwanjeong"
+          }
+        },
+        {
+          "id": "법학도서관",
+          "title": "법학도서관에서 공부",
+          "place": {
+            "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+            "label": "법학도서관(72동)",
+            "latitude": 37.46182,
+            "longitude": 126.95189
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-10T01:00:00+09:00",
+          "togetherMinutes": 1080,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+              "title": "법학도서관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "열람실",
+                "strong": true
+              },
+              {
+                "text": " · 01:00까지",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": ["열람실: 06:00–01:00", "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "pick",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-10T01:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-10T01:00:00+09:00",
+            "text": "07:00–01:00 · 18시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "law-reading-room",
+                "name": "열람실",
+                "kind": "reading",
+                "hours": "06:00–01:00",
+                "open": "open",
+                "closesAt": "01:00"
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "제1법학관",
+          "title": "제1법학관에서 공부",
+          "place": {
+            "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+            "label": "제1법학관(15동)",
+            "latitude": 37.46233,
+            "longitude": 126.95174
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-10T01:00:00+09:00",
+          "togetherMinutes": 1080,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+              "title": "제1법학관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "열람실",
+                "strong": true
+              },
+              {
+                "text": " · 01:00까지",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": ["열람실: 06:00–01:00", "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "pick",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-10T01:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-10T01:00:00+09:00",
+            "text": "07:00–01:00 · 18시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "law-hall-reading-room",
+                "name": "열람실",
+                "kind": "reading",
+                "hours": "06:00–01:00",
+                "open": "open",
+                "closesAt": "01:00"
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "농학도서관",
+          "title": "농학도서관에서 공부",
+          "place": {
+            "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+            "label": "농학도서관(75-1동)",
+            "latitude": 37.45647,
+            "longitude": 126.94851
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T22:30:00+09:00",
+          "togetherMinutes": 930,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+              "title": "농학도서관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "상록 라키비움",
+                "strong": true
+              },
+              {
+                "text": " · 22:30까지",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": ["상록 라키비움: 06:30–22:30", "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "pick",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T23:00:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T22:30:00+09:00",
+            "text": "07:00–22:30 · 15시간 30분"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "agriculture-larchiveum",
+                "name": "상록 라키비움",
+                "kind": "reading",
+                "hours": "06:30–22:30",
+                "open": "open",
+                "closesAt": "22:30"
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "수의학도서관",
+          "title": "수의학도서관에서 공부",
+          "place": {
+            "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+            "label": "수의학도서관(81동)",
+            "latitude": 37.46698,
+            "longitude": 126.95425
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T23:00:00+09:00",
+          "togetherMinutes": 960,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+              "title": "수의학도서관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "그룹스터디룸",
+                "strong": true
+              },
+              {
+                "text": " · 23:00까지",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": ["그룹스터디룸: 07:00–23:00", "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "pick",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T23:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T23:00:00+09:00",
+            "text": "07:00–23:00 · 16시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "veterinary-group-rooms",
+                "name": "그룹스터디룸",
+                "kind": "group",
+                "hours": "07:00–23:00",
+                "open": "open",
+                "closesAt": "23:00"
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "제1공학관",
+          "title": "제1공학관에서 공부",
+          "place": {
+            "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+            "label": "제1공학관(301동)",
+            "latitude": 37.45016,
+            "longitude": 126.95259
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T10:00:00+09:00",
+          "togetherMinutes": 180,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "title": "제1공학관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "해동학술정보실",
+                "strong": true
+              },
+              {
+                "text": " · 24시간",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "해동학술정보실: 24시간",
+            "컴퓨터공학부 학생공간: 여는 시간 정보 없음",
+            "24시간 여는 곳이라 세 시간 머무는 것으로 잡았어요",
+            "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"
+          ],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "pick",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T10:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T10:00:00+09:00",
+            "text": "07:00–10:00 · 3시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "ece-haedong",
+                "name": "해동학술정보실",
+                "kind": "reading",
+                "hours": "24시간",
+                "open": "open",
+                "closesAt": null
+              },
+              {
+                "key": "cse-student-space",
+                "name": "컴퓨터공학부 학생공간",
+                "kind": "pc",
+                "hours": null,
+                "open": "unknown",
+                "closesAt": null
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "공대 신양학술정보관",
+          "title": "공대 신양학술정보관에서 공부",
+          "place": {
+            "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+            "label": "공대 신양학술정보관(44-1동)",
+            "latitude": 37.4552,
+            "longitude": 126.95206
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T10:00:00+09:00",
+          "togetherMinutes": 180,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+              "title": "공대 신양학술정보관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "3층 자유열람실",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "여는 시간을 몰라요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "3층 자유열람실: 학기 중 24시간 · 방학 08:00–24:00",
+            "정보화열람실·PC실: 여는 시간 정보 없음",
+            "4층 그룹스터디실: 여는 시간 정보 없음",
+            "여는 시간을 몰라 세 시간 머무는 것으로 잡았어요",
+            "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"
+          ],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "pick",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T10:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T10:00:00+09:00",
+            "text": "07:00–10:00 · 3시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "engineering-sinyang-free-room",
+                "name": "3층 자유열람실",
+                "kind": "reading",
+                "hours": "학기 중 24시간 · 방학 08:00–24:00",
+                "open": "unknown",
+                "closesAt": null
+              },
+              {
+                "key": "engineering-sinyang-pc-rooms",
+                "name": "정보화열람실·PC실",
+                "kind": "pc",
+                "hours": null,
+                "open": "unknown",
+                "closesAt": null
+              },
+              {
+                "key": "engineering-sinyang-group-rooms",
+                "name": "4층 그룹스터디실",
+                "kind": "group",
+                "hours": null,
+                "open": "unknown",
+                "closesAt": null
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "유회진학술정보관",
+          "title": "유회진학술정보관에서 공부",
+          "place": {
+            "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+            "label": "유회진학술정보관(300동)",
+            "latitude": 37.45095,
+            "longitude": 126.9527
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T10:00:00+09:00",
+          "togetherMinutes": 180,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+              "title": "유회진학술정보관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "스터디룸",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "여는 시간을 몰라요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "스터디룸: 여는 시간 정보 없음",
+            "여는 시간을 몰라 세 시간 머무는 것으로 잡았어요",
+            "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"
+          ],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "pick",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T10:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T10:00:00+09:00",
+            "text": "07:00–10:00 · 3시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "yuhoejin-study-rooms",
+                "name": "스터디룸",
+                "kind": "group",
+                "hours": null,
+                "open": "unknown",
+                "closesAt": null
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "제2공학관",
+          "title": "제2공학관에서 공부",
+          "place": {
+            "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+            "label": "제2공학관(302동)",
+            "latitude": 37.44887,
+            "longitude": 126.95265
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T10:00:00+09:00",
+          "togetherMinutes": 180,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+              "title": "제2공학관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "소프트웨어실습실",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "여는 시간을 몰라요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "소프트웨어실습실: 여는 시간 정보 없음",
+            "여는 시간을 몰라 세 시간 머무는 것으로 잡았어요",
+            "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"
+          ],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "pick",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "candidate",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T10:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T10:00:00+09:00",
+            "text": "07:00–10:00 · 3시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "cse-software-lab",
+                "name": "소프트웨어실습실",
+                "kind": "pc",
+                "hours": null,
+                "open": "unknown",
+                "closesAt": null
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        },
+        {
+          "id": "인문대 신양학술정보관",
+          "title": "인문대 신양학술정보관에서 공부",
+          "place": {
+            "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+            "label": "인문대 신양학술정보관(4동)",
+            "latitude": 37.46089,
+            "longitude": 126.95326
+          },
+          "startAt": "2088-03-09T07:00:00+09:00",
+          "endAt": "2088-03-09T10:00:00+09:00",
+          "togetherMinutes": 180,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "나",
+              "me": true,
+              "origin": null,
+              "leaveAt": "2088-03-09T07:00:00+09:00",
+              "walkMinutes": null,
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T07:00:00+09:00",
+              "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+              "title": "인문대 신양학술정보관에서 공부"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "1층 라운지",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "여는 시간을 몰라요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "1층 라운지: 여는 시간 정보 없음",
+            "여는 시간을 몰라 세 시간 머무는 것으로 잡았어요",
+            "출발 위치를 몰라 걷는 시간은 빼고 쟀어요"
+          ],
+          "scene": {
+            "people": [],
+            "places": [
+              {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "중앙도서관(62동)",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "role": "candidate",
+                "tag": "중앙도서관 · 24시간",
+                "order": 1
+              },
+              {
+                "place": {
+                  "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                  "label": "관정관(62-1동)",
+                  "latitude": 37.45903,
+                  "longitude": 126.95247
+                },
+                "role": "candidate",
+                "tag": "관정관 · 23:00까지",
+                "order": 2
+              },
+              {
+                "place": {
+                  "placeId": "250ae106-40ad-5310-9520-8ba4c1a6ae4a",
+                  "label": "법학도서관(72동)",
+                  "latitude": 37.46182,
+                  "longitude": 126.95189
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 3
+              },
+              {
+                "place": {
+                  "placeId": "fd5489b4-102a-5530-9aeb-5eb65f09d40a",
+                  "label": "제1법학관(15동)",
+                  "latitude": 37.46233,
+                  "longitude": 126.95174
+                },
+                "role": "candidate",
+                "tag": "열람실 · 01:00까지",
+                "order": 4
+              },
+              {
+                "place": {
+                  "placeId": "f4f4b780-d70b-548e-afd3-992242304d80",
+                  "label": "농학도서관(75-1동)",
+                  "latitude": 37.45647,
+                  "longitude": 126.94851
+                },
+                "role": "candidate",
+                "tag": "상록 라키비움 · 22:30까지",
+                "order": 5
+              },
+              {
+                "place": {
+                  "placeId": "35d3a195-bbc0-533e-a1e2-d8f99cf1f501",
+                  "label": "수의학도서관(81동)",
+                  "latitude": 37.46698,
+                  "longitude": 126.95425
+                },
+                "role": "candidate",
+                "tag": "그룹스터디룸 · 23:00까지",
+                "order": 6
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "제1공학관(301동)",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "해동학술정보실 · 24시간",
+                "order": 7
+              },
+              {
+                "place": {
+                  "placeId": "13840a0a-8aa4-5015-95ea-1632fc1d954b",
+                  "label": "공대 신양학술정보관(44-1동)",
+                  "latitude": 37.4552,
+                  "longitude": 126.95206
+                },
+                "role": "candidate",
+                "tag": "3층 자유열람실 · 시간 모름",
+                "order": 8
+              },
+              {
+                "place": {
+                  "placeId": "41f4e514-f152-558d-8801-2fe1d75df3f8",
+                  "label": "유회진학술정보관(300동)",
+                  "latitude": 37.45095,
+                  "longitude": 126.9527
+                },
+                "role": "candidate",
+                "tag": "스터디룸 · 시간 모름",
+                "order": 9
+              },
+              {
+                "place": {
+                  "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                  "label": "제2공학관(302동)",
+                  "latitude": 37.44887,
+                  "longitude": 126.95265
+                },
+                "role": "candidate",
+                "tag": "소프트웨어실습실 · 시간 모름",
+                "order": 10
+              },
+              {
+                "place": {
+                  "placeId": "a0d034af-e5b5-566f-b8a3-5f3cd037dc12",
+                  "label": "인문대 신양학술정보관(4동)",
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "role": "pick",
+                "tag": "1층 라운지 · 시간 모름",
+                "order": 11
+              }
+            ],
+            "routes": [],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.46089,
+                  "longitude": 126.95326
+                },
+                "text": "07:00 공부",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T06:00:00+09:00",
+              "endAt": "2088-03-09T10:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T07:00:00+09:00",
+            "endAt": "2088-03-09T10:00:00+09:00",
+            "text": "07:00–10:00 · 3시간"
+          },
+          "study": {
+            "spaces": [
+              {
+                "key": "humanities-sinyang-lounge",
+                "name": "1층 라운지",
+                "kind": "lounge",
+                "hours": null,
+                "open": "unknown",
+                "closesAt": null
+              }
+            ],
+            "book": null,
+            "liveSeats": null
+          }
+        }
+      ],
+      "dropped": [],
+      "closed": [
+        {
+          "place": {
+            "placeId": "fcd8804e-16f9-5766-b8bc-8c2750b486e2",
+            "label": "경영학도서관(58동)",
+            "latitude": 37.46568,
+            "longitude": 126.95203
+          },
+          "notices": ["09:00에 열어요"]
+        },
+        {
+          "place": {
+            "placeId": "74c76d85-d0d8-5d0b-a52c-9dcf9a6a4c04",
+            "label": "사회과학도서관(16동)",
+            "latitude": 37.46353,
+            "longitude": 126.95092
+          },
+          "notices": ["09:00에 열어요"]
+        },
+        {
+          "place": {
+            "placeId": "3f7005d2-7891-5b3c-b88e-ff898d3a134b",
+            "label": "음악도서관(74동)",
+            "latitude": 37.46193,
+            "longitude": 126.95312
+          },
+          "notices": ["09:00에 열어요"]
+        },
+        {
+          "place": {
+            "placeId": "059e5e25-dd60-55bb-b41d-bd971c5f5088",
+            "label": "국제학도서관(140-1동)",
+            "latitude": 37.46406,
+            "longitude": 126.9546
+          },
+          "notices": ["09:00에 열어요"]
+        }
+      ],
+      "noPlan": null,
+      "choosable": true,
+      "key": "study 2088-03-09 alone"
+    },
+    {
+      "input": {
+        "kind": "meal",
+        "date": "2088-03-09",
+        "meal": "lunch",
+        "people": [
+          {
+            "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+            "constraints": [
+              {
+                "kind": "from",
+                "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                "source": "step"
+              },
+              {
+                "kind": "notBefore",
+                "time": "10:00",
+                "source": "step"
+              }
+            ]
+          }
+        ],
+        "window": {
+          "from": null,
+          "until": null
+        },
+        "placeId": null
+      },
+      "chips": [
+        {
+          "kind": "origin",
+          "text": "62동에서",
+          "userId": null
+        }
+      ],
+      "plans": [
+        {
+          "id": "학생회관식당",
+          "title": "학생회관식당에서 점심",
+          "place": {
+            "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+            "label": "학생회관식당",
+            "latitude": 37.45932,
+            "longitude": 126.95058
+          },
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "62동",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "basis": "chosen"
+              },
+              "leaveAt": "2088-03-09T10:58:00+09:00",
+              "walkMinutes": 2,
+              "arriveAt": "2088-03-09T10:02:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T11:00:00+09:00",
+              "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+              "title": "학생회관식당에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "학생회관식당",
+                "strong": true
+              },
+              {
+                "text": "이 가장 가까워요",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "제육볶음",
+                "strong": true
+              }
+            ]
+          ],
+          "basis": [
+            "시간표가 없어 가까운 순서로 넘겨 봐요",
+            "62동 → 학생회관식당 걸어서 2분",
+            "제육볶음 6,000원",
+            "메뉴: 오늘의 식단"
+          ],
+          "scene": {
+            "people": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "source": "timetable",
+                "tag": "나 · 2분"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "pick",
+                "tag": "학생회관식당"
+              },
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "candidate",
+                "tag": "자하연식당 2층"
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "301동식당"
+              }
+            ],
+            "routes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "role": "me",
+                "from": {
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "to": {
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "minutes": 2
+              }
+            ],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "text": "11:00 점심",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T10:00:00+09:00",
+              "endAt": "2088-03-09T12:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T11:00:00+09:00",
+            "endAt": "2088-03-09T12:00:00+09:00",
+            "text": "11:00–12:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "제육볶음",
+                "price": 6000,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        },
+        {
+          "id": "자하연식당 2층",
+          "title": "자하연식당 2층에서 점심",
+          "place": {
+            "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+            "label": "자하연식당 2층",
+            "latitude": 37.46098,
+            "longitude": 126.95252
+          },
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "62동",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "basis": "chosen"
+              },
+              "leaveAt": "2088-03-09T10:56:00+09:00",
+              "walkMinutes": 4,
+              "arriveAt": "2088-03-09T10:04:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T11:00:00+09:00",
+              "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+              "title": "자하연식당 2층에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "점심 ",
+                "strong": false
+              },
+              {
+                "text": "자하연식당 2층",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "제육볶음",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "걸어서 4분이에요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "시간표가 없어 가까운 순서로 넘겨 봐요",
+            "62동 → 자하연식당 2층 걸어서 4분",
+            "제육볶음 6,000원",
+            "메뉴: 오늘의 식단"
+          ],
+          "scene": {
+            "people": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "source": "timetable",
+                "tag": "나 · 4분"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "pick",
+                "tag": "자하연식당 2층"
+              },
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "candidate",
+                "tag": "학생회관식당"
+              },
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "candidate",
+                "tag": "301동식당"
+              }
+            ],
+            "routes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "role": "me",
+                "from": {
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "to": {
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "minutes": 4
+              }
+            ],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "text": "11:00 점심",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T10:00:00+09:00",
+              "endAt": "2088-03-09T12:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T11:00:00+09:00",
+            "endAt": "2088-03-09T12:00:00+09:00",
+            "text": "11:00–12:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "제육볶음",
+                "price": 6000,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        },
+        {
+          "id": "301동식당",
+          "title": "301동식당에서 점심",
+          "place": {
+            "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+            "label": "301동식당",
+            "latitude": 37.45016,
+            "longitude": 126.95259
+          },
+          "startAt": "2088-03-09T11:00:00+09:00",
+          "endAt": "2088-03-09T12:00:00+09:00",
+          "togetherMinutes": 60,
+          "meeting": null,
+          "parts": [
+            {
+              "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+              "name": "유상",
+              "me": true,
+              "origin": {
+                "place": {
+                  "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+                  "label": "62동",
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "basis": "chosen"
+              },
+              "leaveAt": "2088-03-09T10:45:00+09:00",
+              "walkMinutes": 15,
+              "arriveAt": "2088-03-09T10:15:00+09:00",
+              "leaveBy": null,
+              "next": null
+            }
+          ],
+          "subQuests": [
+            {
+              "at": "2088-03-09T11:00:00+09:00",
+              "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+              "title": "301동식당에서 식사"
+            }
+          ],
+          "lines": [
+            [
+              {
+                "text": "점심 ",
+                "strong": false
+              },
+              {
+                "text": "301동식당",
+                "strong": true
+              },
+              {
+                "text": " · 식사 60분",
+                "strong": false
+              }
+            ],
+            [
+              {
+                "text": "오늘 ",
+                "strong": false
+              },
+              {
+                "text": "제육볶음",
+                "strong": true
+              }
+            ],
+            [
+              {
+                "text": "걸어서 15분이에요",
+                "strong": false
+              }
+            ]
+          ],
+          "basis": [
+            "시간표가 없어 가까운 순서로 넘겨 봐요",
+            "62동 → 301동식당 걸어서 15분",
+            "제육볶음 6,000원",
+            "메뉴: 오늘의 식단"
+          ],
+          "scene": {
+            "people": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "유상",
+                "me": true,
+                "at": {
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "source": "timetable",
+                "tag": "나 · 15분"
+              }
+            ],
+            "places": [
+              {
+                "place": {
+                  "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                  "label": "301동식당",
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "role": "pick",
+                "tag": "301동식당"
+              },
+              {
+                "place": {
+                  "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                  "label": "학생회관식당",
+                  "latitude": 37.45932,
+                  "longitude": 126.95058
+                },
+                "role": "candidate",
+                "tag": "학생회관식당"
+              },
+              {
+                "place": {
+                  "placeId": "b56be928-cbfe-5c4b-aaa1-40171ba126d1",
+                  "label": "자하연식당 2층",
+                  "latitude": 37.46098,
+                  "longitude": 126.95252
+                },
+                "role": "candidate",
+                "tag": "자하연식당 2층"
+              }
+            ],
+            "routes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "role": "me",
+                "from": {
+                  "latitude": 37.4594,
+                  "longitude": 126.95199
+                },
+                "to": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "minutes": 15
+              }
+            ],
+            "flags": [
+              {
+                "at": {
+                  "latitude": 37.45016,
+                  "longitude": 126.95259
+                },
+                "text": "11:00 점심",
+                "role": "place"
+              }
+            ]
+          },
+          "band": {
+            "range": {
+              "startAt": "2088-03-09T10:00:00+09:00",
+              "endAt": "2088-03-09T12:30:00+09:00"
+            },
+            "now": "2088-03-09T01:20:00+09:00",
+            "lanes": [
+              {
+                "userId": "17772c10-af2b-4633-997a-37c83f0a105f",
+                "name": "나",
+                "busy": []
+              }
+            ],
+            "others": [],
+            "startAt": "2088-03-09T11:00:00+09:00",
+            "endAt": "2088-03-09T12:00:00+09:00",
+            "text": "11:00–12:00 · 식사 60분"
+          },
+          "menu": {
+            "price": null,
+            "dishes": [
+              {
+                "name": "제육볶음",
+                "price": 6000,
+                "cuisine": null
+              }
+            ],
+            "others": 0
+          }
+        }
+      ],
+      "dropped": [],
+      "noPlan": null,
+      "offers": [
+        {
+          "kind": "open",
+          "label": "시간표 넣기",
+          "screen": "timetable",
+          "hint": "시간표를 넣으면 나설 시각까지 알려 드려요"
+        }
+      ],
+      "note": "시간표를 넣으면 나설 시각까지 알려 드려요",
+      "choosable": true,
+      "otherMeal": null,
+      "planSet": null,
+      "related": [],
+      "mealSet": null,
+      "key": "meal 2088-03-09 lunch"
+    }
+  ],
+  "lookup": null,
+  "refusal": null,
+  "steps": [
+    {
+      "kind": "study",
+      "title": "중앙도서관에서 공부",
+      "place": {
+        "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+        "label": "중앙도서관(62동)",
+        "latitude": 37.4594,
+        "longitude": 126.95199
+      },
+      "from": null,
+      "startAt": "2088-03-09T07:00:00+09:00",
+      "endAt": "2088-03-09T10:00:00+09:00",
+      "status": "shown",
+      "reason": null,
+      "shows": {
+        "kind": "answer",
+        "key": "study 2088-03-09 alone"
+      }
+    },
+    {
+      "kind": "meal",
+      "title": "학생회관식당에서 점심",
+      "place": {
+        "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+        "label": "학생회관식당",
+        "latitude": 37.45932,
+        "longitude": 126.95058
+      },
+      "from": {
+        "placeId": "fb701d23-697e-506b-b4cb-148b05348461",
+        "label": "62동",
+        "latitude": 37.4594,
+        "longitude": 126.95199
+      },
+      "startAt": "2088-03-09T11:00:00+09:00",
+      "endAt": "2088-03-09T12:00:00+09:00",
+      "status": "shown",
+      "reason": null,
+      "shows": {
+        "kind": "answer",
+        "key": "meal 2088-03-09 lunch"
+      }
+    }
+  ]
+}

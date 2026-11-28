@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -49,6 +51,29 @@ export function placeToSend(
     return { placeId: picked.placeId };
   }
   return { ...picked.position, label };
+}
+
+// What the place sent is, which the 파티 form's badge says: a Place of the list (건물), a point (지도), or words alone
+// (직접 입력), which the map, walking times and arrival notices cannot use.
+export type PlaceKind = 'building' | 'point' | 'words';
+
+export function placeKindOf(place: SubQuestPlace): PlaceKind {
+  if ('placeId' in place) {
+    return 'building';
+  }
+  return 'latitude' in place ? 'point' : 'words';
+}
+
+// Whether two places go as the same: a Place of the list picked again, though its words differ, is the same Place.
+// Typed words are compared as they are.
+export function sameSentPlace(
+  one: { words: string; picked: PickedPlace | null },
+  other: { words: string; picked: PickedPlace | null },
+): boolean {
+  return (
+    JSON.stringify(placeToSend(one.words, one.picked, [])) ===
+    JSON.stringify(placeToSend(other.words, other.picked, []))
+  );
 }
 
 // `placeToSend`, with the Places of the list asked when typed words are to be named. Without the list, the words go

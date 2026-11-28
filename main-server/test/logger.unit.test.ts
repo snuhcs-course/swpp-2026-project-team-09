@@ -3,10 +3,12 @@
  *
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 // Partitions of LOG_FORMAT: json, text, not set, anything else. Of a line: in a request's context or outside one.
 
+import { stripVTControlCharacters } from 'node:util';
 import { type ConsoleLogger } from '@nestjs/common';
 import { createLogger } from '../src/common/logger.js';
 import { requestContext } from '../src/common/request-context.js';
@@ -150,9 +152,9 @@ describe('A JSON line in a request', () => {
   });
 });
 
-// The process ID and the time come before the level.
+// The process ID and the time come before the level. The logger colours the level, so the colour codes go first.
 function fromLevel(line: string): string {
-  return line.replace(/^.*?(?= *(?:WARN|ERROR) )/u, '');
+  return stripVTControlCharacters(line).replace(/^.*?(?= *(?:WARN|ERROR) )/u, '');
 }
 
 describe('A line outside a request, or in text', () => {
@@ -165,15 +167,23 @@ describe('A line outside a request, or in text', () => {
     }
   });
 
-  it('text, in a request → the same text as outside one', () => {
-    const outside = linesWritten(createLogger({ LOG_FORMAT: 'text' }), warnAndError);
-    const inside = linesWritten(createLogger({ LOG_FORMAT: 'text' }), (logger) => {
-      inRequest(() => {
-        warnAndError(logger);
+  it('text, in a request → the same text as outside one, whenever each is written', () => {
+    // The two are written a second apart, as on a loaded machine: the time is no part of what is compared.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-11-27T17:40:09Z'));
+      const outside = linesWritten(createLogger({ LOG_FORMAT: 'text' }), warnAndError);
+      vi.setSystemTime(new Date('2026-11-27T17:40:10Z'));
+      const inside = linesWritten(createLogger({ LOG_FORMAT: 'text' }), (logger) => {
+        inRequest(() => {
+          warnAndError(logger);
+        });
       });
-    });
 
-    expect(inside.map((line) => fromLevel(line))).toEqual(outside.map((line) => fromLevel(line)));
-    expect(inside.join('\n')).not.toContain('req-1');
+      expect(inside.map((line) => fromLevel(line))).toEqual(outside.map((line) => fromLevel(line)));
+      expect(inside.join('\n')).not.toContain('req-1');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

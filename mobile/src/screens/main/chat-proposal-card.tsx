@@ -4,13 +4,14 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { openBrowserAsync } from 'expo-web-browser';
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { FacilityBooking, QuestProposal } from '@/api/assistant-types';
-import { Button, cardStyles, color, font, Icon, type IconName, space, text } from '@/design-system';
+import { Button, cardStyles, color, font, Icon, type IconName, kindTone, space, text } from '@/design-system';
 import { boardName } from '@/features/party/boards';
 import { type PartyForm, proposalForm } from '@/features/party/making';
 import { whenOf } from '@/features/party/posts';
@@ -160,7 +161,8 @@ export function ChatProposalCard({
 
 const styles = StyleSheet.create({
   card: { gap: space[1], marginTop: space[2] },
-  kicker: { ...text.caption, fontFamily: font.semiBold, color: color.party },
+  // A Proposal is a Quest's: its head and its moved values in the party's colour (`kindTone`).
+  kicker: { ...text.caption, fontFamily: font.semiBold, color: kindTone.party.ink },
   description: { ...text.body, marginTop: space[2], color: color.ink },
   row: {
     flexDirection: 'row',
@@ -173,7 +175,7 @@ const styles = StyleSheet.create({
   label: { ...text.body, width: 72, color: color.inkMuted },
   value: { ...text.body, flex: 1, textAlign: 'right', color: color.ink },
   empty: { color: color.inkMuted },
-  moved: { fontFamily: font.semiBold, color: color.party },
+  moved: { fontFamily: font.semiBold, color: kindTone.party.ink },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[3] },
   button: { flex: 1 },
   booking: { gap: space[1], marginTop: space[2] },

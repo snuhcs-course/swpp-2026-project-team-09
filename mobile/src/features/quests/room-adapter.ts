@@ -8,11 +8,13 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { LatLng, MyParty, Party, SubQuest } from '@/api/types';
-import { koreaClock, koreaDay } from '@/korea-time';
+import { dayAndClock, koreaClock } from '@/korea-time';
 import { shownSubQuest } from './adapter';
 import { placeWithRoom } from './booked-room';
 import { standingsOf } from './plan-steps';
@@ -94,8 +96,6 @@ export interface RoomView {
   host: HostView | null;
   // The Quest's text, "" for none.
   text: string;
-  // "#AI커리어"
-  tags: string[];
   // The time and place box: the orange step's, "내일 10:00" and its place as the step shows it, else "시간 미정" and
   // "장소 미정".
   time: string;
@@ -152,11 +152,13 @@ function activationOf({ quest, myParty, parties, declined, meId, masterOn }: Roo
     : { state: 'waiting', partyId: id, title, people };
 }
 
-function timeOf({ startsAt, endsAt }: SubQuest): string {
+// "오늘 17:40", "내일 18:00–20:00" or "10/8(목) 19:00": the start with its day, then the end's clock.
+function timeOf({ startsAt, endsAt }: SubQuest, now: Date): string {
   if (startsAt === null) {
     return '';
   }
-  return endsAt === null ? koreaClock(startsAt) : `${koreaClock(startsAt)}–${koreaClock(endsAt)}`;
+  const start = dayAndClock(startsAt, now);
+  return endsAt === null ? start : `${start}–${koreaClock(endsAt)}`;
 }
 
 // By their start, those without one last, grey and orange by `plan-steps`. The room booked is on the shown step's
@@ -167,7 +169,7 @@ function planOf(quest: ShownQuest, now: Date): PlanStepView[] {
     const label = subQuest.place?.label ?? '';
     return {
       subQuest,
-      time: timeOf(subQuest),
+      time: timeOf(subQuest, now),
       place: subQuest === shown ? placeWithRoom(label, quest.bookedRoom) : label,
       next: stand === 'now',
       over: stand === 'past',
@@ -250,8 +252,7 @@ export function toRoom(sources: RoomSources): RoomView {
     hasPost: !closed,
     host: hostOf(quest, now),
     text: quest.description,
-    tags: quest.tags.map((tag) => `#${tag}`),
-    time: start === null ? '시간 미정' : `${koreaDay(start, now)} ${koreaClock(start)}`,
+    time: start === null ? '시간 미정' : dayAndClock(start, now),
     place: orange === undefined || orange.place === '' ? '장소 미정' : orange.place,
     destination: destinationOf(plan),
     editsPlan: editsSubQuests(quest, meId),

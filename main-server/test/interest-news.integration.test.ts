@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -80,7 +81,7 @@ describe('A watched interest', () => {
       {
         kind: 'interest-new',
         title: '2026 하반기 채용박람회가 떴어요',
-        line: '14:00 학생회관',
+        line: '3/5(수) 14:00 학생회관',
         url: `/main?card=event:${event.id}`,
       },
     ]);
@@ -89,7 +90,7 @@ describe('A watched interest', () => {
         where: { userId: user.id, cardId: event.id },
         select: { rings: true, body: true, sentAt: true },
       }),
-    ).toEqual([{ rings: true, body: '14:00 학생회관이에요.', sentAt: null }]);
+    ).toEqual([{ rings: true, body: '3/5(수) 14:00 학생회관이에요.', sentAt: null }]);
     expect((await matchesOf(user)).globalEvents).toContainEqual({ id: event.id, watched: true });
   });
 
@@ -111,7 +112,7 @@ describe('A watched interest and a recruiting Quest', () => {
       {
         kind: 'interest-new',
         title: '배드민턴 칠 사람 모집이 떴어요',
-        line: '18:30',
+        line: '3/6(목) 18:30',
         url: `/main?card=party:${questId}`,
       },
     ]);

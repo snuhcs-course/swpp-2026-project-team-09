@@ -15,10 +15,7 @@ import { type ReactElement, type ReactNode, use, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
-import type { AnswerReply, LibrarySpace, Plan } from '@/api/assistant-types';
-import { questsQuery } from '@/api/queries';
-import type { Quest } from '@/api/types';
+import type { AnswerReply, Plan } from '@/api/assistant-types';
 import type { Lookup } from '@/api/lookup-types';
 import { radius, space } from '@/design-system';
 import { windowOf } from '@/features/assistant/plan-input';
@@ -26,19 +23,12 @@ import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
-import type { Slot } from '@/library/cards/payloads';
 import { ANSWER_TOP, listsTop } from '../layout';
-import type { ShownBooking } from '@/features/assistant/booking-scene';
-import { leftOutOf } from '@/features/assistant/left-out';
-import type { Chat } from '@/features/assistant/use-chat';
-import { bookingBarOf } from '../library/booking-kept';
-import { leftOutIdsOn, useBookingBand } from './booking-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { mealDayOf } from './meal-day';
 import { type Picking, PersonRows } from './person-rows';
 import { answerPickSource, usePickingBar } from './pick-head';
 import { usePickingPlace } from './picking-place';
-import { useSeatTogether } from './seat-picking';
 import { PickHint } from './sheet-hint';
 import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
@@ -50,7 +40,6 @@ import { addNameOf } from './who-words';
 import { restingLift, type TopStops } from './top-stops';
 
 const NO_WINDOW = { from: null, until: null };
-const NO_QUESTS: readonly Quest[] = [];
 // The words' room at the right while "＋ 같이" stands there, until the chip is laid out: its width on a phone at the
 // usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
 // the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
@@ -67,7 +56,7 @@ export function barTop(inset: number): number {
 
 type BandProps = Parameters<typeof TimeBand>[0];
 
-interface BarProps {
+export interface BarProps {
   band: Omit<BandProps, 'folded' | 'day'>;
   // The words before the span's; left out, its day word.
   day?: string;
@@ -115,7 +104,7 @@ function OpenRows(p: {
 // folded one: open, it lies over the map for a while.
 // Under the bar of several requests it is the top's last card (P01 ticket 22): it folds behind that bar, then takes the
 // bar up to the stage's top, its grip strip showing all the way (`top-stops.tsx`).
-function Bar(props: BarProps): ReactElement {
+export function Bar(props: BarProps): ReactElement {
   const sheet = use(SheetLinkContext);
   return <TimeCard {...props} under={(props.offset ?? 0) > 0 ? sheet.top : undefined} />;
 }
@@ -259,14 +248,16 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   );
 }
 
-// A Lookup's bar, whose band has no handles: a Lookup is not recalculated by a drag.
+// A Lookup's bar, whose band has no handles: a Lookup is not recalculated by a drag. Under the bar of several requests
+// it stands as the Plan's bar does (P03 ticket 23, rule 7).
 export function LookupBar({
   lookup,
   onHeight,
+  offset,
 }: {
   lookup: Lookup;
   onHeight: (height: number) => void;
-}): ReactElement | null {
+} & Pick<BarProps, 'offset'>): ReactElement | null {
   return lookup.band === null ? null : (
     <Bar
       band={{
@@ -277,63 +268,9 @@ export function LookupBar({
         handles: false,
         onDrop: ignoreDrop,
       }}
+      offset={offset}
       onHeight={onHeight}
     />
-  );
-}
-
-// A booking's bar (P04 ticket 07): the time card a meal's answer draws, with the seat card's band, whose handles change
-// the start and the end the chat keeps for the card within the room's hours, steps, and lengths (P01 ticket 14). Its
-// "＋ 같이" is the answers' own, chip and picker (P10 ticket 15). While a booking is on its way the bar is hidden, so
-// that the time stays as it was booked.
-export function BookingBar({
-  booking,
-  chat,
-  onHeight,
-}: {
-  booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'bubbles' | 'putBack' | 'askApp' | 'waiting'>;
-  onHeight: (height: number) => void;
-}): ReactElement | null {
-  const bar = bookingBarOf(booking, chat);
-  // The User's Classes and Quests of the slot's date, which the band shows and names (P01 ticket 05).
-  const quests = useQuery(questsQuery).data ?? NO_QUESTS;
-  if (bar === null) {
-    return null;
-  }
-  const { kept, keep, live } = bar;
-  // The conversation's Classes left out on the booking's day, which its ✕ puts back (P01 ticket 40).
-  const skipped = { ids: leftOutIdsOn(leftOutOf(chat.bubbles), live.date), putBack: chat.putBack };
-  return (
-    <BookingCard
-      // A new answer's card sets its range anew (P01 ticket 17).
-      key={booking.place}
-      chat={chat}
-      keep={(slot) => {
-        keep({ slot });
-      }}
-      onHeight={onHeight}
-      quests={quests}
-      skipped={skipped}
-      slot={live}
-      space={kept.space}
-    />
-  );
-}
-
-function BookingCard(p: {
-  slot: Slot;
-  space: LibrarySpace;
-  quests: readonly Quest[];
-  keep: (slot: Slot) => void;
-  skipped: { ids: readonly string[]; putBack: (classId: string) => void };
-  chat: Pick<Chat, 'askApp' | 'waiting'>;
-  onHeight: (height: number) => void;
-}): ReactElement {
-  const band = useBookingBand(p.slot, p.space, p.quests, p.keep, p.skipped);
-  const together = useSeatTogether(p.space, band.band, p.chat);
-  return (
-    <Bar add={together.add} band={{ ...band, band: together.band }} onHeight={p.onHeight} picking={together.picking} />
   );
 }
 

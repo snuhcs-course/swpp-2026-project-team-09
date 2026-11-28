@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -110,7 +111,8 @@ describe("the card of a pressed building, as the main server's card reads", () =
     ]);
     expect(styleOf('걸어서 15분 · 12:25 도착').fontFamily).toBe(font.bold);
     expect(styleOf('13:00 수업 전까지 34분 머물 수 있어요').fontFamily).not.toBe(font.bold);
-    expect(styleOf('점심시간이에요. 여기서 드실래요?').color).toBe(color.quest);
+    // The suggestion in the Quest's colour, the party's navy (the user's rule of 2026-11-28: gold is for times alone).
+    expect(styleOf('점심시간이에요. 여기서 드실래요?').color).toBe(color.snuBlue);
     expect(buildingCard().getByText('301동에서')).toBeVisible();
     expect(buildingCard().getByText('13:00 수업까지')).toBeVisible();
     expect(buildingCard().queryByText('301동에서 63동까지 걸어서 15분')).toBeNull();

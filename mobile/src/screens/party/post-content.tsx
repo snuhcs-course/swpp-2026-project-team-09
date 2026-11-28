@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -13,6 +14,7 @@ import { boardName } from '@/features/party/boards';
 import type { PostView } from '@/features/party/posts';
 import type { PostDetailView } from '@/features/party/use-party';
 import { agoWords } from '@/features/quests/room-adapter';
+import { PlaceWords, usePlaceOnMap } from '../place-map/place-on-map-sheet';
 import { Fill } from './post-card';
 import { PostReasons } from './post-reasons';
 
@@ -48,15 +50,25 @@ interface InfoLineProps {
   event?: boolean;
   // A card's smaller, muted words, or the 모집글's.
   small?: boolean;
+  // A line whose press opens something, in the 행사 line's blue: a place picked on the map (P06 ticket 27).
+  link?: boolean;
 }
 
 // A line after its icon: the time, the place, the members, or the event in blue.
-export function InfoLine({ icon, children, lines, event = false, small = false }: InfoLineProps): ReactElement {
-  const ink = event ? color.blue600 : small ? color.inkMuted : color.ink;
+export function InfoLine({
+  icon,
+  children,
+  lines,
+  event = false,
+  small = false,
+  link = false,
+}: InfoLineProps): ReactElement {
+  const blue = event || link;
+  const ink = blue ? color.blue600 : small ? color.inkMuted : color.ink;
   return (
     <View style={styles.line} testID={event ? 'event-line' : undefined}>
       <View style={small ? styles.smallIcon : styles.icon}>
-        <Icon color={event ? color.blue600 : color.inkMuted} name={icon} size={16} />
+        <Icon color={blue ? color.blue600 : color.inkMuted} name={icon} size={16} />
       </View>
       <Text numberOfLines={lines} style={[small ? styles.smallWords : styles.words, { color: ink }]}>
         {children}
@@ -87,6 +99,7 @@ export function InfoBox({ children }: { children: ReactNode }): ReactElement {
 // The 모집글: the board and the fill, the title, the Leader, a grey box with the time, the place, the members and the
 // event, the description and 추천 이유.
 export function PostContent({ post, reasons }: PostDetailView): ReactElement {
+  const placeOnMap = usePlaceOnMap();
   return (
     <View style={styles.content}>
       <View style={styles.head}>
@@ -102,7 +115,13 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
       />
       <InfoBox>
         <InfoLine icon="clock">{post.time}</InfoLine>
-        <InfoLine icon="pin">{post.place}</InfoLine>
+        <PlaceWords onOpen={placeOnMap.open} point={post.point}>
+          {(link) => (
+            <InfoLine icon="pin" link={link}>
+              {post.place}
+            </InfoLine>
+          )}
+        </PlaceWords>
         <InfoLine icon="users">{post.members}</InfoLine>
         {post.event === null ? null : (
           <InfoLine event icon="calendar">
@@ -112,6 +131,7 @@ export function PostContent({ post, reasons }: PostDetailView): ReactElement {
       </InfoBox>
       {post.description === '' ? null : <Text style={styles.description}>{post.description}</Text>}
       {reasons === null ? null : <PostReasons reasons={reasons} />}
+      {placeOnMap.sheet}
     </View>
   );
 }

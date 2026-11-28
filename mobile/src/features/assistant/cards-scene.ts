@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatCard, GlobalEventCard, RestaurantCard } from '@/api/assistant-types';
 import type { LatLng, Place } from '@/api/types';
 import { koreaClock, koreaDayWord } from '@/korea-time';
-import type { Draft } from './answer-groups';
+import { type Draft, inKind } from './answer-groups';
 import { turnOf } from './turn';
 import type { ChatBubble } from './use-chat';
 
@@ -88,11 +89,12 @@ export function cardNumberOf(id: string): number | null {
   return id.startsWith(CARD_ID) ? Number(id.slice(CARD_ID.length)) : null;
 }
 
-// The first card as the main flag, the others as numbered flags (board 15), each with "›": a press opens its card.
+// The first card as the main flag, the others as numbered flags (board 15), each with "›": a press opens its card. A
+// restaurant's flag is in the meal's colour and an event's in the events' (`kindTone`).
 export function cardDrafts({ cards }: ShownCards): Draft[] {
-  return cards.map(({ number, position, title, line }) => {
+  return cards.map(({ number, position, title, line, card }) => {
     const first = number === 1;
-    return {
+    const draft: Draft = {
       id: `${CARD_ID}${String(number)}`,
       name: first ? `${title} › · ${line ?? ''}` : `${String(number)} ${title} › · ${line ?? ''}`,
       position,
@@ -104,5 +106,6 @@ export function cardDrafts({ cards }: ShownCards): Draft[] {
       line,
       number: first ? null : number,
     };
+    return inKind(draft, card.kind === 'restaurant' ? 'meal' : 'event');
   });
 }

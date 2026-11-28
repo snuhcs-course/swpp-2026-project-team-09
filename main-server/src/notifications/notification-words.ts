@@ -7,11 +7,12 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { clockOf } from '../assistant/free-time/free-time.js';
 import { withCopula, withSubject } from '../assistant/gathering/answer-words.js';
-import { koreaDate } from '../assistant/korea-time.js';
+import { dateAndClock, koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
 import { type GoneKind, type NotificationWords, type PartyGone, type Told } from './notification.js';
@@ -83,7 +84,8 @@ function interestBody(time: string | null, placeLabel: string | null): string {
   return time === null ? '맡겨 둔 관심에 맞아요.' : `${time}에 시작해요.`;
 }
 
-// A new match of a watched interest: the start in Korea and the Place, leaving out what is unknown. It rings once.
+// A new match of a watched interest: the start in Korea with its date and the Place, leaving out what is unknown. It
+// rings once.
 function interestWords({
   subject,
   id,
@@ -92,7 +94,7 @@ function interestWords({
   placeLabel,
 }: Told & { kind: 'interest-new' }): NotificationWords {
   const event = subject === 'event';
-  const time = startsAt === null ? null : clockOf(startsAt);
+  const time = startsAt === null ? null : dateAndClock(startsAt);
   return {
     title: event ? `${withSubject(title)} 떴어요` : `${title} 모집이 떴어요`,
     ahead: null,
@@ -104,12 +106,12 @@ function interestWords({
   };
 }
 
-// "14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소".
+// "11/18(수) 14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소".
 function stepLine({ stepTitle, startsAt, cancelled }: Of<'step-changed'>): string {
   if (cancelled) {
     return `'${stepTitle}' 취소`;
   }
-  return startsAt === null ? stepTitle : `${clockOf(startsAt)} ${stepTitle}`;
+  return startsAt === null ? stepTitle : `${dateAndClock(startsAt)} ${stepTitle}`;
 }
 
 // What a party's members would have said in words. Each rings, is about the member, and opens the party's room.
@@ -208,6 +210,19 @@ function goneWords({ kind, questId, questTitle, leaderName }: PartyGone): Notifi
   };
 }
 
+// In 알림 only. The title says what happened and the line names the 파티 and the one who led it.
+function newLeaderWords({ questId, questTitle, formerName, how }: Of<'became-leader'>): NotificationWords {
+  return {
+    title: '파티장이 됐어요',
+    ahead: null,
+    line: `${questTitle} · ${formerName}님이 ${how === 'left' ? '나갔어요' : '넘겼어요'}`,
+    card: { kind: 'party', id: questId },
+    about: null,
+    rings: false,
+    body: null,
+  };
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
@@ -255,5 +270,5 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       body: null,
     };
   }
-  return roomWords(told);
+  return told.kind === 'became-leader' ? newLeaderWords(told) : roomWords(told);
 }

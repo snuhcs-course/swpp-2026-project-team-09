@@ -14,6 +14,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -21,13 +22,11 @@ import { useIsFocused } from 'expo-router';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
-import type { ShownSteps } from '@/features/assistant/steps-scene';
+import { stepShowsCard } from '@/features/assistant/step-choice';
 import { turnOf } from '@/features/assistant/turn';
-import type { ChatBubble } from '@/features/assistant/use-chat';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
-import { BubbleParts } from '../chat-bubbles';
-import { shownParts, speaksForItself } from '../library/chat-library-cards';
+import { shownParts } from '../library/chat-library-cards';
 import type { CardActions } from '../chat-cards';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
@@ -38,18 +37,18 @@ import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
 import { useAnswerRaising } from './card-state';
 import { KeptCards } from './kept-scene';
-import { drawsWords, holdsSlot, SlotHeld } from './sentence-slot';
+import { SlotHeld } from './sentence-slot';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
-import { ReplyPicks } from './reply-picks';
-import { SetQuestLine } from './set-quest-line';
+import { PickTimeSheet } from './pick-time-sheet';
 import { LeaveRow } from './leave-button';
 import { MarkRows } from './mark-rows';
 import { MadeMarkCard } from './made-mark-card';
 import type { Raising } from './raise-handle';
-import { ReplySteps } from './reply-steps';
-import { barOf, onScreenOf, TopBar, Words } from './reply-words';
+import { TopBar } from './answer-top-card';
+import { barOf, onScreenOf } from './reply-words';
+import { OpenPart } from './open-part';
 import { SheetLinkContext, useSheetLink } from './sheet-link';
 import { useTimeCardSkips } from './time-card-skips';
 import { type BandFocus, useBandFocus } from './use-corrections';
@@ -120,81 +119,29 @@ function slotHeld({ chat }: ChatSheetControl): boolean {
   return chat.waiting || (turnOf(chat.bubbles)?.after.some(({ text }) => text !== '') ?? false);
 }
 
-// A reply's words in the card. A reply under a later bubble of its turn, whose words are its card, keeps the card, and
-// its sentence and explaining line give way to the slot's holder (P01 ticket 20; P10 ticket 29).
-function slotWords(
-  { control, cardActions, focus, onClose, room }: AnswerCardProps & { room: number | null },
-  bubble: ChatBubble,
-  holds: boolean,
-): ReactElement {
-  return (
-    <SlotHeld value={!holds}>
-      <Words
-        group={{ act: control.libraryAct.tell, library: cardActions.library }}
-        addRecalculated={control.chat.addRecalculated}
-        bubble={bubble}
-        focus={focus}
-        invitation={control.invitation}
-        lookup={control.lookup}
-        onAsk={control.chat.send}
-        onClose={onClose}
-        room={room}
-        shown={control.answer}
-      />
-    </SlotHeld>
-  );
-}
-
-// A reply's steps over its bubble: those on the map as they stand now (P10 ticket 29), so that a step not done since
-// says why.
-function BubbleSteps({ bubble, onMap }: { bubble: ChatBubble; onMap: ShownSteps | null }): ReactElement | null {
-  if (bubble.steps === undefined) {
-    return null;
-  }
-  const live = onMap?.bubbleId === bubble.id ? onMap : null;
-  return <ReplySteps onMap={live !== null} steps={live?.steps ?? bubble.steps} />;
-}
-
 // A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
-// booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review), and a
-// study answer's 관정관 opened its reply's words, which hold the ticket (P10 ticket 27).
-function dockedBubble({ booking, steps }: ChatSheetControl): number | null {
-  return booking !== null && steps === null && booking.inPlan !== true ? booking.bubbleId : null;
+// booked (P01 ticket 03), and so does a seat card of several requests while its step is chosen (P03 ticket 23); a study
+// answer's 관정관 opened its reply's words, which hold the ticket (P10 ticket 27).
+function dockedBubble({ booking, steps, activeStep }: ChatSheetControl): number | null {
+  const alone = booking !== null && stepShowsCard(steps, activeStep, booking.card.key);
+  return alone && booking.inPlan !== true ? booking.bubbleId : null;
 }
 
 // The open card's content: the turn's bubbles, each under its steps, and the dots with 그만 while a reply is on its way.
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
-  const { control, cardActions } = props;
-  const { bubbles, waiting, retry } = control.chat;
+  const { control } = props;
+  const { bubbles, waiting } = control.chat;
   const docked = dockedBubble(control);
   const turn = turnOf(bubbles);
-  const parts = shownParts(turn?.after ?? []);
-  const last = bubbles.at(-1);
-  // While a Place is picked on the map the card is mostly low: the picking line and its chip that stops it come first,
-  // where the low card shows them, as the dock had them (PR 545's review).
-  const picking = control.pick.place !== null;
+  const after = turn?.after ?? [];
   return (
     <>
-      {parts.map((bubble) => (
-        <View key={bubble.id} style={styles.part}>
-          {bubble === turn?.after[0] ? <SetQuestLine control={control} /> : null}
-          {bubble === last && picking ? <ReplyPicks control={control} /> : null}
-          <BubbleSteps bubble={bubble} onMap={control.steps} />
-          <BubbleParts
-            bubble={bubble}
-            cardActions={cardActions}
-            onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
-            onShowLayer={control.leaving.showLayer}
-            words={
-              bubble.id === docked || speaksForItself(bubble) || !drawsWords(bubble, turn?.after ?? [])
-                ? null
-                : slotWords(props, bubble, holdsSlot(bubble, turn?.after ?? []))
-            }
-          />
-          {bubble === last && !picking ? <ReplyPicks control={control} /> : null}
-        </View>
+      {shownParts(after).map((bubble) => (
+        <OpenPart key={bubble.id} {...props} after={after} bubble={bubble} docked={docked} />
       ))}
       {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}
+      {/* Here, outside the turn's bubbles, the time's wheel slides down also when a time is sent (P06 ticket 35). */}
+      <PickTimeSheet offer={control.pick.time} onClose={control.pick.stop} onPick={control.pick.chooseTime} />
     </>
   );
 }
@@ -340,7 +287,6 @@ export function AnswerFrame(props: AnswerFrameProps): ReactElement | null {
 }
 
 const styles = StyleSheet.create({
-  part: { gap: space[2] },
   // "←" and the bar, which fade while the card is dragged down to close (P04 ticket 12).
   top: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
   faded: { opacity: 0.35 },

@@ -3,12 +3,14 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ReplyStep } from '@/api/assistant-types';
-import { color, radius, space, text } from '@/design-system';
+import { color, kindTone, radius, space, text } from '@/design-system';
+import { stepTone } from '@/features/assistant/answer-tone';
 
 const BADGE = 20;
 
@@ -31,6 +33,7 @@ function noteOf(step: ReplyStep): string | null {
   return step.shows?.kind === 'card' ? '예약 카드는 아래에 있어요' : null;
 }
 
+// A step's number is in its colour (`stepTone`): its kind's when it was done, as its answer on the map, grey when not.
 function StepRow({ step, order }: { step: ReplyStep; order: number }): ReactElement {
   const time = stepTime(step);
   const done = step.status === 'shown';
@@ -38,7 +41,7 @@ function StepRow({ step, order }: { step: ReplyStep; order: number }): ReactElem
   const from = step.from === null ? '' : ` · ${step.from.label}에서`;
   return (
     <View style={styles.row} testID={`reply-step-${order}`}>
-      <View style={[styles.badge, done ? styles.badgeDone : styles.badgeNot]}>
+      <View style={[styles.badge, { backgroundColor: kindTone[stepTone(step)].ink }]}>
         <Text style={styles.badgeText}>{order}</Text>
       </View>
       <View style={styles.words}>
@@ -102,8 +105,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 1,
   },
-  badgeDone: { backgroundColor: color.quest },
-  badgeNot: { backgroundColor: color.inkSubtle },
   badgeText: { ...text.caption, color: color.onPrimary },
   words: { flex: 1 },
   title: { ...text.label, color: color.ink },

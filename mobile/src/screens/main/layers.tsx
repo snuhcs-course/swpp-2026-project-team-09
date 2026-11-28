@@ -9,11 +9,12 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, font, Icon, type IconName, radius, shadow, useSlide } from '@/design-system';
+import { color, font, Icon, type IconName, kindTone, radius, shadow, useSlide } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { keepMapLayers, readMapLayers } from '@/storage/map-layers';
 import { LAYER_STACK, LAYERS_BUTTON } from './layout';
@@ -196,9 +197,21 @@ function LayersButton({
 export function LayerControls({ stack }: LayerControlsProps): ReactElement {
   const { shown, progress } = useSlide(stack.open);
   const toggles: Toggle[] = [
-    { label: '식당', icon: 'meal', tint: color.svcDining, on: stack.layers.dining, onPress: stack.toggleDining },
-    { label: '셔틀버스', icon: 'bus', tint: color.svcShuttle, on: stack.layers.shuttle, onPress: stack.toggleShuttle },
-    { label: '공부공간', icon: 'bookOpen', tint: color.svcStudy, on: stack.layers.study, onPress: stack.toggleStudy },
+    { label: '식당', icon: 'meal', tint: kindTone.meal.ink, on: stack.layers.dining, onPress: stack.toggleDining },
+    {
+      label: '셔틀버스',
+      icon: 'bus',
+      tint: kindTone.shuttle.ink,
+      on: stack.layers.shuttle,
+      onPress: stack.toggleShuttle,
+    },
+    {
+      label: '공부공간',
+      icon: 'bookOpen',
+      tint: kindTone.study.ink,
+      on: stack.layers.study,
+      onPress: stack.toggleStudy,
+    },
   ];
   const rise = progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] });
   return (

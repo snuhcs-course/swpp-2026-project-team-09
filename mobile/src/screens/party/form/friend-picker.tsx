@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -20,7 +21,7 @@ interface FriendPickerProps {
   onChosen: (ids: string[]) => void;
 }
 
-function matches({ name, department }: Friend, search: string): boolean {
+export function matchesFriend({ name, department }: Friend, search: string): boolean {
   const words = search.replaceAll(/\s/gu, '');
   return words === '' || name.includes(words) || department.replaceAll(/\s/gu, '').includes(words);
 }
@@ -32,7 +33,8 @@ interface FriendRowProps {
   onPress: () => void;
 }
 
-function FriendRow({ friend, on, disabled, onPress }: FriendRowProps): ReactElement {
+// A Friend with a check, which a press checks or unchecks.
+export function FriendRow({ friend, on, disabled, onPress }: FriendRowProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={friend.name}
@@ -81,7 +83,7 @@ export function FriendPicker({ friends, chosen, most, hint, onChosen }: FriendPi
       <SearchField label="친구 검색" onChangeText={setSearch} placeholder="친구 검색" value={search} />
       <View style={styles.list}>
         {friends
-          .filter((friend) => matches(friend, search))
+          .filter((friend) => matchesFriend(friend, search))
           .map((friend) => {
             const on = chosen.includes(friend.id);
             return (

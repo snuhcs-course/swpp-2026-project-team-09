@@ -3,6 +3,8 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: Open and Closed Quests, led or not, with and without a Leader and a step; the plan's order, grey and
@@ -25,7 +27,6 @@ describe('toRoom head', () => {
       place: '301동 앞',
       fill: '3/4명',
     });
-    expect(view.tags).toEqual(['#AI커리어']);
   });
 
   it('a Closed Quest that another leads → its text too, and no fill', () => {
@@ -119,9 +120,9 @@ describe('toRoom plan', () => {
   it('steps → by their start, those without one last, with the time and the place shown', () => {
     const view = room({ quest: quest({ subQuests: plan }) });
     expect(view.plan.map(({ subQuest, time, place }) => [subQuest.id, time, place])).toEqual([
-      ['모이기', '17:40', '301동 앞'],
-      ['설명회', '18:00–20:00', '301동 앞'],
-      ['카페', '20:00', '자하연'],
+      ['모이기', '오늘 17:40', '301동 앞'],
+      ['설명회', '오늘 18:00–20:00', '301동 앞'],
+      ['카페', '오늘 20:00', '자하연'],
       ['없음', '', ''],
     ]);
   });

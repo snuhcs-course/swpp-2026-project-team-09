@@ -2575,10 +2575,21 @@ Anthropic API as the AI's key says
     `key`, the server's name for its request: its kind and day, a meal's meal, a study plan alone or together, the
     Quests of one Global Event. The key is opaque: the app compares keys and never builds one. An answer replaces the
     one of the same key on screen and is added otherwise, and an answer on screen the reply does not name stays.
-  - `withdrawn`: the keys of the requests that ended with no answer (a meal over for today, one the User was only
-    invited to). The app takes those answers off. It is left out when there is none.
+  - `withdrawn`: the keys of the answers that leave. They come from a request that ended with none, on any of the
+    paths `clears` lists above (P05 ticket 79, `src/assistant/taken-off.ts`):
+    - the request's own key, for a meal over for today or one the User was only invited to;
+    - the keys of the answers on screen it stood for, by `takenOff`: the same request on another day or with other
+      conditions (the same kind, the same meal, the same alone or together). Answers of other requests stay, so
+      dinner over for today keeps tomorrow's lunch;
+    - every answer on screen, for a refusal plainly not about them.
+
+    The keys on screen are those of `context.steps`, or, with no steps, the key of the answer open (`conditions`). The
+    app takes those answers off. It is left out when there is none.
+
   - `select.key`: the request whose answer holds the plan chosen in words, when one of `answers` does.
-  - `clears` is never sent to it: the answers on screen may be of requests other than the one that ended with none.
+  - `clears` only when nothing stays on screen. That is when every step on screen is among `withdrawn` (a booking
+    step never is), or, with no steps, the answer open is; a refusal plainly not about the plans always clears. While
+    another answer or a booking stays, it is left out, and the app takes off only the keys `withdrawn` names.
   - `POST /assistant/answers` from it answers with `key` too. A changed condition may make the answer another request
     (a Friend added makes a study place one together, the bar's other meal makes lunch dinner), and the app keeps the
     answer under that key from then on.
@@ -2666,9 +2677,12 @@ Anthropic API as the AI's key says
   A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
-  `reason`, and what `shows` it (the card's key or the answer). A meal planned after a booking sets out from 관정 when
-  the booking ends, unless the User named its start (`planMeal`'s `startPlaceId`); `planMeal` plans from the steps shown
-  before it, and the run plans the meal again when the model planned it first (`src/assistant/steps/plan-steps.ts`).
+  `reason`, and what `shows` it (the card's key or the answer). For every app, a meal sets out from the step before it
+  among the message's bookings and answers, such as 관정 when a booking ends or a study place when the stay ends, unless
+  the User named its start (`planMeal`'s `startPlaceId`) or an item of their day lies between; for an app before
+  `answers` the chain is the asker's own (`source: 'asker'`, P05 ticket 78). `planMeal` plans from the steps shown
+  before it, and the run plans the meal again when the model planned it first (`src/assistant/steps/all-steps.ts`,
+  `src/assistant/steps/plan-steps.ts`).
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -4146,8 +4160,8 @@ calls throw when the database fails too, so a caller that must not fail catches 
 | `room-agreed`          | A room request's requester                    | The request becomes `ready`                                                                                                    | `모두 동의했어요`                                          | None                           | `<요일> <start>–<end> <room>`, such as `목 15:30–18:30 관정 4층 6인실`              | `party:<questId>`                            | Yes   |
 | `room-ending`          | Every Holder of a booked room's Quest         | 10 minutes before the room's end                                                                                               | `10분 뒤 끝나요`                                           | `<end> 방 예약 끝`             | `<room> · <end>에 끝나요`                                                           | `party:<questId>`                            | Yes   |
 | `room-window`          | A room request's requester                    | 09:00 on the day the booking window opens for a request that waits for it                                                      | `예약 창이 열렸어요`                                       | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>`                            | Yes   |
-| `interest-new`         | A User watching a match                       | The topics step reads a match                                                                                                  | `<title>이 떴어요`, or `<title> 모집이 떴어요` for a Quest | None                           | `<HH:MM> <Place>`                                                                   | `event:<globalEventId>` or `party:<questId>` | Yes   |
-| `step-changed`         | Every other Holder of the Quest               | A Holder adds, edits or cancels a step that has not ended, or the Leader changes the Quest to another Plan (`PUT /plans/{id}`) | `<name>가 일정을 바꿨어요`                                 | None                           | `<HH:MM> <step's title>`, or `'<step's title>' 취소` for a cancelled step           | `party:<questId>`                            | Yes   |
+| `interest-new`         | A User watching a match                       | The topics step reads a match                                                                                                  | `<title>이 떴어요`, or `<title> 모집이 떴어요` for a Quest | None                           | `<M/D(요일) HH:MM> <Place>`                                                         | `event:<globalEventId>` or `party:<questId>` | Yes   |
+| `step-changed`         | Every other Holder of the Quest               | A Holder adds, edits or cancels a step that has not ended, or the Leader changes the Quest to another Plan (`PUT /plans/{id}`) | `<name>가 일정을 바꿨어요`                                 | None                           | `<M/D(요일) HH:MM> <step's title>`, or `'<step's title>' 취소` for a cancelled step | `party:<questId>`                            | Yes   |
 | `arrived`              | Each other Holder who sees the member exactly | A member sharing with the Quest's Party reaches the shown step's point                                                         | `<name>가 도착했어요`                                      | None                           | The step's place                                                                    | `party:<questId>`                            | Yes   |
 | `late`                 | Every other Holder of the Quest               | A Holder reports being late                                                                                                    | `<name>가 <N>분 늦어요`                                    | None                           | `<HH:MM> 도착 · <Quest's title>`, or the Quest's title when no arrival is known     | `party:<questId>`                            | Yes   |
 | `join-accepted`        | The User who asked to join                    | The Leader accepts the request                                                                                                 | `참여 신청이 수락됐어요`                                   | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party:<questId>`                            | Yes   |
@@ -4157,11 +4171,12 @@ calls throw when the database fails too, so a caller that must not fail catches 
 | `party-removed`        | The Holder removed                            | The Leader removes them                                                                                                        | `파티에서 내보내졌어요`                                    | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party-gone:<questId>`                       | Yes   |
 | `join-cancelled`       | Each User whose request to join waited        | The Leader ends the Quest                                                                                                      | `파티가 없어져 신청이 취소됐어요`                          | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party-gone:<questId>`                       | No    |
 | `invitation-cancelled` | Each User whose invitation waited             | The Leader ends the Quest                                                                                                      | `파티가 없어져 초대가 취소됐어요`                          | None                           | `<Quest's title> · <Leader's name>님의 파티`                                        | `party-gone:<questId>`                       | No    |
+| `became-leader`        | The Holder who leads the Quest now            | The Leader leaves it (`DELETE /quests/:questId`) and they entered earliest, or the Leader hands it over                        | `파티장이 됐어요`                                          | None                           | `<Quest's title> · <Leader's name>님이 나갔어요`, or `… 넘겼어요`                   | `party:<questId>`                            | No    |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
 `leave-by`, `<Place>까지 걸어서 <N>분이에요.`; for a room request's kinds, the line as a sentence ("모두 동의했어요" adds
 "이제 예약할 수 있어요.", and `room-window` reads `<요일> <start>–<end> 스터디를 이제 예약할 수 있어요.`); and for an
-`interest-new`, `<HH:MM> <Place>이에요.`; for `step-changed` and `late`, the line with a full stop; for `arrived`,
+`interest-new`, `<M/D(요일) HH:MM> <Place>이에요.`; for `step-changed` and `late`, the line with a full stop; for `arrived`,
 `<place>에 있어요.`; for `join-accepted`, `<Quest's title>, 이제 내 파티에서 볼 수 있어요.`; for `join-declined`,
 `<Quest's title>, <Leader's name>님이 신청을 받지 않았어요.`; and for `join-asked`, `<name>님(외 N명)이 <Quest's title>에
 참여를 신청했어요.`; for `party-ended`, `<Quest's title>, <Leader's name>님이 파티를 없앴어요.`; and for `party-removed`,
@@ -4180,6 +4195,10 @@ again and again; and once none waits it is cancelled, so the next request rings 
 but the Leader, after it is deleted, without the answer waiting; the Leader's own `join-asked` for it is cancelled.
 `party-removed` is kept by `LeaderService.remove` for the Holder removed. Their card, `party-gone:<questId>`, is on no
 map: the app says the 파티 is gone. A Quest that ends because its time passed, and a Holder's own drop, keep none.
+
+`became-leader` is kept for the Holder who leads a Quest now, in 알림 only: by `QuestParty.drop` when the Leader's drop
+makes the Holder who entered earliest Leader (`QuestsService.removeHolder` answers them), and by `LeaderService.handOver`.
+Other ways a Leader leaves a Quest, such as replacing a held meal, tell nobody.
 
 `step-changed`, `arrived` and `late` stand for the words a party's members cannot say to each other, for the room has
 no chat. Each is kept once per member who caused it (`about`), so a later one replaces the earlier and rings again.
