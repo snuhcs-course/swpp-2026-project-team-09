@@ -1,7 +1,7 @@
 # 40: A kept Notification is deleted by a swipe to the left
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: 38 (the main server's Notification routes) and 39 (알림's rows).
 
 Native files: none (`react-native-gesture-handler` is already in the app). Releases: a main server Release and an app OTA update.
