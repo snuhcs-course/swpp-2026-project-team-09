@@ -28,7 +28,17 @@ describe.each(APPS)('The instructions of %s', (_app, options) => {
   it('tell the model to offer no other meal or time than the one asked', () => {
     const { instructions } = chatAssistant(SERVICES, options);
 
-    expect(instructions).toContain('Never end an answer by offering another meal, day or time');
+    expect(instructions).toContain(
+      'Never end an answer that answered the meal, day or time the User asked about by offering another one',
+    );
+  });
+
+  // TaeHyun79's review of #774: the breakfast rule names the meals that are served, and a run that read the rule as
+  // forbidding it would fail the eval case meal-breakfast-planned-none.
+  it('let an answer say what is served when the meal asked for is not served at all, as for breakfast', () => {
+    const { instructions } = chatAssistant(SERVICES, options);
+
+    expect(instructions).toContain('saying what is instead is a fact, not an offer');
   });
 
   it('give no sentence that offers another meal', () => {
