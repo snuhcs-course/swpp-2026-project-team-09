@@ -77,6 +77,7 @@ export type Told =
   | {
       kind: 'step-changed';
       questId: string;
+      questTitle: string;
       byId: string;
       byName: string;
       stepTitle: string;
