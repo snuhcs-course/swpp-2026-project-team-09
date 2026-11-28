@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -55,8 +56,7 @@ afterEach(() => {
 
 async function openNotifications(bell: string): Promise<Awaited<ReturnType<typeof openMain>>> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-  await user.press(screen.getByRole('button', { name: bell }));
+  await user.press(screen.getByRole('tab', { name: bell }));
   await pass(500);
   return user;
 }
@@ -101,7 +101,7 @@ describe('a kept Notification in 알림', () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
     server.on('GET /notifications', { status: 200, body: [{ ...ACCEPTED, read: true }] });
 
-    await openNotifications('알림 1개');
+    await openNotifications('알림, 새 소식 1개');
 
     expect(screen.getByRole('header', { name: '알림 1' })).toBeVisible();
     expect(screen.getByRole('button', { name: ROW })).toBeVisible();
@@ -122,7 +122,7 @@ function keepOnServer(rows: readonly KeptNotification[]): void {
 }
 
 async function backToMe(user: Awaited<ReturnType<typeof openMain>>): Promise<void> {
-  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('tab', { name: '내 정보' }));
   await pass(500);
 }
 
@@ -133,16 +133,16 @@ describe('an unread kept Notification', () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('button', { name: '알림 2개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '알림, 새 소식 2개' })).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티, 새 소식 1개', includeHiddenElements: true })).toBeOnTheScreen();
 
-    await user.press(screen.getByRole('button', { name: '알림 2개' }));
+    await user.press(screen.getByRole('tab', { name: '알림, 새 소식 2개' }));
     await pass(500);
     expect(screen.getByRole('button', { name: `새 알림 · ${ROW}` })).toBeVisible();
     expect(server.received('POST /notifications/read')).toHaveLength(1);
     await backToMe(user);
 
-    expect(screen.getByRole('button', { name: '알림 1개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '알림, 새 소식 1개' })).toBeVisible();
   });
 
   it('is not counted while its time is still to come, nor when it is a kind 알림 leaves out', async () => {
@@ -155,7 +155,7 @@ describe('an unread kept Notification', () => {
 
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('button', { name: '알림' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '알림' })).toBeVisible();
   });
 
   it('is counted from the signal `notice` that brings it', async () => {
@@ -165,7 +165,7 @@ describe('an unread kept Notification', () => {
     await socketServer((socket) => {
       socket.accept();
     });
-    expect(screen.getByRole('button', { name: '알림' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '알림' })).toBeVisible();
 
     keepOnServer([{ ...ACCEPTED, read: false }]);
     await socketServer((socket) => {
@@ -173,7 +173,7 @@ describe('an unread kept Notification', () => {
     });
     await pass(100);
 
-    expect(screen.getByRole('button', { name: '알림 1개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '알림, 새 소식 1개' })).toBeVisible();
   });
 });
 

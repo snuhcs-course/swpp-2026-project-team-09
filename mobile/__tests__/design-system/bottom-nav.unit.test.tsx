@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -39,37 +40,73 @@ describe('BottomNav', () => {
   });
 });
 
-describe("BottomNav's action", () => {
-  it('is in the middle, is pressed like a tab, is never the current one and shows no name', async () => {
-    const onSelect = jest.fn<void, [number]>();
-    await render(
-      <BottomNav
-        active={0}
-        items={[
-          { icon: 'map', label: '지도' },
-          { icon: 'plus', label: '올리기', action: true },
-          { icon: 'user', label: '내 정보' },
-        ]}
-        onSelect={onSelect}
-      />,
-    );
+// The middle of the bar (A04 ticket 09): the map's tab, a round button whose name is not drawn. Filled navy while it
+// is the current tab and what it raises is up; else white, with a navy ring and icon.
+const ROUND_ITEMS = (raised: boolean) =>
+  [
+    { icon: 'users', label: '파티' },
+    { icon: 'mapSpark', label: '지도', round: true, raised },
+    { icon: 'user', label: '내 정보' },
+  ] as const;
 
-    await userEvent.press(screen.getByRole('button', { name: '올리기' }));
+function round(): ReturnType<typeof screen.getByTestId> {
+  return screen.getByTestId('bottom-nav-round');
+}
 
-    expect(onSelect).toHaveBeenCalledWith(1);
-    expect(screen.queryByRole('tab', { name: '올리기' })).toBeNull();
+describe("BottomNav's round tab", () => {
+  it('is a tab, selected while current, and says whether what it raises is up', async () => {
+    await render(<BottomNav active={1} items={ROUND_ITEMS(true)} />);
+
+    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeExpanded();
     // Its name is what a screen reader says, and is not drawn.
-    expect(screen.queryByText('올리기')).toBeNull();
-    expect(screen.getByText('지도')).toBeVisible();
+    expect(screen.queryByText('지도')).toBeNull();
   });
 
-  it('draws the action inside the bar: nothing of it is placed out of its slot', async () => {
-    await render(<BottomNav active={0} items={[{ icon: 'plus', label: '올리기', action: true }]} line={false} />);
+  it('says it is lowered on its own tab, and nothing of it on another', async () => {
+    const { rerender } = await render(<BottomNav active={1} items={ROUND_ITEMS(false)} />);
 
-    expect(screen.getByRole('button', { name: '올리기' }).parent).toHaveStyle({ height: 64 });
-    expect(screen.getByRole('button', { name: '올리기' }).children).toHaveLength(1);
-    expect(screen.getByRole('button', { name: '올리기' }).children[0]).toHaveStyle({ width: 44, height: 44 });
-    expect(screen.getByRole('button', { name: '올리기' }).children[0]).not.toHaveStyle({ position: 'absolute' });
+    expect(screen.getByRole('tab', { name: '지도' })).toBeCollapsed();
+
+    await rerender(<BottomNav active={0} items={ROUND_ITEMS(true)} />);
+
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeSelected();
+    // Neither raised nor lowered: React Native's `Pressable` keeps the key, with no value.
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeExpanded();
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeCollapsed();
+  });
+
+  it('is filled navy while raised on its tab, and white with a navy ring otherwise', async () => {
+    const { rerender } = await render(<BottomNav active={1} items={ROUND_ITEMS(true)} line={false} />);
+
+    expect(round()).toHaveStyle({ width: 56, height: 56, backgroundColor: '#001A72' });
+
+    await rerender(<BottomNav active={1} items={ROUND_ITEMS(false)} line={false} />);
+    expect(round()).toHaveStyle({ backgroundColor: '#FFFFFF', borderWidth: 3, borderColor: '#001A72' });
+
+    await rerender(<BottomNav active={0} items={ROUND_ITEMS(true)} line={false} />);
+    expect(round()).toHaveStyle({ backgroundColor: '#FFFFFF', borderWidth: 3, borderColor: '#001A72' });
+    // Inside the bar's 64.
+    expect(screen.getByRole('tab', { name: '지도' }).parent).toHaveStyle({ height: 64 });
+    expect(round()).not.toHaveStyle({ position: 'absolute' });
+  });
+
+  it('passes on its press like any tab', async () => {
+    const onSelect = jest.fn<void, [number]>();
+    await render(<BottomNav active={1} items={ROUND_ITEMS(true)} onSelect={onSelect} />);
+
+    await userEvent.press(screen.getByRole('tab', { name: '지도' }));
+
+    expect(onSelect).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("BottomNav's count", () => {
+  it('shows 9+ above nine, and says the whole count', async () => {
+    await render(<BottomNav active={0} items={[{ icon: 'bell', label: '알림', badge: 12 }]} />);
+
+    expect(screen.getByText('9+')).toBeVisible();
+    expect(screen.getByRole('tab', { name: '알림, 새 소식 12개' })).toBeVisible();
   });
 });
 

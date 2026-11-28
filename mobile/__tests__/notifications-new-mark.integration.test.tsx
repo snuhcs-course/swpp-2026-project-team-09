@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -71,8 +72,7 @@ afterEach(() => {
 
 async function openNotifications(): Promise<Awaited<ReturnType<typeof openMain>>> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-  await user.press(screen.getByRole('button', { name: '알림 2개' }));
+  await user.press(screen.getByRole('tab', { name: '알림, 새 소식 2개' }));
   await pass(500);
   return user;
 }
@@ -97,10 +97,10 @@ describe('the new mark in 알림', () => {
 
   it('is gone when 알림 is opened again', async () => {
     const user = await openNotifications();
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('tab', { name: '내 정보' }));
     await pass(500);
 
-    await user.press(screen.getByRole('button', { name: '알림 1개' }));
+    await user.press(screen.getByRole('tab', { name: '알림, 새 소식 1개' }));
     await pass(500);
 
     expect(screen.getByRole('button', { name: UNREAD_ROW })).toBeVisible();

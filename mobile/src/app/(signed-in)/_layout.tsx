@@ -15,6 +15,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -44,7 +45,6 @@ type Edge = 'bottom' | 'right';
 // screen, the menu panel and an Invite Link's accept screen, from the right for the others.
 const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['quests', 'bottom'],
-  ['notifications', 'right'],
   ['profile-edit', 'right'],
   ['me/friends/index', 'right'],
   ['me/friends/requests', 'right'],

@@ -4,6 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -83,8 +84,7 @@ afterEach(() => {
 
 async function openNotifications(bell: string): Promise<Awaited<ReturnType<typeof openMain>>> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-  await user.press(screen.getByRole('button', { name: bell }));
+  await user.press(screen.getByRole('tab', { name: bell }));
   await pass(500);
   return user;
 }
@@ -138,7 +138,7 @@ describe('the requests waiting for the Leader, in 알림', () => {
     server.on('GET /quests', { status: 200, body: [DINNER, STUDY] });
     server.on(`GET /quests/${STUDY.id}/join-requests`, { status: 200, body: JOIN_REQUESTS });
 
-    await openNotifications('알림 1개');
+    await openNotifications('알림, 새 소식 1개');
 
     expect(screen.getByRole('button', { name: '참여 신청 2명 · 알고리즘 스터디' })).toBeVisible();
     expect(screen.queryByText(ASKED.title)).toBeNull();

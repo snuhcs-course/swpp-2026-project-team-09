@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -80,8 +81,8 @@ export function ChatInputs(): ReactElement {
 
 export function BottomNavs(): ReactElement {
   const [active, setActive] = useState(0);
-  const [mainActive, setMainActive] = useState(0);
-  const showToast = useToast();
+  const [mainActive, setMainActive] = useState(2);
+  const [raised, setRaised] = useState(true);
   return (
     <Section name="BottomNav">
       <BottomNav
@@ -95,23 +96,23 @@ export function BottomNavs(): ReactElement {
         ]}
         onSelect={setActive}
       />
-      {/* The main screen's bar, as its frame draws it: an action in the middle and no line on top. */}
+      {/* The tabs' bar (A04 ticket 09): the map's round tab in the middle, which raises and lowers the AI on its own
+          tab, and no line on top. */}
       <BottomNav
         active={mainActive}
         items={[
-          { icon: 'map', label: '지도' },
           { icon: 'users', label: '파티', badge: 2 },
-          { icon: 'plus', label: '올리기', action: true },
           { icon: 'calendar', label: '행사' },
+          { icon: 'mapSpark', label: '지도', round: true, raised },
+          { icon: 'bell', label: '알림', badge: 3 },
           { icon: 'user', label: '내 정보' },
         ]}
         line={false}
         onSelect={(index) => {
           if (index === 2) {
-            showToast('올리기');
-          } else {
-            setMainActive(index);
+            setRaised(mainActive === 2 ? !raised : true);
           }
+          setMainActive(index);
         }}
       />
     </Section>

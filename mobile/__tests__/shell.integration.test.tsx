@@ -6,11 +6,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { pass, screen, shownAddress, startApp } from './support/app';
+import { AI_INPUT } from './support/lists';
 import { holdBackButton } from './support/back';
 import { FOLD_FRIENDS, UNFOLD_FRIENDS } from './support/lists';
 import { givePhone, openMain } from './support/main';
@@ -44,13 +46,14 @@ describe('a slot of the bottom navigation', () => {
   it.each([
     ['파티', /^파티/u],
     ['행사', '행사'],
+    ['알림', /^알림/u],
     ['내 정보', '내 정보'],
   ] as const)('%s opens its screen, with its slot as the current one', async (title, slot) => {
     const user = await openMain();
 
     await user.press(screen.getByRole('tab', { name: slot }));
 
-    expect(screen.getByRole('header', { name: title })).toBeVisible();
+    expect(screen.getByRole('header', { name: title === '알림' ? /^알림/u : title })).toBeVisible();
     expect(screen.getByRole('tab', { name: slot })).toBeSelected();
     expect(screen.getByRole('tab', { name: '지도' })).not.toBeSelected();
   });
@@ -64,25 +67,88 @@ describe('a slot of the bottom navigation', () => {
     expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
     expect(screen.getByRole('button', { name: '확대' })).toBeVisible();
   });
+});
 
-  it.each([
-    ['지도', 'button', '확대'],
-    ['행사', 'header', '행사'],
-  ] as const)('올리기 on %s opens 파티 만들기, empty, and 뒤로 shows the tab again', async (slot, role, name) => {
+// The bar of A04 ticket 09: 파티, 행사, the map's round tab in the middle, 알림 and 내 정보, with no 올리기.
+describe('the bottom bar', () => {
+  it('reads 파티, 행사, 지도, 알림 and 내 정보, with 지도 in the middle, and has no 올리기', async () => {
+    await openMain();
+
+    const slots = ['파티', '행사', '지도', '알림', '내 정보'];
+    const names = screen
+      .getAllByRole('tab')
+      .map((tab) => String(tab.props.accessibilityLabel).split(',')[0] ?? '')
+      .filter((name) => slots.includes(name));
+    expect(names).toEqual(slots);
+    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+    expect(screen.queryByRole('button', { name: '올리기' })).toBeNull();
+  });
+
+  it('opens with the AI raised', async () => {
+    await openMain();
+
+    expect(screen.getByRole('tab', { name: '지도' })).toBeExpanded();
+    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
+  });
+});
+
+describe('the middle on the map', () => {
+  it('lowers the AI input, and raises it again with what was typed', async () => {
     const user = await openMain();
-    await user.press(screen.getByRole('tab', { name: slot }));
+    await user.type(screen.getByLabelText(AI_INPUT), '배고파');
 
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await user.press(screen.getByRole('tab', { name: '지도' }));
 
-    expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
-    expect(screen.getByLabelText('제목')).toHaveDisplayValue('');
-    expect(screen.queryByText('준비 중이에요')).toBeNull();
+    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeCollapsed();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+    expect(screen.getByRole('button', { name: '확대' })).toBeVisible();
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('tab', { name: '지도' }));
 
-    expect(screen.queryByRole('header', { name: '파티 만들기' })).toBeNull();
-    expect(screen.getByRole('tab', { name: slot })).toBeSelected();
-    expect(screen.getByRole(role, { name })).toBeVisible();
+    expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('배고파');
+    expect(screen.getByRole('tab', { name: '지도' })).toBeExpanded();
+  });
+});
+
+describe('the middle on another tab', () => {
+  it('shows the map with the AI raised, also after it was lowered', async () => {
+    const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    await user.press(screen.getByRole('tab', { name: /^파티/u }));
+
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeSelected();
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+
+    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeExpanded();
+    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
+  });
+});
+
+describe('알림 in the tabs', () => {
+  it('is a tab with no 뒤로, and 내 정보 has no bell', async () => {
+    const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: '내 정보' }));
+
+    expect(screen.queryByRole('button', { name: /^알림/u })).toBeNull();
+
+    await user.press(screen.getByRole('tab', { name: /^알림/u }));
+
+    expect(screen.getByRole('header', { name: /^알림/u })).toBeVisible();
+    expect(screen.getByRole('tab', { name: /^알림/u })).toBeSelected();
+    expect(screen.queryByRole('button', { name: '뒤로' })).toBeNull();
+    expect(shownAddress()).toBe('/notifications');
+  });
+
+  it('is what the address /notifications opens', async () => {
+    await openMain();
+
+    await act(() => {
+      router.navigate('/notifications');
+    });
+
+    expect(screen.getByRole('tab', { name: /^알림/u })).toBeSelected();
   });
 });
 

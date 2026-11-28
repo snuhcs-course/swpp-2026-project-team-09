@@ -3,27 +3,54 @@
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useSegments } from 'expo-router';
 import { type ReactElement, useEffect, useEffectEvent, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, color, font, Overlay, radius, space, text } from '@/design-system';
+import { Button, color, font, Icon, Overlay, radius, shadow, space, text } from '@/design-system';
 import { TOUR_STEPS } from '@/features/tab-tour/rules';
 import { type TabTour as Tour, useTabTour } from '@/features/tab-tour/use-tab-tour';
 import { NAV_HEIGHT, tabBarHeight } from './layout';
 import { useTabBarHiddenOnMain } from './main-tab-bar';
 
-// What each step of the tour says, and the slot of the tab bar it points at. The bar has five slots of one width, the
-// third being 올리기, which the tour leaves out. It points only at the four tabs, never at what is inside a tab: the
-// main screen's map, input and cards are being rebuilt (P06 spec, ticket 7).
-const STEPS: readonly { slot: number; title: string; words: string }[] = [
-  { slot: 0, title: '지도', words: '캠퍼스 지도에서 친구와 행사를 보고, 궁금한 걸 물어봐요.' },
-  { slot: 1, title: '파티', words: '함께할 파티를 찾고, 내 파티와 초대를 모아 봐요.' },
-  { slot: 3, title: '행사', words: '학교 행사를 모아 보고, 함께 갈 파티를 찾아요.' },
+// What each step of the tour says, and the slot of the tab bar it points at: the bar's five slots of one width, in its
+// order (A04 ticket 09). It points only at the tabs, never at what is inside a tab. The middle's step also shows its
+// two looks, filled while the AI is raised and outlined while it is lowered.
+const STEPS: readonly { slot: number; title: string; words: string; looks?: true }[] = [
+  { slot: 0, title: '파티', words: '함께할 파티를 찾고, 내 파티와 초대를 모아 봐요.' },
+  { slot: 1, title: '행사', words: '학교 행사를 모아 보고, 함께 갈 파티를 찾아요.' },
+  {
+    slot: 2,
+    title: '지도와 AI',
+    words: '캠퍼스 지도에서 친구와 행사를 보고, AI에게 물어봐요. 지도에서 누르면 AI를 내리고, 다시 누르면 올려요.',
+    looks: true,
+  },
+  { slot: 3, title: '알림', words: '답할 초대와 신청, 지난 알림을 한곳에서 봐요.' },
   { slot: 4, title: '내 정보', words: '시간표, 친구, 위치 공유를 관리해요. 이 안내도 여기서 다시 볼 수 있어요.' },
 ];
+
+// The middle's two looks, each beside what it means.
+function Looks(): ReactElement {
+  return (
+    <View style={styles.looks}>
+      <View style={styles.look} testID="tab-tour-raised">
+        <View style={[styles.round, styles.roundFilled]}>
+          <Icon color={color.onPrimary} name="mapSpark" size={18} />
+        </View>
+        <Text style={styles.lookWords}>채움: AI가 올라와 있어요</Text>
+      </View>
+      <View style={styles.look} testID="tab-tour-lowered">
+        <View style={[styles.round, styles.roundOutlined]}>
+          <Icon color={color.snuBlue} name="mapSpark" size={18} />
+        </View>
+        <Text style={styles.lookWords}>테두리: AI가 내려가 있어요</Text>
+      </View>
+    </View>
+  );
+}
 
 const SLOTS = 5;
 
@@ -126,6 +153,7 @@ function Bubble({ step, shown, size, hole, tour }: BubbleProps): ReactElement {
         {shown.title}
       </Text>
       <Text style={styles.words}>{shown.words}</Text>
+      {shown.looks === true ? <Looks /> : null}
       <View style={styles.buttons}>
         <Pressable accessibilityRole="button" hitSlop={SLOP} onPress={tour.never} style={styles.never}>
           <Text style={styles.neverWords}>다시 보지 않기</Text>
@@ -168,6 +196,12 @@ const styles = StyleSheet.create({
   count: { ...text.caption, fontFamily: font.semiBold, color: color.snuBlue },
   title: { ...text.title, color: color.ink },
   words: { ...text.label, fontFamily: font.regular, color: color.inkMuted },
+  looks: { gap: space[2], marginTop: space[2] },
+  look: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  round: { alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: radius.full },
+  roundFilled: { backgroundColor: color.snuBlue, boxShadow: shadow.navAction },
+  roundOutlined: { borderWidth: 2, borderColor: color.snuBlue, backgroundColor: color.surface },
+  lookWords: { ...text.label, color: color.ink },
   buttons: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space[2] },
   never: { paddingVertical: space[1] },
   neverWords: { ...text.caption, color: color.inkSubtle },

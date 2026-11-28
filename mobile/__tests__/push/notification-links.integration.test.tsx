@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -198,14 +199,14 @@ describe('a push tapped while the app runs', () => {
   it('closes the screen above the tabs', async () => {
     await openMain();
     await act(() => {
-      router.push('/notifications');
+      router.push('/profile-edit');
     });
     await pass(500);
-    expect(screen.getByRole('header', { name: /^알림/u })).toBeVisible();
+    expect(screen.getByRole('header', { name: '프로필 편집' })).toBeVisible();
 
     await tap(tapOn(`/main?card=friend:${MIN_JUN.id}`));
 
-    expect(screen.queryByRole('header', { name: /^알림/u, includeHiddenElements: true })).toBeNull();
+    expect(screen.queryByRole('header', { name: '프로필 편집', includeHiddenElements: true })).toBeNull();
     expect(router.canDismiss()).toBe(false);
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
   });
