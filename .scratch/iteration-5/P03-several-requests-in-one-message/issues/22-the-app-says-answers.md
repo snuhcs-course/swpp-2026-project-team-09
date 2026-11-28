@@ -2,7 +2,7 @@
 
 Parent: [P03 spec](../spec.md). Turns on tickets 20, 21, 23 and 24, which the app already holds but which waited for the main server.
 Status: ready-for-human
-Blocked by: P05 ticket 79 (#735) released, and the user's check on his phone in the preview build. P05 tickets 73, 74, 76 and 78 (#703, #710, #727) are in `snunow/all/26.11.28-6`. P03 ticket 23 (#729) is merged.
+Blocked by: the user's check on his phone in the preview build. P05 tickets 73, 74, 76 and 78 (#703, #710, #727) are in `snunow/all/26.11.28-6`, and P05 ticket 79 (#735) in `snunow/all/26.11.28-8`. P03 ticket 23 (#729) is merged.
 
 Native files: none. Releases: an app OTA update, after the main server's Release with P05 ticket 79.
 
@@ -17,7 +17,7 @@ Native files: none. Releases: an app OTA update, after the main server's Release
 
 ## Acceptance criteria
 
-- [x] Every request says `answers`. (Integration tests, the 27 files that check `SENT_CAPABILITIES`.)
+- [x] Every request says `answers`. (Integration tests, the 26 files that check `SENT_CAPABILITIES`, run locally, since PR CI does not run the app's integration files.)
 - [x] "아침 7시에 도서관 갔다가 점심":
   - ① the study place from 07:00 and ② lunch, each with its own answer in the time card;
   - lunch's plan browsed is kept while the study is chosen;
@@ -27,6 +27,7 @@ Native files: none. Releases: an app OTA update, after the main server's Release
 - [x] "점심이랑 저녁 짜줘" and "관정에 있다가 저녁" as before, now on the real declaration. (Integration tests: `answer-steps-own-answers`, `answer-steps-context`, `answer-step-top-card`, `answer-steps-live`, `answer-booking-on-map`, `answer-study-seat`, `answer-sheet-high-steps`, `answer-steps-gold`, `answer-frame-steps` and `answer-top-stops`.)
 - [x] A step withdrawn with one left: dinner's step leaves, lunch stays chosen, and the next request tells lunch alone. These failed before the change. With none left, both steps leave. (Integration test, `answer-steps-withdrawn`; unit test, `features/conversation-answers`.)
 - [x] One answer on screen: a reply that names it among what leaves and says `clears` takes it off (A); one that names only the request that ended keeps it (B). (Integration test, `answer-clears`.)
+- [x] The mock answers a meal asked for a day out of reach as the main server does, so the emulator shows both. (Unit test, `api/mock-out-of-reach`.)
 - [ ] The user's check on his phone in the preview build.
 
 ## Open points
