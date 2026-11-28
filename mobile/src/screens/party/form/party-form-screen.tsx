@@ -10,6 +10,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -29,6 +30,7 @@ import { type HeldProposal, heldProposal } from '@/features/party/held-proposal'
 import type { Missing } from '@/features/party/making';
 import { EventPicker } from './event-field';
 import { FriendSheet } from './friend-sheet';
+import { useKeptHeight } from './kept-height';
 import { BoardRow, CapacityRow, FriendsRow, VisibilityRows } from './party-form-fields';
 import { PlanBox } from './plan-box';
 import { PosterRow, TextInPlace, TitleInPlace } from './preview-fields';
@@ -182,6 +184,7 @@ function Page({ state, props, onChooseEvent }: PageProps): ReactElement {
   const scroll = useRef<ScrollView>(null);
   const body = useRef<View>(null);
   const frames: Frames = useRef({});
+  const kept = useKeptHeight();
   useToastAbove(FOOTER, useIsFocused());
   const words = wordsOf(props.quest, state.form.visibility === 'public');
   const submit = (): void => {
@@ -203,39 +206,49 @@ function Page({ state, props, onChooseEvent }: PageProps): ReactElement {
       scrollRef={scroll}
       title={words.title}
     >
-      <View ref={body}>
+      <View onLayout={kept.onLayout} ref={body} style={{ minHeight: kept.minHeight }} testID="party-form-page">
         <Preview frames={frames} onChooseEvent={onChooseEvent} props={props} state={state} />
       </View>
     </FullScreenPanel>
   );
 }
 
-// The form, or the event picker over it, which keeps what the form holds.
+// The form, and the event picker over it, which keeps what the form holds. The page stays under the picker, so that
+// coming back finds it as it was left, scrolled where it was (P06 ticket 66).
 function Form(props: FormProps): ReactElement {
   const state = useFormState(props);
   const [picking, setPicking] = useState(false);
-  if (picking) {
-    return (
-      <EventPicker
-        chosen={state.form.event}
-        onBack={() => {
-          setPicking(false);
-        }}
-        onPick={(event) => {
-          state.pickEvent(event);
-          setPicking(false);
-        }}
-      />
-    );
-  }
   return (
-    <Page
-      onChooseEvent={() => {
-        setPicking(true);
-      }}
-      props={props}
-      state={state}
-    />
+    <>
+      {/* Under the picker the page is not read out. */}
+      <View
+        accessibilityElementsHidden={picking}
+        importantForAccessibility={picking ? 'no-hide-descendants' : 'auto'}
+        style={styles.under}
+      >
+        <Page
+          onChooseEvent={() => {
+            setPicking(true);
+          }}
+          props={props}
+          state={state}
+        />
+      </View>
+      {picking ? (
+        <View style={StyleSheet.absoluteFill}>
+          <EventPicker
+            chosen={state.form.event}
+            onBack={() => {
+              setPicking(false);
+            }}
+            onPick={(event) => {
+              state.pickEvent(event);
+              setPicking(false);
+            }}
+          />
+        </View>
+      ) : null}
+    </>
   );
 }
 
@@ -300,6 +313,7 @@ function EditedForm({ questId }: { questId: string }): ReactElement {
 }
 
 const styles = StyleSheet.create({
+  under: { flex: 1 },
   body: { gap: space[5], padding: space[4] },
   post: { gap: space[3] },
   section: { marginBottom: space[1], fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: color.inkMuted },
