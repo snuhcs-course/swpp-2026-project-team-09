@@ -127,11 +127,16 @@ function shownKept(kept: readonly KeptNotification[]): KeptNotification[] {
   return kept.filter(({ kind }) => kind !== 'join-asked' && kind !== 'party-activated');
 }
 
+// The key of a kept Notification's row.
+export function keptKey(id: string): string {
+  return `notice-${id}`;
+}
+
 function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[] {
   return shownKept(kept)
     .toSorted((one, other) => Date.parse(other.at) - Date.parse(one.at))
     .map((notification) => ({
-      key: `notice-${notification.id}`,
+      key: keptKey(notification.id),
       kind: keptKind(notification.kind),
       icon: keptIcon(notification),
       title: notification.title,

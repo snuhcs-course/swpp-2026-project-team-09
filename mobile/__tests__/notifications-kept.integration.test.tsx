@@ -137,7 +137,7 @@ describe('an unread kept Notification', () => {
 
     await user.press(screen.getByRole('button', { name: '알림 2개' }));
     await pass(500);
-    expect(screen.getByRole('button', { name: ROW })).toBeVisible();
+    expect(screen.getByRole('button', { name: `새 알림 · ${ROW}` })).toBeVisible();
     expect(server.received('POST /notifications/read')).toHaveLength(1);
     await backToMe(user);
 

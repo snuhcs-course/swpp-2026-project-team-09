@@ -11,9 +11,9 @@ import { color, font, Icon, type IconName, radius } from '@/design-system';
 import type { FormEvent } from '@/features/party/making';
 import type { PickedPlace } from '@/features/places/picked-place';
 import { DateTimeSheet, whenWords } from '../../date-time-sheet';
-import { KindTag, usePlaceKind } from './place-kind';
-import { PlaceSheet } from './place-sheet';
-import { usePlaceSheet } from './use-place-sheet';
+import { KindTag, usePlaceKind } from '../../place-sheet/place-kind';
+import { PlaceSheet } from '../../place-sheet/place-sheet';
+import { usePlaceSheet } from '../../place-sheet/use-place-sheet';
 
 // The 파티 form's box of the time, the place and the event, as the 모집글 shows them: a row each, an icon and the value
 // with no label, which opens its sheet.

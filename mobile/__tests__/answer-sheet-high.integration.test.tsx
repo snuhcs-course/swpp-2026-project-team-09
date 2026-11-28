@@ -2,15 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { StyleSheet, type ViewStyle } from 'react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { askOnMap } from './support/answer-map';
-import { grip as sheetGrip, raiseCard } from './support/card-grip';
+import { grip as sheetGrip, raiseCard, shownHeight } from './support/card-grip';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { layStage } from './support/lists';
@@ -56,12 +56,6 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// High's height: the sheet's scrolling part is laid out at it.
-function highHeight(): number {
-  const style: unknown = screen.getByTestId('answer-card-content').props.style;
-  return Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).height);
-}
-
 // Partitions: while the answer loads, with no time card yet; the answer come, its time card laid out as the phone lays
 // it out. Expected value: the same high in both.
 describe('high while an answer loads', () => {
@@ -75,13 +69,13 @@ describe('high while an answer loads', () => {
     await raiseCard();
     await raiseCard();
     expect(sheetGrip()).toHaveAccessibilityValue({ text: '크게' });
-    const loading = highHeight();
+    const loading = shownHeight();
 
     await pass(ANSWER_MS);
     // The card's own parts tell its height: the bar itself has no layout handler, so one fired on it reaches the stage.
     await layFolded(116);
     await pass(50);
 
-    expect(highHeight()).toBe(loading);
+    expect(shownHeight()).toBe(loading);
   });
 });
