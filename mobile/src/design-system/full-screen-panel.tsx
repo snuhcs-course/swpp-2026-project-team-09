@@ -5,10 +5,12 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, type Ref, useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { useRevealFocused } from '@/hooks/use-reveal-focused';
 import { useInsets } from './insets';
@@ -36,6 +38,9 @@ interface FullScreenPanelProps {
   // On the glass layer's `screen` level instead of white, for a screen the stack shows over the map, which then shows through
   // (`app/(signed-in)/_layout.tsx`, A04 ticket 08). The app bar is clear on it, as the friend panel's is.
   glass?: boolean;
+  // A page drawn inside a screen, not a screen of the stack, such as 파티 만들기's 관련 행사 고르기: Android's back then
+  // does what its ‹ does, before the screen under it leaves (P06 ticket 60). A screen of the stack is left by the stack.
+  inner?: boolean;
   children: ReactNode;
 }
 
@@ -75,8 +80,10 @@ export function FullScreenPanel({
   subtle = false,
   scrollRef,
   glass = false,
+  inner = false,
   children,
 }: FullScreenPanelProps): ReactElement {
+  useBackToClose(inner, leave.onPress);
   const insets = useInsets();
   const keyboard = useKeyboardHeight(insets.bottom);
   const scroll = useBothRefs(scrollRef);
