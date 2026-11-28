@@ -15,7 +15,7 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 
 ## What to build
 
-- `Notification` gains `readAt`, nullable; a row is unread while it is null. The migration sets `readAt` on the rows that exist and whose time has come (`at <= now()`), so that the bell counts only what comes after the Release (decided by the user on 2026-11-28). A row kept before the Release for a time after it, such as the next morning's 지금 나서요, stays unread and counts when it rings (PR #747's review).
+- `Notification` gains `readAt`, nullable; a row is unread while it is null. The migration sets `readAt` on the rows that exist, so that the bell counts only what comes after the Release (decided by the user on 2026-11-28). It sets it only where the time has come (`at <= now()`): a row kept before the Release for a time after it, such as the next morning's 지금 나서요, stays unread and counts when it rings (suggested by fyoon46 in PR #747's review, accepted by the user).
 - A write that rings a row again makes it unread again: `keep`, and `replace` when the time moves, set `readAt` back to null with `sentAt`. `renew`, which keeps whether it was sent, keeps `readAt` too.
 - `GET /notifications` gives each row's `read`.
 - A new `POST /notifications/read` marks every kept Notification of the User whose time has come as read.
