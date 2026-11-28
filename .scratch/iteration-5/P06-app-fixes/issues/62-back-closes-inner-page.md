@@ -1,4 +1,4 @@
-# 60: Android's back closes a page drawn inside a screen, as its ‹ does
+# 62: Android's back closes a page drawn inside a screen, as its ‹ does
 
 Parent: [P06 spec](../spec.md)
 Status: ready-for-human (built; waits for review)

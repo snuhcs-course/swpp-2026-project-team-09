@@ -39,7 +39,7 @@ interface FullScreenPanelProps {
   // (`app/(signed-in)/_layout.tsx`, A04 ticket 08). The app bar is clear on it, as the friend panel's is.
   glass?: boolean;
   // A page drawn inside a screen, not a screen of the stack, such as 파티 만들기's 관련 행사 고르기: Android's back then
-  // does what its ‹ does, before the screen under it leaves (P06 ticket 60). A screen of the stack is left by the stack.
+  // does what its ‹ does, before the screen under it leaves (P06 ticket 62). A screen of the stack is left by the stack.
   inner?: boolean;
   children: ReactNode;
 }
