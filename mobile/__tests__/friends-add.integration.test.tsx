@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import * as Clipboard from 'expo-clipboard';
@@ -49,11 +50,22 @@ describe('내 친구 ID and the field', () => {
     const user = await openFriendScreen('/me/friends/add');
 
     expect(screen.getByText('7KX2M9QD')).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '복사' }));
+    await user.press(screen.getByRole('button', { name: '친구 ID 복사' }));
     await pass(0);
 
     expect(Clipboard.setStringAsync).toHaveBeenCalledWith('7KX2M9QD');
     expect(screen.getByText('친구 ID를 복사했어요')).toBeVisible();
+  });
+
+  // The section heads say what each part is: the field has no label of its own and no hint repeats them.
+  it('names the field only to a screen reader, under its section head', async () => {
+    await openFriendScreen('/me/friends/add');
+
+    expect(screen.getByRole('header', { name: '친구 ID로 추가' })).toBeVisible();
+    expect(screen.getByLabelText('친구 ID')).toBeVisible();
+    expect(screen.queryByText('친구 ID')).toBeNull();
+    expect(screen.queryByText('친구 ID를 알려 주면 친구 요청을 받을 수 있어요')).toBeNull();
+    expect(screen.queryByRole('button', { name: '복사' })).toBeNull();
   });
 
   it('takes letters and digits in capitals, at most 8, and finds at 8', async () => {
