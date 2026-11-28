@@ -9,9 +9,10 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
+import { useEffect, useEffectEvent, useMemo } from 'react';
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import type { LabelView } from '@/features/assistant/answer-labels';
@@ -33,7 +34,7 @@ import {
   useFraming,
   useHeldViews,
 } from './answer-framing';
-import { paddingOf } from './answer-padding';
+import { type Frame, useFramedCamera } from './framed-camera';
 import type { Room } from './layout';
 import { facesClearOf, othersOf, useFacePoints, useFaces } from './use-answer-faces';
 
@@ -95,64 +96,6 @@ function drawOf(
   }
   const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
   return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways);
-}
-
-// How long the drawing and the card's height stay the same before the camera follows an answer that replaced another,
-// such as a recalculation's: the card is laid out again after that answer comes, and the camera moves once for both.
-const STILL_MS = 120;
-
-// The glide to the camera the drawing's labels were placed at. Until the stage is laid out and the map has told its fit
-// zoom, the map fits the points itself. No drawing, no move.
-function showDrawing(drawing: AnswerDrawing | null, shown: LabelView | null, map: MainMap, framing: Framing): void {
-  if (drawing === null || drawing.points.length === 0) {
-    return;
-  }
-  if (framing.view === null) {
-    map.fitAnswer(drawing.points, paddingOf(framing.top, framing.card, drawing, framing.pill, framing.timeBar));
-    return;
-  }
-  if (shown !== null) {
-    map.moveTo(shown.camera);
-  }
-}
-
-// Shows the drawing when it comes, and again when the card's height or the stage's size changes. Once an answer has
-// replaced another, the glide waits until the drawing and the card's height have stayed the same for `STILL_MS`. No
-// drawing moves nothing, so closing the answer leaves the camera where it is.
-function useAnswerCamera(
-  drawing: AnswerDrawing | null,
-  shown: LabelView | null,
-  answer: object | null,
-  map: MainMap,
-  framing: Framing,
-): void {
-  const followed = useRef<object | null>(null);
-  const waiting = useRef(false);
-  const move = (): void => {
-    showDrawing(drawing, shown, map, framing);
-  };
-  const follow = useEffectEvent(() => {
-    if (followed.current !== null && answer !== null && answer !== followed.current) {
-      waiting.current = true;
-    }
-    followed.current = answer;
-    if (!waiting.current) {
-      move();
-      return null;
-    }
-    return setTimeout(() => {
-      waiting.current = false;
-      move();
-    }, STILL_MS);
-  });
-  useEffect(() => {
-    const timer = follow();
-    return (): void => {
-      if (timer !== null) {
-        clearTimeout(timer);
-      }
-    };
-  }, [drawing, framing]);
 }
 
 export interface AnswerMap {
@@ -220,13 +163,13 @@ export function useBase(draw: Draw | null): AnswerDrawing | null {
 // and the marks are drawn with their sides chosen at that camera, and again at the camera where the map comes to rest
 // after it (`useRestedView`, P04 ticket 69), once their pictures are made (`useMadeDrawing`). Null while there is
 // nothing to draw. `looks` are asked for with the drawing's own, so that a change of drawing never waits for a
-// picture. `answer` is the answer drawn, or the reply of a Lookup, for the camera to tell one that replaced another.
+// picture. `frame` says what the camera frames, and when (`useFramedCamera`, P10 ticket 30).
 // `routes` are those of the scene drawn: its walks follow their paths once found (`useAnswerWalks`). Labels keep clear
 // of the faces at `avoid`.
 export function useDrawnMap(
   draw: Draw | null,
   base: AnswerDrawing | null,
-  answer: object | null,
+  frame: Frame,
   looks: readonly MarkerLook[],
   map: MainMap,
   framing: Framing,
@@ -246,7 +189,7 @@ export function useDrawnMap(
   const baseKey = useMemo(() => looksKey(base), [base]);
   const { drawing, view, images } = useMadeDrawing(baseKey, next, placedAt, looks);
   const things = drawing?.things ?? [];
-  useAnswerCamera(base, shown, answer, map, framing);
+  useFramedCamera(base, shown, frame, map, framing);
   const lines = useAnswerWalks(drawing?.lines ?? NO_LINES, routes);
   if (base === null || drawing === null || things.length === 0) {
     return null;
@@ -268,6 +211,13 @@ export function ignorePress(): void {
 
 const NO_AVATARS: readonly MapAvatar[] = [];
 
+// What a way's camera frames: its places, where they are. A poll that brings the same way again frames nothing.
+function sceneKeyOf(scene: MapScene | null): string | null {
+  return scene === null
+    ? null
+    : scene.places.map(({ place, role }) => `${role}:${String(place.latitude)},${String(place.longitude)}`).join('|');
+}
+
 // The invitee's own way of a received invitation drawn as a Plan is, with no Avatar of anyone else: the card says
 // that others are shown once the Party is on. Null while there is none to draw.
 export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Room): AnswerMap | null {
@@ -276,12 +226,26 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
     [scene],
   );
   const framing = useFraming(map, room, false);
-  const drawn = useDrawnMap(draw, useBase(draw), null, NO_LOOKS, map, framing, scene?.routes);
+  const frame = { key: { reply: sceneKeyOf(scene), chosen: [] }, from: scene };
+  const drawn = useDrawnMap(draw, useBase(draw), frame, NO_LOOKS, map, framing, scene?.routes);
   if (drawn === null) {
     return null;
   }
   const { markers, lines } = drawn;
   return { contents: { markers, lines, avatars: NO_AVATARS }, onPress: ignorePress, ...ANSWER_LIMITS };
+}
+
+// A Plan's framing: for the reply, and again for the Plan chosen, its menu opened or closed, the Plan made or left as
+// it is, and a recalculation that brings other places; one that keeps the places frames nothing.
+function planFrame(
+  { source, answer, index, menuFor }: ShownAnswer,
+  settled: boolean,
+  leftAlone: boolean,
+  active: boolean,
+): Frame {
+  const plan = answer?.plans[index];
+  const chosen = [plan?.id ?? index, sceneKeyOf(plan?.scene ?? null), menuFor, settled, leftAlone];
+  return { key: { reply: source, chosen }, from: answer, active };
 }
 
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
@@ -297,6 +261,8 @@ export function useAnswerMap(
   everyday: EverydayAvatars,
   { sending, made, standings, changed, changing, left }: Invited,
   onMark: OnMark = ignoreMark,
+  // Whether the map shows this answer, not a scene the app made over it (`Frame`).
+  active = true,
 ): AnswerMap | null {
   const { answer, index } = shown;
   const settled = made !== null || changed !== null;
@@ -325,7 +291,8 @@ export function useAnswerMap(
   const avoid = useFacePoints(faces);
   const { held, looks } = useHeldViews(answer, sent, standings, framing, avoid, base);
   const press = pressableWhile(sent);
-  const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, press, avoid, held);
+  const frame = planFrame(shown, settled, leftAlone, active);
+  const drawn = useDrawnMap(draw, base, frame, looks, map, framing, routes, press, avoid, held);
   if (drawn === null) {
     return null;
   }

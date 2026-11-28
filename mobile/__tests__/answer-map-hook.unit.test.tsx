@@ -10,15 +10,14 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, renderHook } from '@testing-library/react-native';
+import { renderHook } from '@testing-library/react-native';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
 import type { AnswerLabel } from '@/design-system';
 import { drawingOf } from '@/features/assistant/answer-marks';
-import { NO_STANDINGS } from '@/features/assistant/invited-friends';
-import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { NO_ANSWER } from './support/no-answer';
 import { inView, type MapCamera, type MarkerLook } from '@/map';
 import type * as MarkerImages from '@/map/marker-images';
@@ -26,6 +25,7 @@ import { useMarkerImages } from '@/map/marker-images';
 import type { Room } from '@/screens/main/layout';
 import { type AnswerMap, useAnswerMap } from '@/screens/main/use-answer-map';
 import { placeMoved, withScene } from './support/answer-view';
+import { FIRST, FIT_ZOOM, NOT_INVITED, render, ROOM, shownAt, SIZE } from './support/answer-map-hook';
 import { type Asked, mapOf } from './support/main-map-stand-in';
 
 jest.mock('@/map/marker-images', () => {
@@ -46,41 +46,6 @@ jest.mock('@/screens/main/use-answer-walks', () => {
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));
-
-// The emulator's numbers: a stage of 411 by 914 under no status bar, and a card of 274. Nothing takes the top (the way
-// back is in the card) and the card 274 at the bottom, each with the 8 of ticket 08's area and the room the marks there need: for the first
-// Plan 24 above (자하연식당 2층's label is at its left) and 66 below (the pick's two lines under 302동, 18 + 2 + 46), so
-// the area is from 32 to 566; for the third Plan 24 and 24 (302동's labels are at its sides). A campus map of that
-// view goes no further out than zoom 15.26 (see `answer-camera.unit.test.ts`).
-const SIZE = { width: 411, height: 914 };
-const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false, interestsHint: false };
-const FIT_ZOOM = 15.26;
-
-function shownAt(index: number): ShownAnswer {
-  return { ...NO_ANSWER, source: MEAL_ANSWER, answer: MEAL_ANSWER, plan: MEAL_ANSWER.plans[index] ?? null, index };
-}
-
-interface Given {
-  shown: ShownAnswer;
-  room: Room;
-  fitZoom: number | null;
-}
-
-const FIRST: Given = { shown: shownAt(0), room: ROOM, fitZoom: FIT_ZOOM };
-
-// No Plan made into a Quest.
-const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS, changed: null, changing: false, left: null };
-
-async function render(asked: Asked, given: Given = FIRST): Promise<(next: Given) => Promise<void>> {
-  const { rerender } = await renderHook(
-    ({ shown, room, fitZoom }: Given) =>
-      useAnswerMap(shown, mapOf(fitZoom, asked), room, { avatars: [], cards: [] }, NOT_INVITED),
-    { initialProps: given },
-  );
-  return async (next): Promise<void> => {
-    await rerender(next);
-  };
-}
 
 // From the top of the box around the points to its bottom, in the view of a camera.
 function spanIn(points: readonly LatLng[], camera: MapCamera | undefined): { top: number; bottom: number } {
@@ -223,87 +188,6 @@ describe("the room the camera leaves when it fits the Plan's own points alone", 
 
     expect(asked.cameras[0]?.zoom).toBeCloseTo(15.2601, 3);
     expect(labelOf(drawn, '302동식당 · 12:15 점심')).toMatchObject({ side: 'below' });
-  });
-});
-
-async function wait(milliseconds: number): Promise<void> {
-  await act(async () => {
-    await jest.advanceTimersByTimeAsync(milliseconds);
-  });
-}
-
-// The card laid out taller over the first Plan, as it is before a recalculation's answer changes it.
-const TALLER: Given = { ...FIRST, room: { ...ROOM, answerHeight: 380 } };
-
-// A recalculation's answer: a new object, as every answer of the server is, here with the stored answer's Plans.
-function recalculated(plans = MEAL_ANSWER.plans): ShownAnswer {
-  const answer = { ...MEAL_ANSWER, plans };
-  return { ...shownAt(0), answer, plan: answer.plans[0] ?? null };
-}
-
-function onFakeTimers(): void {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-}
-
-// Partitions: the card laid out again within 120 ms of the answer, and the moment of 120 ms still; an answer without a
-// Plan. Expected values: the first Plan's area under a card of 274 is from 32 to 566, as above.
-describe("the answer's camera after a recalculation", () => {
-  onFakeTimers();
-
-  it('moves once, after the drawing and the card have stayed the same for 120 ms, to the card then laid out', async () => {
-    const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked, TALLER);
-    const shown = recalculated();
-
-    await rerender({ ...TALLER, shown });
-    await wait(60);
-    // The card is laid out again for the answer.
-    await rerender({ ...FIRST, shown });
-    await wait(119);
-    expect(asked.cameras).toHaveLength(1);
-    await wait(1);
-
-    expect(asked.cameras).toHaveLength(2);
-    const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 0).points, asked.cameras[1]);
-    // Ticket 08's camera, the one its labels were placed at: 32 and 566 with the 8 of its area.
-    expect(top).toBeCloseTo(32, 0);
-    expect(bottom).toBeCloseTo(566, 0);
-    await wait(1000);
-    expect(asked.cameras).toHaveLength(2);
-  });
-
-  it('stays where it is when the answer has no Plan', async () => {
-    const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked, TALLER);
-
-    // The recalculated answer with its Plans emptied for the boundary.
-    await rerender({ ...FIRST, shown: recalculated([]) });
-    await wait(1000);
-
-    expect(asked.cameras).toHaveLength(1);
-    expect(asked.fits).toBe(0);
-  });
-});
-
-// Partitions: a change of the card after the one move.
-describe("the answer's camera after the move for a recalculation", () => {
-  onFakeTimers();
-
-  it('moves at once again for a change of the card', async () => {
-    const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked, TALLER);
-    const shown = recalculated();
-    await rerender({ ...FIRST, shown });
-    await wait(120);
-
-    await rerender({ ...FIRST, shown, room: { ...ROOM, answerHeight: 336 } });
-
-    expect(asked.cameras).toHaveLength(3);
   });
 });
 

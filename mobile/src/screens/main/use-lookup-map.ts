@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -67,6 +68,8 @@ export function useLookupMap(
   mine: readonly MapAvatar[],
   seats: AwaySeats | null = null,
   raise: (earlier: boolean) => void = ignoreRaise,
+  // Whether the map shows this Lookup, not an answer or a scene the app made over it (`Frame`).
+  active = true,
 ): AnswerMap | null {
   const area = reply?.area ?? null;
   const draw = useMemo(
@@ -81,7 +84,9 @@ export function useLookupMap(
   const base = useBase(draw);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useUnselected(others);
-  const drawn = useDrawnMap(draw, base, reply, NO_LOOKS, map, framing, lookup?.scene.routes, ownMark);
+  // Framed for its reply: the free seats the phone reads again frame nothing.
+  const frame = { key: { reply, chosen: [] }, from: reply, active };
+  const drawn = useDrawnMap(draw, base, frame, NO_LOOKS, map, framing, lookup?.scene.routes, ownMark);
   if (drawn === null || lookup === null) {
     return null;
   }
