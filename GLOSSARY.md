@@ -91,6 +91,10 @@ _Avoid_: Objective, task
 A User who holds a Quest. Each Holder tracks their own progress through its Sub Quests.
 _Avoid_: Participant, assignee
 
+**Holder Note**:
+One sentence a Holder leaves in a Quest for its other Holders, such as where they are, how late they are or what they wear. A Holder has at most one in a Quest, and only the Quest's Holders see it. Writing again replaces it, and it goes when its writer clears it or stops holding the Quest. The screens call it "한마디".
+_Avoid_: Status message, chat message, comment, memo
+
 **Shared Quest**:
 A Quest with two or more Holders, such as Users who joined another's Quest.
 _Avoid_: Common quest
