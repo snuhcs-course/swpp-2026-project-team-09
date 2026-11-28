@@ -15,6 +15,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
+import { recordMoves } from './support/moves';
 import { answerRoom, PICNIC, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
@@ -63,18 +64,21 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-async function pressTheRow(): Promise<void> {
+// Presses the row in 알림, opened from 내 정보. Gives the router's moves the press made.
+async function pressTheRow(): Promise<unknown[][]> {
   const user = await openMain();
   await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
   await user.press(screen.getByRole('tab', { name: /^알림/u }));
   await pass(500);
+  const moves = recordMoves();
   await user.press(screen.getByRole('button', { name: ROW }));
   await pass(500);
+  return moves();
 }
 
 describe("a 파티's own news in 알림", () => {
-  it("opens the 파티's room when pressed", async () => {
-    await pressTheRow();
+  it("opens the 파티's room over 알림 when pressed, in one move (P06 ticket 63)", async () => {
+    expect(await pressTheRow()).toEqual([['push', `/room/${PICNIC.id}`]]);
 
     expect(shownAddress()).toBe(`/room/${PICNIC.id}`);
     expect(screen.getByText(PICNIC.title)).toBeVisible();

@@ -12,6 +12,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +25,7 @@ import { resetMockPrivateZones } from '@/api/mock/private-zones';
 import { resetMockTimetable } from '@/api/mock/timetable';
 import { forgetMockFavorites } from '@/api/mock/global-events';
 import { resetMockTutorial } from '@/api/mock/tutorial';
+import { forgetAskedCard } from '@/push/asked-card';
 import { forgetKeptCounts } from '@/screens/main/library/room-counting';
 
 const SETTINGS = [
@@ -54,6 +56,8 @@ export async function startFresh(): Promise<void> {
   resetMockTutorial();
   // The seat card's room counts are kept for a minute across cards (P01 ticket 08).
   forgetKeptCounts();
+  // A card asked of the main screen and not opened, by a test that ended first.
+  forgetAskedCard();
 }
 
 // The everyday map without interest marks (P05 ticket 13), as a main server without the matches draws it: the map's

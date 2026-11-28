@@ -14,6 +14,7 @@ import { sockets } from './support/fake-socket';
 import type { KeptNotification } from '@/api/waiting-types';
 import { pass, screen, shownAddress } from './support/app';
 import { socketServer } from './support/live';
+import { recordMoves } from './support/moves';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { ACCEPTED, answerMainScreen, askMainServer, INVITATION, LEAVE_BY, PHONE_NOW } from './support/server';
@@ -191,5 +192,24 @@ describe('the time to leave in 알림', () => {
 
     expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
     expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
+  });
+});
+
+describe('a press on a row of 알림 that opens a card on the map', () => {
+  it('goes from 알림 to the map with the card in one move, never showing 내 정보 under it (P06 ticket 63)', async () => {
+    jest.setSystemTime(new Date('2026-10-06T12:17:00+09:00'));
+    server.on('GET /notifications', { status: 200, body: [LEAVE_BY] });
+    const user = await openNotifications('알림');
+    const moves = recordMoves();
+
+    await user.press(screen.getByRole('button', { name: '지금 나서요 · 학생회관식당까지 걸어서 15분 · 12:18' }));
+    await pass(500);
+
+    // One move down to the map: no second tab navigator pushed over 알림, and no stop at 내 정보 on the way.
+    expect(moves()).toEqual([['dismissTo', '/main']]);
+    expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
+    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+    expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
+    expect(shownAddress()).toBe('/main');
   });
 });
