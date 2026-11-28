@@ -6,6 +6,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -56,7 +57,7 @@ export function storedPlace(place: SubQuestPlace | undefined): SubQuest['place']
 
 function subQuestOf(content: SubQuestContent): SubQuest {
   return {
-    id: `sub-quest-${content.startsAt}`,
+    id: `sub-quest-${content.startsAt ?? content.title}`,
     attending: false,
     title: content.title,
     startsAt: content.startsAt,

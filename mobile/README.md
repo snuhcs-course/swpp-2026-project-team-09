@@ -1087,7 +1087,8 @@ person), a request that waited on it (`join-cancelled`, a group) and an invitati
 (`invitation-cancelled`, a calendar). Their address, `/main?card=party-gone:<questId>`, is on no map, and pressing it
 says "이미 없는 파티예요", with the alert icon. The member who becomes a 파티's Leader (`became-leader`, a person on the
 navy round) is told "파티장이 됐어요", with the 파티 and who left it or handed it over in the line; it opens the party's
-card. A kind
+card. A 파티's activation rings its other Holders too (`party-activated`), but that kept copy is left out: the row
+"{name}님이 파티를 활성화했어요" below shows the running Party once. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does

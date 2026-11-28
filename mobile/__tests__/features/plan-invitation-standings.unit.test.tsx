@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -97,8 +98,6 @@ describe("the Quest's members", () => {
     jest.mocked(apiClient.listQuests).mockResolvedValue([
       {
         ...PLAN_QUEST.quest,
-        photo: null,
-        tags: [],
         faces: [],
         members: [
           { user: ASKER, state: 'accepted', lateMinutes: null },

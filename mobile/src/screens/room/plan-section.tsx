@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -16,7 +17,8 @@ import { color, font, Icon, type IconName, radius, space } from '@/design-system
 import { type PointOnMap, pointOnMap } from '@/features/places/point-on-map';
 import type { PlanStepView, RoomView } from '@/features/quests/room-adapter';
 import { PlaceWords, usePlaceOnMap } from '../place-map/place-on-map-sheet';
-import { HelpButton, PLAN_HELP } from './help-bubble';
+import { HelpButton } from '../help-bubble';
+import { PLAN_HELP } from './room-help';
 import { PlanForm } from './plan-form';
 import { SectionTitle } from './section-title';
 import type { RoomActions } from './use-room-actions';

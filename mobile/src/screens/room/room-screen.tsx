@@ -11,22 +11,13 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import {
-  Button,
-  Chip,
-  color,
-  ErrorState,
-  font,
-  FullScreenPanel,
-  LoadingState,
-  space,
-  useToastAbove,
-} from '@/design-system';
+import { Button, color, ErrorState, font, FullScreenPanel, LoadingState, space, useToastAbove } from '@/design-system';
 import { heldAlone } from '@/features/quests/adapter';
 import type { RoomView } from '@/features/quests/room-adapter';
 import { useRoom } from '@/features/quests/use-room';
@@ -51,10 +42,10 @@ function leaveRoom(): void {
   }
 }
 
-// The title, then the 모집글 as 파티 모집글 draws it: the Leader's row without a mark, the text, the tags, and the box
-// of the orange step's time and place with the event's line.
+// The title, then the 모집글 as 파티 모집글 draws it: the Leader's row without a mark, the text, and the box of the
+// orange step's time and place with the event's line.
 function Head({ room }: { room: RoomView }): ReactElement {
-  const { quest, host, text: description, tags, time, place } = room;
+  const { quest, host, text: description, time, place } = room;
   return (
     <View style={styles.head}>
       <Text accessibilityRole="header" style={styles.title}>
@@ -62,13 +53,6 @@ function Head({ room }: { room: RoomView }): ReactElement {
       </Text>
       {host === null ? null : <PostHost line={host.line} name={host.name} />}
       {description === '' ? null : <Text style={styles.description}>{description}</Text>}
-      {tags.length === 0 ? null : (
-        <View accessibilityLabel="태그" style={styles.tags}>
-          {tags.map((tag) => (
-            <Chip key={tag}>{tag}</Chip>
-          ))}
-        </View>
-      )}
       <InfoBox>
         <InfoLine icon="clock">{time}</InfoLine>
         <InfoLine icon="pin">{place}</InfoLine>
@@ -244,5 +228,4 @@ const styles = StyleSheet.create({
   head: { gap: space[3] },
   title: { fontFamily: font.bold, fontSize: 22, lineHeight: 30, letterSpacing: -0.33, color: color.ink },
   description: { fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.ink },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
 });

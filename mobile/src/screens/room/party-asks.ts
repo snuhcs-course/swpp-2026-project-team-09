@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { OtherParty } from '@/features/quests/room-adapter';
@@ -51,10 +52,9 @@ export function joinAsk(title: string, otherParty: OtherParty, onConfirm: () => 
   };
 }
 
-// The question before opening the Quest's Party, `others` being its other Holders. Opening sends no push: the others
-// see it in their 알림 list.
+// The question before opening the Quest's Party, `others` being its other Holders, whom opening rings (P06 ticket 21).
 export function openAsk(others: number, otherParty: OtherParty | null, onConfirm: () => void): Ask {
-  const notice = others > 0 ? '다른 멤버의 알림 목록에 떠요. ' : '';
+  const notice = others > 0 ? `멤버 ${String(others)}명에게 알림이 가요. ` : '';
   return {
     title: '파티를 활성화할까요?',
     body: `${notice}수락한 멤버끼리만 서로 위치를 볼 수 있어요.${switchLine(otherParty)}`,

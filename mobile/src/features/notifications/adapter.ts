@@ -29,6 +29,7 @@ const KEPT_KINDS = [
   'join-cancelled',
   'invitation-cancelled',
   'became-leader',
+  'party-activated',
   'leave-by',
   'room-declined',
   'room-agreed',
@@ -120,10 +121,11 @@ function timeOf(at: string, now: Date): string {
 }
 
 // The Leader's `join-asked` is the push's copy of the row 알림 composes from the requests waiting, which counts them and
-// opens the room that answers them: it is left out, so that no request shows twice.
+// opens the room that answers them, and `party-activated` the copy of a running Party's row: both are left out, so that
+// nothing shows twice.
 function keptNotices(kept: readonly KeptNotification[], now: Date): NoticeView[] {
   return kept
-    .filter(({ kind }) => kind !== 'join-asked')
+    .filter(({ kind }) => kind !== 'join-asked' && kind !== 'party-activated')
     .toSorted((one, other) => Date.parse(other.at) - Date.parse(one.at))
     .map((notification) => ({
       key: `notice-${notification.id}`,

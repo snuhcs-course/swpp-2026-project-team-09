@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { type Party, type Prisma } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { PARTY_INCLUDE } from '../parties/dto/party.dto.js';
+import { type Told } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { CLOCK, type Clock } from './clock.js';
@@ -97,7 +99,7 @@ export class QuestParty {
       return [];
     }
     const audience = await this.audienceOf(party, tx);
-    await tx.party.delete({ where: { id: party.id } });
+    await this.delete(party, tx);
     return audience;
   }
 
@@ -108,7 +110,7 @@ export class QuestParty {
     await tx.partyMember.delete({ where: { userId } });
     const [earliest] = await this.memberIds(party, tx);
     if (earliest === undefined) {
-      await tx.party.delete({ where: { id: party.id } });
+      await this.delete(party, tx);
     } else if (party.leaderId === userId) {
       await tx.party.update({ where: { id: party.id }, data: { leaderId: earliest } });
     }
@@ -120,6 +122,38 @@ export class QuestParty {
     const memberIds = await this.memberIds(party, tx);
     const holderIds = party.questId === null ? [] : await this.quests.holderIds(party.questId, tx);
     return [...new Set([...memberIds, ...holderIds, ...(await this.friends.friendsOfAny(memberIds, tx))])];
+  }
+
+  // Deletes the Party with its members, requests and invitations, and the Holders' Notifications that it opened: every
+  // way a Party ends ends here.
+  async delete(party: Pick<Party, 'id' | 'questId'>, tx: Prisma.TransactionClient): Promise<void> {
+    if (party.questId !== null) {
+      await tx.notification.deleteMany({
+        where: { kind: 'party-activated', cardKind: 'party', cardId: party.questId },
+      });
+    }
+    await tx.party.delete({ where: { id: party.id } });
+  }
+
+  // What each other Holder of the Quest is told of its Party opened by the User, read in the opening's transaction
+  // (P06 ticket 21).
+  async activationTold(questId: string, openerId: string, tx: Prisma.TransactionClient): Promise<[string, Told][]> {
+    const [{ title }, { name }, holderIds] = await Promise.all([
+      tx.quest.findUniqueOrThrow({ where: { id: questId }, select: { title: true } }),
+      tx.user.findUniqueOrThrow({ where: { id: openerId }, select: { name: true } }),
+      this.quests.holderIds(questId, tx),
+    ]);
+    const told: Told = { kind: 'party-activated', questId, questTitle: title, byName: name };
+    return holderIds.filter((id) => id !== openerId).map((id) => [id, told]);
+  }
+
+  // Not awaited: one Holder's Notification never fails the opening. Opening again rings again and replaces the one kept.
+  tellActivated(told: readonly [string, Told][]): void {
+    for (const [userId, one] of told) {
+      this.notifications.schedule(userId, one, this.clock.now()).catch((error: unknown) => {
+        this.logger.warn(`A Holder was not told of a Party opened: ${String(error)}`);
+      });
+    }
   }
 
   // In the order they entered.

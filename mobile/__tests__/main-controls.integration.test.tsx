@@ -12,9 +12,11 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
+import { apiClient } from '@/api/client';
 import { pass, screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import {
@@ -67,7 +69,7 @@ afterEach(() => {
 });
 
 describe('the controls above the navigation of the main screen', () => {
-  it('shows "활성 파티" with the members who share, and no "오늘의 발자국"', async () => {
+  it('shows "활성 파티" with the members who share, the User not while the Master Switch is off, and no "오늘의 발자국"', async () => {
     await openMain();
 
     expect(findButton(/^오늘의 발자국/u)).toBeNull();
@@ -82,6 +84,17 @@ describe('the controls above the navigation of the main screen', () => {
 
     expect(findButton(/^활성 파티/u)).toBeNull();
     expect(button(LAYERS)).toBeVisible();
+  });
+});
+
+describe('the count of "활성 파티"', () => {
+  it('takes in the User who shares in the Party, as the room does', async () => {
+    const turned = apiClient.setMasterSwitch(true);
+    await pass(300);
+    await turned;
+    await openMain();
+
+    expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티4명 공유 중');
   });
 });
 
