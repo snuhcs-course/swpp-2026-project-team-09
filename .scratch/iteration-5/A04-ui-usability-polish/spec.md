@@ -1,6 +1,6 @@
 # A04: The app's UI and usability polish
 
-Status: in progress (01 and 03 to 07 are done; 02 waits for P04's work, see its ticket)
+Status: in progress (01 and 03 to 07 are done; 08 waits for review; 02 waits for P04's work, see its ticket)
 
 ## Problem Statement
 
@@ -12,6 +12,7 @@ The app's screens have grown one ticket at a time, and they no longer read as on
 - **The map's marks** are loud: solid-coloured dots and heavy pins, quest rows told apart by blue and orange, a pink "학" pin for restaurants, and a "가까이 보기" button on every far-away card.
 - **The 행사 tab's** date column is large and long event titles wrap to two lines.
 - **The 내 정보 timetable** scrolls inside its card and does not read as a timetable grid.
+- **The Quest list on the whole screen** (added by the user on 2026-11-28) is solid white, while the friend panel beside it lies on glass over the map.
 
 The canvas does not match the app one to one. It holds screens the app no longer has (Legacy*, the P15 "before" screens), shows features differently, and draws some things the app never built. So the changelog sets the scope, and the canvas only shows how each item should look.
 
@@ -28,6 +29,7 @@ Seven tickets. They are split so that no two of them change the same source file
 5. [**Filter rows as word tabs.**](issues/05-filter-rows-as-word-tabs.md) The shared filter row draws plain word tabs instead of bordered pills. This changes the 내 파티 filter, the friend panel's filter and the Quest screen's filter at once.
 6. [**The map.**](issues/06-map.md) One navy for quest rows, told apart by icon. Glass icon tags for the map's 행사, 파티 and 퀘스트 marks. New restaurant and study-space pins and layer colours. A glass friend panel. No "가까이 보기".
 7. [**The 행사 tab and the timetable.**](issues/07-events-and-timetable.md) A smaller date column and one-line titles on the 행사 tab, and a ruled 09–21 timetable grid on 내 정보.
+8. [**The Quest list on glass.**](issues/08-quests-on-glass.md) Added on 2026-11-28: the Quest list on the whole screen lies on glass over the map, and the map's floating parts give way as they do for the friend panel.
 
 How the work runs:
 
@@ -115,6 +117,7 @@ The 행사 tab and the timetable
 52. As a User with a class outside 09–21, I want the grid widened to fit it, as today.
 53. As a User, I want the timetable drawn as a ruled grid: an outer border, lines between days, a light grey day header, a solid line each hour and a dotted line each half hour.
 54. As a User, I want classes as square blocks that fill their day's column.
+55. As a User opening the Quest list, I want it on glass over the map, as the friend panel is, so that I still see the map behind it.
 
 ## Implementation Decisions
 
@@ -249,6 +252,8 @@ The 행사 tab and the timetable (ticket 07)
 ## Further Notes
 
 Order and conflicts:
+
+- 08 (added 2026-11-28) changes `FullScreenPanel`, the signed-in stack's options for `/quests`, the Quest list and the friend panel's giving way (moved to `screens/main/map-cover.ts`); no open A04 ticket touches them.
 
 - 01, 04, 05 and 07 start together. 01 is small and goes first.
 - 03 and ticket 06's glass parts (the friend panel, the pin head and label) build on 01. Ticket 06's other parts do not wait.

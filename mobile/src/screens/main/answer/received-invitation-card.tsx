@@ -5,6 +5,7 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -20,7 +21,7 @@ import type { ReceivedInvitation } from '../use-received-invitation';
 import { FrameCard } from './frame-card';
 import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
-import { QuestSteps } from './quest-steps';
+import { onlyRepeats, QuestSteps } from './quest-steps';
 import { FAILURE } from './line-types';
 
 interface ReceivedInvitationCardProps {
@@ -87,9 +88,11 @@ function Invitation({ card, offCampus, busy, onAccept, onDecline }: InvitationPr
       </Text>
       {holders === '' ? null : <Text style={styles.with}>{`${withParticle(holders)} 함께`}</Text>}
       {lines.length === 0 ? null : <AnswerLines lines={lines} way />}
-      <View style={styles.steps}>
-        <QuestSteps steps={card.steps} />
-      </View>
+      {card.gathering !== null && onlyRepeats(card.steps, card.gathering.startAt, title) ? null : (
+        <View style={styles.steps}>
+          <QuestSteps steps={card.steps} />
+        </View>
+      )}
       <Buttons busy={busy} onAccept={onAccept} onDecline={onDecline} />
       <Text style={styles.caption}>초대장에는 내 길만 보여요. 다른 사람의 위치는 파티를 켠 뒤에 보여요.</Text>
     </>

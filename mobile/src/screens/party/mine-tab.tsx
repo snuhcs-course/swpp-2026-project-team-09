@@ -8,13 +8,14 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { myPartyQuery } from '@/api/queries';
-import { ChipRow, EmptyState, ErrorState, LoadingState, SectionHeader, space } from '@/design-system';
+import { ChipRow, EmptyState, ErrorState, LoadingState, SectionHeader, space, useListEnd } from '@/design-system';
 import { filterMine, groupMine, LIVE_GROUP, type MineCardView, type MineFilter } from '@/features/party/mine';
 import { useMineCards } from '@/features/party/use-party';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
@@ -98,6 +99,7 @@ export function useMineList(): MineList {
   const { declineParty } = useRoomActions();
   const all = cards ?? [];
   const shown = filterMine(all, filter);
+  const end = useListEnd(space[6]);
   // The chips count, and the empty state minds, the Quests the User holds now, not the past ones.
   const held = (chosen: MineFilter): number => filterMine(all, chosen).filter(({ past }) => !past).length;
   return {
@@ -113,7 +115,7 @@ export function useMineList(): MineList {
       />
     ),
     cards: (
-      <View style={styles.body}>
+      <View style={[styles.body, { paddingBottom: end }]} testID="mine-list">
         {cards === undefined && isPending ? <LoadingState /> : null}
         {cards === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
         {cards !== undefined && held(filter) === 0 ? <MineEmpty filter={filter} /> : null}
@@ -153,7 +155,7 @@ export function MineTab(): ReactElement {
 
 // A group's last card stands 20 from the next group's header words: this gap and the header's 12 above them.
 const styles = StyleSheet.create({
-  body: { gap: space[2], paddingHorizontal: space[4], paddingBottom: space[6] },
+  body: { gap: space[2], paddingHorizontal: space[4] },
   group: { gap: space[3] },
   liveHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });

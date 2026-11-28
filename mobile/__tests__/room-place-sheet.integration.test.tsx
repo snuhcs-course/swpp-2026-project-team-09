@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -68,10 +69,6 @@ beforeEach(async () => {
   server = await askMainServer({ signedIn: true });
   answerRoom(server);
   server.on('GET /places', { status: 200, body: PLACES });
-  server.on('GET /places/search', ({ query }) => ({
-    status: 200,
-    body: PLACES.filter(({ name }) => name.includes(query.q ?? '')),
-  }));
   server.on(`POST ${STEPS}`, { status: 201, body: MEET });
   server.on(`PUT ${STEPS}/${MEET.id}`, { status: 200, body: MEET });
   givePhone({ permission: 'granted', position: ON_CAMPUS });

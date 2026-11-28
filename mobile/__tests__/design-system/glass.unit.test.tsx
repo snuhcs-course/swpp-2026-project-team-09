@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -87,11 +88,11 @@ describe('Glass at the panel level', () => {
     expect(screen.queryByTestId('liquid-glass')).toBeNull();
   });
 
-  it('blurs only a panel', async () => {
+  it('blurs only a panel and a whole screen', async () => {
     mockLiquidGlass = true;
     await render(
       <>
-        {GLASS_LEVELS.filter((level) => level !== 'panel').map((level) => (
+        {GLASS_LEVELS.filter((level) => level !== 'panel' && level !== 'screen').map((level) => (
           <Glass key={level} level={level} testID={level} />
         ))}
       </>,
@@ -107,5 +108,23 @@ describe('Glass at the panel level', () => {
     for (const layer of ['liquid-glass', 'glass-line']) {
       expect(styleOf(layer)).toMatchObject({ borderTopLeftRadius: 20, borderTopRightRadius: 20 });
     }
+  });
+});
+
+describe('Glass at the screen level', () => {
+  it('blurs behind a whole screen where the phone has Liquid Glass, with no white over the blur', async () => {
+    mockLiquidGlass = true;
+    await render(<Glass level="screen" testID="screen" />);
+
+    expect(styleOf('screen').backgroundColor).toBe('transparent');
+    expect(screen.getByTestId('liquid-glass')).toBeTruthy();
+  });
+
+  it("draws white at 85%, denser than a panel's, and no blur where the phone has no Liquid Glass", async () => {
+    await render(<Glass level="screen" testID="screen" />);
+
+    expect(styleOf('screen').backgroundColor).toBe(glass.screen.ground);
+    expect(glass.screen.ground).toBe('rgba(255, 255, 255, 0.85)');
+    expect(screen.queryByTestId('liquid-glass')).toBeNull();
   });
 });

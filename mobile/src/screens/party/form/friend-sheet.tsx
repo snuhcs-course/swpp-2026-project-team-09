@@ -20,7 +20,7 @@ import {
   SheetScroll,
   space,
 } from '@/design-system';
-import { matchesFriend } from '@/features/friends/matches-friend';
+import { FRIEND_SEARCH, matchesFriend } from '@/features/friends/matches-friend';
 import { FriendRow } from './friend-picker';
 
 interface FriendSheetProps {
@@ -89,7 +89,7 @@ export function FriendSheet({ open, friends, chosen, most, onClose, onChosen }: 
           <Text accessibilityRole="header" style={styles.title}>
             친구 초대
           </Text>
-          <SearchField label="친구 검색" onChangeText={setSearch} placeholder="친구 검색" value={search} />
+          <SearchField label={FRIEND_SEARCH} onChangeText={setSearch} placeholder={FRIEND_SEARCH} value={search} />
         </View>
       }
       label="친구 초대"

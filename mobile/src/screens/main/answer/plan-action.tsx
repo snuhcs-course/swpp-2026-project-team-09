@@ -43,13 +43,16 @@ export interface PlanAction {
 }
 
 // "만들고 초대 보내기" for a Plan with a Friend, as "이대로 초대" made it into a Quest and invited them; "일정에 넣기" for a meal's Plan
-// alone, as "여기로" took it; beside a Quest the User holds, "바꾸기" or "파티 보기". None once the Plan is sent, or for a
-// Plan whose card holds its own buttons (events, parties, a new recruiting Quest).
+// alone, as "여기로" took it; beside a Quest the User holds, "바꾸기" or "파티 보기", and "파티 보기" with no Plan. None once
+// the Plan is sent, or for a Plan whose card holds its own buttons (events, parties, a new recruiting Quest).
 export function planActionOf(control: ChatSheetControl): PlanAction | null {
   const { answer: shown, invitation, framed } = control;
   const { answer, plan } = shown;
-  if (!framed || answer === null || plan === null || invitation.made !== null) {
+  if (!framed || answer === null || invitation.made !== null) {
     return null;
+  }
+  if (plan === null) {
+    return noPlanAction(control);
   }
   // A study answer's group study room tells its own main button, as a booking ticket does (P10 ticket 11).
   if (!planShown(control.chat.bubbles, onScreenOf(control)) || plan.study?.group !== undefined) {
@@ -89,18 +92,31 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   return schedulesAlone(answer.input, plan) ? { words: '일정에 넣기', onPress: invitation.invite, disabled } : null;
 }
 
+// No Plan beside a Quest the User holds, such as one asked with a Friend added who cannot come in it (P05 ticket 85): its
+// reasons stand beside "파티 보기", where its people are changed, never alone. None once 그대로 두기 left it.
+function noPlanAction(control: ChatSheetControl): PlanAction | null {
+  const set = setQuestOf(control.answer.answer);
+  const { changed, left } = control.invitation;
+  if (set === null || changed !== null || left !== null || !planShown(control.chat.bubbles, onScreenOf(control))) {
+    return null;
+  }
+  return partyAction(set.questId);
+}
+
+const partyAction = (questId: string): PlanAction => ({
+  words: '파티 보기',
+  onPress: () => {
+    router.push(`/room/${questId}`);
+  },
+  disabled: false,
+});
+
 // Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place, or for a meeting changes that
 // Quest in place, saying whom it invites when it adds Friends to it (P05 ticket 44); one the User may not change is changed in its 파티, which "파티 보기" opens.
 function setQuestAction(set: SetQuest, { invitation, answer }: ChatSheetControl, disabled: boolean): PlanAction {
   // A 바꾸기 refused for good sends the User to the 파티 too.
   if (!set.changeable || invitation.refused !== null) {
-    return {
-      words: '파티 보기',
-      onPress: () => {
-        router.push(`/room/${set.questId}`);
-      },
-      disabled: false,
-    };
+    return partyAction(set.questId);
   }
   if (set.inPlace) {
     const onPress = (): void => {

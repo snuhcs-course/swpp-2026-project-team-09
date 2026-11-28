@@ -7,6 +7,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -113,11 +114,13 @@ describe('a press of "만들고 초대 보내기"', () => {
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
     expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
     expect(card().getByText('12:15 302동식당 · 수락하면 알려 드려요')).toBeVisible();
-    const steps = within(card().getByTestId('quest-steps'));
-    expect(steps.getByText('12:15')).toBeVisible();
-    expect(steps.getByText('302동식당에서 식사')).toBeVisible();
+    // The Quest's one step, "12:15 302동식당에서 식사", would only say the line above again (the user's phone,
+    // 2026-11-28), so no row of steps stands under it.
+    expect(card().queryByTestId('quest-steps')).toBeNull();
     expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(card().getByText('301동에서')).toBeVisible();
+    // The chips wrap onto more lines, as the meal answer's do, rather than run off the card's edge.
+    expect(card().getByTestId('sent-chips')).toHaveStyle({ flexDirection: 'row', flexWrap: 'wrap' });
     expect(card().getByRole('button', { name: '답 닫기' })).toBeEnabled();
   });
 

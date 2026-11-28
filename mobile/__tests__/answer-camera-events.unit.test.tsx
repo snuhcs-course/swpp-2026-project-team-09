@@ -68,6 +68,13 @@ async function firstCamera(shown: ShownAnswer): Promise<MapCamera | undefined> {
   return fresh.cameras[0];
 }
 
+// The camera an answer gets when it comes first under a card of 274 and a time card `timeBarHeight` high.
+async function cameraWithBar(timeBarHeight: number): Promise<MapCamera | undefined> {
+  const fresh: Asked = { fits: 0, cameras: [] };
+  await render(fresh, { ...FIRST, room: { ...ROOM, timeBarHeight } });
+  return fresh.cameras.at(-1);
+}
+
 // Partitions: once the framing has rested, a recalculation that keeps the Plan's place, and one that brings another
 // place first, each with the card laid out again 60 ms after it. Expected values: P10 ticket
 // 30's rule: no move for the same places, and for another place one move, once the drawing and the card have stayed
@@ -211,4 +218,68 @@ describe("the answer's marks and a change of the cards, once the map has rested"
       expect(asked.cameras).toHaveLength(1);
     },
   );
+});
+
+// The emulator and a teammate's phone, 2026-11-28: on the first answer after a cold start, and at font 1.3, the map
+// framed the answer with the pick and its marks under the time card. The time card tells its height from its own
+// layout, which can come after the map has rested from the answer's glide; the framing had closed by then and never
+// counted it (P01 ticket 47). Partitions: the time card's first height told after that rest, at the usual font and at a
+// larger one; the chat card's first height told after it; the User's pan before the time card's height; a height told
+// before the rest. Expected values: one move more, to the camera the answer gets when it comes with its cards laid out,
+// and none after a later fold; none after the pan (P10 ticket 30: the camera is the User's), and none for a height told
+// in time.
+describe("the answer's camera and the time card's height told late", () => {
+  it.each([120, 156])('frames again, once, for a time card %i high told after the map rested', async (height) => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, FIRST);
+    const at = rested(FIRST, asked);
+    await rerender(at);
+
+    await rerender({ ...at, room: { ...ROOM, timeBarHeight: height } });
+
+    expect(asked.cameras).toHaveLength(2);
+    expect(asked.cameras[1]).toEqual(await cameraWithBar(height));
+    const again = rested({ ...at, room: { ...ROOM, timeBarHeight: height } }, asked);
+    await rerender(again);
+    await rerender({ ...again, room: { ...ROOM, timeBarHeight: 24 } });
+    expect(asked.cameras).toHaveLength(2);
+  });
+
+  it("frames again, once, for the chat card's first height told after the map rested", async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const unlaid: Given = { ...WITH_BAR, room: { ...WITH_BAR.room, answerHeight: null } };
+    const rerender = await render(asked, unlaid);
+    const at = rested(unlaid, asked);
+    await rerender(at);
+
+    await rerender({ ...at, room: WITH_BAR.room });
+
+    expect(asked.cameras).toHaveLength(2);
+    expect(asked.cameras[1]).toEqual(await cameraWithBar(120));
+  });
+});
+
+describe("the answer's camera where a card's height told late moves nothing", () => {
+  it('leaves the camera where the User panned it before the time card told its height', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, FIRST);
+    const at = rested(FIRST, asked);
+    await rerender(at);
+    const panned: MapCamera = { centre: { latitude: 37.46, longitude: 126.952 }, zoom: 16 };
+    await rerender({ ...at, camera: panned });
+
+    await rerender({ ...at, camera: panned, room: { ...ROOM, timeBarHeight: 120 } });
+
+    expect(asked.cameras).toHaveLength(1);
+  });
+
+  it('moves nothing more for a time card told before the map rested', async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked, WITH_BAR);
+    const at = rested(WITH_BAR, asked);
+
+    await rerender(at);
+
+    expect(asked.cameras).toHaveLength(1);
+  });
 });

@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -57,7 +58,7 @@ async function choose(user: User, select: string, choice: string): Promise<void>
   await user.press(screen.getByRole('button', { name: choice }));
 }
 
-// The User stops typing for 300 ms, and the search is answered.
+// The Places are listed, and the words find the Place among them.
 async function searched(): Promise<void> {
   await pass(300);
   await pass(500);

@@ -28,6 +28,7 @@ describe('matchesWords on what it finds', () => {
     ['고', '과자', 'a compound vowel half typed'],
     ['달', '닭', 'a compound final half typed'],
     ['ㄱㅎ', '공학', 'initials across syllables'],
+    ['ㅈ2ㄱㅎ', '제2공학관', 'initials with a digit between them'],
     ['ㄲ', '꿈', 'a double consonant'],
     ['KIM', 'kim', 'Latin in another case'],
     ['#스터디', '스터디 모집', "a '#' left out"],

@@ -15,7 +15,8 @@ import { mealCard } from './meal-list';
 // The arrows are as high as a button, and their touch area reaches the design system's minimum.
 const ARROW = 40;
 const ARROW_SLOP = (size.touchMin - ARROW) / 2;
-// Wide enough for "11/11": the main server answers with up to eleven Plans.
+// At least as wide as "11/11" (the main server answers with up to eleven Plans): a large font widens it rather than
+// cutting it.
 const COUNT_WIDTH = 44;
 
 function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; onPress: () => void }): ReactElement {
@@ -88,5 +89,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
   },
   pressed: { opacity: 0.85 },
-  count: { ...text.label, width: COUNT_WIDTH, color: color.ink, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  count: { ...text.label, minWidth: COUNT_WIDTH, color: color.ink, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });

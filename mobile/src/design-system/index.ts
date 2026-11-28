@@ -41,6 +41,7 @@ export { ChipRow, type RowChip } from './chip-row';
 export { Dialog } from './dialog';
 export { EventCard, type EventKind } from './event-card';
 export { FullScreenPanel } from './full-screen-panel';
+export { FLOATING_ACTION_ROOM, FloatingActionArea, useListEnd } from './floating-action';
 export { Glass, GLASS_LEVELS, type GlassLevel } from './glass';
 export { Icon, ICON_NAMES, iconOrFlag, type IconName } from './icon';
 export { ListRow, RoundIcon, SectionHeader } from './list-row';
