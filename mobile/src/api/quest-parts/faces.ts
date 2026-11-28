@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { FRAMED_PARTS, NAME_POOL } from '@/api/mock/data/quest-parts';
+import { FRAMED_COMPANIONS, NAME_POOL } from '@/api/mock/data/quest-parts';
 import type { MemberFace } from '@/api/quest-parts-types';
 import type { Person, Quest } from '@/api/types';
 import type { QuestSummary } from '@/api/waiting-types';
@@ -47,6 +48,6 @@ export function facesOfSummary(summary: QuestSummary, build: Build): MemberFace[
   if (build === 'server') {
     return [faceOf(summary.leader)];
   }
-  const companions = FRAMED_PARTS[summary.id]?.companions ?? inventedCompanions(summary);
+  const companions = FRAMED_COMPANIONS[summary.id] ?? inventedCompanions(summary);
   return [faceOf(summary.leader), ...companions].slice(0, MOST_FACES);
 }

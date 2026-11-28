@@ -9,6 +9,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
@@ -95,8 +96,6 @@ export interface RoomView {
   host: HostView | null;
   // The Quest's text, "" for none.
   text: string;
-  // "#AI커리어"
-  tags: string[];
   // The time and place box: the orange step's, "내일 10:00" and its place as the step shows it, else "시간 미정" and
   // "장소 미정".
   time: string;
@@ -253,7 +252,6 @@ export function toRoom(sources: RoomSources): RoomView {
     hasPost: !closed,
     host: hostOf(quest, now),
     text: quest.description,
-    tags: quest.tags.map((tag) => `#${tag}`),
     time: start === null ? '시간 미정' : dayAndClock(start, now),
     place: orange === undefined || orange.place === '' ? '장소 미정' : orange.place,
     destination: destinationOf(plan),

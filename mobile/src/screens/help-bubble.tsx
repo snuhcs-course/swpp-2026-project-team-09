@@ -2,34 +2,26 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, font, Overlay, space } from '@/design-system';
+import { color, font, Overlay, radius, space } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 
-// The help of 파티 활성화 and of 일정, one line each (P06 ticket 19), as the user trimmed it on 2026-11-27.
-export const ACTIVATION_HELP = {
-  title: '파티 활성화',
-  lines: [
-    '참여한 멤버끼리만 지도에서 서로의 위치를 봐요',
-    '참여하려면 전체 위치 공유가 켜져 있어야 해요',
-    '한 번에 한 파티만 참여할 수 있어요',
-    '남은 일정이 있어야 켤 수 있어요',
-  ],
-} as const;
+// A line of help: words after a bullet, or words after a tag, as the place sheet names the kinds of a place.
+export type HelpLine = string | { tag: string; words: string };
 
-export const PLAN_HELP = {
-  title: '일정',
-  lines: [
-    '일정을 추가·수정·삭제하면 다른 멤버에게 알림이 가요',
-    '행사를 골라 만든 일정은 행사를 따라가서 고칠 수 없어요',
-  ],
-} as const;
+// The bubble's title, its lines, and a note under a rule.
+export interface Help {
+  title: string;
+  lines: readonly HelpLine[];
+  note?: string;
+}
 
 interface HelpButtonProps {
-  help: { title: string; lines: readonly string[] };
+  help: Help;
   // 20 beside a button, 18 beside words.
   size: number;
 }
@@ -42,11 +34,31 @@ interface Anchor {
 
 // The dark bubble's ground, the frame's tooltip navy.
 const BUBBLE = '#151A33';
+const BUBBLE_WORDS = '#E3E6F0';
 const GUTTER = space[4];
 const ARROW = 8;
 
-// A round outlined ? that opens a dark bubble of help under it, over the screen. A press anywhere closes it, as do
-// Android's back button and the edge's swipe.
+function Line({ line }: { line: HelpLine }): ReactElement {
+  if (typeof line === 'string') {
+    return (
+      <View style={styles.line}>
+        <Text style={styles.words}>•</Text>
+        <Text style={[styles.words, styles.grow]}>{line}</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.line}>
+      <View style={styles.tag}>
+        <Text style={styles.tagWords}>{line.tag}</Text>
+      </View>
+      <Text style={[styles.words, styles.grow]}>{line.words}</Text>
+    </View>
+  );
+}
+
+// A round outlined ? that opens a dark bubble of help under it, over the screen, the room's and the 파티 form's. A press
+// anywhere closes it, as do Android's back button and the edge's swipe.
 export function HelpButton({ help, size }: HelpButtonProps): ReactElement {
   const round = useRef<View>(null);
   const [open, setOpen] = useState(false);
@@ -75,15 +87,18 @@ export function HelpButton({ help, size }: HelpButtonProps): ReactElement {
       {open ? (
         <Overlay>
           <Pressable accessibilityLabel={`${help.title} 도움말 닫기`} onPress={close} style={StyleSheet.absoluteFill}>
-            <View style={[styles.bubble, { top: (anchor?.bottom ?? 0) + ARROW }]}>
+            <View style={[styles.bubble, { top: (anchor?.bottom ?? 0) + ARROW }]} testID="help-bubble">
               <View style={[styles.arrow, { left: (anchor?.x ?? GUTTER * 2) - GUTTER - ARROW }]} />
               <Text style={styles.title}>{help.title}</Text>
               {help.lines.map((line) => (
-                <View key={line} style={styles.line}>
-                  <Text style={styles.words}>•</Text>
-                  <Text style={[styles.words, styles.grow]}>{line}</Text>
-                </View>
+                <Line key={typeof line === 'string' ? line : line.tag} line={line} />
               ))}
+              {help.note === undefined ? null : (
+                <>
+                  <View style={styles.rule} />
+                  <Text style={styles.note}>{help.note}</Text>
+                </>
+              )}
             </View>
           </Pressable>
         </Overlay>
@@ -122,6 +137,18 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: font.bold, fontSize: 14, lineHeight: 20, color: color.onPrimary, marginBottom: 2 },
   line: { flexDirection: 'row', gap: 6 },
-  words: { fontFamily: font.regular, fontSize: 13, lineHeight: 19, color: '#E3E6F0' },
+  words: { fontFamily: font.regular, fontSize: 13, lineHeight: 19, color: BUBBLE_WORDS },
   grow: { flex: 1 },
+  tag: {
+    alignSelf: 'flex-start',
+    minWidth: 64,
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radius.sm,
+    backgroundColor: BUBBLE_WORDS,
+  },
+  tagWords: { fontFamily: font.medium, fontSize: 11, lineHeight: 17, color: BUBBLE },
+  rule: { height: 1, marginVertical: space[1], backgroundColor: 'rgba(227, 230, 240, 0.2)' },
+  note: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: '#A9AEC2' },
 });

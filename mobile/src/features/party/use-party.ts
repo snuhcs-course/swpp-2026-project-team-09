@@ -10,6 +10,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -21,7 +22,6 @@ import {
   hiddenPostsQuery,
   myJoinRequestsQuery,
   myPartyQuery,
-  myTagsQuery,
   officialRecruitingQuery,
   partiesQuery,
   pastQuestsQuery,
@@ -32,16 +32,15 @@ import {
 } from '@/api/queries';
 import type { CompanionSeeker, OfficialRecruiting, ShownQuestInvitation } from '@/api/quest-parts-types';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
-import type { Board, Quest } from '@/api/types';
+import type { Quest } from '@/api/types';
 import type { MyJoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { declinedPartiesQuery } from '@/features/parties/declined';
 import { heldAlone } from '@/features/quests/adapter';
-import { BOARDS } from './boards';
 import { findPosts, type Reasons, reasonsFor } from './finding';
 import { type MineCardView, toMineCards } from './mine';
-import { boardPosts, entryPost, hasRoom, type PostView, questPost } from './posts';
+import { entryPost, hasRoom, type PostView, questPost } from './posts';
 
 interface Asked<Data> {
   data: Data | undefined;
@@ -51,8 +50,7 @@ interface Asked<Data> {
 }
 
 // Combines the answers a view needs: shown once all have answered. An answer that only adds to the view, such as the
-// Friends a post counts or the User's tags it is ordered by, is waited for too, but the view is shown without it when
-// it fails.
+// Friends a post counts or the posts the User hid, is waited for too, but the view is shown without it when it fails.
 function combined<View>(
   asked: readonly Asked<unknown>[],
   view: () => View,
@@ -68,18 +66,11 @@ function combined<View>(
   };
 }
 
-// 찾기's posts: the recruiting Quests with a place left that match the search and that the User did not hide, those
-// sharing more tags with the User first, and otherwise the newest first as the list holds them.
+// 찾기's posts: the recruiting Quests with a place left that match the search and that the User did not hide, the
+// newest first as the list holds them.
 export function useFindPosts(search: string): ScreenData<PostView[]> {
-  const [entries, requests, friends, myTags, hidden, removals] = useQueries({
-    queries: [
-      recruitingQuery('all'),
-      myJoinRequestsQuery,
-      friendsQuery,
-      myTagsQuery,
-      hiddenPostsQuery,
-      questRemovalsQuery,
-    ],
+  const [entries, requests, friends, hidden, removals] = useQueries({
+    queries: [recruitingQuery('all'), myJoinRequestsQuery, friendsQuery, hiddenPostsQuery, questRemovalsQuery],
   });
   return combined(
     [entries, requests],
@@ -87,9 +78,9 @@ export function useFindPosts(search: string): ScreenData<PostView[]> {
       const posts = (entries.data ?? [])
         .map((entry) => entryPost(entry, requests.data ?? [], friends.data ?? [], removals.data ?? []))
         .filter((post) => hasRoom(post));
-      return findPosts(posts, { search, myTags: myTags.data ?? [], hidden: hidden.data ?? [] });
+      return findPosts(posts, { search, hidden: hidden.data ?? [] });
     },
-    [friends, myTags, hidden, removals],
+    [friends, hidden, removals],
   );
 }
 
@@ -105,28 +96,6 @@ export function useCompanionSeekers(): ScreenData<CompanionSeeker[]> {
   return combined([seekers], () => seekers.data ?? []);
 }
 
-export interface BoardRowView {
-  board: Board;
-  name: string;
-  count: number;
-}
-
-// The boards with their posts counted from the list of all recruiting Quests and the User's own, for the form's sheet
-// of boards.
-export function useBoardRows(): ScreenData<BoardRowView[]> {
-  const [entries, quests] = useQueries({ queries: [recruitingQuery('all'), questsQuery] });
-  return combined([entries, quests], () =>
-    BOARDS.map(({ key, name }) => {
-      const posts = boardPosts(key, entries.data ?? [], quests.data ?? [], [], myUserId());
-      return {
-        board: key,
-        name: `${name} 게시판`,
-        count: posts.length,
-      };
-    }),
-  );
-}
-
 export interface PostDetailView {
   post: PostView;
   // 추천 이유, for a post the User may join; null for one they hold.
@@ -136,16 +105,8 @@ export interface PostDetailView {
 // 파티 모집글: a Quest the User holds, or a recruiting one, with the reasons it is recommended. Null when neither list
 // holds it.
 export function usePost(questId: string): ScreenData<PostDetailView | null> {
-  const [quests, entries, requests, friends, myTags, classes, removals] = useQueries({
-    queries: [
-      questsQuery,
-      recruitingQuery('all'),
-      myJoinRequestsQuery,
-      friendsQuery,
-      myTagsQuery,
-      classesQuery,
-      questRemovalsQuery,
-    ],
+  const [quests, entries, requests, friends, classes, removals] = useQueries({
+    queries: [questsQuery, recruitingQuery('all'), myJoinRequestsQuery, friendsQuery, classesQuery, questRemovalsQuery],
   });
   return combined(
     [quests, entries, requests],
@@ -162,12 +123,10 @@ export function usePost(questId: string): ScreenData<PostDetailView | null> {
         return null;
       }
       const mayJoin = post.role.kind === 'open' || post.role.kind === 'approval';
-      const reasons = mayJoin
-        ? reasonsFor(post, { myTags: myTags.data ?? [], classes: classes.data ?? null, today: now() })
-        : null;
+      const reasons = mayJoin ? reasonsFor(post, { classes: classes.data ?? null, today: now() }) : null;
       return { post, reasons };
     },
-    [friends, myTags, classes, removals],
+    [friends, classes, removals],
   );
 }
 

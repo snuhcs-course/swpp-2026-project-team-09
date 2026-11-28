@@ -69,11 +69,11 @@ function Details({ event }: { event: EventView }): ReactElement {
   );
 }
 
-// The foot's button beside "원문 보기": the 행사 tab's party button, or 파티 만들기's "이 행사 추가", a grey "선택됨" that
-// takes no press for the event chosen already.
+// The foot's button beside "원문 보기": the 행사 tab's party button, or 파티 만들기's "이 행사 추가", and "행사 빼기" for
+// the event chosen already.
 export type SheetAction =
   | { kind: 'party'; onPress: (event: EventView) => void }
-  | { kind: 'add'; chosen: boolean; onPress: (event: EventView) => void };
+  | { kind: 'add'; chosen: boolean; onPress: (event: EventView) => void; onRemove: () => void };
 
 function ActionButton({ event, action }: { event: EventView; action: SheetAction }): ReactElement {
   const press = (): void => {
@@ -87,8 +87,8 @@ function ActionButton({ event, action }: { event: EventView; action: SheetAction
     );
   }
   return action.chosen ? (
-    <Button disabled full icon="check" size="lg">
-      선택됨
+    <Button full icon="x" onPress={action.onRemove} size="lg" variant="secondary">
+      행사 빼기
     </Button>
   ) : (
     <Button full icon="plus" onPress={press} size="lg">

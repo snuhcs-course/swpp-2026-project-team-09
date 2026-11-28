@@ -2,21 +2,23 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Image, type ImageStyle, type StyleProp, StyleSheet, Text, View } from 'react-native';
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { MemberFace, QuestPhoto } from '@/api/quest-parts-types';
 import { Avatar, Badge, color, font, Icon, radius, space } from '@/design-system';
 
-// The mocked parts of a post as the screens draw them: its photo, its tags and its members' faces.
+// The mocked parts as the screens draw them: an official recruiting's photo, a seeker's tags and a post's members'
+// faces.
 
 const THUMB = 64;
 const PHOTO_HEIGHT = 220;
 const ICON = { thumb: 22, full: 56 } as const;
 
-// A photo: a picked one as it is, a drawn one as the frame draws one it has no picture for, a tinted square with an
-// icon. `full` adds the caption under the icon; a thumbnail has none.
+// A photo, as the frame draws one it has no picture for: a tinted square with an icon. `full` adds the caption under
+// the icon; a thumbnail has none.
 export function PhotoView({
   photo,
   size,
@@ -25,13 +27,10 @@ export function PhotoView({
   photo: QuestPhoto;
   size: 'thumb' | 'full';
   // Another shape, such as the banner's.
-  style?: StyleProp<ImageStyle>;
+  style?: StyleProp<ViewStyle>;
 }): ReactElement {
   const shape = [size === 'thumb' ? styles.thumb : styles.full, style];
   const label = photo.caption === '' ? '사진' : `사진 · ${photo.caption}`;
-  if (photo.kind === 'picked') {
-    return <Image accessibilityLabel={label} source={{ uri: photo.uri }} style={shape} />;
-  }
   return (
     <View
       accessibilityLabel={label}

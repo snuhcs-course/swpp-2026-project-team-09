@@ -74,7 +74,7 @@ describe("A booked party's place on its screens", () => {
 
   it("leads with the room on its room's screen", () => {
     const view = toRoom({
-      quest: { ...booked(), photo: null, tags: [], faces: [] },
+      quest: { ...booked(), faces: [] },
       myParty: null,
       parties: [],
       declined: [],

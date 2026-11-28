@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -18,7 +19,7 @@ import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { answerParty, MY_HIKE, YU_NA } from './support/party';
+import { answerParty, MY_HIKE } from './support/party';
 import { MIN_JUN_HOLDER, SEO_YEON_HOLDER, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
@@ -193,11 +194,11 @@ describe('파티 만들기 on the Restaurant card', () => {
     expect(screen.getByRole('radio', { name: '비공개' })).toBeChecked();
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('학생회관식당에서 점심');
     expect(screen.getByRole('button', { name: '언제 오늘 13:40' })).toBeVisible();
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('학생회관식당 (63동)');
+    expect(screen.getByRole('button', { name: '어디서 학생회관식당 (63동)' })).toBeVisible();
     expect(screen.getByText('3명')).toBeVisible();
-    expect(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: SEO_YEON_HOLDER.name })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: YU_NA.name })).not.toBeChecked();
+    expect(
+      screen.getByRole('button', { name: `친구 초대 ${MIN_JUN_HOLDER.name}, ${SEO_YEON_HOLDER.name}` }),
+    ).toBeVisible();
   });
 
   it("lets the form's own button make the Quest and invite the Friends", async () => {
