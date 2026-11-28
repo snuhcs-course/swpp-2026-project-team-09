@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -15,7 +16,6 @@ export const MARK_WORDS: Record<Missing, string> = {
   title: '제목을 입력해 주세요',
   description: '본문을 입력해 주세요',
   board: '게시판을 골라 주세요',
-  friends: '초대할 친구를 골라 주세요',
 };
 
 // The red line of a marked field.

@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -18,7 +19,7 @@ import { answer, answerRoom, openRoom, PICNIC, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
 // A Quest taken alone (P03 tickets 17 and 19) beside the User's 비공개 파티, against the fake main server: no count of
-// parties counts it, and its room offers no 수정, which would invite or recruit into it, and says no 파티 word.
+// parties counts it, and its room says no 파티 word. It offers 수정 unless it is a seat's stay (P06 ticket 67).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -78,18 +79,28 @@ describe('the counts of parties', () => {
 });
 
 // Partitions: the room of a Quest taken alone that the User leads; its one action. Expected values: P03 ticket 17's
-// decisions and the review of PR 338 (C): a 퀘스트, with no 수정, no 파티 활성화 and no 파티 채팅.
+// decisions and the review of PR 338 (C): a 퀘스트, with no 파티 활성화 and no 파티 채팅. Since P06 ticket 67 (the user,
+// 2026-11-28: every Quest taken alone but a seat's stay may invite later) it offers 수정, but a seat's stay does not.
 describe('the room of a Quest taken alone', () => {
-  it('is a 퀘스트, with no 수정, no 파티 활성화 and no 파티 채팅', async () => {
+  it('is a 퀘스트 with 수정, no 파티 활성화 and no 파티 채팅', async () => {
     await openRoom(TAKEN);
 
     expect(screen.getByText(TAKEN.title)).toBeVisible();
     expect(screen.getByRole('header', { name: '퀘스트' })).toBeVisible();
     expect(screen.queryByText(/^파티 · /u)).toBeNull();
     expect(screen.queryByText('내가 만든 파티')).toBeNull();
-    expect(screen.queryByRole('button', { name: '수정' })).toBeNull();
+    expect(screen.getByRole('button', { name: '수정' })).toBeVisible();
     expect(screen.queryByLabelText('파티 활성화')).toBeNull();
     expect(screen.queryByText('파티 채팅')).toBeNull();
+  });
+
+  it("offers no 수정 for a seat's stay, which takes nobody", async () => {
+    const seat = { ...TAKEN, seatStay: true };
+    answerRoom(server, seat);
+    await openRoom(seat);
+
+    expect(screen.getByRole('header', { name: '퀘스트' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '수정' })).toBeNull();
   });
 
   it("asks before 퀘스트 없애기, in a 퀘스트's words", async () => {

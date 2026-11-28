@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -92,16 +93,15 @@ describe('the least 인원', () => {
     expect(screen.getByRole('button', { name: '인원 줄이기' })).toBeDisabled();
   });
 
-  it('is the User alone for 비공개 with no Friend invited, and 공개 chosen then raises 1 to 2', async () => {
+  // P06 ticket 67: under 비공개 with nobody invited the form makes a Quest taken alone, for one, with no 인원 to set.
+  it('has no 인원 under 비공개 with no Friend invited, and under 공개 goes no lower than 2', async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('radio', { name: '비공개' }));
 
-    await pressTimes(user, '인원 줄이기', 3);
-
-    expect(screen.getByText('1명')).toBeVisible();
-    expect(screen.getByRole('button', { name: '인원 줄이기' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '인원 줄이기' })).toBeNull();
 
     await user.press(screen.getByRole('radio', { name: '공개' }));
+    await pressTimes(user, '인원 줄이기', 3);
 
     expect(screen.getByText('2명')).toBeVisible();
     expect(screen.getByRole('button', { name: '인원 줄이기' })).toBeDisabled();

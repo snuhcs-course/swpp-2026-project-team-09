@@ -13,6 +13,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -74,11 +75,12 @@ function Head({ room }: { room: RoomView }): ReactElement {
   );
 }
 
-// The app bar's `수정` for the Quest's Leader, but not for a Quest taken alone, which gathers nobody and keeps its
-// settings. `centred` keeps it on the title's line: a button otherwise stands at the top of the bar's row.
+// The app bar's `수정` for the Quest's Leader, also of a Quest taken alone, which may invite a Friend and gather, but
+// not of a seat's stay, which takes nobody (P06 ticket 67). `centred` keeps it on the title's line: a button otherwise
+// stands at the top of the bar's row.
 function EditAction({ room }: { room: RoomView }): ReactElement | null {
   const { quest, leads } = room;
-  if (!leads || heldAlone(quest)) {
+  if (!leads || quest.seatStay === true) {
     return null;
   }
   return (
