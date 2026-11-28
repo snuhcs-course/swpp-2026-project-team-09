@@ -5,10 +5,13 @@
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
-import { type ConversationAnswers, withRecalculated } from './conversation-answers';
+import type { ChosenAnswer } from './answer-state';
+import { type ConversationAnswers, conversationAnswersOf, withRecalculated } from './conversation-answers';
 import type { ChatBubble } from './use-chat';
 
-// What is kept of each step's answer on screen, by key (P03 ticket 21; moved from `use-step-answer.ts`), pure.
+// What is kept of each step's answer on screen, by key (P03 ticket 21; moved from `use-step-answer.ts`), pure. One entry
+// per step, and every entry is read through `keptOnScreen`, never raw: an entry a later reply gave again is gone for
+// every reader, its `from` included (TaeHyun79's reviews of #725).
 
 // What became of a step's answer on screen: recalculated (`answer`, null when it is the reply's), and the plan last on;
 // `from` is the key it had when the reply gave it, and `after` the reply it was kept after.
@@ -46,13 +49,14 @@ export function keptWith(
   { key, ...one }: Omit<Kept, 'from'> & { key: string },
   bubbles: readonly ChatBubble[],
 ): ReadonlyMap<string, Kept> {
-  const was = keptOnScreen(last, bubbles).get(key);
+  const onScreen = keptOnScreen(last, bubbles);
+  const was = onScreen.get(key);
   if (key === chosenKey && was !== undefined && was.answer === one.answer && was.index === one.index) {
     return last;
   }
-  const next = new Map(last);
+  const next = new Map(onScreen);
   next.delete(chosenKey);
-  return next.set(key, { from: last.get(chosenKey)?.from ?? chosenKey, ...one });
+  return next.set(key, { from: onScreen.get(chosenKey)?.from ?? chosenKey, ...one });
 }
 
 // The conversation's answers with each recalculation on screen in its place.
@@ -65,4 +69,21 @@ export function recalculatedConversation(
       one.answer === null ? conversation : withRecalculated(conversation, one.from, one.answer),
     given,
   );
+}
+
+// The answer a step of that key shows: the reply's answer of it (`source`), by the key it had when a reply gave it, as
+// last on screen. `kept` is `keptOnScreen`'s. Null when no reply gives it.
+export function chosenAnswerOf(
+  key: string,
+  conversation: ConversationAnswers,
+  kept: ReadonlyMap<string, Kept>,
+  bubbles: readonly ChatBubble[],
+): ChosenAnswer | null {
+  const one = kept.get(key);
+  const given = conversationAnswersOf(bubbles).answers.find((answer) => answer.key === (one?.from ?? key));
+  const shown = conversation.answers.find((answer) => answer.key === key) ?? given;
+  if (given === undefined || shown === undefined) {
+    return null;
+  }
+  return { key, source: given, answer: shown, index: one?.index ?? null };
 }

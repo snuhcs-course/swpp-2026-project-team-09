@@ -9,7 +9,13 @@ import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { now } from '@/clock';
 import type { ChosenAnswer } from '@/features/assistant/answer-state';
 import { type ConversationAnswers, conversationAnswersOf } from '@/features/assistant/conversation-answers';
-import { type Kept, keptOnScreen, keptWith, recalculatedConversation } from '@/features/assistant/kept-answers';
+import {
+  chosenAnswerOf,
+  type Kept,
+  keptOnScreen,
+  keptWith,
+  recalculatedConversation,
+} from '@/features/assistant/kept-answers';
 import {
   chosenOnReply,
   firstSeenIndex,
@@ -190,7 +196,7 @@ export function useStepAnswer(bubbles: readonly ChatBubble[], replied: ShownStep
   const active = steps?.steps[activeStep];
   const answerKey = (active === undefined ? null : keyOf(active)) ?? choice.answerKey ?? firstKeyOf(steps);
   const chosen = useMemo(
-    () => (keyed && answerKey !== null ? chosenOf(answerKey, conversation, kept, bubbles) : null),
+    () => (keyed && answerKey !== null ? chosenAnswerOf(answerKey, conversation, kept, bubbles) : null),
     [keyed, answerKey, conversation, kept, bubbles],
   );
   const keep = useKeep(chosen, bubbles, { setKept, rename });
@@ -214,23 +220,6 @@ function firstKeyOf(steps: ShownSteps | null): string | null {
   return step === undefined ? null : keyOf(step);
 }
 
-// The answer a step of that key shows: the reply's answer of it, as last on screen.
-function chosenOf(
-  key: string,
-  conversation: ConversationAnswers,
-  kept: ReadonlyMap<string, Kept>,
-  bubbles: readonly ChatBubble[],
-): ChosenAnswer | null {
-  const one = kept.get(key);
-  const given = conversationAnswersOf(bubbles).answers.find((answer) => answer.key === (one?.from ?? key));
-  const shown = conversation.answers.find((answer) => answer.key === key) ?? given;
-  if (given === undefined || shown === undefined) {
-    return null;
-  }
-  return { key, source: given, answer: shown, index: one?.index ?? null };
-}
-
-// Each step's answer as now drawn, for the steps as they stand (`liveStepsOf`): the step chosen at the answer on screen,
 // every other as last on screen. Left out for the reply's one answer.
 export function useStepAnswerOf(
   { chosen, keptOf }: Pick<StepAnswer, 'chosen' | 'keptOf'>,
