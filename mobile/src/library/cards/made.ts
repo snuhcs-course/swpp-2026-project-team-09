@@ -2,16 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
+import type { ArmedAct } from '@/api/library-card-types';
 import { now as clockNow } from '@/clock';
 import { koreaDateKey } from '@/korea-time';
 import type { Slot } from './payloads';
-import { clockOf, minutesOf, nextStart, STEP_MINUTES } from './times';
+import { clockOf, dayAfter, minutesOf, nextStart, STEP_MINUTES } from './times';
 
-// The library cards the app gives itself, in its own bubble: the seats card that 좌석 현황 보기 shows, and the book
-// card of a seat tapped on the map. They are never sent back to the Assistant.
+// The library cards the app gives itself, in its own bubble: the seats card that 좌석 현황 보기 shows, the book card of
+// a seat tapped on the map, and 내 예약 opened from 오늘. They are never sent back to the Assistant.
 
 // A tapped seat is booked for 2 hours unless the card says otherwise.
 const TAPPED_MINUTES = 120;
@@ -71,4 +73,28 @@ export function seatBookCardOf(
 export function roomCancelCardOf(space: LibrarySpace, slot: Slot): LibraryCardData {
   const key = `cancel:${space.id}:${slot.date}:${slot.start.replace(':', '')}`;
   return { ...card(key, 'cancel', space, []), target: { spaceId: space.id, date: slot.date, start: slot.start } };
+}
+
+// 내 예약 as 오늘's 예약 opens it (A04 ticket 11): the period the Assistant's has, from a week ago to three days on, and
+// the act of one booking armed when one of its links was pressed.
+export function myBookingsCardOf(today: string, armed: ArmedAct | null = null): LibraryCardData {
+  const period = { date: dayAfter(today, -7), until: dayAfter(today, 3) };
+  return {
+    key: `myBookings:${period.date}:${period.until}`,
+    action: 'myBookings',
+    space: null,
+    date: period.date,
+    start: null,
+    minutes: null,
+    seat: null,
+    useDesc: null,
+    useDescOptions: [],
+    pledge: null,
+    companions: [],
+    questId: null,
+    notes: [],
+    until: period.until,
+    target: null,
+    ...(armed === null ? {} : { armed }),
+  };
 }

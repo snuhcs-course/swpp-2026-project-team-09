@@ -15,6 +15,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -178,6 +179,10 @@ export interface Chat {
   addOwn: (bubble: OwnBubble, after?: number) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
   addRecalculated: (asked: string, answer: AnswerReply) => void;
+  // Starts a new conversation with a turn the app gives itself, whose reply is its own bubble: `asked` stands as the
+  // User's words and `bubble` as the reply, and neither is ever sent, so no model is called (A04 ticket 11: 오늘's
+  // 예약 opens 내 예약 so).
+  askOwn: (asked: string, bubble: OwnBubble) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
   // User's words and `reply`'s answer as the Assistant's. `forgotten` when the conversation was forgotten meanwhile;
   // a failure takes the turn back. `fromCard` marks an answer asked from a card, which can go back to it.
@@ -388,8 +393,29 @@ export function useChat(readContext: () => RequestContext): Chat {
   }, [ask, said, show]);
 
   const own = { ...useAddOwn(add, takeBack), ...useLeftOut(said, show) };
+  const { startNew } = conversations;
+  const askOwn = useCallback(
+    (asked: string, bubble: OwnBubble): void => {
+      startNew();
+      add({ role: 'user', text: asked, cards: [], mapButtons: [], proposal: null, failure: null, own: true });
+      own.addOwn(bubble);
+    },
+    [add, startNew, own.addOwn],
+  );
   const appTurn = useAppTurn({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, ...appTurn, ...cardsKept, proposalMade };
+  return {
+    bubbles,
+    waiting,
+    send,
+    retry,
+    ...conversations,
+    stop,
+    ...own,
+    askOwn,
+    ...appTurn,
+    ...cardsKept,
+    proposalMade,
+  };
 }

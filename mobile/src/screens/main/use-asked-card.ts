@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { useToast } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
 import { fallbackFor, readCard } from '@/push/card-address';
 import { requestAnswer } from './answer/study-group-reopen';
+import { useAskedBookings } from './use-asked-bookings';
 import type { ChatSheetControl } from './chat-sheet';
 import { showWaitingRoom } from './library/waiting-room';
 import { useAskedPerson } from './use-asked-person';
@@ -111,8 +113,8 @@ export function useAskedCard(
   }, [card, cards, map, selection, showToast, fetchStatus, isError, refetch]);
 }
 
-// What the main screen is asked by its address: a member pressed in a Quest's room (`?person=`) and a tapped push's
-// card (`?card=`).
+// What the main screen is asked by its address: a member pressed in a Quest's room (`?person=`), a tapped push's
+// card (`?card=`) and 오늘's 예약 (`?myBookings=`, A04 ticket 11).
 export function useAskedByAddress(
   cards: readonly CardView[] | null,
   map: MainMap,
@@ -121,4 +123,5 @@ export function useAskedByAddress(
 ): void {
   useAskedPerson(cards, map, selection);
   useAskedCard(cards, map, selection, chat);
+  useAskedBookings(chat);
 }

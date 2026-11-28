@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -246,6 +247,24 @@ function useGuideTold(held: boolean): ActTold | null {
   return { words: '가는 길', onPress, disabled: false, danger: false };
 }
 
+// The act armed as the card opens, as 오늘's "예약 취소 ›" or "반납 ›" asks (A04 ticket 11): once the bookings are read,
+// that booking's act stands as a link pressed, if the booking is still there and the act is still its own.
+function useArmed(
+  armed: LibraryCardData['armed'],
+  bookings: readonly LibraryBooking[] | null,
+  setActing: (acting: { booking: LibraryBooking; act: Act }) => void,
+): void {
+  const [used, setUsed] = useState(false);
+  if (used || armed === undefined || bookings === null) {
+    return;
+  }
+  setUsed(true);
+  const booking = bookings.find(({ BSEQNO }) => BSEQNO === armed.bseqno);
+  if (booking !== undefined && actOf(booking) === armed.act) {
+    setActing({ booking, act: armed.act });
+  }
+}
+
 // 내 예약: the bookings of the card's period booked or in use, soonest first, else one sentence (P01 ticket 15).
 export function MyBookingsCard({ card, bubbleId, actions }: CardProps): ReactElement {
   const today = koreaDateKey(now());
@@ -254,6 +273,7 @@ export function MyBookingsCard({ card, bubbleId, actions }: CardProps): ReactEle
   const logIn = useLogInReload(reload);
   const [acting, setActing] = useState<{ booking: LibraryBooking; act: Act } | null>(null);
   const bookings = loaded.state === 'ready' ? shownBookings(loaded.value, card, today) : [];
+  useArmed(card.armed, loaded.state === 'ready' ? bookings : null, setActing);
   const walk = actions.bookingWalk?.()?.minutes ?? null;
   const guide = useGuideTold(bookings.some((booking) => actOf(booking) !== null));
   useTellAct(actions.act ?? null, bubbleId, acting === null ? guide : null);

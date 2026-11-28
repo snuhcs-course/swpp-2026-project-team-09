@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // --- The library cards of a reply (main-server `assistant/library/library-card.ts`, the same shapes) ---
@@ -60,6 +61,14 @@ export interface LibraryCardData {
   arrival?: { at: string; walkMinutes: number; from: string };
   // With a filled seat: when to leave 관정관 for the first thing that starts before the booking ends, null when none does.
   leaveBy?: string | null;
+  // The app's own 내 예약 only, never the main server's: the booking whose act is armed as the card opens, as its
+  // "예약 취소 ›" or "반납 ›" on 오늘 asks (A04 ticket 11).
+  armed?: ArmedAct;
+}
+
+export interface ArmedAct {
+  bseqno: number;
+  act: 'cancel' | 'return';
 }
 
 export interface LibraryCard {

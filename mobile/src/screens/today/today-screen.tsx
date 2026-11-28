@@ -31,6 +31,7 @@ import { readCardAddress } from '@/push/card-address';
 import { NoticeRow } from '../me/notifications-screen';
 import { usePartyActions } from '../party/use-party-actions';
 import { TabScreen } from '../shell/tab-screen';
+import { Bookings, useTodayBookings } from './bookings';
 
 // How many kept Notifications 지난 알림 shows; "알림 모두 보기" opens every one.
 const KEPT_SHOWN = 5;
@@ -181,10 +182,11 @@ function PastRows({ rows }: { rows: readonly QuestRowView[] }): ReactElement | n
 }
 
 // 오늘 일정: today's Quests, classes included, in time order, the rows over folded above "지금 HH:MM", and one line for
-// tomorrow. The 새내기 튜토리얼's quests are none of the User's Quests, so they are not here, as on the map.
-function Day(): ReactElement {
+// tomorrow. The 새내기 튜토리얼's quests are none of the User's Quests, so they are not here, as on the map. A seat's
+// stay whose booking 예약 lists is left out (`listed`, A04 ticket 11).
+function Day({ listed }: { listed: ReadonlySet<string> }): ReactElement {
   const { data: rows, isPending, refetch } = useQuestRows();
-  const today = (rows ?? []).filter(({ daysAway }) => daysAway === 0);
+  const today = (rows ?? []).filter(({ id, daysAway }) => daysAway === 0 && !listed.has(id));
   const tomorrow = tomorrowWords((rows ?? []).filter(({ daysAway }) => daysAway === 1));
   const past = today.filter(({ over }) => over);
   const coming = today.filter(({ over }) => !over);
@@ -253,6 +255,7 @@ function newestFirst(one: NoticeView, other: NoticeView): number {
 function Page(): ReactElement {
   const { data, isPending, refetch } = useNotices();
   const fresh = useMarkShownRead(data !== undefined);
+  const bookings = useTodayBookings();
   const notices = data ?? [];
   const kept = notices
     .filter(({ keptId }) => keptId !== null)
@@ -261,7 +264,8 @@ function Page(): ReactElement {
   return (
     <ScrollView contentContainerStyle={styles.body}>
       <Waiting waiting={waitingNotices(notices)} />
-      <Day />
+      <Day listed={bookings.stays} />
+      <Bookings bookings={bookings} />
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       {data === undefined ? null : <Kept fresh={fresh} kept={kept} />}
@@ -270,7 +274,7 @@ function Page(): ReactElement {
 }
 
 // 오늘 (A04 ticket 10), the bar's fourth slot: 답할 것, 오늘 일정 and 지난 알림 on one page that scrolls once, under the
-// title and the date. Ticket 11 puts 예약 between 오늘 일정 and 지난 알림. Behind another tab it shows nothing, so that
+// title and the date, with 예약 between 오늘 일정 and 지난 알림 (A04 ticket 11). Behind another tab it shows nothing, so that
 // nothing is marked read unseen.
 export function TodayScreen(): ReactElement {
   const chosen = useChosenTab();

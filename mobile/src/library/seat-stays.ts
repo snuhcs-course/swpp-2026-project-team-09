@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +27,12 @@ async function readMap(): Promise<Record<string, string>> {
   } catch {
     return {};
   }
+}
+
+// The Quests of the stays the phone keeps, which 오늘 leaves out of 오늘 일정 while its 예약 lists the seats (A04
+// ticket 11).
+export async function seatStayQuestIds(): Promise<string[]> {
+  return Object.values(await readMap());
 }
 
 export async function keepSeatStay(bseqno: string, questId: string): Promise<void> {
