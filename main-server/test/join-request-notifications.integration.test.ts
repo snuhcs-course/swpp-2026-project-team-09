@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -87,7 +88,7 @@ describe('The Leader accepting a request to join', () => {
           ahead: null,
           line: '점심 같이 · 홍길동님의 파티',
           at: AT,
-          url: `/main?card=party:${questId}`,
+          url: `/main?card=room:${questId}`,
         },
       ]);
     });

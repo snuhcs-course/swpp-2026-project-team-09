@@ -12,12 +12,24 @@
  * 2026-11-20  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
 import { type ReactElement, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Button, color, ErrorState, font, FullScreenPanel, LoadingState, space, useToastAbove } from '@/design-system';
+import {
+  Button,
+  color,
+  ErrorState,
+  font,
+  FullScreenPanel,
+  LoadingState,
+  space,
+  useToast,
+  useToastAbove,
+} from '@/design-system';
+import { PARTY_GONE } from '@/features/notifications/address';
 import { heldAlone } from '@/features/quests/adapter';
 import type { RoomView } from '@/features/quests/room-adapter';
 import { useRoom } from '@/features/quests/use-room';
@@ -127,14 +139,19 @@ function goingAsk(room: RoomView, actions: RoomActions, onLeft: () => void): Ask
 }
 
 // A Quest the User no longer holds closes its room, unless the User just left it here. The signed-in layout's
-// `GoneQuestsWatch` tells it, once, whichever screen is shown.
-function useCloseWhenGone(gone: boolean, left: { current: boolean }): void {
+// `GoneQuestsWatch` tells it, once, whichever screen is shown, of a Quest the room showed. One gone before the room
+// could show it, as one opened from its news in 알림 or its push, the room tells itself.
+function useCloseWhenGone(gone: boolean, shown: boolean, left: { current: boolean }): void {
+  const showToast = useToast();
   useEffect(() => {
     if (gone && !left.current) {
       left.current = true;
+      if (!shown) {
+        showToast(PARTY_GONE, undefined, 'alert');
+      }
       leaveRoom();
     }
-  }, [gone, left]);
+  }, [gone, shown, left, showToast]);
 }
 
 // The footer's full-width danger button: `나가기`, `파티 없애기` for the Leader, or `퀘스트 없애기` for a Quest taken
@@ -186,7 +203,7 @@ export function RoomScreen({ questId }: { questId: string }): ReactElement {
   const [ask, setAsk] = useState<Ask | null>(null);
   const left = useRef(false);
   const open = useIsFocused();
-  useCloseWhenGone(gone, left);
+  useCloseWhenGone(gone, room !== undefined, left);
   useToastAbove(FOOTER, open);
   const onLeft = (): void => {
     left.current = true;

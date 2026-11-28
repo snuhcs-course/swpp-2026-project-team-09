@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { Href } from 'expo-router';
@@ -34,7 +35,13 @@ export function readCardAddress(url: unknown): CardAddress | null {
   return readCard(url.slice(PREFIX.length));
 }
 
-// The screen the row of 알림 opens, for a card the map does not hold. An event the map shows no card of, such as one on
+// A Quest's room.
+export function roomAddress(questId: string): Href {
+  return `/room/${questId}`;
+}
+
+// The screen the row of 알림 opens, for a card the map does not hold. A 파티's own news, `room:<questId>`, opens the
+// 파티's room (P06 ticket 37). An event the map shows no card of, such as one on
 // a later day, opens in the 행사 tab. A declined request to join (`find-parties:<questId>`) opens 찾기, for another 파티.
 export function fallbackFor({ kind, id }: CardAddress): Href {
   if (kind === 'invitation') {
@@ -45,6 +52,9 @@ export function fallbackFor({ kind, id }: CardAddress): Href {
   }
   if (kind === 'event') {
     return { pathname: '/events', params: { focus: id } };
+  }
+  if (kind === 'room') {
+    return roomAddress(id);
   }
   return { pathname: '/main' };
 }

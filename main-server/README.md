@@ -4343,7 +4343,7 @@ until it comes, when the sender rings it and sends `notice`:
     "ahead": null,
     "line": "저녁 같이",
     "at": "2026-11-14T11:58:00+09:00",
-    "url": "/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b",
+    "url": "/main?card=room:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b",
     "read": false
   }
 ]
@@ -4351,7 +4351,11 @@ until it comes, when the sender rings it and sends `notice`:
 
 `id` is the identity, `at` the time in Korea with its offset, and `url` the address that opens the card,
 `/main?card=<kind>:<id>`. `cardAddress()` from `src/notifications/card-address.ts` makes it and refuses a card kind
-outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`. `ahead` is the title while `at`
+outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`. A 파티's own news, `became-leader`,
+`join-accepted`, `step-changed`, `arrived`, `late`, `accepted` and `declined`, is kept on the 파티's card, so that a
+new one replaces an old one, but its `url` and its push open the room, `/main?card=room:<questId>`
+(`openedAddress()`), those kept before included. The app opens `room:<id>` as `/room/<id>`; an app without it opens
+only `/main`, so the app's update goes out before or with the Release. `ahead` is the title while `at`
 is still to come, with `at` in Korea in it, and null for a kind that has none. The list never shows it, since it lists
 only what has come. `read` is whether the User has read it.
 
