@@ -28,6 +28,7 @@ import {
 import { Button, color, ErrorState, font, FullScreenPanel, LoadingState, space, useToastAbove } from '@/design-system';
 import { type HeldProposal, heldProposal } from '@/features/party/held-proposal';
 import type { Missing } from '@/features/party/making';
+import { heldAlone } from '@/features/quests/adapter';
 import { EventPicker } from './event-field';
 import { FriendSheet } from './friend-sheet';
 import { useKeptHeight } from './kept-height';
@@ -68,7 +69,7 @@ function Settings({ state, frames }: SettingsProps): ReactElement {
   return (
     <View>
       <Text style={styles.section}>파티 설정</Text>
-      <CapacityRow floor={state.floor} form={form} least={state.least} onChange={change} />
+      {state.alone ? null : <CapacityRow floor={state.floor} form={form} least={state.least} onChange={change} />}
       <VisibilityRows form={form} onChange={change} />
       {open ? (
         <BoardRow
@@ -79,13 +80,10 @@ function Settings({ state, frames }: SettingsProps): ReactElement {
         />
       ) : null}
       <FriendsRow
-        frameRef={frameRef(frames, 'friends')}
-        marked={marked.includes('friends')}
         names={names}
         onOpen={() => {
           setInviting(true);
         }}
-        required={!open && !state.editing}
       />
       <FriendSheet
         chosen={state.chosen}
@@ -164,10 +162,14 @@ function scrollTo(scroll: ScrollView | null, body: View | null, field: View | nu
   );
 }
 
-// The words of the app bar and of the button: an edit's, or a new one's, 공개 or 비공개.
-function wordsOf(quest: FormProps['quest'], open: boolean): { title: string; submit: string } {
+// The words of the app bar and of the button: an edit's, or a new one's, 공개, 비공개 or taken alone.
+function wordsOf(quest: FormProps['quest'], open: boolean, alone: boolean): { title: string; submit: string } {
   if (quest !== null) {
-    return { title: quest.joinPolicy === 'closed' ? '파티 수정' : '모집글 수정', submit: '수정 완료' };
+    const kind = quest.joinPolicy === 'closed' ? '파티 수정' : '모집글 수정';
+    return { title: heldAlone(quest) ? '퀘스트 수정' : kind, submit: '수정 완료' };
+  }
+  if (alone) {
+    return { title: '파티 만들기', submit: '퀘스트 만들기' };
   }
   return { title: '파티 만들기', submit: open ? '파티 올리기' : '파티 만들기' };
 }
@@ -186,7 +188,7 @@ function Page({ state, props, onChooseEvent }: PageProps): ReactElement {
   const frames: Frames = useRef({});
   const kept = useKeptHeight();
   useToastAbove(FOOTER, useIsFocused());
-  const words = wordsOf(props.quest, state.form.visibility === 'public');
+  const words = wordsOf(props.quest, state.form.visibility === 'public', state.alone);
   const submit = (): void => {
     Keyboard.dismiss();
     const [first] = state.submit();
