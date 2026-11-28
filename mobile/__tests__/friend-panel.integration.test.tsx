@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { font } from '@/design-system';
@@ -123,12 +124,18 @@ describe("Android's back button over the friend panel", () => {
 });
 
 describe("the friend panel's search and chips", () => {
-  it('filters by name and by department, and says so when nobody is found', async () => {
+  // The user's word (2026-11-28): "학과 검색은 필요 없을 것 같아."
+  it('filters by name only, not by department, and says so when nobody is found', async () => {
     const user = await openPanel();
+    expect(screen.getByPlaceholderText('친구 검색')).toBeVisible();
 
     await user.type(screen.getByLabelText(SEARCH), '컴퓨터');
-    expect(shownFriends()).toEqual(['김민준', '정하은']);
-    expect(sectionHeaders()).toEqual(['공강 · 1', '수업 중 · 1']);
+    expect(screen.getByText('결과 없음')).toBeVisible();
+
+    await user.press(screen.getByRole('button', { name: '지우기' }));
+    await user.type(screen.getByLabelText(SEARCH), '김민');
+    expect(shownFriends()).toEqual(['김민준']);
+    expect(sectionHeaders()).toEqual(['공강 · 1']);
 
     await user.press(screen.getByRole('button', { name: '지우기' }));
     await user.type(screen.getByLabelText(SEARCH), '서지');
@@ -161,6 +168,20 @@ describe("the friend panel's search and chips", () => {
     expect(screen.queryByRole('button', { name: /^공강/u })).toBeNull();
     expect(screen.queryByRole('button', { name: /^수업 중/u })).toBeNull();
     expect(screen.queryByRole('button', { name: /^이동 중/u })).toBeNull();
+  });
+});
+
+describe("the friend panel's search of Hangul being typed", () => {
+  // The phone's keyboard gives '미' before '민', and 'ㅁ' before both (reported on 2026-11-28 with 'ㅋㅓㅁ' and 결과 없음).
+  it('narrows while a Hangul syllable is still being composed, and by first consonants', async () => {
+    const user = await openPanel();
+
+    await user.type(screen.getByLabelText(SEARCH), '김미');
+    expect(shownFriends()).toEqual(['김민준']);
+
+    await user.press(screen.getByRole('button', { name: '지우기' }));
+    await user.type(screen.getByLabelText(SEARCH), 'ㅅㅈ');
+    expect(shownFriends()).toEqual(['서지우']);
   });
 });
 

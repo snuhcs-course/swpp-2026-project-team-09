@@ -22,6 +22,7 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -281,7 +282,6 @@ export const mockClient: ApiClient = {
   listPlaces: () => answer('listPlaces', () => PLACES, []),
   // The mock build has no AI: refused as by a main server without the route, so the phone reads the picture.
   readTimetableImage: () => Promise.reject(new ApiError(404)),
-  searchPlaces: (words) => answer('searchPlaces', () => timetable.searchPlaces(words), []),
   ...mockGlobalEvents,
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),

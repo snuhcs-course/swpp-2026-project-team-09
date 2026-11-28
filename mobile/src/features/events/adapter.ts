@@ -10,12 +10,14 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { heldAlone, shownSubQuest } from '@/features/quests/adapter';
 import { placeWithRoom } from '@/features/quests/booked-room';
+import { matchesWords } from '@/features/search/matches-words';
 import { koreaCalendar, koreaClock, koreaDay, koreaDaysAfter, koreaWeekday, WEEKDAYS } from '@/korea-time';
 
 // What the 행사 tab and its sheet show of the Global Events.
@@ -126,11 +128,7 @@ function passes(event: GlobalEvent, recruiting: number, filter: EventFilter, now
 export const EVENT_SEARCH_HINT = '제목·장소·내용 검색';
 
 function matches(event: GlobalEvent, search: string): boolean {
-  const words = search.trim().toLowerCase();
-  return (
-    words === '' ||
-    [event.title, event.place ?? '', event.description].some((text) => text.toLowerCase().includes(words))
-  );
+  return matchesWords(search, [event.title, event.place ?? '', event.description]);
 }
 
 export function toEventViews(sources: EventSources, filter: EventFilter, search: string): EventView[] {

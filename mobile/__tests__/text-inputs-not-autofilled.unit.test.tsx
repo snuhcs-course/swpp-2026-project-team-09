@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
@@ -23,6 +24,8 @@ function expectNotAutofilled(label: string): void {
   expect(field.props.autoComplete).toBe('off');
   expect(field.props.importantForAutofill).toBe('no');
   expect(field.props.textContentType).toBe('none');
+  // TextEntry's: `autoCorrect={false}` would make Samsung Keyboard type Hangul as loose letters.
+  expect(field.props.autoCorrect).toBeUndefined();
 }
 
 describe('the text fields autofill leaves alone', () => {

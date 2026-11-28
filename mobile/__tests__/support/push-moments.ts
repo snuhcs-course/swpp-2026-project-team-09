@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, type userEvent, within } from '@testing-library/react-native';
@@ -49,7 +50,7 @@ export async function sendParty(user: User, friends: readonly string[]): Promise
     router.navigate('/party');
   });
   await pass(500);
-  await user.press(screen.getByRole('button', { name: '만들기' }));
+  await user.press(screen.getByRole('button', { name: '파티 만들기' }));
   await pass(500);
   await fillPublic(user);
   if (friends.length > 0) {

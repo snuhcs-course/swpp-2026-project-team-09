@@ -3,11 +3,12 @@
  *
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { color, Icon, NOT_AUTOFILLED, radius, size, space, text } from '@/design-system';
+import { StyleSheet, Text, View } from 'react-native';
+import { color, Icon, radius, size, space, TextEntry, text } from '@/design-system';
 import { FieldLabel } from './field-label';
 
 // A field the SNU account fills, shown in an input's place and not editable.
@@ -16,8 +17,7 @@ export function FixedField({ label, value }: { label: string; value: string }): 
     <View style={styles.field}>
       <FieldLabel>{label}</FieldLabel>
       <View style={styles.box}>
-        <TextInput
-          {...NOT_AUTOFILLED}
+        <TextEntry
           accessibilityLabel={label}
           accessibilityState={{ disabled: true }}
           editable={false}

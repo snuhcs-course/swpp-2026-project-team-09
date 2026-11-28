@@ -25,6 +25,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -152,7 +153,6 @@ export interface ApiClient extends KeptNotificationsClient {
   readTimetableImage: (image: string, grid: SentGrid | null) => Promise<ServerTimetableReading>;
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
-  searchPlaces: (words: string) => Promise<Place[]>;
   listGlobalEvents: () => Promise<ListedGlobalEvent[]>;
   // Stars a published Global Event, or clears its star; a repeat changes nothing. Refused with 404
   // GLOBAL_EVENT_NOT_FOUND for an event that is not published.
@@ -321,7 +321,6 @@ export const apiClient: ShownClient = {
   resetTimetable: () => chosen().resetTimetable(),
   readTimetableImage: (image, grid) => chosen().readTimetableImage(image, grid),
   listPlaces: () => chosen().listPlaces(),
-  searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
   setFavoriteEvent: (globalEventId, favorite) => chosen().setFavoriteEvent(globalEventId, favorite),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
