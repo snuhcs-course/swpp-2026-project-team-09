@@ -68,7 +68,7 @@ export function useNotices(): ScreenData<NoticeView[]> {
   };
 }
 
-// The number on 오늘 (A04 ticket 12; once 내 정보's bell): the rows of 알림 that wait for the User, the rows of 답할 것,
+// The number on 오늘 (A04 ticket 12; once 내 정보's bell): the rows of 알림 that wait for the User, which 답할 것 lists,
 // and the kept Notifications they have not read. Nothing while the lists load or when every one failed.
 export function useBellCount(): number {
   const notices = useNotices().data;

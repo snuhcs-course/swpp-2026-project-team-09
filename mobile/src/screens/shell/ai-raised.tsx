@@ -44,4 +44,11 @@ export function useTellReady(ready: number): void {
   useEffect(() => {
     setReady(ready);
   }, [ready, setReady]);
+  // Nothing is ready once the map is gone, as when the User signs out.
+  useEffect(
+    () => (): void => {
+      setReady(0);
+    },
+    [setReady],
+  );
 }

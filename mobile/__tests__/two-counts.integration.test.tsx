@@ -11,6 +11,7 @@ import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
+import { socketServer } from './support/live';
 import { answerMadeQuest, KEPT_MADE, MADE_ACCEPTED, signInAsAsker } from './support/made-quest';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
@@ -125,6 +126,35 @@ describe("the middle's count", () => {
     const user = await openMain(KEPT_MADE);
 
     await user.press(screen.getByRole('tab', { name: '행사' }));
+
+    expect(middle()).toHaveProp('accessibilityLabel', '지도');
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 1개' })).toBeVisible();
+  });
+});
+
+// "They never count the same thing": a Friend's acceptance, while the app runs.
+describe('a made Quest answered while the app runs', () => {
+  beforeEach(async () => {
+    await signInAsAsker();
+    answerMadeQuest(server);
+  });
+
+  it('moves an answer from the middle to 오늘 as the lists it reads change, with no poll of its own', async () => {
+    const user = await openMain(KEPT_MADE);
+    await socketServer((socket) => {
+      socket.accept();
+    });
+    await user.press(screen.getByRole('tab', { name: '행사' }));
+    expect(middle()).toHaveProp('accessibilityLabel', '지도, AI가 준비한 것 1개');
+    expect(screen.getByRole('tab', { name: '오늘' })).toBeVisible();
+
+    answerMadeQuest(server, MADE_ACCEPTED);
+    server.on('GET /notifications', { status: 200, body: [UNREAD] });
+    await socketServer((socket) => {
+      socket.send('quests-changed');
+      socket.send('notice');
+    });
+    await pass(500);
 
     expect(middle()).toHaveProp('accessibilityLabel', '지도');
     expect(screen.getByRole('tab', { name: '오늘, 답할 것 1개' })).toBeVisible();

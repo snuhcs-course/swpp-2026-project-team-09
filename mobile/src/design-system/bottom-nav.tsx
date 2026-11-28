@@ -50,10 +50,15 @@ function nameOf({ label, badge, badgeWords = '새 소식' }: BottomNavItem): str
   return hasCount(badge) ? `${label}, ${badgeWords} ${badge}개` : label;
 }
 
+// A count as drawn: "9+" above nine.
+function countWords(badge: number): string {
+  return badge > 9 ? '9+' : String(badge);
+}
+
 function Count({ badge }: { badge: number }): ReactElement {
   return (
     <View style={styles.badge}>
-      <Text style={styles.badgeText}>{badge > 9 ? '9+' : String(badge)}</Text>
+      <Text style={styles.badgeText}>{countWords(badge)}</Text>
     </View>
   );
 }
@@ -109,7 +114,7 @@ function RoundTab({ item, current, onPress }: ItemProps): ReactElement {
           <Icon color={filled ? color.onPrimary : color.snuBlue} name={item.icon} size={ROUND_ICON} />
           {hasCount(item.badge) ? (
             <View style={styles.roundCount} testID="bottom-nav-round-count">
-              <Text style={styles.roundCountText}>{item.badge > 9 ? '9+' : String(item.badge)}</Text>
+              <Text style={styles.roundCountText}>{countWords(item.badge)}</Text>
             </View>
           ) : null}
         </View>
@@ -142,7 +147,7 @@ const BADGE = 16;
 const ROUND = 56;
 const ROUND_ICON = 28;
 const ROUND_RING = 4;
-// The round tab's count, as the boards draw it: 22 with its ring of 2.
+// The round tab's count: 20 with its ring of 2, a little smaller than the boards' 22, to sit inside the bar.
 const ROUND_COUNT = 20;
 
 const styles = StyleSheet.create({
