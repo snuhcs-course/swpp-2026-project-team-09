@@ -101,8 +101,8 @@ describe('A start the User names before dinner is served', () => {
   });
 });
 
-// Lunch being over, the reply asks back as for any time of today that has passed (P05 ticket 80): tomorrow's lunch, or
-// today from now, which plans dinner. It offered "오늘 저녁 보기" alone before.
+// Lunch being over, the reply asks back as for any time of today that has passed (P05 ticket 80): today's dinner, or
+// tomorrow's lunch. It offered "오늘 저녁 보기" alone before.
 describe('A lunch the User names at 15:00', () => {
   it('is planned as asked and, lunch being over, asks back instead of an answer (P01-23)', async () => {
     const date = '2087-10-21';
@@ -116,11 +116,11 @@ describe('A lunch the User names at 15:00', () => {
 
     expect(stage.model.toolResults().at(-1)).toMatchObject({ result: 'asked', meal: 'lunch' });
     expect(response.body).toMatchObject({
-      text: '오늘 점심 시간은 지났어요. 내일로 볼까요?',
+      text: '오늘 점심 시간은 지났어요. 오늘 저녁이나 내일 점심으로 볼까요?',
       answer: null,
       offers: [
-        { kind: 'ask', label: '내일로', text: '민수와 내일 점심으로 해 줘' },
-        { kind: 'ask', label: '오늘 지금부터', text: '민수와 오늘 지금부터 해 줘' },
+        { kind: 'ask', label: '오늘 저녁으로', text: '민수와 오늘 저녁으로 해 줘' },
+        { kind: 'ask', label: '내일 점심으로', text: '민수와 내일 점심으로 해 줘' },
       ],
     });
   });

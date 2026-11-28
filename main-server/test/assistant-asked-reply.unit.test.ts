@@ -119,7 +119,8 @@ describe('A message that asked back', () => {
 });
 
 // planMeal over a service that plans nothing, as a meal over for today: named, it asks for the whole message; named by
-// no time ("배고파" at 21:20, a request for now), its 내일로 stands beside the reply, and the rest is answered as asked.
+// no time ("배고파" at 21:20, a request for now), its 내일 점심으로 stands beside the reply, and the rest is answered as
+// asked.
 const noPlans = planMeal({
   restaurantPlaceId: () => null,
   asked: (_askerId, input: MealInput) => Promise.resolve({ input, alreadyIn: [] }),
@@ -134,15 +135,15 @@ describe("planMeal's meal over for today", () => {
     const context = contextAt('15:00');
 
     expect(await noPlans.run({ date: '2026-11-28', meal: 'lunch' }, context)).toMatchObject({ result: 'asked' });
-    expect(context.presented.asks?.text).toBe('오늘 점심 시간은 지났어요. 내일로 볼까요?');
+    expect(context.presented.asks?.text).toBe('오늘 점심 시간은 지났어요. 오늘 저녁이나 내일 점심으로 볼까요?');
   });
 
-  it('offers 내일로 beside the reply when the User named no meal', async () => {
+  it('offers 내일 점심으로 beside the reply when the User named no meal', async () => {
     const context = contextAt('21:20');
 
     expect(await noPlans.run({ date: '2026-11-28', now: true }, context)).toMatchObject({ result: 'none' });
     expect(context.presented.asks).toBeUndefined();
-    expect(context.presented.offers).toEqual([{ kind: 'ask', label: '내일로', text: '내일 점심으로 해 줘' }]);
+    expect(context.presented.offers).toEqual([{ kind: 'ask', label: '내일 점심으로', text: '내일 점심으로 해 줘' }]);
   });
 
   it('answers another request of the message as asked when the User named no meal', async () => {
@@ -157,6 +158,6 @@ describe("planMeal's meal over for today", () => {
 
     expect(reply.text).toBe('공부할 곳이에요. 오늘 식사 시간은 지났어요.');
     expect(reply.answers?.[0]).toBe(drawn);
-    expect(reply.offers).toEqual([{ kind: 'ask', label: '내일로', text: '내일 점심으로 해 줘' }]);
+    expect(reply.offers).toEqual([{ kind: 'ask', label: '내일 점심으로', text: '내일 점심으로 해 줘' }]);
   });
 });
