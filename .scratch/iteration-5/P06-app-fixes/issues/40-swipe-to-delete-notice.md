@@ -32,3 +32,11 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 - [ ] No native file changes; lint, format and types pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person or for CI is left out. Tokens include the code-review subagent.
+
+| Work | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Build, code review and its fixes, emulator check of the swipe, PR #754 | about 14 minutes | 21,461,196 | 21,320,272 | 140,782 | 142 | 48,807 |
