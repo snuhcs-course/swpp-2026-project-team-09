@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Weekday } from '../../generated/prisma/client.js';
@@ -46,6 +47,7 @@ export interface FreeInterval {
 }
 
 const MINUTE_MS = 60 * 1000;
+const END_OF_DAY = '24:00';
 
 // A time on a calendar day in Korea. A clock past 23 is the next day's (P05 ticket 91): the app sends a window's time
 // past midnight as hours past 24, counted from the input's date ("24:30" is 00:30 of the next day).
@@ -54,8 +56,12 @@ export function onDay(date: string, clock: string): Date {
   return new Date(Date.parse(`${date}T00:00:00+09:00`) + (hours * 60 + minutes) * MINUTE_MS);
 }
 
-// A window's clock as it is said, on its own day: "24:30" is "00:30".
+// A window's clock as it is said, on its own day: "24:30" is "00:30". "24:00" stays: it is the end of today in the
+// model's own clocks (`clockTime`), and comes back to the model as it wrote it.
 export function shownClock(clock: string): string {
+  if (clock === END_OF_DAY) {
+    return clock;
+  }
   const [hours = 0, minutes = 0] = clock.split(':').map(Number);
   return `${String(hours % 24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }

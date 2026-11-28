@@ -44,6 +44,15 @@ describe('A window clock past midnight', () => {
     expect(onDay(TUESDAY, '13:05')).toEqual(new Date('2026-11-17T13:05:00+09:00'));
   });
 
+  // "24:00" is the end of today in the model's own clocks (`clockTime`; the tools give it as a day's end): it comes back
+  // to the model as it wrote it, never as "00:00", the start of today.
+  it('keeps 24:00, the end of the day, as it is', () => {
+    expect(shownClock('24:00')).toBe('24:00');
+    expect(
+      contextLines({ ...NO_CONTEXT, conditions: study({ from: '22:00', until: '24:00' }), planId: null })[0],
+    ).toContain('"from":"22:00","until":"24:00"');
+  });
+
   it('is shown on its own day', () => {
     expect(['24:30', '47:59', '23:30', '09:00'].map((clock) => shownClock(clock))).toEqual([
       '00:30',
