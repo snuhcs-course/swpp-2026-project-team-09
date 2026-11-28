@@ -39,3 +39,8 @@ Positions are as of `origin/5.0/Main` da54c9c18, under `mobile/src/`.
 - [ ] On the emulator, Korean typed in the friend panel's search is composed and narrows the list.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 123 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 199k; input 92.4M, of which 91.8M cache reads, 532k cache writes and 582 uncached. No subagents.

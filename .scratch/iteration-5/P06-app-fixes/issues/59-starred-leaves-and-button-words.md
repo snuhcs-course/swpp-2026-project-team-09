@@ -41,3 +41,8 @@ The user on 2026-11-28, on the 행사 tab:
 - [ ] The 행사 sheet's button reads "모집 중인 파티 2" (integration test).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 9 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 21k; input 28.6M, of which 28.6M cache reads, 36k cache writes and 78 uncached. No subagents.

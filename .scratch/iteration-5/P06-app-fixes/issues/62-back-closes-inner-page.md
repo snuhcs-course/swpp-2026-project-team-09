@@ -39,3 +39,8 @@ The user on 2026-11-28, on a Samsung phone: "파티 만들 때, 관련 행사 �
 - [ ] Back closes an event's sheet over the page first, then the page (integration test, failing before).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 21 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 24k; input 29.3M, of which 29.2M cache reads, 98k cache writes and 116 uncached. No subagents.
