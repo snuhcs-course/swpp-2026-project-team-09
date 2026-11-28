@@ -52,5 +52,5 @@ The tab is named 오늘, with the date under the title ("12월 1일 화요일").
 
 ### Agent usage (2026-11-29)
 
-- Agent time: about 50 minutes in one session (`iter5-a04-09~12`), an estimate. It leaves out the waits for the shared heavy-job lock and for the user's answers.
+- Agent time: about 30 minutes in one session (`iter5-a04-09~12`), an estimate. It leaves out the waits for the shared heavy-job lock and for the user's answers.
 - Tokens (Opus 5.5, the two review subagents included): input 242 and output 81,112; of the input, cache reads 42,891,289 and cache writes 739,619.
