@@ -52,7 +52,7 @@ export interface QuestRowView {
   reopens?: true;
   // "301동 118호", or "" for a Quest without a place.
   place: string;
-  // "14:00", the start of the Sub Quest it shows, or "" without one.
+  // "14:00", the start of the Sub Quest it shows, "시간 미정" for a Quest whose time is not set, or "" for one that ended.
   time: string;
   // How many days of Korea's calendar its start is after today, or null without a start.
   daysAway: number | null;
@@ -214,13 +214,24 @@ function sharedKicker(quest: Quest, switchedOn: boolean, meId: string): string {
   return more.length === 0 ? `${kind} · ${first.name}` : `${kind} · ${first.name} 외 ${more.length}명`;
 }
 
-// "14:00 · 학생회관", with its day when it is not today ("내일 14:00 · 학생회관"): the main screen's list has no day
-// headers, and a Party tomorrow read as today's was gone to a day early.
-function meta(subQuest: SubQuest | null, now: Date, bookedRoom: string | null | undefined): string {
+// What a row says in place of a time for a Quest whose time is not set yet (P06 ticket 42).
+const UNTIMED = '시간 미정';
+
+// "14:00 · 학생회관", with its day when it is not today ("내일 14:00 · 학생회관"), or "시간 미정 · 학생회관" for a Quest
+// whose time is not set: the main screen's list has no day headers, and a Party tomorrow read as today's was gone to a
+// day early.
+function meta(subQuest: SubQuest | null, untimed: boolean, now: Date, bookedRoom: string | null | undefined): string {
   const label = placeWithRoom(subQuest?.place?.label ?? '', bookedRoom);
   const start = subQuest?.startsAt ?? null;
-  const time = start === null ? '' : today(start, now) ? koreaClock(start) : dayAndClock(start, now);
+  const time = untimed ? UNTIMED : startWords(start, now);
   return [time, label].filter((part) => part !== '').join(' · ');
+}
+
+function startWords(start: string | null, now: Date): string {
+  if (start === null) {
+    return '';
+  }
+  return today(start, now) ? koreaClock(start) : dayAndClock(start, now);
 }
 
 function today(start: string | null, now: Date): boolean {
@@ -251,10 +262,34 @@ function toneOf(quest: Quest): QuestRowTone {
 }
 
 // Whether a Quest has a time: one of its Sub Quests still to come has a start, or, once every Sub Quest ended, one of
-// them had. A Party whose time is not set is no Quest yet, as `Main` has it, and is in neither the list nor its counts.
+// them had.
 function timed(quest: Quest): boolean {
   const subQuest = timedSubQuest(quest);
   return subQuest === null ? quest.subQuests.some(({ startsAt }) => startsAt !== null) : subQuest.startsAt !== null;
+}
+
+// Whether a Quest is on the list: one with a time, and one whose time is not set yet while a step of it is still to
+// come or it has none (P06 ticket 42). An untimed Quest whose every step ended or was cancelled is over.
+function onTheList(quest: Quest): boolean {
+  return timed(quest) || timedSubQuest(quest) !== null || quest.subQuests.length === 0;
+}
+
+// The list's order: by start, and the Quests whose time is not set after every other, ended ones included, in the
+// order they were made. Quests of the same start keep the order they came in.
+function byStartThenMade(first: Quest, second: Quest): number {
+  const firstUntimed = !timed(first);
+  if (firstUntimed !== !timed(second)) {
+    return firstUntimed ? 1 : -1;
+  }
+  if (firstUntimed) {
+    return madeAt(first) - madeAt(second);
+  }
+  const byStart = startOf(first) - startOf(second);
+  return Number.isNaN(byStart) ? 0 : byStart;
+}
+
+function madeAt(quest: Quest): number {
+  return quest.createdAt === null ? Number.POSITIVE_INFINITY : Date.parse(quest.createdAt);
 }
 
 function kindOf(quest: Quest): QuestRowView['kind'] {
@@ -264,16 +299,17 @@ function kindOf(quest: Quest): QuestRowView['kind'] {
   return heldAlone(quest) ? 'quest' : 'party';
 }
 
-// The rows of the Quest list, the earliest first, without the Quests that have no time.
+// The rows of the Quest list, the earliest first, and the Quests whose time is not set last, as they were made.
 export function toQuestRows(sources: QuestSources): QuestRowView[] {
   const { quests, myParty, parties, meId, now } = sources;
-  const byStart = quests.filter((quest) => timed(quest)).toSorted((first, second) => startOf(first) - startOf(second));
-  const nextClass = byStart.find((quest) => quest.classQuest && startOf(quest) > now.getTime());
-  return byStart.map((quest) => {
+  const listed = quests.filter((quest) => onTheList(quest)).toSorted(byStartThenMade);
+  const nextClass = listed.find((quest) => quest.classQuest && startOf(quest) > now.getTime());
+  return listed.map((quest) => {
     const subQuest = timedSubQuest(quest);
     const tone = toneOf(quest);
     const start = subQuest?.startsAt ?? null;
     const request = requestFlagOf(quest, start, now);
+    const untimed = !timed(quest);
     const row: QuestRowView = {
       id: quest.id,
       kind: kindOf(quest),
@@ -285,9 +321,12 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
       label: kindLabel(tone, quest, meId),
       title: quest.title,
       // The map's list says no day for today, as `meta` does, and only the request's fact: its row is narrow.
-      meta: request === null ? meta(subQuest, now, quest.bookedRoom) : requestShortLine(request, !today(start, now)),
+      meta:
+        request === null
+          ? meta(subQuest, untimed, now, quest.bookedRoom)
+          : requestShortLine(request, !today(start, now)),
       place: placeWithRoom(subQuest?.place?.label ?? '', quest.bookedRoom),
-      time: start === null ? '' : koreaClock(start),
+      time: untimed ? UNTIMED : start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),
       ended: subQuest === null && quest.subQuests.length > 0,
       position: positionOf(subQuest),
@@ -306,8 +345,9 @@ export interface QuestGroup {
   rows: QuestRowView[];
 }
 
-// The groups of the `MainQuests` frame by the days from today to a Quest's start, the last day of each first. Their
-// rows keep the list's order. Ended Quests are left out, and the rows hold no Quest without a time.
+// The groups of the `MainQuests` frame by the days from today to a Quest's start, the last day of each first, and
+// last "시간 미정", the Quests whose time is not set (P06 ticket 42). Their rows keep the list's order. Ended Quests are
+// left out.
 export function toQuestGroups(rows: readonly QuestRowView[], now: Date): QuestGroup[] {
   const tomorrow = koreaNextDay(now);
   const groups = [
@@ -318,13 +358,13 @@ export function toQuestGroups(rows: readonly QuestRowView[], now: Date): QuestGr
     { upTo: Number.POSITIVE_INFINITY, title: '그 이후' },
   ];
   const shown = rows.filter(({ ended }) => !ended);
-  return groups
-    .map(({ upTo, title }, index) => {
-      const from = index === 0 ? Number.NEGATIVE_INFINITY : (groups[index - 1]?.upTo ?? 0) + 1;
-      return {
-        title,
-        rows: shown.filter(({ daysAway }) => daysAway !== null && daysAway >= from && daysAway <= upTo),
-      };
-    })
-    .filter((group) => group.rows.length > 0);
+  const byDay = groups.map(({ upTo, title }, index) => {
+    const from = index === 0 ? Number.NEGATIVE_INFINITY : (groups[index - 1]?.upTo ?? 0) + 1;
+    return {
+      title,
+      rows: shown.filter(({ daysAway }) => daysAway !== null && daysAway >= from && daysAway <= upTo),
+    };
+  });
+  const untimed = { title: UNTIMED, rows: shown.filter(({ daysAway }) => daysAway === null) };
+  return [...byDay, untimed].filter((group) => group.rows.length > 0);
 }
