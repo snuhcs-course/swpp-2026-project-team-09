@@ -35,12 +35,28 @@ function movedBy(band: Band, distance: number): Stretch {
   return { startAt: bandTimeAt(moved), endAt: bandTimeAt(moved + width) };
 }
 
-// `share` is the distance dragged as a share of the range's width; less than half a step moves nothing.
+// A whole move stands the band's start on the clock's ten minutes (P01 ticket 44), so that a far time such as 07:00 is
+// reached exactly on a range from now to the place's closing, or on its rules' own steps when they are longer, as a
+// seat's half hours.
+export const MOVE_STEP_MINUTES = 10;
+
+function moveStepMs(band: Band): number {
+  return Math.max(stepMsOf(band), MOVE_STEP_MINUTES * 60_000);
+}
+
+// `share` is the distance dragged as a share of the range's width; less than half a step moves nothing. Halfway between
+// two ten minutes, as 12:25 is from a start at 12:15, the one nearer the band's own place is taken, so that the band
+// never moves further than the finger.
 export function bandMoved(band: Band, share: number): Stretch {
   const distance = share * (msOf(band.range.endAt) - msOf(band.range.startAt));
-  const step = stepMsOf(band);
-  const steps = Math.sign(distance) * Math.floor(Math.abs(distance) / step + 0.5);
-  return movedBy(band, steps * step);
+  const step = moveStepMs(band);
+  if (Math.abs(distance) < step / 2) {
+    return movedBy(band, 0);
+  }
+  const start = msOf(band.startAt);
+  const steps = (start + distance) / step;
+  const snapped = distance > 0 ? Math.ceil(steps - 0.5) : Math.floor(steps + 0.5);
+  return movedBy(band, snapped * step - start);
 }
 
 export function bandStepped(band: Band, direction: 1 | -1): Stretch {

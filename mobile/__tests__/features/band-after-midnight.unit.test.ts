@@ -37,8 +37,9 @@ describe('A band wholly after midnight', () => {
     expect(droppedAt('from', share(next('01:00')), AFTER)).toBe('25:00');
   });
 
+  // A whole move stands the start on the clock's ten minutes (P01 ticket 44): 00:04 and 20 minutes is 00:20.
   it('moves whole', () => {
-    expect(ms(bandMoved(AFTER, (20 * 60_000) / (ms(RANGE.endAt) - ms(RANGE.startAt))).startAt)).toBe(ms(next('00:24')));
+    expect(ms(bandMoved(AFTER, (20 * 60_000) / (ms(RANGE.endAt) - ms(RANGE.startAt))).startAt)).toBe(ms(next('00:20')));
   });
 
   it("steps by a screen reader's step", () => {

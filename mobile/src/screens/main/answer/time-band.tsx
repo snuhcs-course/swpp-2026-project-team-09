@@ -28,8 +28,9 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import { BandOnTrack, Ends, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
+import { BandOnTrack, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
 import { BandWords, type HeadRoom } from './band-head-words';
+import { HourNotches, UnderTrack } from './band-hour-marks';
 import { NowMark, Red, useShownBand } from './band-track';
 import { type Moved, useMovedBand } from './moved-band';
 import { SkippedBlocks, SkippedLine } from './skipped-classes';
@@ -189,6 +190,7 @@ function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
         </View>
       ))}
       <NowMark band={band} />
+      <HourNotches barHeight={BAR_HEIGHT} barTop={(LANE_HEIGHT - BAR_HEIGHT) / 2} range={band.range} />
     </>
   );
 }
@@ -260,7 +262,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
           <RedOver band={band} moving={moving} />
         </Track>
       </View>
-      <Ends band={band} folded={folded} />
+      <UnderTrack band={band} folded={folded} />
       <SkippedLine disabled={disabled} onPutBack={props.onPutBack} skipped={band.skipped} />
     </View>
   );

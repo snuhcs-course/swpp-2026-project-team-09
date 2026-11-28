@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -95,7 +96,8 @@ function startingAt(from: string): object {
   };
 }
 
-// Partitions: the band let go at 12:30; a band off the five-minute grid; past the track's end; less than half a step.
+// Partitions: the band let go at 12:30; a band off the ten minutes (P01 ticket 44); past the track's end; less than half
+// a step.
 describe("a meet's band let go", () => {
   it('asks the meet again from 12:30 and leaves its end to the server', async () => {
     await meetMinSu();
@@ -107,13 +109,13 @@ describe("a meet's band let go", () => {
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
 
-  it("moves the second Plan's band, off the grid, by whole steps, and shows the answer's first Plan", async () => {
+  it("puts the second Plan's band, off the ten minutes, on the nearest, and shows the answer's first Plan", async () => {
     const user = await meetMinSu();
     await pressMarker(user, SECOND);
 
     await dragBody(60);
 
-    expect(recalculations(server).at(-1)).toEqual(startingAt('12:33'));
+    expect(recalculations(server).at(-1)).toEqual(startingAt('12:30'));
     expect(mapThings()).toEqual(expect.arrayContaining([FIRST_PICK, SECOND]));
   });
 
@@ -207,7 +209,8 @@ describe("a lunch alone's band let go far", () => {
 });
 
 describe("a meal's band let go", () => {
-  it('asks the meal again from 12:25 for a drag of ten minutes, and keeps no outline of the place before', async () => {
+  // 12:25 is halfway between two ten minutes: the one nearer the band's own place (P01 ticket 44).
+  it('asks the meal again from 12:20 for a drag of ten minutes, and keeps no outline of the place before', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await layBand();
@@ -216,7 +219,7 @@ describe("a meal's band let go", () => {
 
     expect(recalculations(server)).toEqual([
       {
-        input: { ...MEAL_ANSWER.input, window: { from: '12:25', until: null } },
+        input: { ...MEAL_ANSWER.input, window: { from: '12:20', until: null } },
         location: ON_CAMPUS,
         clientCapabilities: SENT_CAPABILITIES,
       },

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, ConditionChip, TimeBand } from '@/api/assistant-types';
@@ -16,10 +17,11 @@ import {
 } from '@/features/assistant/band-move';
 import type { Stretch } from '@/features/assistant/time-band';
 
-// The band of the first Plan of the stored reply to 민수's meet (board a5): the range 12:00 to 18:30, the band 12:15 to
-// 12:43, 나 busy 13:00–13:50 ("24동 수업") and 17:00–18:15 ("58동 수업"), 민수 12:00–12:15 and 15:30–16:45 ("302동
-// 수업"). Board a12 drags the band to 15:20–15:48. The expected times are worked by hand from the rule: the width
-// kept, the distance dragged rounded to whole steps of five minutes, inside the range.
+// The band of the first Plan of the stored reply to 민수's meet (board a5): the range 12:00 to 22:00 (P01 ticket 43), the
+// band 12:15 to 12:43, 나 busy 13:00–13:50 ("24동 수업") and 17:00–18:15 ("58동 수업"), 민수 12:00–12:15 and 15:30–16:45
+// ("302동 수업"). Board a12 drags the band to 15:20–15:48. The expected times are worked by hand from the rule: the
+// width kept, the start where it is dragged to put on the clock's ten minutes (P01 ticket 44), nothing for less than
+// five minutes, inside the range.
 
 type Lanes = TimeBand['lanes'];
 
@@ -39,8 +41,8 @@ const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
 
 const at = (clock: string): string => `2026-11-17T${clock}:00+09:00`;
 const stretch = (from: string, until: string): Stretch => ({ startAt: at(from), endAt: at(until) });
-// A drag of `minutes` as the screen passes it: a share of the range's 390 minutes.
-const dragged = (minutes: number): number => minutes / 390;
+// A drag of `minutes` as the screen passes it: a share of the range's 600 minutes.
+const dragged = (minutes: number): number => minutes / 600;
 
 const MINSU_CLASS = { startAt: at('15:30'), endAt: at('16:45'), label: '302동 수업' };
 
@@ -62,19 +64,22 @@ function words(text: string, name: string, reason: string): { text: string; line
 }
 
 describe('bandMoved', () => {
-  // Partitions: a drag inside the range (board a12); exactly one step each way; less than half a step each way and
-  // just over it; to the range's start exactly and past it; just short of the range's end and past it.
+  // Partitions: a drag inside the range (board a12); half a step each way, onto the ten minutes on either side; less
+  // than half a step each way; a drag that ends off the ten minutes, put on the nearest, and one halfway between two;
+  // to the range's start exactly and past it; just short of the range's end and past it.
   it.each([
     ['board a12', 185, '15:20', '15:48'],
-    ['one step later', 5, '12:20', '12:48'],
-    ['one step earlier', -5, '12:10', '12:38'],
-    ['less than half a step later', 2, '12:15', '12:43'],
-    ['less than half a step earlier', -2, '12:15', '12:43'],
-    ['just over half a step', 3, '12:20', '12:48'],
+    ['half a step later', 5, '12:20', '12:48'],
+    ['half a step earlier', -5, '12:10', '12:38'],
+    ['less than half a step later', 4, '12:15', '12:43'],
+    ['less than half a step earlier', -4, '12:15', '12:43'],
+    ['to 14:43, off the ten minutes', 148, '14:40', '15:08'],
+    ['ten minutes later, to 12:25, halfway: the nearer its own place', 10, '12:20', '12:48'],
+    ['ten minutes earlier, to 12:05, halfway: the nearer its own place', -10, '12:10', '12:38'],
     ["to the range's start exactly", -15, '12:00', '12:28'],
     ["past the range's start", -20, '12:00', '12:28'],
-    ["a step short of the range's end", 345, '18:00', '18:28'],
-    ["past the range's end", 350, '18:02', '18:30'],
+    ["to the ten minutes short of the range's end", 545, '21:20', '21:48'],
+    ["past the range's end", 600, '21:32', '22:00'],
   ])('moves the band whole for a drag %s (%d minutes) to %s–%s', (_, minutes, from, until) => {
     expect(bandMoved(band, dragged(minutes))).toEqual(stretch(from, until));
   });
@@ -99,9 +104,9 @@ describe('bandStepped', () => {
 
   it("keeps a band at the range's end where it is for a step later", () => {
     // The band moved to the range's end, as a drag past it leaves it.
-    const atEnd = { ...band, ...stretch('18:02', '18:30') };
+    const atEnd = { ...band, ...stretch('21:32', '22:00') };
 
-    expect(bandStepped(atEnd, 1)).toEqual(stretch('18:02', '18:30'));
+    expect(bandStepped(atEnd, 1)).toEqual(stretch('21:32', '22:00'));
   });
 });
 
