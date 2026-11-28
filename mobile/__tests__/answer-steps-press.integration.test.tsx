@@ -80,12 +80,14 @@ async function ask(menus = true): Promise<User> {
   return user;
 }
 
-function flag(number: number): string | undefined {
-  return mapThings().find((thing) => thing.startsWith(`${String(number)} `));
+// A mark on the map by the start of its name: a step's mark by its flag's title, or the meal shown, drawn as its answer
+// alone, by its pick's (P03 ticket 26: no mark carries a step's number).
+function mark(start: string): string | undefined {
+  return mapThings().find((thing) => thing.startsWith(start));
 }
 
-function word(number: number): ReturnType<typeof screen.getByRole> {
-  return screen.getByRole('button', { name: new RegExp(`^${String(number)}번 `, 'u') });
+function word(number: number): ReturnType<typeof screen.getByTestId> {
+  return screen.getByTestId(`step-word-${String(number)}`);
 }
 
 // Partitions: the meal's step raised, against a meal alone, which shows its list and no pager.
@@ -107,36 +109,33 @@ describe("the steps card's words", () => {
   it("say 공부 for the seat, and the title's last word for the meal", async () => {
     await ask();
 
-    expect(word(1)).toHaveAccessibleName(/^1번 공부 /u);
-    expect(word(2)).toHaveAccessibleName(/^2번 저녁 /u);
+    expect(word(1)).toHaveAccessibleName(/^공부 /u);
+    expect(word(2)).toHaveAccessibleName(/^저녁 /u);
   });
 });
 
-// Partitions: each flag with ① chosen, then with ② chosen; a press on the chosen meal step's flag, with menus known and
-// without.
+// Partitions: the step not shown, with ① chosen, then with ② chosen; a press on the pick of the meal shown, drawn as its
+// answer alone (P03 ticket 26), with menus known and without.
 describe("the steps' flags", () => {
-  it('carry "›" in both choices, and the chosen meal step opens its menu as a meal alone does', async () => {
+  it('carry "›" on the step not shown in both choices, and the meal shown opens its menu as a meal alone does', async () => {
     const user = await ask();
-    expect(flag(1)).toMatch(/›/u);
-    expect(flag(2)).toMatch(/›/u);
+    expect(mark('학생회관식당 › · ')).toBeDefined();
 
     await user.press(word(2));
     await pass(50);
-    expect(flag(1)).toMatch(/›/u);
-    expect(flag(2)).toMatch(/^2 학생회관식당 › /u);
+    expect(mark('관정 7층 열람실 › · ')).toBeDefined();
 
-    await pressMarker(user, flag(2) ?? '');
+    await pressMarker(user, mark('학생회관식당') ?? '');
     await pass(100);
     expect(inFrame().getByTestId('meal-menu')).toBeOnTheScreen();
   });
 
-  it('carry "›" on the chosen meal step without menus too, which opens its pick\'s card as a meal alone does', async () => {
+  it("open the pick's card of the meal shown without menus, as a meal alone does, the seat's booking on screen", async () => {
     const user = await ask(false);
     await user.press(word(2));
     await pass(50);
-    expect(flag(2)).toMatch(/^2 학생회관식당 › /u);
 
-    await pressMarker(user, flag(2) ?? '');
+    await pressMarker(user, mark('학생회관식당') ?? '');
     await pass(100);
     expect(within(screen.getByTestId('mark-card')).getByText('학생회관식당에서 저녁')).toBeOnTheScreen();
   });

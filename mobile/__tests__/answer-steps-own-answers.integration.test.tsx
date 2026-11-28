@@ -79,7 +79,7 @@ async function asked(reply: AssistantReply): Promise<User> {
 }
 
 async function choose(user: User, number: number): Promise<void> {
-  await user.press(screen.getByRole('button', { name: new RegExp(`^${String(number)}번 `, 'u') }));
+  await user.press(screen.getByTestId(`step-word-${String(number)}`));
   await pass(300);
 }
 
@@ -108,7 +108,7 @@ describe('The steps of lunch and dinner', () => {
 
     expect(bandWords()).toHaveTextContent(new RegExp(DINNER_BAND, 'u'));
     expect(bandWords()).not.toHaveTextContent(new RegExp(LUNCH_BAND, 'u'));
-    expect(screen.getByRole('button', { name: /^2번 /u })).toBeSelected();
+    expect(screen.getByTestId('step-word-2')).toBeSelected();
 
     await choose(user, 1);
 
@@ -133,7 +133,7 @@ describe('The steps of lunch and dinner', () => {
     const dinner = reply.answers?.[1];
     await asked({ ...reply, select: { planId: dinner?.plans[0]?.id ?? '', key: dinner?.key } });
 
-    expect(screen.getByRole('button', { name: /^2번 /u })).toBeSelected();
+    expect(screen.getByTestId('step-word-2')).toBeSelected();
     expect(bandWords()).toHaveTextContent(new RegExp(DINNER_BAND, 'u'));
     expect(bandWords()).not.toHaveTextContent(new RegExp(LUNCH_BAND, 'u'));
   });
@@ -195,12 +195,12 @@ describe('A step of lunch and dinner kept on screen', () => {
     const user = await asked(twoMeals());
     await choose(user, 2);
     await moveDinner(laterDinner(dinnerOf(twoMeals()).key));
-    expect(screen.getByRole('button', { name: /^2번 저녁 17:30–18:30/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^저녁 17:30–18:30/u })).toBeOnTheScreen();
     await choose(user, 1);
 
     await askAgain(user, twoMeals());
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 17:00–18:00/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^저녁 17:00–18:00/u })).toBeOnTheScreen();
   });
 
   it('stays on a step whose answer a recalculation gave another key', async () => {
@@ -209,7 +209,7 @@ describe('A step of lunch and dinner kept on screen', () => {
 
     await moveDinner(laterDinner('meal 2026-10-07 dinner together'));
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 17:30–18:30/u })).toBeSelected();
+    expect(screen.getByRole('button', { name: /^저녁 17:30–18:30/u })).toBeSelected();
   });
 });
 
@@ -226,7 +226,7 @@ describe('A step whose answer changed key and changed back', () => {
     await moveDinner(laterDinner(`${key} together`));
     await moveDinner(laterDinner(key, '18:00', '19:00'));
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 18:00–19:00/u })).toBeSelected();
+    expect(screen.getByRole('button', { name: /^저녁 18:00–19:00/u })).toBeSelected();
   });
 
   it('stays chosen at its last answer after three changes back to its first key', async () => {
@@ -238,6 +238,6 @@ describe('A step whose answer changed key and changed back', () => {
     await moveDinner(laterDinner('meal 2026-10-07 late', '17:45', '18:45'));
     await moveDinner(laterDinner(key, '18:00', '19:00'));
 
-    expect(screen.getByRole('button', { name: /^2번 저녁 18:00–19:00/u })).toBeSelected();
+    expect(screen.getByRole('button', { name: /^저녁 18:00–19:00/u })).toBeSelected();
   });
 });

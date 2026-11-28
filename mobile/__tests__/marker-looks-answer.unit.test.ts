@@ -36,7 +36,7 @@ function withLabel(side: 'above' | 'below' | 'left' | 'right'): MarkerLook {
 }
 
 // Partitions: the same picture built twice; a change of each thing drawn (the symbol's type, name, ring, badge, green
-// dot, role, and number; the label's side, tone, title, line, and number; no symbol; no label). Expected values: the
+// dot, role, number, and icon; the label's side, tone, title, line, and number; no symbol; no label). Expected values: the
 // brief's rule that the name holds the words.
 describe("an answer's look on the map", () => {
   it('has one name for two looks that draw the same picture', () => {
@@ -65,6 +65,8 @@ describe("an answer's look on the map", () => {
       { ...PICK, symbol: { type: 'dot', role: 'pick', number: 2 } },
       { ...PICK, symbol: { type: 'dot', role: 'candidate', number: 1 } },
       { ...PICK, symbol: { type: 'dot', role: 'pick', number: null } },
+      { ...PICK, symbol: { type: 'dot', role: 'pick', number: null, icon: 'meal' } },
+      { ...PICK, symbol: { type: 'dot', role: 'pick', number: null, icon: 'bookOpen' } },
       withLabel('left'),
       withLabel('right'),
       { kind: 'answer', symbol: null, label: { side: 'left', tone: 'dropped', title: '3식당', line: null, number: 4 } },
