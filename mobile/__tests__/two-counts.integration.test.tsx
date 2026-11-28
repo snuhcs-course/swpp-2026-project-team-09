@@ -4,7 +4,7 @@
  * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { KeptNotification } from '@/api/types';
+import type { KeptNotification } from '@/api/waiting-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';

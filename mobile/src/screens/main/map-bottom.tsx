@@ -23,19 +23,16 @@
 
 import { router } from 'expo-router';
 import { type ReactElement, type ReactNode, useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { Mention } from '@/api/mention-types';
+import { StyleSheet, View } from 'react-native';
 import { now } from '@/clock';
 import { space } from '@/design-system';
 import { restoreOf } from '@/features/assistant/restore';
 import { nextMeal } from '@/features/dining/adapter';
 import type { FirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
-import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { useAiRaised, useTellReady } from '../shell/ai-raised';
-import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
+import { sendWithKeyboardDown, useKeyboardLift } from './input-keyboard';
 import { AnswerFrame } from './answer/answer-frame';
 import { AnswerActionButton, answerActionOf } from './answer/plan-action';
 import { AskedExamples } from './answer/asked-examples';
@@ -72,26 +69,6 @@ import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
 export function openMenus(restaurant?: string): void {
   const { date, meal } = nextMeal(now());
   router.push({ pathname: '/menus', params: restaurant === undefined ? { date, meal } : { date, meal, restaurant } });
-}
-
-// How much higher the AI input stands while the keyboard is up: the keyboard's reach less what already lies under
-// the bar, the navigation with the phone's own bar, which the keyboard covers. 0 while it is down. While the answer
-// frame is shown the navigation gives way, and the bar stands above the phone's own bar or the keyboard.
-function useKeyboardLift(framed: boolean): { lift: number; keyboardUp: boolean } {
-  const { bottom } = useSafeAreaInsets();
-  const keyboard = useKeyboardHeight(bottom);
-  const lift = framed ? Math.max(bottom, keyboard) : Math.max(0, keyboard - tabBarHeight(bottom));
-  return { lift, keyboardUp: keyboard > 0 };
-}
-
-// A send puts the keyboard down, so that the frame's card shows the reply.
-function sendWithKeyboardDown(
-  send: ChatSheetControl['chat']['send'],
-): (text: string, mentions?: readonly Mention[]) => void {
-  return (text, mentions) => {
-    Keyboard.dismiss();
-    send(text, undefined, mentions?.length === 0 ? undefined : mentions);
-  };
 }
 
 // What the open card and the first run's card take. A 식당's card sits at the top: the lists give way to it, and what
@@ -139,11 +116,7 @@ interface MapBottomProps {
 type EverydayProps = Pick<
   MapBottomProps,
   'taken' | 'onParty' | 'onNoticeHeight' | 'room' | 'stack' | 'tutorial' | 'firstRun' | 'unasked'
-> & {
-  keyboardUp: boolean;
-  // The bottom bar's middle lowered the AI (A04 ticket 09): its input and the lines over it are gone.
-  lowered: boolean;
-};
+> & { keyboardUp: boolean; lowered: boolean };
 
 // The line of the first Quest made from a Plan, while the room has it, the keyboard is down and the AI is raised.
 function MadeLine({
@@ -221,8 +194,7 @@ function TutorialParts({
 // The list of earlier questions takes the input's place in the answer's card, as it reaches the sheet's bottom (P04
 // ticket 52); people picked in the time card leave the input where it is (P04 ticket 64). The input stays mounted, hidden, so that
 // "＋ 새 대화" can put the cursor in it as the list closes. The time band moved whole hides the input but keeps its room,
-// so that the card and its lanes stay under the finger. The input lowered by the bottom bar's middle stays mounted too,
-// so that what was typed is there when it is raised again.
+// so that the card and its lanes stay under the finger.
 function inputStateOf(chat: MapBottomProps['chat']): { listOpen: boolean; inputGone: boolean; inputShown: boolean } {
   const listOpen = chat.framed && chat.card.earlier.open;
   return {
@@ -230,6 +202,13 @@ function inputStateOf(chat: MapBottomProps['chat']): { listOpen: boolean; inputG
     inputGone: listOpen,
     inputShown: !(chat.framed && chat.answer.moving !== null),
   };
+}
+
+// Whether the bar's middle lowered the AI (A04 ticket 09): the input, mounted so that a draft is kept, and the lines
+// over it go. Only on the everyday map: an answer frame hides the bar, and its card keeps its input; nor while the
+// 새내기 튜토리얼's list or a quest's sheet is open, which keep the input as they show it.
+function useLowered(chat: MapBottomProps['chat'], tutorial: TutorialFlow): boolean {
+  return !useAiRaised().raised && !chat.framed && tutorial.list === null && tutorial.sheet === null;
 }
 
 // What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
@@ -248,8 +227,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   // While a quest's guide is open it takes the whole map. The AI input stays mounted, hidden, so that a draft is kept.
   const guided = tutorial.guide !== null;
-  // Lowered only on the everyday map: an answer frame hides the bottom bar, and its card keeps its input.
-  const lowered = !useAiRaised().raised && !chat.framed;
+  const lowered = useLowered(chat, tutorial);
   // What the AI has ready, which the bar's middle counts while these lines are out of sight (A04 ticket 12).
   useTellReady((mapChipOf(chat)?.kind === 'continue' ? 1 : 0) + unasked.made.waiting);
   const cardShown = invitation.shown || made.shown !== null;
@@ -307,7 +285,19 @@ type FramedProps = MapBottomProps & {
 // The everyday map's bottom, the answer frame, the examples over the keyboard, and the cards nobody asked for: none of
 // them while a quest's guide is open.
 function FramedParts(props: FramedProps): ReactElement {
-  const { chat, room, unasked, onAnswerHeight, onTimeBarHeight, cardShown, inputTop, keyboardUp, empty, send } = props;
+  const {
+    chat,
+    room,
+    unasked,
+    onAnswerHeight,
+    onTimeBarHeight,
+    cardShown,
+    inputTop,
+    keyboardUp,
+    empty,
+    lowered,
+    send,
+  } = props;
   const { invitation, made } = unasked;
   return (
     <>
@@ -324,7 +314,9 @@ function FramedParts(props: FramedProps): ReactElement {
         />
       </RowFourProvider>
       <MapQuestions {...props} />
-      {!chat.framed && keyboardUp && empty && !lowered ? <AskedExamples bottom={examplesBottom(props)} onSend={send} /> : null}
+      {!chat.framed && keyboardUp && empty && !lowered ? (
+        <AskedExamples bottom={examplesBottom(props)} onSend={send} />
+      ) : null}
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />

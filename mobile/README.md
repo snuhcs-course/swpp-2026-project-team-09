@@ -1086,11 +1086,15 @@ Iteration 2 (P06), and commit `2f4f201` holds its code.
 
 **오늘** (`src/screens/today/today-screen.tsx`, A04 ticket 10) is a tab with the date after its title ("12월 1일
 화요일") and one page that scrolls once, drawn anew each time it comes to the front: 답할 것 N, the rows of what waits
-as 알림 lists them, an invitation with 거절 and 수락 through 파티 > 초대's calls, hidden when nothing waits; 오늘 일정,
-today's rows of `useQuestRows()` in time order, those over by now (`over`) folded into "지난 일정 N개 ▾" above a
-"지금 HH:MM" mark, and one line for tomorrow, "내일 N개 · 강의 1, 파티 1", or "오늘 일정 없음" (a press does what the
-map's Quest row does, by the main screen's address for a class); and 지난 알림, the newest five kept Notifications,
-with "알림 모두 보기 ›". The kept ones shown are marked read as 알림 marks them.
+as 알림 lists them, the invitations first and three at most with "답할 것 N개 모두 보기 ›" to the rest, an invitation
+with 거절 and 수락 through 파티 > 초대's calls, hidden when nothing waits; 오늘 일정,
+today's rows of `useQuestRows()` in time order, those over by now folded into "지난 일정 N개 ▾" above a "지금
+HH:MM" mark, and one line for tomorrow, "내일 N개 · 강의 1, 파티 1", or "오늘 일정 없음" (a press does what the map's
+Quest row does, by the main screen's address for a class). The main server leaves out a Quest whose every step ended
+and sends today's Class Quests only, so the classes already over and tomorrow's classes come from the timetable
+(`useWeek()`); a 파티 already over is not listed; and 지난 알림, the newest five kept Notifications,
+with "알림 모두 보기 ›", which stays while the lists load or fail. The main server marks every kept Notification read at once, so 오늘 marks them read only
+while every unread one is among the five it shows; otherwise "알림 모두 보기" does.
 
 알림 (`notifications-screen.tsx`), every row, above the tabs, is composed from the main server's lists (`useNotices()` of the notifications
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its

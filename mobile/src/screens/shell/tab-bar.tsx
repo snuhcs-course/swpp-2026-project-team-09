@@ -9,7 +9,7 @@
 
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { ReactElement } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNav, type BottomNavItem, color, shadow } from '@/design-system';
 import { useBellCount } from '@/features/notifications/use-notices';
@@ -72,6 +72,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement |
             return;
           }
           if (route === 'main') {
+            // The keyboard goes down with the input it was up for.
+            Keyboard.dismiss();
             setRaised(current === 'main' ? !raised : true);
           }
           if (route !== current) {

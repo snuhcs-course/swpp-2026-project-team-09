@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -34,13 +35,13 @@ function recalculate(body: object): request.Test {
   });
 }
 
-const studyInput = (from: string | null, userIds = [stage.asker.id]): object => ({
+const studyInput = (from: string | null, userIds = [stage.asker.id], until: string | null = null): object => ({
   kind: 'study',
   date: DATE,
   what: 'any',
   people: userIds.map((userId) => ({ userId, constraints: [] })),
   together: false,
-  window: { from, until: null },
+  window: { from, until },
   area: null,
   minutes: null,
   chosen: { seatSpaceId: null, roomSpaceId: null },
@@ -78,5 +79,37 @@ describe("A study plan's input", () => {
     const response = await recalculate({ input: studyInput(null), location: null, clientCapabilities: ['answer'] });
 
     expect(response.status).toBe(422);
+  });
+});
+
+// P05 ticket 91: a band dragged over midnight sends its time as hours past 24, counted from the date.
+describe("A study plan's input past midnight", () => {
+  beforeAll(async () => {
+    await stage.asking(DATE, '11:50');
+  });
+
+  it('is answered across midnight, its end let go at 00:30 of the next day', async () => {
+    const response = await recalculate({ input: studyInput('23:30', [stage.asker.id], '24:30'), location: null });
+    const answer = answerIn(response.body);
+    const NEXT = '2087-01-08';
+
+    expect(response.status).toBe(200);
+    expect(answer.plans[0]?.endAt).toBe(`${NEXT}T00:30:00+09:00`);
+    expect(answer.plans[0]?.band.endAt).toBe(`${NEXT}T00:30:00+09:00`);
+    expect(answer.chips.find(({ kind }) => kind === 'until')?.text).toBe('00:30까지');
+    expect(answer.input.kind === 'study' ? answer.input.window : null).toEqual({ from: '23:30', until: '24:30' });
+  });
+
+  it('is answered wholly after midnight, its start let go at 00:30 of the next day', async () => {
+    const response = await recalculate({ input: studyInput('24:30'), location: null });
+    const answer = answerIn(response.body);
+
+    expect(response.status).toBe(200);
+    expect(answer.plans[0]?.startAt).toBe('2087-01-08T00:30:00+09:00');
+    expect(answer.chips.find(({ kind }) => kind === 'from')?.text).toBe('00:30부터');
+  });
+
+  it('is refused with 400 past 47:59', async () => {
+    expect((await recalculate({ input: studyInput('48:00'), location: null })).status).toBe(400);
   });
 });

@@ -80,7 +80,7 @@ describe('An invited User accepting', () => {
           ahead: null,
           line: '저녁 같이',
           at: '2026-11-14T11:58:00+09:00',
-          url: `/main?card=party:${questId}`,
+          url: `/main?card=room:${questId}`,
           read: false,
         },
       ]);
@@ -128,7 +128,7 @@ describe('An invited User declining', () => {
           ahead: null,
           line: '저녁 같이',
           at: '2026-11-14T11:58:00+09:00',
-          url: `/main?card=party:${questId}`,
+          url: `/main?card=room:${questId}`,
           read: false,
         },
       ]);

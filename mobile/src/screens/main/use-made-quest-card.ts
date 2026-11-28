@@ -73,7 +73,7 @@ export function useMadeQuestCard(
   const scene = useScene(shown, at);
   return {
     first: made[0] ?? null,
-    waiting: made.filter(waitsForAnswer).length,
+    waiting: made.filter((one) => waitsForAnswer(one)).length,
     shown,
     scene,
     openCard: (questId) => {
