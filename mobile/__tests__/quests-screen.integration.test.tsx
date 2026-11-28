@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -17,6 +18,12 @@ import { startFresh } from './support/mocks';
 // The Quest list on the whole screen, the `MainQuests` frame, against the mocks.
 
 jest.mock('expo-location');
+// As on Android, where nothing blurs the map: the list on glass is the `screen` level's white.
+jest.mock('expo-glass-effect', () => ({
+  isLiquidGlassAvailable: (): boolean => false,
+  isGlassEffectAPIAvailable: (): boolean => false,
+  GlassView: (): null => null,
+}));
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
   useMotionAllowed: (): boolean => false,
@@ -55,6 +62,16 @@ describe('the Quest list on the whole screen', () => {
     await user.press(screen.getByRole('button', { name: '닫기' }));
     expect(screen.queryByRole('header', { name: '퀘스트 3' })).toBeNull();
     expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+  });
+
+  it('lies on glass over the map, whose floating parts give way until it closes (A04 ticket 08)', async () => {
+    const user = await openQuests();
+
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.85)' });
+    expect(screen.getByTestId('over-map', { includeHiddenElements: true })).toHaveStyle({ opacity: 0 });
+
+    await user.press(screen.getByRole('button', { name: '닫기' }));
+    expect(screen.getByTestId('over-map')).not.toHaveStyle({ opacity: 0 });
   });
 
   it("is closed by Android's back button", async () => {
@@ -167,5 +184,19 @@ describe("the Quest list on the whole screen's states", () => {
     expect(screen.getByLabelText('불러오는 중')).toBeVisible();
     await pass(1000);
     expect(screen.getByRole('button', { name: CLASS })).toBeVisible();
+  });
+});
+
+describe('the Quest list opened from 내 정보', () => {
+  it('is white, since 내 정보 and not the map lies under it (A04 ticket 08)', async () => {
+    const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: '내 정보' }));
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: '내 퀘스트' }));
+    await pass(0);
+
+    expect(screen.getByRole('header', { name: '퀘스트 3' })).toBeVisible();
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: '#FFFFFF' });
   });
 });

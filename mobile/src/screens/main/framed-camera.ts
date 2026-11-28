@@ -16,7 +16,8 @@ import type { MainMap } from './use-main-map';
 // for it, and never in between (P10 ticket 30, the user's words: "최초 질의 혹은 클릭 이후 줌 세팅이 된 이후에는 마음대로
 // 움직일 수 있어야 하는거야"). The events are a new reply, and a press that opens or chooses something: a candidate, a
 // mark, a step, a place opened, the list again. Nothing else frames: not the phone's position, a poll, the card's height,
-// the keyboard, or a recalculation that keeps the places.
+// the keyboard, or a recalculation that keeps the places. A card's first height, told after the map has rested, frames
+// the event's drawing once more: the framing had not counted it (P01 ticket 47).
 
 // What a framing is of, part by part, each compared with `Object.is`: the reply or answer drawn (`reply`), and what was
 // opened or chosen in it (`chosen`).
@@ -77,7 +78,15 @@ interface FramingState {
   glidedFrom: MapCamera | null | undefined;
   // The layout the drawing was last framed for.
   laidOut: Framing | null;
+  // Where the map rested when the framing closed, which a pan of the User's leaves; null while it is open.
+  restedAt: MapCamera | null;
   timer: ReturnType<typeof setTimeout> | null;
+}
+
+// The layout now, and where the map rests.
+interface Laid {
+  framing: Framing;
+  camera: MapCamera | null;
 }
 
 // What the camera does when the drawing is framed, and when the framing waits `STILL_MS` first.
@@ -119,7 +128,7 @@ function framedAgain(now: FramingState, here: boolean, { key, from }: Frame, mov
   if (!here || (!came && sameKey(now.framed, key))) {
     return;
   }
-  Object.assign(now, { framed: key, open: true, glidedFrom: undefined });
+  Object.assign(now, { framed: key, open: true, glidedFrom: undefined, restedAt: null });
   if (replied) {
     moves.later();
   } else {
@@ -128,9 +137,27 @@ function framedAgain(now: FramingState, here: boolean, { key, from }: Frame, mov
   }
 }
 
-// A change of the card's height or the stage: framed again while the framing is open, never after.
-function laidOutAgain(now: FramingState, here: boolean, framing: Framing, moves: Moves): void {
-  if (!now.open || !here || now.laidOut === framing) {
+// A card that had told no height when the drawing was last framed tells one: the time card, whose layout can come after
+// the map has rested from the glide on a cold start or at a larger font, or the chat card. A height told again, as a
+// card folds, opens, or rises, is no such arrival (P01 ticket 47).
+function arrived(framed: Framing | null, framing: Framing): boolean {
+  return (
+    framed !== null &&
+    ((framed.timeBar === 0 && framing.timeBar > 0) || (framed.card === null && framing.card !== null))
+  );
+}
+
+// A change of the card's height or the stage: framed again while the framing is open. After it has closed, only a card's
+// first height frames again, once, and only while the map rests where the framing left it: a pan of the User's stands.
+function laidOutAgain(now: FramingState, here: boolean, { framing, camera }: Laid, moves: Moves): void {
+  if (!here || now.laidOut === framing) {
+    return;
+  }
+  if (!now.open) {
+    if (arrived(now.laidOut, framing) && camera === now.restedAt) {
+      Object.assign(now, { open: true, glidedFrom: undefined, restedAt: null });
+      moves.glide();
+    }
     return;
   }
   if (now.timer === null) {
@@ -147,6 +174,7 @@ const NOTHING_FRAMED: FramingState = {
   open: false,
   glidedFrom: undefined,
   laidOut: null,
+  restedAt: null,
   timer: null,
 };
 
@@ -172,12 +200,12 @@ export function useFramedCamera(
     framedAgain(state.current, here, frame, moves);
   });
   const onLayout = useEffectEvent(() => {
-    laidOutAgain(state.current, here, framing, moves);
+    laidOutAgain(state.current, here, { framing, camera: map.camera }, moves);
   });
   const onRest = useEffectEvent(() => {
     const { glidedFrom } = state.current;
-    if (glidedFrom !== undefined && map.camera !== glidedFrom) {
-      state.current.open = false;
+    if (state.current.open && glidedFrom !== undefined && map.camera !== glidedFrom) {
+      Object.assign(state.current, { open: false, restedAt: map.camera });
     }
   });
   // Each render compares what is drawn with what was last framed.
