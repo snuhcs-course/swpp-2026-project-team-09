@@ -952,10 +952,11 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
   friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
 - **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
   left out when empty. A request that waits no more says "이미 처리된 요청이에요" and the requests are fetched again.
-- **친구 추가** (`/me/friends/add`): the User's Friend ID from the Lobby, which "복사" puts on the clipboard
-  (`expo-clipboard`); the field "친구 ID", which keeps letters and digits in capitals, at most 8, and "찾기", which looks
-  the owner up before "추가" sends the Friend Request; each refusal under the field; and "초대 링크 보내기", which makes
-  an Invite Link and opens the phone's share sheet (React Native's `Share`).
+- **친구 추가** (`/me/friends/add`): three sections, each a grey head over a soft box. The User's Friend ID from the
+  Lobby, which the copy icon after it ("친구 ID 복사") puts on the clipboard (`expo-clipboard`); the field, named
+  "친구 ID" to a screen reader only, which keeps letters and digits in capitals, at most 8, and "찾기" beside it at
+  its height, which looks the owner up before "추가" sends the Friend Request; each refusal under the field; and
+  "초대 링크 보내기", which makes an Invite Link and opens the phone's share sheet (React Native's `Share`).
 - **The accept screen** of an Invite Link (`/invite/[token]`), which slides up: who sent it, "수락" and "거절", or why it
   cannot be accepted, with "확인". "수락" closes it on 지도 with "{name}님과 친구가 됐어요"; "거절" only closes it.
 
