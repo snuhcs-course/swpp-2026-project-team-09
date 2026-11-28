@@ -5,6 +5,8 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { type NotificationKind } from './notification.js';
+
 // A card on the main screen's map, such as a party's: `{ kind: 'party', id: <questId> }`.
 export interface Card {
   kind: string;
@@ -24,7 +26,7 @@ export function cardAddress({ kind, id }: Card): string {
 }
 
 // A 파티's own news, which the User wants to read in its room: its 일정, its members and its activation (P06 ticket 37).
-const ROOM_KINDS: ReadonlySet<string> = new Set([
+const ROOM_KINDS: ReadonlySet<string> = new Set<NotificationKind>([
   'became-leader',
   'join-accepted',
   'step-changed',
