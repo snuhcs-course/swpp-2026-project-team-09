@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -45,14 +46,21 @@ function askPlaceAt(point: LatLng | null): Promise<PlaceAt> {
   return point === null ? Promise.reject(new Error('No point')) : apiClient.findPlaceAt(point);
 }
 
-// The Place at the point, asked when the camera stops there. Undefined until it is known.
-export function usePlaceAt(point: LatLng | null): PlaceAtView | undefined {
-  return useQuery({
+// The Place at the point, asked when the camera stops there: `shown`, what the card says, keeps the last place's words
+// while the next point is asked, so that the card does not blink as the map moves; `chosen`, what a press gives, is
+// the point's own answer, undefined until it comes. Both are undefined for no point (outside the campus).
+export function usePlaceAt(point: LatLng | null): { shown: PlaceAtView | undefined; chosen: PlaceAtView | undefined } {
+  const { data, isPlaceholderData } = useQuery({
     queryKey: placeAtKey(point),
     queryFn: () => askPlaceAt(point),
     enabled: point !== null,
+    placeholderData: keepPreviousData,
     select: (at: PlaceAt) => (point === null ? undefined : toPlaceAt(at, point)),
-  }).data;
+  });
+  if (point === null) {
+    return { shown: undefined, chosen: undefined };
+  }
+  return { shown: data, chosen: isPlaceholderData ? undefined : data };
 }
 
 function placeOf(at: PlaceAt): Place | null {
