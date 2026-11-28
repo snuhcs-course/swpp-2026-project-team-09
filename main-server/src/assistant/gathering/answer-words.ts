@@ -10,6 +10,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -119,6 +120,8 @@ export const withTopic = (word: string): string => `${word}${hasFinal(word) ? '�
 export const withAnd = (word: string): string => `${word}${hasFinal(word) ? '과' : '와'}`;
 
 export const withSubject = (word: string): string => `${word}${hasFinal(word) ? '이' : '가'}`;
+
+export const withObject = (word: string): string => `${word}${hasFinal(word) ? '을' : '를'}`;
 
 export const withCopula = (word: string): string => `${word}${hasFinal(word) ? '이에요' : '예요'}`;
 // 으로 after a final consonant other than ㄹ, and 로 otherwise.

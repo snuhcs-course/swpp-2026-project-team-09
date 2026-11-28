@@ -1,7 +1,7 @@
 # 25: A changed step says which 파티 and when, and 지금 나서요 is kept again
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: 26 (the date words).
 
 Native files: none. Releases: a main server Release.
@@ -16,7 +16,7 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## What to build
 
-- Words: "<파티 제목> · <이름>이 일정을 바꿨어요" / "<날짜 시각> <단계>로 바뀌었어요" (the date words of ticket 26; a cancelled step as now).
+- Words: "<이름>이 일정을 바꿨어요" / "<파티 제목> · <날짜 시각> <단계>로 바뀌었어요" (the date words of ticket 26; a cancelled step "<파티 제목> · '<단계>' 취소"). The title says what happened and the line starts with the 파티, as #699 set for every 파티 Notification, so a long 파티 title does not hide what happened.
 - After the change, each Holder's 지금 나서요 is kept again for the steps as they are, by the same Timetable rule as an accepted invitation's (decided 2026-11-27: the Timetable, not the live position). A Holder whose way cannot be worked out (no Place with a position, no start known from the Timetable) gets none, as today.
 
 ## Must not break
@@ -32,3 +32,10 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 - [ ] No native file changes; lint, format and types pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 55 minutes, an estimate. It is the time in which the agent worked on this ticket in one session (worktree `snu-now-p06-s2`), split from the session's other tickets by when each ticket's PR was opened. Waiting for the shared lock, for Docker and for reviews is left out.
+- Tokens, the two review subagents included:
+  - input: 274 uncached, with 56,298,575 read from the cache and 761,628 written to it;
+  - output: 82,923.

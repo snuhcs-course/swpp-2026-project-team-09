@@ -1,7 +1,7 @@
 # 30: One count for one thing on every screen
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

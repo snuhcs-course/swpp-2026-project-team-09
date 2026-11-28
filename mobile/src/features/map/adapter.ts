@@ -18,6 +18,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -213,9 +214,10 @@ export interface MapSources {
   forInterestMarks?: boolean;
 }
 
-// A Party that others may join: its members and how to join, in the Quest's room.
+// A Party that others may join: its members and how to join, in the Quest's room. Its size is the 파티's, Holders over
+// the Quest's capacity, as the room shows it (P06 ticket 30).
 function openPartyCard(
-  questId: string,
+  quest: Pick<Quest, 'id' | 'holders' | 'capacity'>,
   party: QuestParty,
   { start, label, now }: { start: string | null; label: string; now: Date },
 ): Omit<CardView, 'id' | 'position'> {
@@ -228,10 +230,10 @@ function openPartyCard(
       count: party.memberCount,
       minutesOld: null,
     },
-    subLabel: `파티 · ${party.memberCount}/${party.capacity}명`,
+    subLabel: `파티 · ${String(quest.holders.length)}/${String(quest.capacity)}명`,
     title: party.title,
     lines: [line('clock', start === null ? label : `${dayAndClock(start, now)} ${label}에서 출발`)],
-    primary: { label: party.mine ? '파티 열기' : '참여하기', action: 'room', questId },
+    primary: { label: party.mine ? '파티 열기' : '참여하기', action: 'room', questId: quest.id },
     secondary: null,
   };
 }
@@ -249,7 +251,7 @@ function partyCard(
   const start = subQuest?.startsAt ?? null;
   const label = subQuest?.place?.label ?? '';
   if (party !== null && quest.joinPolicy !== 'closed') {
-    return openPartyCard(quest.id, party, { start, label, now });
+    return openPartyCard(quest, party, { start, label, now });
   }
   const alone = party === null && others === '';
   // Worded as the Quest list words the same Quest, by its own Join Policy: "공개 파티 · 4명", or "비공개 파티" with

@@ -3,6 +3,7 @@
  *
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -115,10 +116,11 @@ async function stepIdOf({ leader, questId }: Holders): Promise<string> {
   return step.id;
 }
 
-// "11/18(수) 14:10 정문 앞에서 만나기": a changed step's date, then its clock in Korea, then its title.
-const datedLine = (startsAt: string, title: string): unknown =>
+// "저녁 같이 · 11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요": the 파티, a changed step's date, then its clock in Korea,
+// then its words.
+const datedLine = (startsAt: string, words: string): unknown =>
   expect.stringMatching(
-    new RegExp(`^\\d{1,2}/\\d{1,2}\\([일월화수목금토]\\) ${clockOf(new Date(startsAt))} ${title}$`, 'u'),
+    new RegExp(`^저녁 같이 · \\d{1,2}/\\d{1,2}\\([일월화수목금토]\\) ${clockOf(new Date(startsAt))} ${words}$`, 'u'),
   );
 
 describe('A Holder changing a step', () => {
@@ -133,7 +135,7 @@ describe('A Holder changing a step', () => {
         expect.objectContaining({
           id: `step-changed:party:${questId}:${minsu.id}`,
           title: '민수가 일정을 바꿨어요',
-          line: datedLine(step.startsAt, '정문 앞에서 만나기'),
+          line: datedLine(step.startsAt, '정문 앞에서 만나기로 바뀌었어요'),
           url: `/main?card=party:${questId}`,
         }),
       ]);
@@ -150,7 +152,7 @@ describe('A Holder changing a step', () => {
 
     await vi.waitFor(async () => {
       expect(await noticesOf(minsu, 'step-changed')).toEqual([
-        expect.objectContaining({ title: '김리더가 일정을 바꿨어요', line: "'카페' 취소" }),
+        expect.objectContaining({ title: '김리더가 일정을 바꿨어요', line: "저녁 같이 · '카페' 취소" }),
       ]);
     });
   });
