@@ -107,7 +107,7 @@ Not breaking what is there
 ### The server's interface
 
 - `PUT /quests/:questId/note` writes, replaces or clears the caller's own. Its body carries the words under the name `holderNote`, the empty text to clear. It answers 204, as handing the Quest over does.
-- The words are trimmed, and a line break or a run of spaces becomes one space, before they are counted: at most 40 (UTF-16 units, as the app's field counts them, so an emoji counts as two or more). More is refused with 400.
+- The words are trimmed, and a line break or a run of spaces becomes one space, before they are counted: at most 40. The app's fields count characters as Unicode numbers them, so that an emoji is one and not two, and the server and the migration's check count them the same way. More is refused with 400.
 - Only a Holder may call it. Anyone else gets `404 QUEST_NOT_FOUND`; a Class Quest is refused with `409 CLASS_QUEST` and a Quest taken alone with `409 QUEST_TAKEN_ALONE`, as they are today. Neither the Quest's end nor its activation is asked.
 - The write runs under the Quest's lock, as every Holder's change does, so one that meets a removal runs before or after it. Saving the words that are stored changes nothing: not the time, no signal, no notice. It is safe to repeat, so it takes no Idempotency-Key. Nothing limits how often it is called.
 - After a change every Holder gets the signal `quests-changed`, which already refetches the open room.
@@ -126,7 +126,7 @@ Not breaking what is there
 - Under a member's row, at the row's full width from the words' start: the bubble, then its time. The line that parts two members goes under the bubble. The row keeps its face, its words and its buttons, the Leader's three among them, with 10 above it and 6 below in place of its height of 64.
 - From the mock-up: the bubble starts 52 from the left (the face's 40 and its gap of 12), padding 8 by 12, corners 4, 12, 12 and 12, the words 14 over 20 in medium, wrapping and never cut. Another member's is on the subtle surface. The User's own is on blue 50 with a pencil at its end and is a button of at least 36 high. The time is 12 over 16 in the muted ink, after the bubble and level with its foot.
 - The User without one gets the pill "한마디 남기기" there, 36 high, blue 50, semibold 13 in navy with a pencil.
-- Pressing either swaps it for the form, on the grey box the room's step form uses: the field, whose example is "예: 회색 코트, 정문 왼쪽이에요", and under it the count "20/40" on the left and 취소 and 남기기 on the right. The field has no label above it and is named "한마디" for a screen reader. It takes the focus, at most 40 characters and no line break. 남기기 waits only while a save runs.
+- Pressing either swaps it for the form, on the grey box the room's step form uses: the field, whose example is "예: 회색 코트, 정문 왼쪽이에요", and under it the count "20/40" on the left and 취소 and 남기기 on the right. The field has no label above it and is named "한마디" for a screen reader. It takes the focus, is one line and holds at most 40 characters. 남기기 waits only while a save runs.
 - Saved: the form closes without a toast and the room is fetched again. Failed: the toast says why, with the words the room's other refusals use, and the form stays with what was typed.
 - What is typed lives in the section, so a refetch does not touch it.
 - The time words are the ones the room uses already ("방금", "10분 전", "3시간 전", "2일 전"), worded anew each minute while the room is open.
@@ -146,9 +146,9 @@ Not breaking what is there
 
 Three tickets, in one pull request with a commit for each:
 
-1. **The server keeps it**: the migration, the route, the field in the replies, the mask in the log.
-2. **The room shows and writes it**: the row, the form, the live refresh, the app's API with its mock.
-3. **The others are told**: the kind, the push, the row in 알림, and `/notifications` without bodies in the log.
+1. [**The server keeps it**](issues/01-server-keeps-the-note.md): the migration, the route, the field in the replies, the mask in the log.
+2. [**The room shows and writes it**](issues/02-room-shows-and-writes-it.md): the row, the form, the live refresh, the app's API with its mock. After 01.
+3. [**The others are told**](issues/03-the-others-are-told.md): the kind, the push, the row in 알림, and `/notifications` without bodies in the log. After 01.
 
 Native files: none. No new dependency. Documents: the main server's README (Quests, Notifications, Logging) and the app's README where it describes the room and 알림.
 
