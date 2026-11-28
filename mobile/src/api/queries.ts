@@ -18,6 +18,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -26,7 +27,7 @@ import { apiClient } from './client';
 import type { InvitationCard } from './invitation-card-types';
 import type { RestaurantMenus } from './menu-types';
 import type { ShownJoinRequest, ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
-import type { Board, LatLng, Person, Place } from './types';
+import type { Board, LatLng, Person } from './types';
 import type { JoinRequest } from './waiting-types';
 
 // One entry of the cache per operation, each under its own key. The hooks of the features combine them, so that an
@@ -145,9 +146,6 @@ export const placesQuery = queryOptions({
   queryFn: () => apiClient.listPlaces(),
   staleTime: Infinity,
 });
-export function placeSearchQuery(words: string): UseQueryOptions<Place[], Error, Place[], string[]> {
-  return { queryKey: [...PLACES_KEY, 'search', words], queryFn: () => apiClient.searchPlaces(words) };
-}
 // The shuttle's route and its vehicles, which the socket's `shuttle-vehicles-updated` replaces in the cache.
 export const shuttleQuery = queryOptions({ queryKey: SHUTTLE_KEY, queryFn: () => apiClient.getShuttle() });
 export const shuttleVehiclesQuery = queryOptions({

@@ -2,33 +2,30 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { keepPreviousData, useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { placeSearchQuery } from '@/api/queries';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { placesQuery } from '@/api/queries';
 import type { Place } from '@/api/types';
+import { matchesWords } from '@/features/search/matches-words';
 
-const SEARCH_AFTER_MS = 300;
-
-// The words once they have not changed for a while.
-function useSettled(words: string): string {
-  const [settled, setSettled] = useState(words);
-  useEffect(() => {
-    const timer = setTimeout(setSettled, SEARCH_AFTER_MS, words);
-    return (): void => {
-      clearTimeout(timer);
-    };
-  }, [words]);
-  return settled;
+// Whether a Place is found by the words: its name as every search of the app matches it (`matchesWords`, so a
+// syllable still being typed and first consonants count), or its number, which a User writes as 302 or 302동.
+export function matchesPlace(place: Place, words: string): boolean {
+  const number = words.trim().replace(/동$/u, '');
+  return matchesWords(words, [place.name]) || (place.number !== null && place.number === number);
 }
 
-// The main server's search of the Places, asked once the User stopped typing: the words asked, '' while none are typed,
-// and the answer, the previous one kept while the next is asked. The timetable's place picker and the 파티 form's place
-// sheet both search with it.
+// The search of the Places, on the phone over the list the app holds whole: the words asked, '' while none are
+// typed, and the Places found. The timetable's place picker and the 파티 form's and the room's place sheet search
+// with it.
 export function usePlaceSearch(words: string): { asked: string; found: UseQueryResult<Place[]> } {
-  const settled = useSettled(words.trim());
-  const asked = words.trim() === '' ? '' : settled;
-  const found = useQuery({ ...placeSearchQuery(asked), enabled: asked !== '', placeholderData: keepPreviousData });
+  const asked = words.trim();
+  const found = useQuery({
+    ...placesQuery,
+    enabled: asked !== '',
+    select: (places: Place[]) => places.filter((place) => matchesPlace(place, asked)),
+  });
   return { asked, found };
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -51,10 +52,6 @@ beforeEach(async () => {
   server = await askMainServer({ signedIn: true });
   answerForm(server);
   server.on('GET /places', { status: 200, body: PLACES });
-  server.on('GET /places/search', ({ query }) => ({
-    status: 200,
-    body: PLACES.filter(({ name }) => name.includes(query.q ?? '')),
-  }));
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -73,7 +70,7 @@ function choice(): ReturnType<typeof screen.getByTestId> {
   return screen.getByTestId('place-choice');
 }
 
-// The place sheet with the words typed into its search, once the search, asked after the typing stops, has answered.
+// The place sheet with the words typed into its search, once the Places are listed.
 async function searchPlace(user: User, words: string): Promise<void> {
   await user.press(screen.getByRole('button', { name: /^어디서 /u }));
   await user.type(screen.getByLabelText('장소 검색'), words);
@@ -162,6 +159,27 @@ describe('a place picked on the map', () => {
     await pass(500);
     const sent = relation === 'inside' ? { placeId: 'p301' } : { label: words };
     expect(server.received('POST /quests/own')[0]?.body).toMatchObject({ subQuest: { place: sent } });
+  });
+});
+
+// The keyboard gives '고' before '공', and 'ㄱ' before both, as every search of the app reads them (P06 ticket 51).
+describe('a building searched while a Hangul syllable is being typed', () => {
+  it('is found by a syllable on its way and by first consonants, and by its number', async () => {
+    const user = await openAt('/party-form');
+
+    await searchPlace(user, '고');
+    expect(screen.getByRole('button', { name: '제1공학관 301동' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '제2공학관 302동' })).toBeVisible();
+
+    await user.clear(screen.getByLabelText('장소 검색'));
+    await user.type(screen.getByLabelText('장소 검색'), 'ㅈ2ㄱㅎ');
+    expect(screen.queryByRole('button', { name: '제1공학관 301동' })).toBeNull();
+    expect(screen.getByRole('button', { name: '제2공학관 302동' })).toBeVisible();
+
+    await user.clear(screen.getByLabelText('장소 검색'));
+    await user.type(screen.getByLabelText('장소 검색'), '301동');
+    expect(screen.getByRole('button', { name: '제1공학관 301동' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '제2공학관 302동' })).toBeNull();
   });
 });
 
