@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { apiClient } from '@/api/client';
@@ -37,9 +38,14 @@ describe('파티 만들기 under 비공개 with nobody invited', () => {
   it('asks for no Friend and no 인원, and its button is 퀘스트 만들기', async () => {
     const user = await openAt('/party-form');
 
+    expect(screen.getByText('파티 설정')).toBeVisible();
     await user.press(screen.getByRole('radio', { name: '비공개' }));
 
     expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
+    // P06 ticket 68: the parts of the form name a Quest too.
+    expect(screen.getByText('퀘스트 설정')).toBeVisible();
+    expect(screen.getByLabelText('본문')).toHaveProp('placeholder', '어떤 퀘스트인지 적어 주세요');
+    expect(screen.getByText('어떤 퀘스트인지 적어 주세요', { includeHiddenElements: true })).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: '인원 늘리기' })).toBeNull();
     expect(screen.getByRole('button', { name: '친구 초대 고르기' })).toBeVisible();
     expect(screen.getByRole('button', { name: '퀘스트 만들기' })).toBeVisible();

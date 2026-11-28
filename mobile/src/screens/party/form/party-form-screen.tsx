@@ -11,6 +11,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -68,7 +69,7 @@ function Settings({ state, frames }: SettingsProps): ReactElement {
   const names = state.friends.filter(({ id }) => state.chosen.includes(id)).map(({ name }) => name);
   return (
     <View>
-      <Text style={styles.section}>파티 설정</Text>
+      <Text style={styles.section}>{state.alone ? '퀘스트 설정' : '파티 설정'}</Text>
       {state.alone ? null : <CapacityRow floor={state.floor} form={form} least={state.least} onChange={change} />}
       <VisibilityRows form={form} onChange={change} />
       {open ? (
@@ -129,6 +130,7 @@ function Preview({ state, props, frames, onChooseEvent }: PreviewProps): ReactEl
           onChange={(description) => {
             change({ description });
           }}
+          alone={state.alone}
           required={form.visibility === 'public'}
           value={form.description}
         />
