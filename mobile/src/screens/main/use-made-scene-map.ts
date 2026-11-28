@@ -64,8 +64,8 @@ type Me = { position: LatLng | null; avatars: readonly MapAvatar[] };
 interface Made {
   // The reply drawn.
   source: object;
-  // What the camera frames (`FrameKey`): the reply's scene, and the step shown. The phone's position, the free seats, and
-  // the time on the bar frame nothing.
+  // What the camera frames (`FrameKey`): the reply's scene, and what is chosen in it. The phone's position, the free
+  // seats, and the time on the bar frame nothing.
   frame: FrameKey;
   scene: MapScene;
   setting: SceneSetting;
@@ -129,6 +129,15 @@ function isCardStep(step: ReplyStep, key: string | null): boolean {
   return key !== null && step.shows?.kind === 'card' && step.shows.key === key;
 }
 
+// What the steps' camera frames: the reply, the step chosen, and where each step is, which another plan of a step's
+// answer, or a recalculation that brings another place, moves (P03 ticket 21). A booking's time moves no step.
+function stepsFrame({ bubbleId, steps }: ShownSteps, active: number): FrameKey {
+  const places = steps.map(({ place }) =>
+    place === null ? '' : `${String(place.latitude)},${String(place.longitude)}`,
+  );
+  return { reply: `steps:${String(bubbleId)}`, chosen: [active, places.join('|')] };
+}
+
 // Several requests as numbered flags (P04 ticket 09): the step due, or pressed, carries the seat its card offers; a
 // booking made carries its seat and "예약됨" whichever step is shown (P10 ticket 29).
 function stepsMade(
@@ -154,7 +163,7 @@ function stepsMade(
   const setting = { ...BOOKING_SETTING, drafts: stepDrafts(steps, lines, titles, opens) };
   return {
     source: steps,
-    frame: { reply: `steps:${String(shownSteps.bubbleId)}`, chosen: [active] },
+    frame: stepsFrame(shownSteps, active),
     scene: stepsScene(steps, position),
     setting,
     flag: { latitude: first.latitude, longitude: first.longitude },

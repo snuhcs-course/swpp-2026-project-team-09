@@ -4,13 +4,15 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { AssistantReply } from '@/api/assistant-types';
 import type { Place } from '@/api/types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { severalAnswersReplyTo } from '@/api/mock/data/several-answers';
 import { useMemo } from 'react';
 import * as cameraMoves from '@/screens/main/use-camera-moves';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { fireEvent, within } from '@testing-library/react-native';
+import { fireEvent, type userEvent, within } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { raiseCard } from './support/card-grip';
 import { answerDining, PLACES } from './support/dining';
@@ -155,20 +157,25 @@ async function ask(user: Awaited<ReturnType<typeof openMain>>, words: string): P
   await pass(1000);
 }
 
+// The main server answering every request with `body`, and the phone on campus.
+async function answering(body: AssistantReply): Promise<Phone> {
+  jest.useFakeTimers({ now: PHONE_NOW });
+  await startFresh();
+  sockets.length = 0;
+  const server: FakeServer = await askMainServer({ signedIn: true });
+  answerMainScreen(server);
+  answerDining(server);
+  server.on('POST /assistant/messages', { status: 200, body });
+  return givePhone({ permission: 'granted', position: ON_CAMPUS });
+}
+
 // Partitions: each trigger that is no framing event, after a meal answer was framed; a new reply, which is one.
 // Expected values: no move of the camera after the framing came to rest; a move for the new reply.
 describe('A meal answer on the map, once framed', () => {
   let phone: Phone;
 
   beforeEach(async () => {
-    jest.useFakeTimers({ now: PHONE_NOW });
-    await startFresh();
-    sockets.length = 0;
-    const server: FakeServer = await askMainServer({ signedIn: true });
-    answerMainScreen(server);
-    answerDining(server);
-    phone = givePhone({ permission: 'granted', position: ON_CAMPUS });
-    server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
+    phone = await answering(MEAL_ANSWER_REPLY);
   });
 
   it.each(NOT_EVENTS)('keeps the camera where it rests when %s changes', async (_what, change) => {
@@ -191,6 +198,67 @@ describe('A meal answer on the map, once framed', () => {
 
     await ask(user, '다른 데 없어?');
 
+    expect(moves()).toBeGreaterThan(framed);
+  });
+});
+
+// The main server's reply to "점심이랑 저녁 짜줘", moved to the day after the phone's: two steps, each drawn at its own
+// answer (P03 ticket 21).
+function lunchAndDinner(): AssistantReply {
+  const reply = severalAnswersReplyTo('점심이랑 저녁 짜줘', '2026-10-07');
+  if (reply === null) {
+    throw new Error('No stored reply of lunch and dinner');
+  }
+  return reply;
+}
+
+type User = ReturnType<typeof userEvent.setup>;
+
+// Asks for lunch and dinner, and gives the count of the camera's moves once their framing has come to rest.
+async function framedSteps(): Promise<{ user: User; moves: () => number; framed: number }> {
+  const moves = countMoves();
+  const user = await openMain();
+  await ask(user, '점심이랑 저녁 짜줘');
+  const framed = moves();
+  expect(framed).toBeGreaterThan(0);
+  return { user, moves, framed };
+}
+
+// Partitions: each trigger that is no framing event, after the steps were framed; another step chosen, and another plan
+// of the chosen step's answer, which draws that step at another place, each a press that chooses something. Expected
+// values: no move after the framing came to rest; a move for each press.
+describe("Several requests' steps on the map, once framed", () => {
+  let phone: Phone;
+
+  beforeEach(async () => {
+    phone = await answering(lunchAndDinner());
+  });
+
+  it.each(NOT_EVENTS)('keep the camera where it rests when %s changes', async (_what, change) => {
+    const { moves, framed } = await framedSteps();
+
+    await change(phone);
+    await pass(1000);
+
+    expect(moves()).toBe(framed);
+  });
+
+  it('are framed again for another step chosen', async () => {
+    const { user, moves, framed } = await framedSteps();
+
+    await user.press(screen.getByRole('button', { name: /^2번 /u }));
+    await pass(1000);
+
+    expect(moves()).toBeGreaterThan(framed);
+  });
+
+  it("are framed again for another plan of the chosen step's answer", async () => {
+    const { user, moves, framed } = await framedSteps();
+
+    await user.press(within(screen.getByTestId('plan-stepper')).getByLabelText('다음 후보'));
+    await pass(1000);
+
+    expect(screen.getByTestId('plan-count')).toHaveTextContent('2/3');
     expect(moves()).toBeGreaterThan(framed);
   });
 });
