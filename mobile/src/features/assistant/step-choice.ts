@@ -16,9 +16,23 @@ import type { ChatBubble } from './use-chat';
 // A step's name across replies: its answer's key, its card's key, else its kind and title (a booking refused).
 export function stepIdOf({ shows, kind, title }: ReplyStep): string {
   if (shows?.kind === 'answer' && shows.key !== undefined) {
-    return `answer ${shows.key}`;
+    return answerStepId(shows.key);
   }
   return shows?.kind === 'card' ? `card ${shows.key}` : `${kind} ${title}`;
+}
+
+const answerStepId = (key: string): string => `answer ${key}`;
+
+// The step chosen, moved with its answer when a recalculation gives that answer another key, so that the screen stays
+// on it (TaeHyun79's review of #725).
+export function renamedChoice<Choice extends { id: string | null; answerKey: string | null }>(
+  choice: Choice,
+  from: string,
+  to: string,
+): Choice {
+  const id = choice.id === answerStepId(from) ? answerStepId(to) : choice.id;
+  const answerKey = choice.answerKey === from ? to : choice.answerKey;
+  return id === choice.id && answerKey === choice.answerKey ? choice : { ...choice, id, answerKey };
 }
 
 const keyOf = ({ shows }: ReplyStep): string | null => (shows?.kind === 'answer' ? (shows.key ?? null) : null);
@@ -89,5 +103,6 @@ export function stepPartsOf(bubble: ChatBubble, steps: ShownSteps | null, active
 export const mayChooseStep = ({ adding }: { adding: boolean }): boolean => !adding;
 
 // Rule 3: coming back to a step shows the plan the User was last on in it, with the answer as last recalculated
-// (`useStepAnswer` keeps them by key); a step never seen opens at its answer's first plan.
+// (`useStepAnswer` keeps them by key), until a later reply gives that answer again. A step not browsed since the reply
+// that gave it opens as that reply opens it (`fresh`); drawn among the steps, at its first plan.
 export const firstSeenIndex = 0;
