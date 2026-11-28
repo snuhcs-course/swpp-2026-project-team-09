@@ -8,7 +8,11 @@ import { act } from '@testing-library/react-native';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { MapCamera } from '@/map';
-import { FIRST, type Given, render, ROOM, shownAt } from './support/answer-map-hook';
+import { stepsReplyOn } from '@/api/mock/data/steps-answer';
+import { stepDrafts } from '@/features/assistant/steps-scene';
+import type { Room } from '@/screens/main/layout';
+import type { Beside } from '@/screens/main/use-answer-map';
+import { drawn, FIRST, type Given, render, ROOM, shownAt } from './support/answer-map-hook';
 import type { Asked } from './support/main-map-stand-in';
 
 // When an answer's camera frames its drawing (P10 ticket 30, the user's phone, 2026-11-28): once for each event that
@@ -148,4 +152,63 @@ describe("the answer's camera and a change of the card", () => {
 
     expect(asked.cameras).toHaveLength(1);
   });
+});
+
+// The cards as the frame lays them out over the first Plan: the chat card at 274 and the time card at 120.
+const WITH_BAR: Given = { ...FIRST, room: { ...ROOM, timeBarHeight: 120 } };
+
+// Each change of a top or a bottom card's height or fold, which is no framing event: the chat card raised to middle
+// and high, the time card folded away to its strip under the steps card, and its person rows opened.
+const CARD_CHANGES: [string, Room][] = [
+  ['the chat card raised to middle', { ...ROOM, timeBarHeight: 120, answerHeight: 420 }],
+  ['the chat card raised high', { ...ROOM, timeBarHeight: 120, answerHeight: 700 }],
+  ['the time card folded away', { ...ROOM, timeBarHeight: 24 }],
+  ["the time card's person rows opened", { ...ROOM, timeBarHeight: 200 }],
+];
+
+// The other step of several requests beside the step shown as this answer (P03 ticket 26).
+function seatBeside(): Beside {
+  const [seat] = stepsReplyOn('2026-11-02').steps ?? [];
+  const drafts = seat === undefined ? [] : stepDrafts([seat], ['17:30–19:00'], ['관정 7층 열람실']);
+  return { drafts, press: jest.fn<undefined, [string]>() };
+}
+
+// Partitions: each change of a card's height or fold, there and back, with one answer and with the other steps of
+// several requests beside it. Expected values: the user's phone, 2026-11-28 (P10 ticket 31): the time card folded away
+// and back made the map blink, every mark drawn again; once the map has rested, no such change draws a mark anew or
+// moves the camera.
+describe("the answer's marks and a change of the cards, once the map has rested", () => {
+  it.each(CARD_CHANGES)('stay the same through %s and back', async (_what, room) => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const map = await drawn(asked, WITH_BAR);
+    const at = rested(WITH_BAR, asked);
+    await map.rerender(at);
+    const before = map.marks();
+
+    await map.rerender({ ...at, room });
+    expect(map.marks()).toEqual(before);
+    await map.rerender(at);
+
+    expect(map.marks()).toEqual(before);
+    expect(asked.cameras).toHaveLength(1);
+  });
+
+  it.each(CARD_CHANGES)(
+    'stay the same through %s and back, with the other steps beside the answer',
+    async (_what, room) => {
+      const asked: Asked = { fits: 0, cameras: [] };
+      const map = await drawn(asked, WITH_BAR, seatBeside());
+      const at = rested(WITH_BAR, asked);
+      await map.rerender(at);
+      const before = map.marks();
+      expect(before.some((mark) => mark.startsWith('answer:step:1 '))).toBe(true);
+
+      await map.rerender({ ...at, room });
+      expect(map.marks()).toEqual(before);
+      await map.rerender(at);
+
+      expect(map.marks()).toEqual(before);
+      expect(asked.cameras).toHaveLength(1);
+    },
+  );
 });

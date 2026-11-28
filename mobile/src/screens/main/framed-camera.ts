@@ -38,7 +38,7 @@ export interface Frame {
 // laid out again after it comes, and the camera moves once for both.
 const STILL_MS = 120;
 
-function sameKey(one: FrameKey | null, other: FrameKey): boolean {
+export function sameKey(one: FrameKey | null, other: FrameKey): boolean {
   return (
     one !== null &&
     Object.is(one.reply, other.reply) &&
