@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -23,6 +24,8 @@ interface ButtonProps<Shown> {
 
 interface BottomControlsProps {
   cardOpen: boolean;
+  // How far it comes down while the AI is lowered (`loweredBy`, A04 ticket 12). Left out, none.
+  drop?: number;
   // "활성 파티": the room of the User's Party's Quest.
   onActiveParty: () => void;
 }
@@ -53,13 +56,13 @@ function ActivePartyButton({ view, onPress }: ButtonProps<ActivePartyView>): Rea
 // The row of buttons above the AI input (`MapBottom`): "활성 파티", shown only while the User is in a Party, which
 // opens its room. The 편의기능 button at the row's right is `LayerControls`. While a card is open the row is not shown,
 // as in the frame.
-export function BottomControls({ cardOpen, onActiveParty }: BottomControlsProps): ReactElement | null {
+export function BottomControls({ cardOpen, onActiveParty, drop = 0 }: BottomControlsProps): ReactElement | null {
   const party = useActiveParty();
   if (cardOpen || party === null) {
     return null;
   }
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { bottom: BUTTON_ROW.bottom - drop }]}>
       <ActivePartyButton onPress={onActiveParty} view={party} />
     </View>
   );

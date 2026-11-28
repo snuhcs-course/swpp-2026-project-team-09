@@ -22,6 +22,7 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -38,7 +39,7 @@ import { type PickedEvent, useEventSheetsOver } from '@/screens/events/event-she
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
 import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
-import { listsTop, ROUTE_PADDING, type Room } from './layout';
+import { listsTop, loweredBy, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
 import { MainMapView } from './main-map-view';
 import { MapBottom, openMenus, type Taken } from './map-bottom';
@@ -64,6 +65,7 @@ import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow
 import { useGuideGivesWay } from './tutorial/use-guide-flow';
 import { useGuideMap } from './tutorial/use-guide-map';
 import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
+import { useLowered } from './use-lowered';
 import { ZoomControl } from './zoom-control';
 
 interface ListProps {
@@ -202,9 +204,10 @@ function listsHidden({ topCard }: Taken, framed: boolean): boolean {
   return topCard || framed;
 }
 
-function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
+function MainZoomControl({ map, me, room }: { map: MainMap; me: Me; room: Room }): ReactElement {
   return (
     <ZoomControl
+      drop={loweredBy(room)}
       onMyPosition={me.goToMe}
       onZoomIn={() => {
         map.zoomBy(1);
@@ -294,7 +297,10 @@ function useMainParts(): MainParts {
   useAskedByAddress(ready ? cards : null, map, selection, chat);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const guided = tutorial.guide !== null;
-  const framedRoom = useFramedRoom(selection, layers, me, { tutorialStart: start, guided });
+  const framed = useFramedRoom(selection, layers, me, { tutorialStart: start, guided });
+  // While the AI is lowered, what stood over its input comes down (A04 ticket 12).
+  const lowered = useLowered(framed.framed, tutorial);
+  const framedRoom = { ...framed, room: { ...framed.room, lowered } };
   const overMap = selection.open || framedRoom.framed;
   useGuideGivesWay(guided, overMap, tutorial.closeGuide);
   const { room, unasked } = framedRoom;
@@ -317,7 +323,7 @@ export function MainScreen(): ReactElement {
         <MainMapView {...view} map={map} room={room} />
         <OverMap onStage={bottom.setStage}>
           <Lists hidden={listsHidden(taken, framed || guided)} map={map} room={room} selection={selection} />
-          {zoomShown(taken, stack.open, framed || guided) ? <MainZoomControl map={map} me={me} /> : null}
+          {zoomShown(taken, stack.open, framed || guided) ? <MainZoomControl map={map} me={me} room={room} /> : null}
           <SelectedCard
             chat={chat}
             hidden={guided}
