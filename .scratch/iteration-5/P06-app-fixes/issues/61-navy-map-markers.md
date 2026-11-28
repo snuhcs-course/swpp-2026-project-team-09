@@ -44,3 +44,8 @@ Option A of the mockup, chosen by the user on 2026-11-28. The user also said: "ë
 - [ ] The marker and map tests still pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 55 minutes, an estimate. One session in its own worktree, from 20:53 to about 21:48 Korea time: the code, the tests, the ticket, the pull request and a screenshot attempt that was stopped. Jest runs, the two app bundles and the emulator's boot are about 25 minutes of it. The orchestrating session's time is not counted here.
+- Tokens, this session alone (no subagents), up to this entry: input 218 uncached, with 12,851,876 read from the cache and 147,128 written to it; output 42,634.
