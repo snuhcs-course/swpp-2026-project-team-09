@@ -15,7 +15,7 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 
 ## What to build
 
-- `Notification` gains `readAt`, nullable; a row is unread while it is null. The migration sets `readAt` on the rows that exist, so that the bell counts only what comes after the Release (decided by the user on 2026-11-28).
+- `Notification` gains `readAt`, nullable; a row is unread while it is null. The migration sets `readAt` on the rows that exist and whose time has come (`at <= now()`), so that the bell counts only what comes after the Release (decided by the user on 2026-11-28). A row kept before the Release for a time after it, such as the next morning's 지금 나서요, stays unread and counts when it rings (PR #747's review).
 - A write that rings a row again makes it unread again: `keep`, and `replace` when the time moves, set `readAt` back to null with `sentAt`. `renew`, which keeps whether it was sent, keeps `readAt` too.
 - `GET /notifications` gives each row's `read`.
 - A new `POST /notifications/read` marks every kept Notification of the User whose time has come as read.
@@ -32,7 +32,7 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 
 ## Acceptance criteria
 
-- [ ] A kept Notification is unread until `POST /notifications/read`, which marks those whose time has come; `keep` and a `replace` that moves the time make it unread again; existing rows start read. (Main server integration test, which fails before the change.)
+- [ ] A kept Notification is unread until `POST /notifications/read`, which marks those whose time has come; `keep` and a `replace` that moves the time make it unread again; existing rows whose time has come start read, and one still ahead starts unread. (Main server integration test, which fails before the change.)
 - [ ] The bell counts the unread kept Notifications with what waits, and goes back to what waits once 알림 is opened. (App integration test, which fails before the change.)
 - [ ] The migration runs on the Dev Server; no native file changes; lint, format and types pass.
 
