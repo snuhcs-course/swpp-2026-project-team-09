@@ -75,6 +75,12 @@ export class NotificationStore {
     return (await this.prisma.notification.deleteMany({ where: keyOf(userId, kind, card, about) })).count > 0;
   }
 
+  // Those of the User whose time has come by `now`, but those of `keptKinds`. Whether one was kept.
+  async forgetCome(userId: string, now: Date, keptKinds: readonly NotificationKind[]): Promise<boolean> {
+    const where = { userId, at: { lte: now }, kind: { notIn: [...keptKinds] } };
+    return (await this.prisma.notification.deleteMany({ where })).count > 0;
+  }
+
   // Those of the User whose time has come by `now` and that are unread.
   async markRead(userId: string, now: Date): Promise<void> {
     await this.prisma.notification.updateMany({

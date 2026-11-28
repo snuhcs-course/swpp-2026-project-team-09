@@ -40,6 +40,7 @@ import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import type { KeptNotification } from '../waiting-types';
+import { isWaitingCopy } from '../kept-notifications-client';
 import { KEPT_NOTIFICATIONS, questInvitationsAt } from './data/waiting';
 import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
@@ -69,7 +70,7 @@ let libraryDetails = NO_LIBRARY_DETAILS;
 // The kept Notifications the User has read in 알림, which the main server keeps on each row. Kept in memory, like the
 // Master Switch.
 const readNotifications = new Set<string>();
-// And those the User deleted by a swipe.
+// And those the User deleted by a swipe or by 모두 지우기.
 const deletedNotifications = new Set<string>();
 
 // The kept Notifications as the main server lists them: those deleted left out, those read marked.
@@ -253,6 +254,15 @@ export const mockClient: ApiClient = {
   deleteNotification: async (id) => {
     await answer('deleteNotification', () => {
       deletedNotifications.add(id);
+    });
+  },
+  deleteNotifications: async () => {
+    await answer('deleteNotifications', () => {
+      for (const kept of KEPT_NOTIFICATIONS) {
+        if (Date.parse(kept.at) <= now().getTime() && !isWaitingCopy(kept)) {
+          deletedNotifications.add(kept.id);
+        }
+      }
     });
   },
   markNotificationsRead: async () => {

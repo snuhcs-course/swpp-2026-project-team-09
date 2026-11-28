@@ -13,6 +13,7 @@
 
 import type { Party, Quest } from '@/api/types';
 import type { FriendRequests, JoinRequest, KeptNotification, QuestInvitation } from '@/api/waiting-types';
+import { isWaitingCopy } from '@/api/kept-notifications-client';
 import { koreaCalendar, koreaClock, koreaDaysAfter, sameKoreaDay } from '@/korea-time';
 import { readCardAddress } from '@/push/card-address';
 import { cardAddress } from './address';
@@ -120,11 +121,9 @@ function timeOf(at: string, now: Date): string {
   return `${month}월 ${date}일`;
 }
 
-// The Leader's `join-asked` is the push's copy of the row 알림 composes from the requests waiting, which counts them and
-// opens the room that answers them, and `party-activated` the copy of a running Party's row: both are left out, so that
-// nothing shows or counts twice.
+// The pushes' copies of what waits are left out, so that nothing shows or counts twice.
 function shownKept(kept: readonly KeptNotification[]): KeptNotification[] {
-  return kept.filter(({ kind }) => kind !== 'join-asked' && kind !== 'party-activated');
+  return kept.filter((notification) => !isWaitingCopy(notification));
 }
 
 // The key of a kept Notification's row.
