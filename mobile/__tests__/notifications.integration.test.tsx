@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -132,6 +133,18 @@ describe('a running Party in 알림', () => {
 
     expect(shownRows()).toEqual(ROWS);
     expect(screen.queryByText('김민준님이 저녁 약속을 활성화했어요')).toBeNull();
+  });
+});
+
+// The user (2026-11-28): "각 셀 하단에 미세하게 가로줄이 있는데 이것도 별로야." Each row of 알림 drew a line at its card's foot.
+describe("알림's day cards", () => {
+  it('draw no line under a row, and give its press the whole card', async () => {
+    await openNotifications();
+
+    for (const name of ROWS) {
+      expect(screen.getByRole('button', { name })).not.toHaveStyle({ borderBottomWidth: 1 });
+      expect(screen.getByRole('button', { name })).toHaveStyle({ paddingHorizontal: 16 });
+    }
   });
 });
 

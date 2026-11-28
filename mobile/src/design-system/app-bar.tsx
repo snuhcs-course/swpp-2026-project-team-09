@@ -62,8 +62,8 @@ interface AppBarProps {
   clear?: boolean;
 }
 
-// The bar at the top of a screen, under the phone's status bar, in the frames' two forms. A tab's has its title in
-// 25/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
+// The bar at the top of a screen, under the phone's status bar, in the frames' two forms, both in the tab's row. A tab's
+// has its title in 25/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
 export function AppBar({ title, count, leave, actions, line = true, clear = false }: AppBarProps): ReactElement {
   const { top } = useInsets();
   return (
@@ -91,7 +91,8 @@ const styles = StyleSheet.create({
   lined: { borderBottomWidth: 1, borderBottomColor: color.border },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
   tab: { ...TAB_BAR_ROW, paddingRight: space[2], paddingLeft: space[5] },
-  sub: { height: size.appBar, paddingRight: space[3], paddingLeft: space[1] },
+  // As high as a tab's, so that a screen pushed over the tabs keeps their bar's height (P06 ticket 64).
+  sub: { ...TAB_BAR_ROW, paddingRight: space[3], paddingLeft: space[1] },
   // Larger than `text.titleLg`, which other screens share (P06 ticket 17).
   tabTitle: { flex: 1, fontFamily: font.bold, fontSize: 25, lineHeight: 32, letterSpacing: -0.4, color: color.ink },
   // The frames' sub-screen title: between the two titles of the design system.
