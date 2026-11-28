@@ -53,7 +53,7 @@ import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
 import { type StepAnswer, useStepAnswerOf, useStepsNow, useStepsOfReply } from './use-step-answer';
-import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
+import { sceneBubblesOf, withdrawnAfter } from '@/features/assistant/scene-bubbles';
 import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type ActStage, useActStage } from './library/act-stage';
@@ -150,7 +150,8 @@ function useOnMap(
   chat: Chat,
   { bubbles, framed }: { bubbles: readonly ChatBubble[]; framed: boolean },
 ): ReturnType<typeof useStepsOfReply<ReturnType<typeof useShownOnMap>>> {
-  return useStepsOfReply(useShownOnMap({ ...chat, bubbles }, framed), bubbles);
+  const withdrawn = useMemo(() => withdrawnAfter(chat.bubbles, bubbles), [chat.bubbles, bubbles]);
+  return useStepsOfReply(useShownOnMap({ ...chat, bubbles }, framed), bubbles, withdrawn);
 }
 
 // The steps as they stand now (P10 ticket 29): the answer's step at the Plan on screen, and the booking's at the time

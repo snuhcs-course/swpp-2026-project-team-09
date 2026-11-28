@@ -98,3 +98,12 @@ export function stepsContextOf(
   });
   return { answers: inputs, steps: [...steps] };
 }
+
+// The conversation without the answers of these keys and their steps (P03 ticket 22): a later reply that drew nothing of
+// its own withdrew them while another answer of the steps stays on screen, which the main server then leaves as it was.
+export function withoutWithdrawn(kept: ConversationAnswers, withdrawn: ReadonlySet<string>): ConversationAnswers {
+  const gone = (key: string | undefined): boolean => key !== undefined && withdrawn.has(key);
+  const answers = kept.answers.filter(({ key }) => !gone(key));
+  const steps = kept.steps?.filter(({ shows }) => shows?.kind !== 'answer' || !gone(shows.key)) ?? null;
+  return answers.length === kept.answers.length && steps?.length === kept.steps?.length ? kept : { answers, steps };
+}
