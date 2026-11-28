@@ -9,6 +9,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { BandRules, MealInput, TimeBand } from '@/api/assistant-types';
@@ -41,10 +42,30 @@ function koreaDayOf(ms: number): string {
   return new Date(ms + KOREA_OFFSET_MS).toISOString().slice(0, 10);
 }
 
-// The last step a band's start or end may be let go at: before its day ends. A time dropped is sent as a clock, which
-// the main server reads on the band's day, so 00:30 after midnight would read as that morning's (P01 ticket 48).
-export function lastDropMsOf(band: { range: Stretch }, step: number): number {
-  return Date.parse(`${koreaDayOf(msOf(band.range.startAt))}T00:00:00+09:00`) + DAY_MS - step;
+function dayStartMs(date: string): number {
+  return Date.parse(`${date}T00:00:00+09:00`);
+}
+
+// The start of the band's day: the Korea day its range starts on.
+function bandDayStartMs(band: { startAt: string; range?: Stretch }): number {
+  return dayStartMs(koreaDayOf(msOf((band.range ?? band).startAt)));
+}
+
+// A time as a window's clock counted from the start of a day: an hour past 23 the next day's, "24:30" for 00:30 of the
+// next day (P01 ticket 49), as the main server reads a window's clocks (P05 ticket 91).
+function clockFrom(dayStart: number, ms: number): string {
+  const minutes = Math.round((ms - dayStart) / MINUTE_MS);
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+// A time as a window's clock on `date`, the input's: what a time let go on the band is sent as.
+export function windowClockOn(date: string, time: string): string {
+  return clockFrom(dayStartMs(date), msOf(time));
+}
+
+// A time as a window's clock on the band's day, as its handles let it go.
+export function bandClockOf(time: string, band: { startAt: string; range?: Stretch }): string {
+  return clockFrom(bandDayStartMs(band), msOf(time));
 }
 
 // A meal's band: 5-minute steps, at least 15 minutes, anywhere in its range.
@@ -105,16 +126,15 @@ function kept(ms: number, bound: BandBound, band: Band): number {
           stepUp(msOf(band.startAt) + least, step),
           Math.min(stepDown(msOf(band.range.endAt), step), stepDown(msOf(band.startAt) + most, step)),
         ];
-  return Math.min(Math.max(ms, lowest), highest, lastDropMsOf(band, step));
+  return Math.min(Math.max(ms, lowest), highest);
 }
 
-// The handle moved from `own` toward `wanted`, where it may stand. For a band off the steps the nearest step it may
-// take can lie behind its own time: it then stays. A handle pressed where it is stays too, as an end past the last
-// drop does, and an end that the last drop would leave shorter than the shortest length.
+// The handle moved from `own` toward `wanted`, where it may stand, as a clock on the band's day, past 23 after
+// midnight. For a band off the steps the nearest step it may take can lie behind its own time: it then stays. A handle
+// pressed where it is stays too.
 function moved(own: number, wanted: number, bound: BandBound, band: Band): string {
   const time = kept(wanted, bound, band);
-  const short = bound === 'until' && time < msOf(band.startAt) + rulesOf(band).leastMinutes * MINUTE_MS;
-  return clockAt(short || (wanted - own) * (time - own) <= 0 ? own : time);
+  return clockFrom(bandDayStartMs(band), (wanted - own) * (time - own) <= 0 ? own : time);
 }
 
 function ownOf(bound: BandBound, band: Band): number {
@@ -159,6 +179,10 @@ export function bandTimeAt(ms: number): string {
 // open to 01:00) puts a clock before its start and no later than its end on the next day (P01 ticket 48); the range is
 // the band's own without one.
 export function onBandDay(clock: string, band: { startAt: string; endAt?: string; range?: Stretch }): string {
+  const [hours = 0, minutes = 0] = clock.split(':').map(Number);
+  if (hours >= 24) {
+    return bandTimeAt(bandDayStartMs(band) + (hours * 60 + minutes) * MINUTE_MS);
+  }
   const { startAt, endAt = startAt } = band.range ?? band;
   const start = msOf(startAt);
   const end = msOf(endAt);
