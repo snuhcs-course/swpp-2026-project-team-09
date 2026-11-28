@@ -33,7 +33,7 @@ interface FullScreenPanelProps {
   subtle?: boolean;
   // The body, for a screen that scrolls it to a part.
   scrollRef?: Ref<ScrollView>;
-  // On the glass layer's panel instead of white, for a screen the stack shows over the map, which then shows through
+  // On the glass layer's `screen` level instead of white, for a screen the stack shows over the map, which then shows through
   // (`app/(signed-in)/_layout.tsx`, A04 ticket 08). The app bar is clear on it, as the friend panel's is.
   glass?: boolean;
   children: ReactNode;
@@ -101,7 +101,7 @@ export function FullScreenPanel({
   );
   if (glass) {
     return (
-      <Glass level="panel" style={[styles.glass, { paddingBottom: keyboard }]} testID="full-screen-panel">
+      <Glass level="screen" style={[styles.glass, { paddingBottom: keyboard }]} testID="full-screen-panel">
         {content}
       </Glass>
     );

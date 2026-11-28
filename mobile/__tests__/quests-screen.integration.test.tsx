@@ -61,7 +61,7 @@ describe('the Quest list on the whole screen', () => {
   it('lies on glass over the map, whose floating parts give way until it closes (A04 ticket 08)', async () => {
     const user = await openQuests();
 
-    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.8)' });
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.85)' });
     expect(screen.getByTestId('over-map', { includeHiddenElements: true })).toHaveStyle({ opacity: 0 });
 
     await user.press(screen.getByRole('button', { name: '닫기' }));

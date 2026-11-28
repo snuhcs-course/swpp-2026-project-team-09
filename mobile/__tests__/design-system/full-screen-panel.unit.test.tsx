@@ -87,8 +87,8 @@ describe('FullScreenPanel on glass', () => {
       </FullScreenPanel>,
     );
 
-    // Without Liquid Glass, as on Android, the panel is white at 80% (A04-03).
-    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.8)' });
+    // Without Liquid Glass, as on Android, the screen is white at 85% (A04-08).
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.85)' });
     expect(screen.getByText('자료구조')).toBeVisible();
   });
 });
