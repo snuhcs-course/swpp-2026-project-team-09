@@ -136,7 +136,7 @@ describe('A Holder changing a step', () => {
           id: `step-changed:party:${questId}:${minsu.id}`,
           title: '민수가 일정을 바꿨어요',
           line: datedLine(step.startsAt, '정문 앞에서 만나기로 바뀌었어요'),
-          url: `/main?card=party:${questId}`,
+          url: `/main?card=room:${questId}`,
         }),
       ]);
     });
