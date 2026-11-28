@@ -76,6 +76,7 @@ async function editTitle(quest: Quest, title: string): Promise<void> {
   server.on(`PATCH /quests/${quest.id}`, { status: 200, body: { ...quest, title } });
   const user = await openAt(`/party-form?questId=${quest.id}`);
   expect(screen.getByRole('header', { name: '퀘스트 수정' })).toBeVisible();
+  expect(screen.getByText('퀘스트 설정')).toBeVisible();
   expect(screen.queryByRole('button', { name: '인원 늘리기' })).toBeNull();
   await user.clear(screen.getByLabelText('제목'));
   await user.type(screen.getByLabelText('제목'), title);
