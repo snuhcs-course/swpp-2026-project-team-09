@@ -41,6 +41,7 @@ import { CHOOSE_PLAN_RULES, choosePlan } from '../gathering/choose-plan.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { bareHourRule } from '../bare-hours.js';
+import { askPastTime, pastTimeRule } from '../past-time.js';
 import { koreaNow } from '../korea-time.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
@@ -126,10 +127,12 @@ function instructionsOf(freeTimeRules: readonly string[], libraryRules: string, 
 }
 
 // The system prompt's lines of a request made at `now`, sent after the rest: the time in Korea, which the rules' "now"
-// means, and what an hour said bare means at it, for every answer kind (P05 ticket 75).
+// means, what an hour said bare means at it (P05 ticket 75), and what of today has passed, which is asked back before
+// anything is planned (P05 ticket 80), for every answer kind.
 function requestInstructionsOf(now: Date): string {
   return `Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
-${bareHourRule(now)}`;
+${bareHourRule(now)}
+${pastTimeRule(now)}`;
 }
 
 // In the chat of an app that draws answers, an earlier reply that drew an answer comes back as the words the User saw
@@ -326,6 +329,7 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
       // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom.
       ...libraryTools(library, libraryOptions),
       getTutorial: getTutorial(tutorial),
+      askPastTime: askPastTime(),
     },
   };
 }
