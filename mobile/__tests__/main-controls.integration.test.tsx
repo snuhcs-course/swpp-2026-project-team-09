@@ -13,6 +13,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -84,6 +85,27 @@ describe('the controls above the navigation of the main screen', () => {
 
     expect(findButton(/^활성 파티/u)).toBeNull();
     expect(button(LAYERS)).toBeVisible();
+  });
+});
+
+// A04 ticket 12 (asked by the user on 2026-11-29): the bar's middle lowers "활성 파티" and the lines at the left with
+// the AI input, out of sight; the 편의기능 button stays.
+describe('the controls with the AI lowered', () => {
+  it('go with the AI input and come back with it, but for the 편의기능 button', async () => {
+    const user = await openMain();
+    expect(screen.getByText('관심을 맡기면 맞는 행사를 알려 드려요')).toBeVisible();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+
+    expect(findButton(/^활성 파티/u)).toBeNull();
+    expect(screen.queryByText('관심을 맡기면 맞는 행사를 알려 드려요')).toBeNull();
+    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    expect(button(LAYERS)).toBeVisible();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+
+    expect(button(ACTIVE_PARTY)).toBeVisible();
+    expect(screen.getByText('관심을 맡기면 맞는 행사를 알려 드려요')).toBeVisible();
   });
 });
 

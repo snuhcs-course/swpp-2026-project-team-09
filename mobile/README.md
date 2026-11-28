@@ -447,7 +447,8 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   whose name, "지도", is not drawn; the map stays the first route, so Android's back and the edge swipe on another tab
   show it. On the map the middle raises and lowers the AI: lowered, the AI input and the lines over it ("이어서 · …"
   and a made Quest's line) are gone, the input mounted and hidden so that what was typed comes back; on another tab
-  it shows the map with the AI raised. Raised, it is filled `snuBlue` with a white icon; lowered, or on another tab,
+  it shows the map with the AI raised. "활성 파티" and the lines at the left (the tutorial's start, the line that asks
+  for interests) go with the input while it is lowered; the 편의기능 button and the zoom control stay (A04 ticket 12). Raised, it is filled `snuBlue` with a white icon; lowered, or on another tab,
   white with a `snuBlue` ring and icon; on the map it has the selected tab's light ring and is `expanded` while
   raised. Whether the AI is raised is held by `AiRaisedProvider` (`src/screens/shell/ai-raised.tsx`) in the tabs'
   layout, in memory only, and the tabs start raised. 파티 만들기 is the 파티 tab's pencil button. A tab stays mounted
