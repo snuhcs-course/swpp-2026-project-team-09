@@ -1565,8 +1565,10 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
     A `Button` with an icon and no words is the icon alone in a square of 40, read by its `label`.
   - `FullScreenPanel`: a screen above the tabs, white, with an app bar, what stays under it, a body that scrolls and
     an optional footer.
-  - `SidePanel` (from the left, 324 wide, radius 24 at its right, the scrim) and `BottomSheet` (a handle, top radius
-    24, the scrim). The scrim, Android's back button and, for the sheet, a drag down from its handle close them.
+  - `SidePanel` (from the left, 324 wide, radius 24 at its right, the scrim) and `BottomSheet` (a handle, its
+    `head` under it closed by a thin rule, top radius 24, the scrim). The scrim and Android's back button close
+    them; the sheet also closes by a drag down on its handle or head, and by a pull down on its body, which a
+    `SheetScroll` hands over only once its content is scrolled to the top (`pullBody={false}` for a body of wheels).
     They slide over 0.28 s, or appear at once where the phone asks for less motion (`use-slide.ts`), and are drawn
     in the `OverlayHost` (`Overlay`).
   - `SegmentedTabs` (48 high, the selected one underlined in navy, a count pill in grey or red), `ChipRow` (chips

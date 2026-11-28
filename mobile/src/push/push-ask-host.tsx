@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createContext, type ReactElement, type ReactNode, use, useCallback, useRef, useState } from 'react';
@@ -52,11 +53,17 @@ function PushSheet({ open, onClose }: { open: boolean; onClose: () => void }): R
       .catch(() => null);
   };
   return (
-    <BottomSheet label="푸시 알림" onClose={onClose} open={open}>
-      <View style={styles.body}>
-        <Text accessibilityRole="header" style={styles.title}>
+    <BottomSheet
+      head={
+        <Text accessibilityRole="header" style={[styles.title, styles.head]}>
           나설 시각을 휴대폰으로 알려 드릴까요?
         </Text>
+      }
+      label="푸시 알림"
+      onClose={onClose}
+      open={open}
+    >
+      <View style={styles.body}>
         <Text style={styles.words}>나설 시각, 초대, 예약, 관심만 보내요.</Text>
         <View style={styles.buttons}>
           <Button full onPress={allow} size="lg">
@@ -106,6 +113,7 @@ export function PushAskHost({ children }: { children: ReactNode }): ReactElement
 }
 
 const styles = StyleSheet.create({
+  head: { paddingHorizontal: space[5] },
   body: { gap: space[3], paddingHorizontal: space[5] },
   title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },

@@ -6,9 +6,20 @@
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { Friend } from '@/api/types';
-import { BottomSheet, Button, color, EmptyState, font, NO_RESULTS, radius, SearchField, space } from '@/design-system';
+import {
+  BottomSheet,
+  Button,
+  color,
+  EmptyState,
+  font,
+  NO_RESULTS,
+  radius,
+  SearchField,
+  SheetScroll,
+  space,
+} from '@/design-system';
 import { matchesFriend } from '@/features/friends/matches-friend';
 import { FriendRow } from './friend-picker';
 
@@ -35,7 +46,7 @@ function FriendList({ friends, search, checked, most, onChecked }: ListProps): R
   const full = checked.length >= most;
   const found = friends.filter((friend) => matchesFriend(friend, search));
   return (
-    <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll}>
+    <SheetScroll keyboardShouldPersistTaps="handled" style={styles.scroll}>
       <View style={styles.list}>
         {found.length === 0 && friends.length > 0 ? <EmptyState words={NO_RESULTS} /> : null}
         {found.map((friend) => {
@@ -53,7 +64,7 @@ function FriendList({ friends, search, checked, most, onChecked }: ListProps): R
           );
         })}
       </View>
-    </ScrollView>
+    </SheetScroll>
   );
 }
 
@@ -72,12 +83,20 @@ export function FriendSheet({ open, friends, chosen, most, onClose, onChosen }: 
     }
   }
   return (
-    <BottomSheet label="친구 초대" onClose={onClose} open={open}>
+    <BottomSheet
+      head={
+        <View style={styles.head}>
+          <Text accessibilityRole="header" style={styles.title}>
+            친구 초대
+          </Text>
+          <SearchField label="친구 검색" onChangeText={setSearch} placeholder="친구 검색" value={search} />
+        </View>
+      }
+      label="친구 초대"
+      onClose={onClose}
+      open={open}
+    >
       <View style={styles.body}>
-        <Text accessibilityRole="header" style={styles.title}>
-          친구 초대
-        </Text>
-        <SearchField label="친구 검색" onChangeText={setSearch} placeholder="친구 검색" value={search} />
         <FriendList checked={checked} friends={friends} most={most} onChecked={setChecked} search={search} />
         <Text style={styles.left}>{`남은 자리 ${String(most)}명까지 초대할 수 있어요`}</Text>
         <Button
@@ -96,6 +115,7 @@ export function FriendSheet({ open, friends, chosen, most, onClose, onChosen }: 
 }
 
 const styles = StyleSheet.create({
+  head: { gap: space[3], paddingHorizontal: space[4] },
   body: { flexShrink: 1, gap: space[3], paddingHorizontal: space[4] },
   title: { fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
   scroll: { flexShrink: 1 },

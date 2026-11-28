@@ -3,11 +3,12 @@
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { BottomSheet, EmptyState, ErrorState, LoadingState, space } from '@/design-system';
+import { StyleSheet, View } from 'react-native';
+import { BottomSheet, EmptyState, ErrorState, LoadingState, SheetScroll, space } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
 import { usePost } from '@/features/party/use-party';
 import type { Ask } from '../room/confirm-sheet';
@@ -35,9 +36,9 @@ function SheetBody({ questId, onClose, onJoin, onAsk }: PostSheetProps & { quest
   const { post } = detail;
   return (
     <View style={styles.body}>
-      <ScrollView contentContainerStyle={styles.content} style={styles.scroll}>
+      <SheetScroll contentContainerStyle={styles.content} style={styles.scroll}>
         <PostContent post={post} reasons={detail.reasons} />
-      </ScrollView>
+      </SheetScroll>
       <PostFooter
         onAsk={onAsk}
         onGone={onClose}

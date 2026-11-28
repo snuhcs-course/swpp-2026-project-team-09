@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -141,7 +142,7 @@ function PickTime({
 // sends the time in the middle as "HH:MM에". It stays mounted, so that it slides down when it closes (P06 ticket 35).
 export function PickTimeSheet({ offer, onPick, onClose }: PickTimeSheetProps): ReactElement {
   return (
-    <BottomSheet label="시간 고르기" onClose={onClose} open={offer !== null}>
+    <BottomSheet label="시간 고르기" onClose={onClose} open={offer !== null} pullBody={false}>
       {offer === null ? null : <PickTime offer={offer} onPick={onPick} />}
     </BottomSheet>
   );

@@ -5,12 +5,24 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
-import { BottomSheet, Button, color, font, Icon, radius, space, text, tutorialTone } from '@/design-system';
+import {
+  BottomSheet,
+  Button,
+  color,
+  font,
+  Icon,
+  radius,
+  SheetScroll,
+  space,
+  text,
+  tutorialTone,
+} from '@/design-system';
 import { kickerOf } from '@/features/tutorial/rules';
 import { Places } from './tutorial-places';
 import { Said } from './tutorial-said';
@@ -186,22 +198,32 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
   const quest = shown === null ? undefined : tutorial?.quests.find(({ key }) => key === shown.key);
   const close = shown?.mode === 'checking' ? (): void => undefined : flow.closeSheet;
   return (
-    <BottomSheet label="새내기 튜토리얼 퀘스트" onClose={close} open={shown !== null && quest !== undefined}>
-      {shown === null || quest === undefined || tutorial === undefined ? null : (
-        <ScrollView contentContainerStyle={styles.body}>
-          <View style={styles.head}>
-            <View style={styles.kicker}>
-              <Icon color={tutorialTone.ink} name="flag" size={14} />
-              <Text style={styles.kickerWords}>{kickerOf(tutorial, quest)}</Text>
+    <BottomSheet
+      head={
+        quest === undefined || tutorial === undefined ? undefined : (
+          <View style={styles.headBlock}>
+            <View style={styles.head}>
+              <View style={styles.kicker}>
+                <Icon color={tutorialTone.ink} name="flag" size={14} />
+                <Text style={styles.kickerWords}>{kickerOf(tutorial, quest)}</Text>
+              </View>
+              <View style={styles.headEnd}>
+                <Dots shownKey={quest.key} tutorial={tutorial} />
+                <WebLinks links={quest.links} />
+              </View>
             </View>
-            <View style={styles.headEnd}>
-              <Dots shownKey={quest.key} tutorial={tutorial} />
-              <WebLinks links={quest.links} />
-            </View>
+            <Text accessibilityRole="header" style={styles.title}>
+              {quest.title}
+            </Text>
           </View>
-          <Text accessibilityRole="header" style={styles.title}>
-            {quest.title}
-          </Text>
+        )
+      }
+      label="새내기 튜토리얼 퀘스트"
+      onClose={close}
+      open={shown !== null && quest !== undefined}
+    >
+      {shown === null || quest === undefined || tutorial === undefined ? null : (
+        <SheetScroll contentContainerStyle={styles.body}>
           {quest.body.map((paragraph) => (
             <Text key={paragraph} style={styles.paragraph}>
               {paragraph}
@@ -210,13 +232,14 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
           <Places onShowOnMap={onShowOnMap} quest={quest} />
           <Said quest={quest} shown={shown} />
           <Buttons flow={flow} onAskAssistant={onAskAssistant} quest={quest} shown={shown} />
-        </ScrollView>
+        </SheetScroll>
       )}
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  headBlock: { gap: 14, paddingHorizontal: space[5] },
   body: { gap: 14, paddingHorizontal: space[5], paddingBottom: space[2] },
   head: {
     flexDirection: 'row',

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -27,12 +28,20 @@ interface ConfirmSheetProps {
 // The frames' confirm sheets of the room: `활성화 확인` and `파티 나가기 확인`.
 export function ConfirmSheet({ ask, label, onClose }: ConfirmSheetProps): ReactElement {
   return (
-    <BottomSheet label={label} onClose={onClose} open={ask !== null}>
-      {ask === null ? null : (
-        <View style={styles.body}>
-          <Text accessibilityRole="header" style={styles.title}>
+    <BottomSheet
+      head={
+        ask === null ? undefined : (
+          <Text accessibilityRole="header" style={[styles.title, styles.head]}>
             {ask.title}
           </Text>
+        )
+      }
+      label={label}
+      onClose={onClose}
+      open={ask !== null}
+    >
+      {ask === null ? null : (
+        <View style={styles.body}>
           <Text style={styles.words}>{ask.body}</Text>
           <View style={styles.buttons}>
             <View style={styles.button}>
@@ -61,6 +70,7 @@ export function ConfirmSheet({ ask, label, onClose }: ConfirmSheetProps): ReactE
 }
 
 const styles = StyleSheet.create({
+  head: { paddingHorizontal: space[5] },
   body: { gap: space[3], paddingHorizontal: space[5] },
   title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },

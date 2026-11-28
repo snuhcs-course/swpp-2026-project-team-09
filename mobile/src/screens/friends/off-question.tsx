@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -30,6 +31,11 @@ export function OffQuestion({ name, open, onAnswer }: OffQuestionProps): ReactEl
   const whom = name ?? '모든 친구';
   return (
     <BottomSheet
+      head={
+        <Text accessibilityRole="header" style={[styles.title, styles.head]}>
+          {`${whom}에게는 지금 있는 건물만 보여 줄 수도 있어요.`}
+        </Text>
+      }
       label="위치 끄기"
       onClose={() => {
         onAnswer('cancel');
@@ -37,9 +43,6 @@ export function OffQuestion({ name, open, onAnswer }: OffQuestionProps): ReactEl
       open={open}
     >
       <View style={styles.body}>
-        <Text accessibilityRole="header" style={styles.title}>
-          {`${whom}에게는 지금 있는 건물만 보여 줄 수도 있어요.`}
-        </Text>
         <Text style={styles.words}>{`어느 쪽을 골라도 ${name ?? '친구'}에게는 아무 표시도 가지 않아요.`}</Text>
         <View style={styles.answers}>
           {ANSWERS.map(({ answer, words }) => (
@@ -63,6 +66,7 @@ export function OffQuestion({ name, open, onAnswer }: OffQuestionProps): ReactEl
 }
 
 const styles = StyleSheet.create({
+  head: { paddingHorizontal: space[5] },
   body: { gap: space[3], paddingHorizontal: space[5] },
   title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useRef, useState } from 'react';
@@ -48,7 +49,7 @@ function PinMap({ point }: { point: PointOnMap }): ReactElement {
 
 function PlaceOnMapSheet({ point, onClose }: { point: PointOnMap | null; onClose: () => void }): ReactElement {
   return (
-    <BottomSheet label="장소" onClose={onClose} open={point !== null}>
+    <BottomSheet label="장소" onClose={onClose} open={point !== null} pullBody={false}>
       {point === null ? null : (
         <View style={styles.body}>
           <PinMap point={point} />

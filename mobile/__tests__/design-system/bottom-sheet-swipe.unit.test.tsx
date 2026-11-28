@@ -3,6 +3,7 @@
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, render, screen, userEvent } from '@testing-library/react-native';
@@ -16,7 +17,7 @@ import { MOVING, PAN_STARTS } from '@/design-system/sheet-pull';
 
 // A drag down on a sheet's handle bar closes it (P06 ticket 35), by the way the finger moves as it lets go: moving down
 // it closes, moving up it springs back, and at rest it closes past a quarter of its height but never asks for more than
-// 120 points. The sheet's body takes no drag (the user's decision after the phone check, 2026-11-28).
+// 120 points. The body's pull, which shares these let-go rules, is in `bottom-sheet-pull-body.unit.test.tsx`.
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,

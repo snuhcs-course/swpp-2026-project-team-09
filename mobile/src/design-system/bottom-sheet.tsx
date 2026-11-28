@@ -6,17 +6,19 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useCallback, useState } from 'react';
+import { type ReactElement, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
+import { GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { useInsets } from './insets';
 import { Overlay } from './overlay';
-import { type SheetPull, useSheetPan, useSheetPull } from './sheet-pull';
+import { type SheetPull, useBodyPan, useScrollTop, useSheetPan, useSheetPull } from './sheet-pull';
+import { type SheetBody, SheetBodyContext } from './sheet-scroll';
 import { color, radius, space } from './tokens';
 import { useSlide } from './use-slide';
 
@@ -25,6 +27,13 @@ interface BottomSheetProps {
   onClose: () => void;
   // The sheet's name, such as "파티 찾기": the scrim is read as "파티 찾기 닫기".
   label: string;
+  // What stays on top under the handle, such as the title, closed by a thin rule: with the handle, what drags the sheet.
+  head?: ReactNode;
+  // False for a body of wheels to scroll, which a pull down would take from them: then only the handle and the head
+  // drag the sheet.
+  pullBody?: boolean;
+  // The whole sheet's, head and body.
+  testID?: string;
   children: ReactNode;
 }
 
@@ -76,12 +85,60 @@ function Scrim({ label, progress, sheet, onPress }: ScrimProps): ReactElement {
   );
 }
 
+// The handle bar and the head, closed by the rule: a tap on the bar closes the sheet, and a drag on either pulls it.
+// The scrim's button is what a screen reader offers.
+function Top({ head, pan, onClose }: { head: ReactNode; pan: PanGesture; onClose: () => void }): ReactElement {
+  return (
+    <GestureDetector gesture={pan}>
+      <View collapsable={false}>
+        <Pressable accessible={false} onPress={onClose} style={styles.grip} testID="sheet-handle">
+          <View style={styles.handle} />
+        </Pressable>
+        {head === undefined ? null : (
+          <View style={styles.head} testID="sheet-head">
+            {head}
+          </View>
+        )}
+        <View style={styles.rule} testID="sheet-rule" />
+      </View>
+    </GestureDetector>
+  );
+}
+
+// The body's pull, and where a `SheetScroll` inside keeps its scroll.
+function useBody(sheet: SheetPull): SheetBody {
+  const scrollTop = useScrollTop();
+  const pan = useBodyPan(sheet, scrollTop);
+  return useMemo(() => ({ pan, scrollTop }), [pan, scrollTop]);
+}
+
+function PulledBody({ body, children }: { body: SheetBody; children: ReactNode }): ReactElement {
+  return (
+    <SheetBodyContext value={body}>
+      <GestureDetector gesture={body.pan}>
+        <View collapsable={false} style={styles.body}>
+          {children}
+        </View>
+      </GestureDetector>
+    </SheetBodyContext>
+  );
+}
+
 // A sheet that rises from the bottom over the whole screen, the bottom navigation too, as the frames draw them: a
-// handle, a top radius of 24 and the scrim. A tap on the scrim or on the handle bar, a drag down on the handle bar
-// (`sheet-pull.ts`), or Android's back button closes it, each by one call of `onClose`, and it slides down with what it
-// showed. Its body takes no drag, so that its lists scroll as they do anywhere. While the phone's keyboard is up the sheet stands on it, at most 90% of what is left above it, so that a
+// handle, its head closed by a thin rule, a top radius of 24 and the scrim. A tap on the scrim or on the handle bar, a
+// drag down on the handle bar or the head, a pull down on a body that does not scroll or whose `SheetScroll` is at its
+// top (`sheet-pull.ts`), or Android's back button closes it, each by one call of `onClose`, and it slides down with
+// what it showed. Content that scrolls in a sheet scrolls in a `SheetScroll`, so that the pull and the scroll share. While the phone's keyboard is up the sheet stands on it, at most 90% of what is left above it, so that a
 // search at its top and the first rows under it stay in view.
-export function BottomSheet({ open, onClose, label, children }: BottomSheetProps): ReactElement | null {
+export function BottomSheet({
+  open,
+  onClose,
+  label,
+  head,
+  pullBody = true,
+  testID,
+  children,
+}: BottomSheetProps): ReactElement | null {
   const { shown, progress } = useSlide(open);
   const insets = useInsets();
   const keyboard = useKeyboardHeight(insets.bottom);
@@ -91,6 +148,7 @@ export function BottomSheet({ open, onClose, label, children }: BottomSheetProps
   const content = useLastContent(open, children);
   const sheet = useSheetPull(open, shown, close);
   const pan = useSheetPan(sheet);
+  const body = useBody(sheet);
   const { down, height } = sheet;
   const pulled = useAnimatedStyle(() => ({ transform: [{ translateY: down.value }] }));
   const risen = progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] });
@@ -110,15 +168,10 @@ export function BottomSheet({ open, onClose, label, children }: BottomSheetProps
                 height.value = nativeEvent.layout.height;
               }}
               style={[styles.sheet, { paddingBottom: space[4] + bottom }, pulled]}
+              testID={testID}
             >
-              {/* The bar's touch row: a tap closes the sheet, and a drag pulls it. The scrim's button is what a screen
-                  reader offers. */}
-              <GestureDetector gesture={pan}>
-                <Pressable accessible={false} onPress={close} style={styles.grip} testID="sheet-handle">
-                  <View style={styles.handle} />
-                </Pressable>
-              </GestureDetector>
-              {content}
+              <Top head={head} onClose={close} pan={pan} />
+              {pullBody ? <PulledBody body={body}>{content}</PulledBody> : content}
             </Reanimated.View>
           </Animated.View>
         </View>
@@ -147,4 +200,9 @@ const styles = StyleSheet.create({
   // The handle's touch area spans the sheet's top.
   grip: { alignItems: 'center', justifyContent: 'center', height: space[6] },
   handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: color.border },
+  // The head's own words keep their side padding, as the sheet's body does.
+  head: { paddingBottom: space[3] },
+  // The Assistant's answer card closes its head with the same line (`card-header.tsx`).
+  rule: { height: StyleSheet.hairlineWidth, backgroundColor: color.border },
+  body: { flexShrink: 1, paddingTop: space[3] },
 });
