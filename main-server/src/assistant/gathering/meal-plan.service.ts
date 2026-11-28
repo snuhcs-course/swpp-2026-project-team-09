@@ -10,6 +10,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -36,24 +37,24 @@ import {
   type MealInput,
   type MeetInput,
 } from '../dto/answer.dto.js';
-import { type DayItem, freeTimeOf, onDay } from '../free-time/free-time.js';
+import { type DayItem, onDay } from '../free-time/free-time.js';
 import { mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { type OpenRestaurant } from '../free-time/restaurant-card.js';
 import { idsOn, skippedOut } from '../free-time/left-out-classes.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { keptDto } from '../lookup/day-quests.js';
-import { type GatheringPerson, MINUTE_MS } from './gathering.js';
-import { addingDto, addingOf, type Asked, askedFor, candidatesOf } from './meal-adding.js';
+import { MINUTE_MS } from './gathering.js';
+import { gatheringPeopleOf } from './gathering-people.js';
+import { addingDto, addingOf, asHeld, type Asked, askedFor, candidatesOf, keptOnly } from './meal-adding.js';
 import { type AnswerPerson, mealAnswer, menusOf } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
 import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf, withSkipped } from './meal-plan-parts.js';
 import { type BesideServices, besideOf } from './meal-beside.js';
 import { type MissingInputs } from './missing-inputs.js';
-import { locationPlaceOf, otherFriendsOf } from './other-friends.js';
+import { otherFriendsOf } from './other-friends.js';
 import { placeLabelOf } from './place-naming.js';
 import { relatedOf } from './related-quests.js';
-import { conditionsOf } from './plan-conditions.js';
 import { gatherMeal, withHours } from './unmet-plans.js';
 
 // The one place that gathers what a meal's plan needs: the tool, the recalculation, and the making of a Quest call it,
@@ -132,35 +133,35 @@ export class MealPlanService {
     ]);
     leaveOut([...people, ...others], [...(at.leftOut ?? []), ...(held?.subQuestIds ?? [])]);
     const { adding, asked: input } = addingOf(held, withSkipped(given, people[0].skipped ?? []));
-    const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
-      id: userId,
-      free: freeTimeOf(items, date, now),
-      locationPlaceId: index === 0 ? this.placeIdAt(position) : locationPlaceOf(friends[index - 1]),
-      ...(index === 0 ? { positionOnly: true as const } : {}),
-      ...conditionsOf(given.people[index]?.constraints ?? [], date),
-    }));
-    if (askerPerson === undefined) {
-      throw new Error('A plan has its asker');
-    }
+    const persons = gatheringPeopleOf(people, friends, given, {
+      now,
+      placeIdAt: (position) => this.placeIdAt(position),
+    });
     const restaurants = openRestaurants(collected, meal, this.restaurantPlaces);
     const open = restaurants.map(({ key, place }) => ({ key, placeId: place.id }));
     const candidates = candidatesOf(open, input.placeId, adding);
     const { hours, menus } = await this.servedMenus(restaurants, candidates, input);
     const { places, ...served } = withHours(input, candidates, hours);
-    const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, ...served }, this.travel);
-    const answer = mealAnswer({
-      input,
-      now,
-      people,
-      others,
-      ...gathered,
-      menus: menusOf(collected.length, open.length, candidates.length),
-      placeOf: (placeId) => this.placeOf(placeId),
-      missing,
-      served: menus,
-    });
+    const answerOf = (kept: (userId: string) => boolean): AnswerReply => {
+      const only = keptOnly(kept, { input, people, persons });
+      return mealAnswer({
+        ...only,
+        now,
+        others,
+        ...gatherMeal(only.persons, places, { input: only.input, now, ...served }, this.travel),
+        menus: menusOf(collected.length, open.length, candidates.length),
+        placeOf: (placeId) => this.placeOf(placeId),
+        missing,
+        served: menus,
+      });
+    };
+    const answer = asHeld(
+      answerOf(() => true),
+      { adding, people, meal },
+      answerOf,
+    );
     const busy = this.busyOf(answer, people[0]?.items ?? [], input);
-    const beside = await besideOf(collected, { input, now, people: [askerPerson, ...friendPeople] }, this.beside);
+    const beside = await besideOf(collected, { input, now, people: persons }, this.beside);
     const touched = await this.touched(askerId, input, { ...at, now, kinds: [`meal-${meal}`], setAside: held?.id });
     const set = { ...touched, mealSet: mealSetOf(held), ...addingDto(adding, people, answer.plans) };
     return { answer: { ...answer, ...beside, ...set }, served: menus, busy, posted: collected.length > 0 };

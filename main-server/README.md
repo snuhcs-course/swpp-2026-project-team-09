@@ -4264,6 +4264,14 @@ capacity 4, and the Holders are told (`step-changed`) only when the meal's step 
 out answers 400 `PLAN_PEOPLE_CHANGED`. A User who holds no meal of that day but an invitation to one, asking for a
 Friend, has nothing planned; the model is told its Holders alone.
 
+So a plan under `adding` may not hold the Friends it names (P05 ticket 85, `asHeld`). When no plan has them in it, as
+for a Friend who arrives after the asker must leave, the answer is the meal as it is held: its one plan is planned for
+everyone of it but them, at its Restaurant and start, `noPlan` is null, and `note` says why they cannot join it,
+naming them ("지호는 이 점심에 시간이 안 돼요" when the reasons do not). `adding` still names them with `movesTo` null,
+and the press invites them to the same Quest at the same time; nobody of it is asked again or told. The model's
+`adding.fits` is then false, with `adding.why`. Only when the meal cannot be planned as it is held either does the
+answer keep `noPlan`; the app then offers 파티 보기 beside its reasons.
+
 A meeting is set aside the same way (`quests/held-meeting.ts`): a new meet's Plan takes the asker's meeting made from a
 meet's Plan that day, not started, that the model names by its ref (`planMeet`'s `questId`), else the one whose
 people are the Friends asked for (the others not declined, or the declined ones when every other declined). One the

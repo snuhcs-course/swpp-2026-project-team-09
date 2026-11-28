@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Prisma } from '../../generated/prisma/client.js';
 import { type HeldMeal, heldMealOf, type InvitedMeal, invitedMealOf } from '../../quests/held-meal.js';
 import { type AnswerReply, type MealInput } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
+import { withTopic } from './answer-words.js';
 import { koreaTime } from '../korea-time.js';
 
 // Friends added to the meal the asker already holds (P05 ticket 44): asked for with everyone in it and someone new, the
@@ -88,6 +90,56 @@ export function withItsPeople(input: MealInput, held: HeldMeal | null): MealInpu
     friends.find((person) => person.userId === userId) ?? { userId, constraints: [] };
   const added = friends.filter(({ userId }) => !held.otherIds.includes(userId));
   return { ...input, people: [asker, ...held.otherIds.map((id) => kept(id)), ...added] };
+}
+
+// The answer when no plan has the Friends added in it (P05 ticket 85): the meal as it is held, planned for everyone in it
+// but them, and why there was no plan as its note, which names them ("지호는 이 점심에 시간이 안 돼요" when the reasons
+// do not). The app then still offers the press that invites them, and 그대로 두기, beside why they cannot join it,
+// rather than the reasons alone over the whole meal's time. An answer with a plan, or one adding nobody, is as it was;
+// so is one whose meal cannot be planned as it is held either.
+export function asHeld(
+  answer: AnswerReply,
+  {
+    adding,
+    people,
+    meal,
+  }: { adding: Adding | null; people: readonly { userId: string; name: string }[]; meal: MealInput['meal'] },
+  answerOf: (kept: (userId: string) => boolean) => AnswerReply,
+): AnswerReply {
+  if (adding === null || answer.plans.length > 0) {
+    return answer;
+  }
+  const { plans } = answerOf((userId) => !adding.friendIds.includes(userId));
+  if (plans.length === 0) {
+    return answer;
+  }
+  const names = people.filter(({ userId }) => adding.friendIds.includes(userId)).map(({ name }) => name);
+  const reasons = (answer.noPlan?.lines ?? []).map((line) => line.map(({ text }) => text).join(''));
+  const named = reasons.some((reason) => names.some((name) => reason.includes(name)));
+  const why = named
+    ? reasons
+    : [`${withTopic(names.join(', '))} 이 ${meal === 'lunch' ? '점심' : '저녁'}에 시간이 안 돼요`];
+  const note = [...why, ...(answer.note === undefined ? [] : [answer.note])].join('\n');
+  return { ...answer, plans, noPlan: null, note };
+}
+
+// What a meal's answer is planned of for only the people `kept`, the asker always among them: the input, the people of
+// the answer, and the people of the gathering, in the same order.
+export function keptOnly<Person extends { userId: string }, Gathered extends { id: string }>(
+  kept: (userId: string) => boolean,
+  {
+    input,
+    people,
+    persons,
+  }: { input: MealInput; people: readonly [Person, ...Person[]]; persons: readonly [Gathered, ...Gathered[]] },
+): { input: MealInput; people: [Person, ...Person[]]; persons: [Gathered, ...Gathered[]] } {
+  const [asker, ...friends] = people;
+  const [askerPerson, ...friendPersons] = persons;
+  return {
+    input: { ...input, people: input.people.filter(({ userId }, index) => index === 0 || kept(userId)) },
+    people: [asker, ...friends.filter(({ userId }) => kept(userId))],
+    persons: [askerPerson, ...friendPersons.filter(({ id }) => kept(id))],
+  };
 }
 
 // What the app reads of the Friends the plan adds: who, the meal's start, and the start the first plan moves it to,

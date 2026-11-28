@@ -5,6 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type CuisineWord } from '../../menus/cuisine-words.js';
@@ -53,11 +54,15 @@ export function alreadySetWords(mealSet: AnswerReply['mealSet'], planSet: Answer
 }
 
 // The Friends the plan adds to the meal set (P05 ticket 44), and the start it moves the meal to, null when it keeps it;
-// `fits` is false when no plan has them in it. And the Friends asked for who are in it already, or invited to it and
+// `fits` is false when no plan has them in it, and then `why` says why, the note of the meal shown as it is held
+// (`asHeld`). And the Friends asked for who are in it already, or invited to it and
 // have not answered.
 const named = (name: string): string => othersText('friend.name', name);
 
-export function addingWords({ adding, plans }: AnswerReply, alreadyIn: readonly AlreadyIn[]): object {
+export function addingWords({ adding, plans, note }: AnswerReply, alreadyIn: readonly AlreadyIn[]): object {
+  const parts = plans[0]?.parts ?? [];
+  const fits =
+    adding !== undefined && adding.friends.every(({ userId }) => parts.some((part) => part.userId === userId));
   return {
     ...(adding === undefined
       ? {}
@@ -65,7 +70,8 @@ export function addingWords({ adding, plans }: AnswerReply, alreadyIn: readonly 
           adding: {
             friends: adding.friends.map(({ name }) => named(name)),
             movesTo: adding.movesTo === null ? null : clock(adding.movesTo),
-            fits: plans.length > 0,
+            fits,
+            ...(fits || note === undefined ? {} : { why: note }),
           },
         }),
     ...(alreadyIn.length === 0
