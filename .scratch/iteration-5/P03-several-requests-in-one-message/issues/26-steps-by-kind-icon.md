@@ -23,6 +23,7 @@ The user chose board 가 of the step-numbers boards ("가안이 좋아보여"). 
   - On the map, a step not shown is one solid round in its kind's colour holding its kind's icon. Its flag is "name ›" with its time, as before. A step not done stays a small grey round with no icon.
   - Each kind's icon comes from the one table of kinds (`kindTone`), beside its colour (`stepIcon` in `answer-tone.ts`): the book for study (seat, room, study plan), the fork and spoon for a meal, the calendar for events, people for Quests and a new Quest, and the person for meet. The 관정 booking's round already held the book; it is now the same part, an icon in a pick's round (`icon` on a dot, `map-answer.tsx`).
 - **The step choices are settled.** Ticket 24's first open choice (`bookingStepHolds`, whether a seat's round holds a number or the book) is settled by the user's choice, and the function goes. Ticket 25's menu and pick presses on a step's flag go too: the step shown's own pick takes them now.
+- **Marks beside a drawing are drawn as they come** (`drawingOfScene`). A step's mark beside an answer keeps its single "›" and its look; before, the answer's drawing added a second "›" and restyled it as the meal's pick (found on the emulator, and in TaeHyun79's review). After 그대로 두기 the kept Quest's drawing keeps the other steps too (`keptDrawingOf`, the same review).
 - **Test ids replace the numbers.** Tests find a step's words by `step-word-N`, since no number is shown.
 - **For length:** `looksOf` moved from `answer-marks.ts` to `answer-looks.ts`.
 
