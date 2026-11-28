@@ -2854,6 +2854,11 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
 - Each model call logs one line with the key's name, its provider and the outcome, such as
   `Model call with key default on OpenRouter: answered, finish stop`, or `failed` with its cause: never a key's value or
   what was sent.
+- A tool call the model library refuses for its input is made again once with what the model meant: a field given null
+  left out, and a number written as a string (`"7,000"`) read as that number on a field that takes a number. Each
+  refused call logs one warning with the tool, each refused field's issue code and the type it expected, and what was
+  changed, such as `The model's planMeal call was refused: maxPrice invalid_union; made again with read as a number:
+maxPrice`: field names alone, never a value the model gave, which may hold the User's words.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
   written in each call, reasoning included (4,000). A call that fails with 429 or 529 is sent once more, within the time,
