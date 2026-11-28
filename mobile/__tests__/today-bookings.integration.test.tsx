@@ -13,7 +13,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
-import { bookingRow, expectNoWrite, inCard, pressIn, startLibraryChat } from './support/library-chat';
+import { bookingRow, expectNoWrite, pressIn, startLibraryChat } from './support/library-chat';
 import { openMain } from './support/main';
 import { answerParty } from './support/party';
 import { DINNER } from './support/server';
@@ -176,9 +176,7 @@ describe('a press in 예약', () => {
     await pressIn(within(screen.getByTestId('ai-input-beside')), '예약 취소');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: String(SEAT.BSEQNO) } }]);
-    expect(
-      inCard(screen.getByTestId(/^library-myBookings-/u).props.testID as string).getByText('예약을 취소했어요.'),
-    ).toBeVisible();
+    expect(within(screen.getByTestId(/^library-myBookings-/u)).getByText('예약을 취소했어요.')).toBeVisible();
     expect(server.received('POST /assistant/messages')).toHaveLength(0);
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));

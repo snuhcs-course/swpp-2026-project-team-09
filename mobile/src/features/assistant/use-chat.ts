@@ -180,9 +180,7 @@ export interface Chat {
   addOwn: (bubble: OwnBubble, after?: number) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
   addRecalculated: (asked: string, answer: AnswerReply) => void;
-  // Starts a new conversation with a turn the app gives itself, whose reply is its own bubble: `asked` stands as the
-  // User's words and `bubble` as the reply, and neither is ever sent, so no model is called (A04 ticket 11: 오늘's
-  // 예약 opens 내 예약 so).
+  // A new conversation with a turn the app gives itself, never sent (`own-turn.ts`, A04 ticket 11).
   askOwn: (asked: string, bubble: OwnBubble) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
   // User's words and `reply`'s answer as the Assistant's. `forgotten` when the conversation was forgotten meanwhile;
@@ -279,13 +277,10 @@ function useBubbles(): Bubbles {
   return { bubbles, said, show, add };
 }
 
+type Own = Pick<Chat, 'addOwn' | 'addRecalculated' | 'askOwn'>;
+
 // The app's own bubbles, added after what was said, and the turns of a card's button.
-function useAddOwn(
-  add: Bubbles['add'],
-  takeBack: () => void,
-  startNew: () => void,
-): Pick<Chat, 'addOwn' | 'addRecalculated' | 'askOwn'> {
-  const askOwn = useAskOwn(add, startNew);
+function useAddOwn(add: Bubbles['add'], takeBack: () => void, startNew: () => void): Own {
   const addOwn = useCallback(
     ({ text, cards = [], done }: OwnBubble, after?: number): void => {
       add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done }, after);
@@ -301,7 +296,7 @@ function useAddOwn(
     },
     [add, takeBack],
   );
-  return { addOwn, addRecalculated, askOwn };
+  return { addOwn, addRecalculated, askOwn: useAskOwn(add, startNew) };
 }
 
 // How the library cards ended, kept with the conversation by each card's place.
