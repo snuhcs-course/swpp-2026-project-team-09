@@ -4,9 +4,17 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply } from '@/api/assistant-types';
+import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { severalAnswersReplyTo } from '@/api/mock/data/several-answers';
-import { type Kept, keptWith, recalculatedConversation } from '@/features/assistant/kept-answers';
+import {
+  chosenAnswerOf,
+  type Kept,
+  keptOnScreen,
+  keptWith,
+  recalculatedConversation,
+} from '@/features/assistant/kept-answers';
+import { conversationAnswersOf } from '@/features/assistant/conversation-answers';
+import type { ChatBubble } from '@/features/assistant/use-chat';
 
 // What is kept of each step's answer on screen (P03 ticket 21), through recalculations that give the answer another
 // key, as "＋ 같이" does to a study (`… alone` → `… together`) and the bar's other meal to a meal (TaeHyun79's review of
@@ -98,5 +106,61 @@ describe("What is kept of a step's answer as its key changes", () => {
     const kept = keep(NONE, D0, D0, null);
 
     expect(keep(kept, D0, D0, null)).toBe(kept);
+  });
+});
+
+// TaeHyun79's third review of #725: an entry a later reply gave again is gone for every reader, its `from` too. The
+// path: a reply gives dinner `D0`; "＋ 같이" recalculates it into `D1`; a later reply gives `D1` again; a plan browsed
+// and a recalculation keep it again. Partitions: the later reply keeps `D0`; it withdraws `D0`.
+const D1 = `${D0} together`;
+const steps = given.steps ?? [];
+const reply = (id: number, answers: AnswerReply[], replied: ReplyStep[], withdrawn?: string[]): ChatBubble => ({
+  id,
+  role: 'assistant',
+  text: '',
+  cards: [],
+  mapButtons: [],
+  proposal: null,
+  failure: null,
+  answers,
+  steps: replied,
+  ...(withdrawn === undefined ? {} : { withdrawn }),
+});
+const first = reply(1, [lunch, dinner], [...steps]);
+const dinnerStep = steps[1];
+if (dinnerStep === undefined) {
+  throw new Error('No dinner step');
+}
+const laterSteps = steps.with(1, { ...dinnerStep, shows: { kind: 'answer', key: D1 } });
+
+// The kept entries along the path, with the later reply `later` on screen.
+function keptAlong(later: ChatBubble, recalculated: AnswerReply): ReadonlyMap<string, Kept> {
+  const before = [first];
+  const now = [first, later];
+  const one = keptWith(NONE, D0, { key: D0, answer: null, index: 0, after: 1 }, before);
+  const two = keptWith(one, D0, { key: D1, answer: dinnerAs(D1), index: 0, after: 1 }, before);
+  const browsed = keptWith(two, D1, { key: D1, answer: null, index: 1, after: 5 }, now);
+  return keptOnScreen(keptWith(browsed, D1, { key: D1, answer: recalculated, index: 0, after: 5 }, now), now);
+}
+
+describe('What is kept after a later reply gave the answer again', () => {
+  it('starts its chain again at the later reply, so the conversation holds that answer once', () => {
+    const later = reply(5, [dinnerAs(D1)], laterSteps);
+    const recalculated = dinnerAs(D1);
+    const kept = keptAlong(later, recalculated);
+    const conversation = recalculatedConversation(conversationAnswersOf([first, later]), kept);
+
+    expect(kept.get(D1)).toMatchObject({ from: D1 });
+    expect(conversation.answers.filter(({ key }) => key === D1)).toEqual([recalculated]);
+    expect(conversation.answers.find(({ key }) => key === D0)).toBe(dinner);
+  });
+
+  it('finds the step chosen when the later reply withdrew the first key', () => {
+    const givenAgain = dinnerAs(D1);
+    const later = reply(5, [givenAgain], laterSteps, [D0]);
+    const kept = keptAlong(later, dinnerAs(D1));
+    const conversation = recalculatedConversation(conversationAnswersOf([first, later]), kept);
+
+    expect(chosenAnswerOf(D1, conversation, kept, [first, later])).toMatchObject({ key: D1, source: givenAgain });
   });
 });
