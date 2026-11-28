@@ -40,8 +40,8 @@ interface BottomSheetProps {
 
 const RISE = 600;
 
-// What the sheet shows: its children while it is open, and while it slides out the children it last had open, though
-// its caller has dropped them by then.
+// What the sheet shows, its children or its head: while it is open the caller's, and while it slides out what it last
+// had open, though its caller has dropped them by then (a 모집글's head is gone the moment its post is closed).
 function useLastContent(open: boolean, children: ReactNode): ReactNode {
   const [last, setLast] = useState<ReactNode>(open ? children : null);
   if (open && children !== last) {
@@ -178,6 +178,7 @@ export function BottomSheet({
   const { keyboard, bottom } = useStand();
   const close = useClose(open, onClose);
   const content = useLastContent(open, children);
+  const top = useLastContent(open, head) ?? undefined;
   const sheet = useSheetPull(open, shown, close);
   const pan = useSheetPan(sheet);
   const body = useBody(sheet);
@@ -202,8 +203,8 @@ export function BottomSheet({
               style={[styles.sheet, { paddingBottom: space[4] + bottom }, pulled]}
               testID={testID}
             >
-              <Top head={head} onClose={close} pan={pan} />
-              <Body body={body} headed={head !== undefined} pulls={pullBody}>
+              <Top head={top} onClose={close} pan={pan} />
+              <Body body={body} headed={top !== undefined} pulls={pullBody}>
                 {content}
               </Body>
             </Reanimated.View>
