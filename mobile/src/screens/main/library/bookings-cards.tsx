@@ -3,10 +3,11 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import type { LibraryCardData, PlacePoint } from '@/api/assistant-types';
 import { placesQuery } from '@/api/queries';
 import { now } from '@/clock';
@@ -246,6 +247,29 @@ function useGuideTold(held: boolean): ActTold | null {
   return { words: '가는 길', onPress, disabled: false, danger: false };
 }
 
+// The act armed as the card opens, as 오늘's "예약 취소 ›" or "반납 ›" asks (A04 ticket 11): once the bookings are read,
+// that booking's act stands as a link pressed, if the booking is still there and the act is still its own.
+// Each ask is armed once, by when it was asked: a card drawn again, as when the conversation is taken up again, keeps
+// what the User did since. Marked in an effect, so that a render thrown away uses up nothing.
+const armedAsks = new Set<number>();
+
+function useArmed(
+  armed: LibraryCardData['armed'],
+  bookings: readonly LibraryBooking[] | null,
+  setActing: (acting: { booking: LibraryBooking; act: Act }) => void,
+): void {
+  useEffect(() => {
+    if (armed === undefined || bookings === null || armedAsks.has(armed.asked)) {
+      return;
+    }
+    armedAsks.add(armed.asked);
+    const booking = bookings.find(({ BSEQNO }) => BSEQNO === armed.bseqno);
+    if (booking !== undefined && actOf(booking) === armed.act) {
+      setActing({ booking, act: armed.act });
+    }
+  }, [armed, bookings, setActing]);
+}
+
 // 내 예약: the bookings of the card's period booked or in use, soonest first, else one sentence (P01 ticket 15).
 export function MyBookingsCard({ card, bubbleId, actions }: CardProps): ReactElement {
   const today = koreaDateKey(now());
@@ -254,6 +278,7 @@ export function MyBookingsCard({ card, bubbleId, actions }: CardProps): ReactEle
   const logIn = useLogInReload(reload);
   const [acting, setActing] = useState<{ booking: LibraryBooking; act: Act } | null>(null);
   const bookings = loaded.state === 'ready' ? shownBookings(loaded.value, card, today) : [];
+  useArmed(card.armed, loaded.state === 'ready' ? bookings : null, setActing);
   const walk = actions.bookingWalk?.()?.minutes ?? null;
   const guide = useGuideTold(bookings.some((booking) => actOf(booking) !== null));
   useTellAct(actions.act ?? null, bubbleId, acting === null ? guide : null);

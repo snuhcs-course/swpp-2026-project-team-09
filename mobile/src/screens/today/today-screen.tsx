@@ -30,6 +30,7 @@ import { readCardAddress } from '@/push/card-address';
 import { NoticeRow } from '../me/notifications-screen';
 import { usePartyActions } from '../party/use-party-actions';
 import { TabScreen } from '../shell/tab-screen';
+import { Bookings, useTodayBookings } from './bookings';
 import { Day } from './day';
 
 // How many kept Notifications 지난 알림 shows, and how many rows 답할 것 shows, so that the page stays about one screen
@@ -171,10 +172,12 @@ function Page(): ReactElement {
     .slice(0, KEPT_SHOWN);
   const all = useQuery(notificationsQuery).data ?? [];
   const fresh = useMarkShownRead(data !== undefined && allUnreadShown(kept, all));
+  const bookings = useTodayBookings();
   return (
     <ScrollView contentContainerStyle={styles.body}>
       <Waiting waiting={waitingNotices(notices)} />
-      <Day />
+      <Day hidden={bookings.hiddenStays} />
+      <Bookings bookings={bookings} />
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       {/* The whole list stays one press away while these lists load or fail: its kept Notifications may load. */}
@@ -184,7 +187,7 @@ function Page(): ReactElement {
 }
 
 // 오늘 (A04 ticket 10), the bar's fourth slot: 답할 것, 오늘 일정 and 지난 알림 on one page that scrolls once, under the
-// title and the date. Ticket 11 puts 예약 between 오늘 일정 and 지난 알림. Behind another tab it shows nothing, so that
+// title and the date. 예약 stands between 오늘 일정 and 지난 알림 (A04 ticket 11). Behind another tab it shows nothing, so that
 // nothing is marked read unseen.
 export function TodayScreen(): ReactElement {
   const chosen = useChosenTab();

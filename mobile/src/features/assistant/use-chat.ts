@@ -15,6 +15,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -45,6 +46,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAppTurn } from './app-turn';
 import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
+import { useAskOwn } from './own-turn';
 import { useLeftOut } from './left-out-hook';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
@@ -178,6 +180,8 @@ export interface Chat {
   addOwn: (bubble: OwnBubble, after?: number) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
   addRecalculated: (asked: string, answer: AnswerReply) => void;
+  // A new conversation with a turn the app gives itself, never sent (`own-turn.ts`, A04 ticket 11).
+  askOwn: (asked: string, bubble: OwnBubble) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
   // User's words and `reply`'s answer as the Assistant's. `forgotten` when the conversation was forgotten meanwhile;
   // a failure takes the turn back. `fromCard` marks an answer asked from a card, which can go back to it.
@@ -273,8 +277,10 @@ function useBubbles(): Bubbles {
   return { bubbles, said, show, add };
 }
 
+type Own = Pick<Chat, 'addOwn' | 'addRecalculated' | 'askOwn'>;
+
 // The app's own bubbles, added after what was said, and the turns of a card's button.
-function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOwn' | 'addRecalculated'> {
+function useAddOwn(add: Bubbles['add'], takeBack: () => void, startNew: () => void): Own {
   const addOwn = useCallback(
     ({ text, cards = [], done }: OwnBubble, after?: number): void => {
       add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done }, after);
@@ -290,7 +296,7 @@ function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOw
     },
     [add, takeBack],
   );
-  return { addOwn, addRecalculated };
+  return { addOwn, addRecalculated, askOwn: useAskOwn(add, startNew) };
 }
 
 // How the library cards ended, kept with the conversation by each card's place.
@@ -387,7 +393,7 @@ export function useChat(readContext: () => RequestContext): Chat {
     ask();
   }, [ask, said, show]);
 
-  const own = { ...useAddOwn(add, takeBack), ...useLeftOut(said, show) };
+  const own = { ...useAddOwn(add, takeBack, conversations.startNew), ...useLeftOut(said, show) };
   const appTurn = useAppTurn({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
