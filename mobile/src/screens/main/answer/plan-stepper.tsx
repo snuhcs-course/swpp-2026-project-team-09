@@ -3,12 +3,14 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, Icon, size, space, text } from '@/design-system';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { mealCard } from './meal-list';
 
 // The arrows are as high as a button, and their touch area reaches the design system's minimum.
 const ARROW = 40;
@@ -32,8 +34,10 @@ function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; 
   );
 }
 
-// "‹ 1/3 ›" for an answer whose other Plans have no flag on the map: its scene draws no candidate, as an events or a
-// parties answer's does. With candidates on the map, their numbered flags switch the Plan and nothing stands here.
+// "‹ 1/3 ›" for an answer whose other Plans are nowhere else in sight: its scene draws no candidate, as an events or a
+// parties answer's does, and its card lists none. With candidates on the map their numbered flags switch the Plan, and
+// with a list in the card (a meal's, or a study answer's: `mealCard`) its rows do, so nothing stands here: in a step
+// exactly as alone, where the steps' flags take the candidates' place on the map but the list stays (P03 ticket 25).
 export function PlanStepper({
   shown,
   busy,
@@ -46,7 +50,8 @@ export function PlanStepper({
 }): ReactElement | null {
   const { answer, plan, index, browse } = shown;
   const count = answer?.plans.length ?? 0;
-  if (plan === null || count < 2 || (!steps && plan.scene.places.some(({ role }) => role === 'candidate'))) {
+  const flagged = !steps && plan?.scene.places.some(({ role }) => role === 'candidate') === true;
+  if (plan === null || count < 2 || mealCard(answer) || flagged) {
     return null;
   }
   return (

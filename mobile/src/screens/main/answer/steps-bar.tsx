@@ -36,16 +36,22 @@ export function circled(number: number): string {
   return String.fromCodePoint(0x24_5f + number);
 }
 
-// What a step is, in a word: "자리", "방", or the last word of its title ("저녁").
+// What a step is, in a word: what the User does then. A seat, a room, and a study place all read "공부" (the user's
+// phone, 2026-11-28: "자리라는 텍스트 보다는 공부가 낫지 않을까?"); where, the step's flag and card say. Any other step
+// reads the last word of its title ("저녁").
 function wordOf(step: ReplyStep): string {
-  if (step.kind === 'seat') {
-    return '자리';
-  }
-  if (step.kind === 'room') {
-    return '방';
+  if (step.kind === 'seat' || step.kind === 'room') {
+    return '공부';
   }
   return step.title.split(' ').at(-1) ?? step.title;
 }
+
+// A span's press is this high over its own width, so that a press on it chooses its step as its words do, and the gaps
+// between spans take none (P03 ticket 25). It is a box of its own, not a hit slop: Android sends no touch to a child
+// outside its parent's bounds. Over the track it takes the bar's gap above, up to the words, and the rest below, the
+// bar's padding or the day's line, which takes no touch.
+const SPAN_TOUCH = 44;
+const ABOVE_TRACK = space[2];
 
 interface Span {
   index: number;
@@ -85,29 +91,41 @@ export function caretOf(steps: readonly ReplyStep[], active: number): number | u
   return span === undefined ? undefined : shareOf(spans)((span.start + span.end) / 2);
 }
 
-// The track with one span a step.
+// The track with one span a step, each span a press as high as `SPAN_TOUCH`.
 function Track({
   spans,
   active,
   share,
+  onStep,
 }: {
   spans: Span[];
   active: number;
   share: (at: number) => number;
+  onStep: (index: number) => void;
 }): ReactElement {
   return (
-    <View style={styles.track}>
+    <View style={styles.spans} testID="step-spans">
+      <View style={styles.track} />
       {spans.map(({ index, step, start, end }) => (
-        <View
+        // A screen reader reaches the step by its words, which say it; the span is the same press for a finger.
+        <Pressable
+          accessible={false}
           key={index}
-          style={[
-            styles.span,
-            { left: percent(share(start)), width: percent(share(end) - share(start)) },
-            index === active ? styles.spanActive : null,
-            step.status === 'shown' ? null : styles.spanNot,
-          ]}
-          testID={`step-span-${String(index + 1)}`}
-        />
+          onPress={() => {
+            onStep(index);
+          }}
+          style={[styles.spanTouch, { left: percent(share(start)), width: percent(share(end) - share(start)) }]}
+          testID={`step-span-${String(index + 1)}-touch`}
+        >
+          <View
+            style={[
+              styles.span,
+              index === active ? styles.spanActive : null,
+              step.status === 'shown' ? null : styles.spanNot,
+            ]}
+            testID={`step-span-${String(index + 1)}`}
+          />
+        </Pressable>
       ))}
     </View>
   );
@@ -171,8 +189,12 @@ export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarPro
           </Pressable>
         ))}
       </View>
-      <Track active={active} share={share} spans={spans} />
-      {day === '' ? null : <Text style={styles.day}>{day}</Text>}
+      <Track active={active} onStep={onStep} share={share} spans={spans} />
+      {day === '' ? null : (
+        <View style={styles.dayRow}>
+          <Text style={styles.day}>{day}</Text>
+        </View>
+      )}
     </Reanimated.View>
   );
 }
@@ -204,17 +226,32 @@ const styles = StyleSheet.create({
   // The chosen step in the time card's gold, its span drawn as the card's band (P01 ticket 23).
   wordActive: { fontFamily: font.semiBold, color: color.quest },
   faint: { color: color.inkSubtle },
-  track: { height: TRACK, borderRadius: radius.full, backgroundColor: color.border },
+  // The track keeps its place between the words and the day: its press box reaches over the gap above and below it.
+  spans: { height: SPAN_TOUCH, marginTop: -ABOVE_TRACK, marginBottom: TRACK + ABOVE_TRACK - SPAN_TOUCH },
+  track: {
+    position: 'absolute',
+    top: ABOVE_TRACK,
+    right: 0,
+    left: 0,
+    height: TRACK,
+    borderRadius: radius.full,
+    backgroundColor: color.border,
+  },
+  spanTouch: { position: 'absolute', top: 0, bottom: 0 },
   span: {
     position: 'absolute',
-    top: 0,
-    bottom: 0,
+    top: ABOVE_TRACK,
+    right: 0,
+    left: 0,
+    height: TRACK,
     borderRadius: radius.full,
     backgroundColor: color.snuBlue,
     opacity: 0.55,
   },
   spanActive: { opacity: 1, borderWidth: 2, borderColor: color.quest, backgroundColor: color.questSoft },
   spanNot: { backgroundColor: color.inkSubtle },
+  // Under the spans' press box, which reaches over its top.
+  dayRow: { pointerEvents: 'none' },
   day: { ...text.caption, color: color.inkMuted },
 });
 

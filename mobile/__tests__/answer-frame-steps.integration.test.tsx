@@ -130,8 +130,7 @@ describe('A reply to a seat and then dinner', () => {
     expect(screen.getByTestId('step-span-2')).toBeVisible();
     expect(inFrame().queryByTestId('reply-steps')).toBeNull();
     // The seat's step shows as a seat answer alone: its band is its time card's on the bar, and its card the ticket with
-    // no second band. The meal's other candidates and their stepper are its own step's card, shown when ② is chosen
-    // (P03 ticket 23).
+    // no second band. The meal's other candidates are its own step's card, shown when ② is chosen (P03 ticket 23).
     expect(inFrame().getByTestId(`library-book-${SEAT_CARD.library.key}`)).toBeVisible();
     expect(inFrame().queryByTestId('slot-band')).toBeNull();
     expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
@@ -151,9 +150,11 @@ describe('A reply to a seat and then dinner', () => {
 
     expect(beside('만들고 초대 보내기')).toBeVisible();
     expect(beside('예약하기')).toBeNull();
-    // The meal's own bar, with its handles, stands under the steps' bar while ② is shown, and its card in the frame.
+    // The meal's own bar, with its handles, stands under the steps' bar while ② is shown, and its card in the frame:
+    // its list, which switches the Plan, and no pager, as a meal alone shows (P03 ticket 25).
     expect(screen.getAllByTestId('time-bar')).toHaveLength(2);
-    expect(inFrame().getByTestId('plan-stepper')).toBeVisible();
+    expect(inFrame().getByTestId('meal-list')).toBeVisible();
+    expect(inFrame().queryByTestId('plan-stepper')).toBeNull();
     expect(library.writes()).toEqual([]);
   });
 
