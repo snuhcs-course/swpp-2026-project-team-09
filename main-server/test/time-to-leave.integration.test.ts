@@ -14,7 +14,7 @@ import { withAccessToken } from './sign-in.js';
 import { type NotificationDto } from '../src/notifications/dto/notification.dto.js';
 import { keptNotifications } from './kept-notifications.js';
 
-// The Leader's time to leave, kept in GET /notifications when POST /plans makes a party from the design's worked
+// The Leader's time to leave, kept as a Notification when POST /plans makes a party from the design's worked
 // example (a Tuesday at 11:50), and gone when the Leader ends the Quest. Each test stands on a Tuesday of April or May
 // 2088, which no other file uses.
 

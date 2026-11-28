@@ -18,7 +18,7 @@ import { dropQuest, editSubQuest, getQuest } from './quests.js';
 import { type NotificationDto } from '../src/notifications/dto/notification.dto.js';
 import { keptNotifications } from './kept-notifications.js';
 
-// An invited User's own time to leave, kept in GET /notifications when they accept a party made at POST /plans from
+// An invited User's own time to leave, kept as a Notification when they accept a party made at POST /plans from
 // the design's worked example (a Tuesday at 11:50), gone when they leave the Quest or it ends, and kept again by the
 // same rule when its step is changed (P06 ticket 25). Each test stands on
 // a Tuesday of July or August 2088, which no other file posts menus for.

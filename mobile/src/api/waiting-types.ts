@@ -84,7 +84,7 @@ export interface KeptNotification {
   id: string;
   kind: string;
   title: string;
-  // The title while `at` is still to come. Null for a kind that has none; absent from an older main server.
+  // The title while `at` is still to come, which 알림 never shows: it lists a Notification only once its time has come.
   ahead?: string | null;
   line: string;
   at: string;
