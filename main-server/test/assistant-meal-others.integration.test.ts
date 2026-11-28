@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { expectStatus, keptButHidden, shareAt, uploadPosition } from './location-sharing.js';
@@ -44,23 +45,21 @@ describe('Lunch with 민수, with 지은 and 하은 not in it', () => {
     const response = await stage.send([resolve('민수'), planMeal(TUESDAY, [friend.id]), { text: '…' }]);
 
     const answer = answerIn(response.body);
+    // The band runs to the asker's 13:00 Class (P01 ticket 46), so each Friend's stretch is drawn up to it.
     expect(answer.plans[0]?.band).toMatchObject({
-      range: { startAt: time('11:30'), endAt: time('13:30') },
+      range: { startAt: time('11:30'), endAt: time('13:00') },
       others: [
         {
           userId: seen.id,
           name: '지은',
-          busy: [
-            { startAt: time('11:30'), endAt: time('12:15'), label: '8동 수업' },
-            { startAt: time('13:00'), endAt: time('13:30'), label: '8동 수업' },
-          ],
+          busy: [{ startAt: time('11:30'), endAt: time('12:15'), label: '8동 수업' }],
           walkMinutes: expect.any(Number) as unknown,
           after: '8동 수업',
         },
         {
           userId: hidden.id,
           name: '하은',
-          busy: [{ startAt: time('12:30'), endAt: time('13:30'), label: '24동 수업' }],
+          busy: [{ startAt: time('12:30'), endAt: time('13:00'), label: '24동 수업' }],
           walkMinutes: expect.any(Number) as unknown,
           after: '24동 수업',
         },

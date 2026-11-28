@@ -8,7 +8,7 @@
 import { type AnswerReply, type MeetInput, type TimeBand } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
 import { type Interval, mealWindow } from '../free-time/meal-fit.js';
-import { bandRange, type RangeBounds } from '../free-time/band-range.js';
+import { bandRange, mealBounds, type RangeBounds } from '../free-time/band-range.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, type GatheringNaming, type Naming, type OtherFriend } from './answer-words.js';
 import { MINUTE_MS } from './gathering.js';
@@ -73,17 +73,22 @@ export function withBand(noPlan: AnswerReply['noPlan'], bandOf: () => TimeBand):
   return noPlan === null ? null : { ...noPlan, band: bandOf() };
 }
 
-// A meal's: the meal's window as the User narrowed it, or the meal's own when that left none, and the Classes left out.
+// A meal's: the meal's window as the User narrowed it, or the meal's own when that left none, and the Classes left out,
+// over the stretch the meal can be eaten in (`mealBounds`, P01 ticket 46), so that the window can be dragged out of
+// where it found no plan.
 export function mealNoPlanBand(naming: Naming): TimeBand {
   const { input, now, others } = naming.args;
   const asked = windowOf(input);
-  const { skipped = [] } = naming.asker;
+  const { items, skipped = [] } = naming.asker;
   const label = (placeId: string): string => naming.placeLabel(placeId);
-  return windowBand(asked.start < asked.end ? asked : mealWindow(input.date, input.meal), now, (from, until) => ({
+  const meal = mealWindow(input.date, input.meal);
+  const window = asked.start < asked.end ? asked : meal;
+  const rows = (from: Date, until: Date): BandRows => ({
     lanes: lanesOf(naming, from, until),
     ...othersWithoutPlace(others, { from, until, label }),
     ...(skipped.length === 0 ? {} : { skipped: skippedOf(skipped, naming) }),
-  }));
+  });
+  return windowBand(window, now, rows, { hours: mealBounds(window, meal, items) });
 }
 
 // A meeting's: the day's hours as the User narrowed them, or the day's own when that left none, over the day's hours,

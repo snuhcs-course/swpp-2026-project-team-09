@@ -14,8 +14,8 @@
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
-import { mealWindow } from '../free-time/meal-fit.js';
-import { aroundSpan, bandRange, windowHolds } from '../free-time/band-range.js';
+import { type Interval, mealWindow } from '../free-time/meal-fit.js';
+import { bandRange, mealBounds, windowHolds } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import {
   type GatheringNaming,
@@ -217,18 +217,28 @@ export function skippedOf(items: readonly DayItem[], naming: Naming): NonNullabl
   return skippedBand(items, (item) => busyLabel(item, (placeId) => naming.placeLabel(placeId))).skipped ?? [];
 }
 
-// The one range of a time card (`bandRange`) between a meal's own bounds, which P01 ticket 43 leaves as they were for
-// the user to decide (`aroundSpan`): from the later of now and an hour before the plan's start to half an hour past its
-// end, reaching out to the window the User fixed, and over the time a Class left out frees, so that the meal can be
-// moved into it. `now` is given as it is, even outside the range.
+// The meal's window, wider where the plan's Restaurant serves longer; never narrower, as the Restaurant's own window may
+// be the one the User fixed.
+function servedWindow(meal: Interval, own: Interval | undefined): Interval {
+  return own === undefined
+    ? meal
+    : { start: own.start < meal.start ? own.start : meal.start, end: own.end > meal.end ? own.end : meal.end };
+}
+
+// The one range of a time card (`bandRange`) between a meal's own bounds (`mealBounds`, P01 ticket 46): the stretch the
+// asker can eat the meal in, between their items and while it is served, so that a lunch can be dragged anywhere it can
+// be eaten that day. It reaches out to the window the User fixed, and over the time a Class left out frees. `now` is
+// given as it is, even outside the range.
 export function bandOf(fit: GatheringFit, naming: Naming): TimeBand {
   const { start, end, togetherMinutes } = fit;
   const { now, input } = naming.args;
   const { items, skipped = [] } = naming.asker;
-  const freed = skipped.length > 0 ? [freedReach(items, skipped, mealWindow(input.date, input.meal).end)] : [];
+  const meal = mealWindow(input.date, input.meal);
+  const freed = skipped.length > 0 ? [freedReach(items, skipped, meal.end)] : [];
   const span = { start, end };
   const holds = [...windowHolds(input.date, input.window), ...freed];
-  const { from, until } = bandRange({ now, date: input.date, span, bounds: aroundSpan(span), holds });
+  const bounds = mealBounds(span, servedWindow(meal, fit.window), items);
+  const { from, until } = bandRange({ now, date: input.date, span, bounds, holds });
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
