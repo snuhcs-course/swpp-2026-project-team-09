@@ -48,3 +48,4 @@ The approved wireframe of 2026-11-28 (40 states of the tutorial, with its brief 
 
 - Agent time: about 1 hour 40 minutes in one session. This is an estimate from the transcript's timestamps, and it includes the waits for test runs, bundling and the emulator.
 - Tokens: about 79.1 million input, of which 78.7 million were cache reads, 412,000 were cache writes and about 600 were uncached; about 130,000 output. No subagents.
+- Review fixes (done reads only the content's quests, `assistant-tutorial.integration`): about 1 hour more in the same session (estimate, test waits included). With them, the session's total is about 108.1 million input, of which 107.6 million were cache reads, 479,000 cache writes and about 700 uncached; about 160,000 output. No subagents.
