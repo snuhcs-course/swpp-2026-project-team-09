@@ -227,8 +227,8 @@ function DeleteAll({ count }: { count: number }): ReactElement | null {
 }
 
 // 알림, above the tabs, which 오늘's "알림 모두 보기" opens (A04 ticket 10): the Notifications the main server keeps,
-// then what waits for the User, from the lists the main server serves. The count is of the rows that wait. The kept ones shown are then read, and those
-// that were unread stay marked new while 알림 is open.
+// then what waits for the User, from the lists the main server serves. The count is of the rows that wait. The kept
+// ones shown are then read, and those that were unread stay marked new while 알림 is open.
 export function NotificationsScreen(): ReactElement {
   const { data, isPending, refetch } = useNotices();
   const fresh = useMarkShownRead(data !== undefined);
