@@ -5,16 +5,28 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
-import { BottomSheet, Button, color, font, Icon, radius, space, text, tutorialTone } from '@/design-system';
+import {
+  Button,
+  color,
+  font,
+  Icon,
+  iconOrFlag,
+  radius,
+  space,
+  text,
+  tutorialCategoryTone,
+  tutorialTone,
+} from '@/design-system';
 import { kickerOf } from '@/features/tutorial/rules';
 import { Places } from './tutorial-places';
+import { TutorialPanel } from './tutorial-panel';
 import { Said } from './tutorial-said';
-import { WebLinks } from './web-links';
 import type { SheetView, TutorialFlow } from './use-tutorial-flow';
 import type { TutorialPinTarget } from './use-tutorial-pin';
 
@@ -32,6 +44,7 @@ interface TutorialSheetProps {
 
 const DOT = 6;
 const DOT_NOW = 14;
+const TILE = 44;
 
 // One dot for each quest: the completed ones in the tutorial's ink, the one shown wider.
 function Dots({ tutorial, shownKey }: { tutorial: Tutorial; shownKey: string }): ReactElement {
@@ -103,7 +116,7 @@ function KwanjeongButtons(props: ButtonsProps & { skipLabel: string }): ReactEle
             </Button>
           }
           right={
-            <Button disabled={working} full icon="check" onPress={flow.forceDone} size="lg" variant="done">
+            <Button disabled={working} full icon="check" onPress={flow.forceDone} size="lg">
               그냥 완료
             </Button>
           }
@@ -121,7 +134,7 @@ function KwanjeongButtons(props: ButtonsProps & { skipLabel: string }): ReactEle
           </Button>
         }
         right={
-          <Button full icon="check" onPress={flow.check} size="lg" variant="done">
+          <Button full icon="check" onPress={flow.check} size="lg">
             완료
           </Button>
         }
@@ -166,7 +179,7 @@ function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactEle
           </Button>
         }
         right={
-          <Button disabled={working} full icon="check" onPress={flow.saidDone} size="lg" variant="done">
+          <Button disabled={working} full icon="check" onPress={flow.saidDone} size="lg">
             완료
           </Button>
         }
@@ -176,32 +189,39 @@ function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactEle
   );
 }
 
-// A quest's sheet, for a quest without a guide (MainTutorialSheet, "완료 조건 없음 · 링크는 🌐 · [나중에][✓ 완료]"):
-// "새내기 튜토리얼 · {category} · n/N" with the dots and 🌐, the title, the body's paragraphs, the places and the links,
-// and its buttons; after ✓ 완료 or the skip, the completionMessage in the Assistant's bubble with ✓ 퀘스트 완료
-// (MainTutorialOk, with the booking row after the 관정 check found one). While the 관정 check runs, the sheet stays
-// open.
+// A quest's window, for a quest without a guide (MainTutorialSheet, "완료 조건 없음 · [나중에][✓ 완료]"), a glass
+// panel over the map above the navigation (P06 ticket 55): "새내기 튜토리얼 · {category} · n/N" with the dots, the
+// quest's icon and title, the body's paragraphs, its places and links in one box, and its buttons; after ✓ 완료 or the
+// skip, the completionMessage in the Assistant's bubble with ✓ 퀘스트 완료 (MainTutorialOk, with the booking row after
+// the 관정 check found one). While the 관정 check runs, the window stays open.
 export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialSheetProps): ReactElement {
   const { sheet: shown, tutorial } = flow;
   const quest = shown === null ? undefined : tutorial?.quests.find(({ key }) => key === shown.key);
   const close = shown?.mode === 'checking' ? (): void => undefined : flow.closeSheet;
   return (
-    <BottomSheet label="새내기 튜토리얼 퀘스트" onClose={close} open={shown !== null && quest !== undefined}>
+    <TutorialPanel
+      label="새내기 튜토리얼 퀘스트"
+      onClose={close}
+      onScrimPress={close}
+      open={shown !== null && quest !== undefined}
+    >
       {shown === null || quest === undefined || tutorial === undefined ? null : (
         <ScrollView contentContainerStyle={styles.body}>
           <View style={styles.head}>
             <View style={styles.kicker}>
-              <Icon color={tutorialTone.ink} name="flag" size={14} />
+              <Icon color={color.inkMuted} name="flag" size={14} />
               <Text style={styles.kickerWords}>{kickerOf(tutorial, quest)}</Text>
             </View>
-            <View style={styles.headEnd}>
-              <Dots shownKey={quest.key} tutorial={tutorial} />
-              <WebLinks links={quest.links} />
-            </View>
+            <Dots shownKey={quest.key} tutorial={tutorial} />
           </View>
-          <Text accessibilityRole="header" style={styles.title}>
-            {quest.title}
-          </Text>
+          <View style={styles.titleLine}>
+            <View style={styles.tile}>
+              <Icon color={tutorialCategoryTone.ink} name={iconOrFlag(quest.icon)} size={22} />
+            </View>
+            <Text accessibilityRole="header" style={styles.title}>
+              {quest.title}
+            </Text>
+          </View>
           {quest.body.map((paragraph) => (
             <Text key={paragraph} style={styles.paragraph}>
               {paragraph}
@@ -212,12 +232,12 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
           <Buttons flow={flow} onAskAssistant={onAskAssistant} quest={quest} shown={shown} />
         </ScrollView>
       )}
-    </BottomSheet>
+    </TutorialPanel>
   );
 }
 
 const styles = StyleSheet.create({
-  body: { gap: 14, paddingHorizontal: space[5], paddingBottom: space[2] },
+  body: { gap: 14, padding: space[4] },
   head: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -226,14 +246,22 @@ const styles = StyleSheet.create({
     gap: space[2],
   },
   kicker: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  kickerWords: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: tutorialTone.ink },
+  kickerWords: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: color.inkMuted },
   dots: { flexDirection: 'row', gap: space[1] },
   dot: { width: DOT, height: DOT, borderRadius: radius.full, backgroundColor: color.border },
-  dotDone: { backgroundColor: tutorialTone.ink },
+  dotDone: { backgroundColor: color.inkFaint },
   dotNow: { width: DOT_NOW, backgroundColor: tutorialTone.dotNow },
-  title: { ...text.titleLg, marginTop: -space[1], color: color.ink },
+  titleLine: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  tile: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: TILE,
+    height: TILE,
+    borderRadius: radius.md,
+    backgroundColor: tutorialCategoryTone.soft,
+  },
+  title: { ...text.titleLg, flex: 1, color: color.ink },
   paragraph: { ...text.body, lineHeight: 24, color: color.inkMuted },
-  headEnd: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   buttons: { gap: space[2] },
   pair: { flexDirection: 'row', gap: space[2] },
   half: { flex: 1 },

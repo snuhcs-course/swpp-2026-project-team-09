@@ -12,6 +12,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -140,10 +141,10 @@ export function aiInputTop({ inputHeight = AI_INPUT.height }: Room): number {
 export const BUTTON_ROW = { left: space[4], right: 70, bottom: 78, height: 48, gap: 6 } as const;
 
 // The 새내기 튜토리얼's start button, the first run's line that asks for interests, and the line of a Quest made from a
-// Plan stand at the left in that order, each 34 high, 16 from the left and 8 above the one under it. The lowest
-// stands 8 above the row of buttons while that is drawn, else in the row's place: 16 above the AI input's top, in
-// line with the 편의기능 button.
-export const TUTORIAL_START = { left: space[4], height: 34 } as const;
+// Plan stand at the left in that order, 16 from the left and 8 above the one under it: the start button a glass pill
+// 44 high (P06 ticket 55), the lines 34. The lowest stands 8 above the row of buttons while that is drawn, else in the
+// row's place: 16 above the AI input's top, in line with the 편의기능 button.
+export const TUTORIAL_START = { left: space[4], height: 44 } as const;
 export const INTERESTS_HINT = { left: space[4], height: 34 } as const;
 export const MADE_LINE = { left: space[4], height: 34 } as const;
 

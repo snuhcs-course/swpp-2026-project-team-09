@@ -6,6 +6,7 @@
 # 2026-11-04  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-28  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The 새내기 튜토리얼 (README.md: Tutorial). The server checks this file when it starts and serves it with GET /tutorial,
@@ -32,7 +33,7 @@
 # serves both; the Assistant reads neither.
 #
 # The texts marked *drafted* in the P06 spec (the briefs, conditions and completion messages of the quests other than
-# kwanjeong) wait for the owner's review before the P6 eval set freezes them. The ten quests P13 added are marked
+# kwanjeong) wait for the owner's review before the P6 eval set freezes them. The quests P13 added are marked
 # *drafted* each, from .scratch/iteration-3/P13-freshman-and-kwanjeong-improve/references/quest-candidates.md, with
 # their facts read again on the official pages on 2026-11-04.
 
@@ -399,167 +400,8 @@ quests:
           actions:
             - { kind: ask, words: 어시스턴트에게 반납, ask: 관정도서관 좌석 반납해줘 }
 
-  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review. The notice names the system
-  # 타 학과(부) 전공 교과목 성적평가방법 선택제; "S/U" is the title the spec gives.
-  - key: su-grading-option
-    order: 6
-    category: study
-    icon: grade
-    title: 성적평가방법 선택제(S/U) 신청하기
-    brief: 다른 학과 전공 과목도 학점 걱정을 덜고 들을 수 있어요.
-    body:
-      - 다른 학과(부)의 전공 교과목 중 지정된 과목은 학생이 직접 성적평가방법을 바꿔 신청할 수 있어요.
-      - · 수업일수 1/4이 되는 날까지 mySNU에서 직접 신청해요. 2026학년도 1학기는 3월 26일(목)까지였어요.
-      - · 대상 과목은 학교가 정한 목록에 있는 과목뿐이에요. 학기마다 공지를 확인해 보세요.
-    condition: 성적평가방법 선택제 신청 기간과 대상 과목 확인하기
-    completion:
-      kind: button
-    completionMessage: 관심 있던 다른 학과 과목에도 부담 없이 도전해 보세요!
-    places: []
-    links:
-      - label: MySNU
-        url: https://my.snu.ac.kr
-      - label: 2026-1 수강신청 변경 및 취소 안내 (컴퓨터공학부 공지)
-        url: https://cse.snu.ac.kr/community/notice/24751
-    # Left out, as the notice does not state it: the menu of mySNU to apply in.
-    facts:
-      - text: 타 학과(부) 전공 교과목 성적평가방법 선택제는 학생이 직접 수업일수 1/4선까지 mySNU에서 신청해요. 2026학년도 1학기는 2026-03-26(목)까지였어요.
-        source: https://cse.snu.ac.kr/community/notice/24751
-        checked: 2026-11-04
-      - text: 대상은 타 학과(부) 전공 교과목 중 지정된 목록에 있는 과목이에요.
-        source: https://cse.snu.ac.kr/community/notice/24751
-        checked: 2026-11-04
-      - text: 교과구분 변경도 같은 날, 수업일수 1/4선까지 등록해요. 2026학년도 1학기는 2026-03-26(목)까지였어요.
-        source: https://cse.snu.ac.kr/community/notice/24751
-        checked: 2026-11-04
-    # The board MainTutSU.
-    guide:
-      steps:
-        - tab: 신청
-          title: MySNU에서 직접 신청
-          about:
-            - "다른 과 전공 수업, 학점 걱정돼서 망설였다면 써 보세요.\n성적을 A~F 대신 S(통과) / U로 받을 수 있어요."
-          link: { words: MySNU에서 신청하기, url: 'https://my.snu.ac.kr' }
-          chips:
-            - { icon: calendar, words: 수업일수 1/4까지 }
-            - { icon: grade, words: 지정된 다른 학과 전공 과목만 }
-            - { icon: info, words: 학기마다 공지 확인 }
-
-  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
-  - key: chatgpt-edu
-    order: 7
-    category: study
-    icon: spark
-    title: ChatGPT Edu 무료로 쓰기
-    brief: 재학생이면 따로 신청하지 않아도 ChatGPT Edu를 쓸 수 있어요.
-    body:
-      - 서울대는 재학 중인 학생에게 ChatGPT Edu를 제공해요. 관리자가 한꺼번에 등록하므로 따로 신청하지 않아도 돼요.
-      - · chatgpt.com에 접속해 마이스누 포털 아이디와 비밀번호로 로그인해요.
-      - · 휴학생은 쓸 수 없고, 3개월 넘게 접속하지 않으면 아이디가 회수돼요. 필요하면 다시 요청할 수 있어요.
-      - · 학교의 AI 활용 지침을 지켜서 써 주세요.
-    condition: ChatGPT Edu에 로그인해 보기
-    completion:
-      kind: button
-    completionMessage: 공부할 때 든든한 도우미가 하나 더 생겼어요!
-    places: []
-    links:
-      - label: ChatGPT
-        url: https://chatgpt.com
-      - label: 생성형 AI(ChatGPT Edu) 서비스 이용 안내 (컴퓨터공학부 공지)
-        url: https://cse.snu.ac.kr/community/notice/25201
-    # Left out, as the notice does not state it: the models and the limits of use.
-    facts:
-      - text: 재학·재직 중인 학내 구성원이 대상이고 휴학·휴직 중에는 쓸 수 없어요. 학생은 별도 신청 절차 없이 관리자가 일괄 등록해요.
-        source: https://cse.snu.ac.kr/community/notice/25201
-        checked: 2026-11-04
-      - text: https://chatgpt.com 에 접속해 마이스누 포털 아이디와 비밀번호로 로그인해요.
-        source: https://cse.snu.ac.kr/community/notice/25201
-        checked: 2026-11-04
-      - text: 운영 기간은 2026년 6월부터 2027년 8월까지(15개월)예요.
-        source: https://cse.snu.ac.kr/community/notice/25201
-        checked: 2026-11-04
-      - text: 3개월 이상 접속하지 않으면 아이디가 회수되고, 필요하면 다시 쓰겠다고 요청할 수 있어요. 휴학·휴직·퇴직하면 계정이 정지돼요.
-        source: https://cse.snu.ac.kr/community/notice/25201
-        checked: 2026-11-04
-    # The board MainTutGPT.
-    guide:
-      steps:
-        - tab: 로그인
-          title: 바로 로그인
-          rows:
-            - { words: chatgpt.com, url: 'https://chatgpt.com' }
-            - { words: 마이스누 ID · 비밀번호, note: 로그인 }
-          chips:
-            - { icon: check, words: 신청 없이 }
-            - { icon: info, words: 휴학생 불가 }
-            - { icon: clock, words: 3개월 미접속 시 회수 }
-
-  # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review. Re-read on 2026-11-04: whether
-  # the licences may be installed on a student's own laptop is left out of body and facts, since ist.snu.ac.kr lists
-  # "학생 개인 노트북(불법 설치 및 사용 불가)" and www.snu.ac.kr says only that the software is downloaded on campus.
-  - key: ms365-campus-software
-    order: 8
-    category: study
-    icon: download
-    title: 캠퍼스 라이선스 소프트웨어 받기
-    brief: 한글, MS Office, SPSS, MATLAB 같은 소프트웨어를 학교 라이선스로 받을 수 있어요.
-    body:
-      - 서울대 구성원은 교육·연구에 쓰는 소프트웨어를 학교 라이선스로 무료로 쓸 수 있어요. Windows, 한글, MS Office, V3, 알툴즈, SPSS·SAS·Stata, MATLAB, ChemDraw 등이 있어요.
-      - '· 받는 곳: 학내에서 마이스누에 로그인한 뒤 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 캠퍼스라이선스SW다운로드'
-      - · 순수 교육과 연구 목적으로만 쓸 수 있어요.
-      - · Microsoft 365는 mso365.snu.ac.kr에서 SNU 아이디로 써요. 졸업하면 쓸 수 없어요.
-    condition: 캠퍼스 라이선스 소프트웨어 받는 곳 확인하기
-    completion:
-      kind: button
-    completionMessage: 이제 필요한 프로그램을 사지 않고 학교 라이선스로 써 보세요!
-    places: []
-    links:
-      - label: 정보화본부 캠퍼스 라이선스 소프트웨어
-        url: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
-      - label: Microsoft 365
-        url: https://mso365.snu.ac.kr/
-    # Left out: whether the licences may be installed on a student's own laptop (the sources disagree, above).
-    facts:
-      - text: 캠퍼스 라이선스 소프트웨어는 MS Windows(업그레이드용)와 Office, 한글, SAS, Stata, SPSS Statistics, MATLAB, ChemDraw, AutoDesk(교육용), V3, 알툴즈 등이에요. 재학생과 교직원이 대상이에요.
-        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
-        checked: 2026-11-04
-      - text: 학내에서 마이스누에 로그인한 뒤 내려받아요.
-        source: https://www.snu.ac.kr/campuslife/aid/it
-        checked: 2026-11-04
-      - text: 메뉴는 마이스누 로그인 → 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 캠퍼스라이선스SW다운로드, 또는 메인페이지의 소프트웨어 다운로드예요.
-        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
-        checked: 2026-11-04
-      - text: 순수 교육·연구 목적 외에는 쓸 수 없고, 학내 벤처기업 같은 영리 단체와 병원·병원 부속시설에서는 쓸 수 없어요.
-        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
-        checked: 2026-11-04
-      - text: Microsoft 365는 https://mso365.snu.ac.kr/ 에서 개인정보 동의 후 SNU 아이디와 비밀번호로 써요. OneDrive 1GB와 Exchange 1GB를 주고, 재학생은 졸업하면 쓸 수 없어요.
-        source: https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/
-        checked: 2026-11-04
-    # The boards MainTutSW1–2.
-    guide:
-      together: true
-      steps:
-        - tab: 캠퍼스 SW
-          title: 캠퍼스 라이선스 SW
-          rows:
-            - { words: 학내에서 마이스누, url: 'https://my.snu.ac.kr' }
-            - words: 캠퍼스·복지
-            - words: IT서비스
-            - words: 장비/SW대여
-            - words: 캠퍼스라이선스SW다운로드
-          chips:
-            - { icon: download, words: 한글 · Office · SPSS · MATLAB }
-            - { icon: info, words: 교육·연구용만 }
-        - tab: Microsoft 365
-          title: Microsoft 365
-          rows:
-            - { words: mso365.snu.ac.kr, url: 'https://mso365.snu.ac.kr/' }
-            - { words: SNU 아이디, note: 로그인 }
-          chips:
-            - { icon: info, words: 졸업하면 종료 }
-
   - key: admin-shuttle
-    order: 9
+    order: 6
     category: transit
     icon: bus
     title: 행정관 셔틀 이용하기
@@ -592,7 +434,7 @@ quests:
   # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review. The night lines only; the
   # daytime 행정관 셔틀 is admin-shuttle's.
   - key: night-shuttle
-    order: 10
+    order: 7
     category: transit
     icon: moon
     title: 야간 셔틀 타기
@@ -672,7 +514,7 @@ quests:
             - { kind: route, words: 길찾기 }
 
   - key: health-clinic
-    order: 11
+    order: 8
     category: health
     icon: cross
     title: 서울대 보건진료소 이용
@@ -751,7 +593,7 @@ quests:
 
   # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
   - key: counseling-center
-    order: 12
+    order: 9
     category: health
     icon: heart
     title: 대학생활문화원 상담 알아두기
@@ -859,7 +701,7 @@ quests:
                 - { icon: phone, words: 02-880-8787 }
 
   - key: art-museum
-    order: 13
+    order: 10
     category: culture
     icon: art
     title: 서울대 미술관/파워플랜트 관람
@@ -904,7 +746,7 @@ quests:
 
   # *drafted* (P13): brief, body, condition and completionMessage, for the PM's review.
   - key: dure-practice-room
-    order: 14
+    order: 11
     category: culture
     icon: music
     title: 두레문예관 연습실 예약하기
@@ -966,7 +808,7 @@ quests:
   # The two points are OpenStreetMap's: the bus stop 건설환경종합연구소 (node 11560054588), next to the trailhead by
   # the guide, and 연주대 (node 3445797247).
   - key: gwanaksan-engineering-trail
-    order: 15
+    order: 12
     category: culture
     icon: mountain
     title: 공학관 코스로 관악산 오르기

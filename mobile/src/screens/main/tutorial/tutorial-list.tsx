@@ -2,41 +2,27 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Tutorial } from '@/api/tutorial-types';
-import {
-  Button,
-  color,
-  font,
-  Icon,
-  Overlay,
-  radius,
-  shadow,
-  size,
-  space,
-  type TutorialCategoryTone,
-  tutorialTone,
-} from '@/design-system';
-import { useBackToClose } from '@/hooks/use-back-to-close';
+import { Button, color, font, Icon, radius, size, space, tutorialTone } from '@/design-system';
 import { CategoryTabs, QuestRow } from './tutorial-list-rows';
-import { toneOf } from './tone';
+import { TutorialPanel } from './tutorial-panel';
 import type { ShownList, TutorialFlow } from './use-tutorial-flow';
 
 type Shown = ShownList;
 
-const CLOSE = 36;
+const CLOSE = 40;
 const BANNER_ROUND = 24;
-const DONE_ROUND = 64;
-const MAX_WIDTH = 360;
+const DONE_ROUND = 72;
 
-// The flag, "새내기 튜토리얼" and ✕.
+// "새내기 튜토리얼" and ✕.
 function Head({ onClose }: { onClose: () => void }): ReactElement {
   return (
     <View style={styles.head}>
-      <Icon color={tutorialTone.dotNow} name="flag" size={20} />
       <Text accessibilityRole="header" style={styles.headWords}>
         새내기 튜토리얼
       </Text>
@@ -65,16 +51,25 @@ function Banner({ title }: { title: string }): ReactElement {
   );
 }
 
-// "{category} k/m" in the category's colour, "✓ n / N" at the right, and a segment for each quest.
-function Progress({
-  tutorial,
-  shown,
-  tone,
-}: {
-  tutorial: Tutorial;
-  shown: Shown;
-  tone: TutorialCategoryTone;
-}): ReactElement {
+// A segment for each quest: a completed one in navy, one of the shown category darker than the rest.
+function Segments({ tutorial, category }: { tutorial: Tutorial; category: string | null }): ReactElement {
+  return (
+    <View aria-hidden style={styles.bar}>
+      {tutorial.quests.map((quest) => {
+        const fill =
+          quest.status === 'completed'
+            ? tutorialTone.done
+            : quest.category === category
+              ? tutorialTone.rowsLine
+              : color.border;
+        return <View key={quest.key} style={[styles.segment, { backgroundColor: fill }]} />;
+      })}
+    </View>
+  );
+}
+
+// "{category} k/m", "✓ n / N" at the right, and the segments.
+function Progress({ tutorial, shown }: { tutorial: Tutorial; shown: Shown }): ReactElement {
   const inCategory = tutorial.quests.filter(({ category }) => category === shown.category);
   const doneIn = inCategory.filter(({ status }) => status === 'completed').length;
   const done = tutorial.quests.filter(({ status }) => status === 'completed').length;
@@ -82,32 +77,26 @@ function Progress({
   return (
     <View style={styles.progress}>
       <View style={styles.counts}>
-        <Text style={[styles.count, { color: tone.ink }]}>{`${label} ${doneIn}/${inCategory.length}`}</Text>
+        <Text style={styles.count}>{`${label} ${doneIn}/${inCategory.length}`}</Text>
         <View style={styles.total}>
           <Icon color={tutorialTone.done} name="check" size={14} />
           <Text style={styles.totalWords}>{`${done} / ${tutorial.quests.length}`}</Text>
         </View>
       </View>
-      <View aria-hidden style={styles.bar}>
-        {tutorial.quests.map((quest) => {
-          const own = toneOf(tutorial, quest.category);
-          const fill =
-            quest.status === 'completed' ? own.ink : quest.category === shown.category ? own.soft : tutorialTone.idle;
-          return <View key={quest.key} style={[styles.segment, { backgroundColor: fill }]} />;
-        })}
-      </View>
+      <Segments category={shown.category} tutorial={tutorial} />
     </View>
   );
 }
 
 function Page({ tutorial, shown, flow }: { tutorial: Tutorial; shown: Shown; flow: TutorialFlow }): ReactElement {
-  const tone = toneOf(tutorial, shown.category);
   const banner = tutorial.quests.find(({ key }) => key === shown.banner);
   return (
     <>
-      {banner === undefined ? null : <Banner title={banner.title} />}
-      <Progress shown={shown} tone={tone} tutorial={tutorial} />
-      <CategoryTabs flow={flow} shown={shown} tutorial={tutorial} />
+      <View style={styles.top}>
+        {banner === undefined ? null : <Banner title={banner.title} />}
+        <Progress shown={shown} tutorial={tutorial} />
+        <CategoryTabs flow={flow} shown={shown} tutorial={tutorial} />
+      </View>
       <ScrollView contentContainerStyle={styles.rows} style={styles.scroll} testID="tutorial-list-scroll">
         {tutorial.quests
           .filter(({ category }) => category === shown.category)
@@ -119,7 +108,6 @@ function Page({ tutorial, shown, flow }: { tutorial: Tutorial; shown: Shown; flo
                 flow.openQuest(quest.key);
               }}
               quest={quest}
-              tone={tone}
             />
           ))}
       </ScrollView>
@@ -139,6 +127,10 @@ function Done({ tutorial, onClose }: { tutorial: Tutorial; onClose: () => void }
         <Icon color={tutorialTone.done} name="check" size={32} />
       </View>
       <Text accessibilityRole="header" style={styles.doneWords}>{`${count} / ${count}`}</Text>
+      <Text style={styles.doneLine}>새내기 튜토리얼의 퀘스트를 모두 마쳤어요</Text>
+      <View style={styles.doneBar}>
+        <Segments category={null} tutorial={tutorial} />
+      </View>
       <View style={styles.doneButton}>
         <Button full onPress={onClose} size="lg">
           닫기
@@ -148,70 +140,47 @@ function Done({ tutorial, onClose }: { tutorial: Tutorial; onClose: () => void }
   );
 }
 
-// The tutorial's list over the main screen and a scrim, in place of the pager (MainTutorialPager): the shown
-// category's quests under its tabs; a press on a quest starts it and opens its guide. Android's back button closes it.
+// The tutorial's list, a glass panel over the map above the navigation (P06 ticket 55), in place of the pager
+// (MainTutorialPager): the shown category's quests under its tabs; a press on a quest starts it and opens its guide.
+// Android's back button closes it.
 export function TutorialList({ flow }: { flow: TutorialFlow }): ReactElement | null {
   const { list, tutorial, closeList } = flow;
-  useBackToClose(list !== null, closeList);
-  if (list === null || tutorial === undefined) {
-    return null;
-  }
   return (
-    <Overlay>
-      <View style={styles.scrim}>
-        <View accessibilityLabel="새내기 튜토리얼" accessibilityViewIsModal style={styles.card}>
+    <TutorialPanel label="새내기 튜토리얼" onClose={closeList} open={list !== null && tutorial !== undefined}>
+      {list === null || tutorial === undefined ? null : (
+        <>
           <Head onClose={closeList} />
           {list.kind === 'done' ? (
             <Done onClose={closeList} tutorial={tutorial} />
           ) : (
             <Page flow={flow} shown={list} tutorial={tutorial} />
           )}
-        </View>
-      </View>
-    </Overlay>
+        </>
+      )}
+    </TutorialPanel>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space[6],
-    paddingHorizontal: space[5],
-    backgroundColor: color.scrim,
-  },
-  // Within the screen on a low phone or with a large font: the rows scroll, and the head and 그만하기 stay.
-  card: {
-    alignSelf: 'stretch',
-    flexShrink: 1,
-    maxHeight: '100%',
-    gap: 14,
-    maxWidth: MAX_WIDTH,
-    paddingTop: space[5],
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    borderRadius: radius.xl,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  headWords: { flex: 1, fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: color.ink },
-  close: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: CLOSE,
-    height: CLOSE,
-    marginRight: -6,
-    borderRadius: radius.full,
-  },
-  banner: {
+  head: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
+    paddingTop: 10,
+    paddingRight: space[2],
+    paddingLeft: space[4],
+  },
+  // A sheet's title, as the design system's bottom sheets have it.
+  headWords: { flex: 1, fontFamily: font.bold, fontSize: 21, lineHeight: 29, letterSpacing: -0.3, color: color.ink },
+  close: { alignItems: 'center', justifyContent: 'center', width: CLOSE, height: CLOSE, borderRadius: radius.md },
+  top: { gap: space[3], paddingTop: space[1], paddingHorizontal: space[4] },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     paddingVertical: 10,
     paddingHorizontal: space[3],
-    borderRadius: 14,
+    borderRadius: radius.lg,
     backgroundColor: tutorialTone.doneSoft,
   },
   bannerRound: {
@@ -224,17 +193,23 @@ const styles = StyleSheet.create({
   },
   bannerWords: { flex: 1, fontFamily: font.bold, fontSize: 14, lineHeight: 20, color: tutorialTone.doneWords },
   progress: { gap: space[2] },
-  counts: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  count: { fontFamily: font.bold, fontSize: 13, lineHeight: 18 },
+  counts: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between' },
+  count: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.inkMuted },
   total: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
-  totalWords: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  bar: { flexDirection: 'row', gap: 3, height: space[2] },
+  totalWords: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: tutorialTone.done },
+  bar: { flexDirection: 'row', gap: 3, height: 6 },
   segment: { flex: 1, borderRadius: radius.full },
-  rows: { gap: 6 },
+  rows: { gap: space[2], paddingHorizontal: space[4] },
   scroll: { flexShrink: 1 },
-  stop: { alignSelf: 'center', justifyContent: 'center', height: CLOSE, paddingHorizontal: space[3] },
-  stopWords: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.inkFaint },
-  done: { alignItems: 'center', gap: space[2], paddingTop: space[3], paddingBottom: space[1] },
+  stop: {
+    alignSelf: 'center',
+    justifyContent: 'center',
+    minHeight: CLOSE,
+    marginVertical: space[1],
+    paddingHorizontal: space[3],
+  },
+  stopWords: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.inkMuted },
+  done: { alignItems: 'center', paddingTop: space[2], paddingHorizontal: space[5], paddingBottom: space[5] },
   doneRound: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -243,6 +218,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: tutorialTone.doneSoft,
   },
-  doneWords: { marginTop: space[1], fontFamily: font.bold, fontSize: 22, lineHeight: 30, color: color.ink },
-  doneButton: { alignSelf: 'stretch', marginTop: space[2] },
+  doneWords: { marginTop: 14, fontFamily: font.bold, fontSize: 22, lineHeight: 30, color: color.ink },
+  doneLine: {
+    marginTop: space[1],
+    fontFamily: font.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: color.inkMuted,
+    textAlign: 'center',
+  },
+  doneBar: { alignSelf: 'stretch', marginTop: 18 },
+  doneButton: { alignSelf: 'stretch', marginTop: 22 },
 });

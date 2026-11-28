@@ -3,6 +3,7 @@
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { TutorialContent } from './tutorial';
@@ -120,76 +121,5 @@ export const FIRST_QUESTS: readonly TutorialContent[] = [
     completionMessage: '관정도서관 이용은 어떠셨나요? 도서관을 자주 이용해 보아요!',
     places: [{ place: '62-1' }],
     links: [],
-  },
-  {
-    key: 'su-grading-option',
-    order: 6,
-    category: 'study',
-    title: '성적평가방법 선택제(S/U) 신청하기',
-    brief: '다른 학과 전공 과목도 학점 걱정을 덜고 들을 수 있어요.',
-    body: [
-      '다른 학과(부)의 전공 교과목 중 지정된 과목은 학생이 직접 성적평가방법을 바꿔 신청할 수 있어요.',
-      '· 수업일수 1/4이 되는 날까지 mySNU에서 직접 신청해요. 2026학년도 1학기는 3월 26일(목)까지였어요.',
-      '· 대상 과목은 학교가 정한 목록에 있는 과목뿐이에요. 학기마다 공지를 확인해 보세요.',
-    ],
-    condition: '성적평가방법 선택제 신청 기간과 대상 과목 확인하기',
-    completion: { kind: 'button' },
-    completionMessage: '관심 있던 다른 학과 과목에도 부담 없이 도전해 보세요!',
-    places: [],
-    links: [
-      { label: 'MySNU', url: 'https://my.snu.ac.kr' },
-      {
-        label: '2026-1 수강신청 변경 및 취소 안내 (컴퓨터공학부 공지)',
-        url: 'https://cse.snu.ac.kr/community/notice/24751',
-      },
-    ],
-  },
-  {
-    key: 'chatgpt-edu',
-    order: 7,
-    category: 'study',
-    title: 'ChatGPT Edu 무료로 쓰기',
-    brief: '재학생이면 따로 신청하지 않아도 ChatGPT Edu를 쓸 수 있어요.',
-    body: [
-      '서울대는 재학 중인 학생에게 ChatGPT Edu를 제공해요. 관리자가 한꺼번에 등록하므로 따로 신청하지 않아도 돼요.',
-      '· chatgpt.com에 접속해 마이스누 포털 아이디와 비밀번호로 로그인해요.',
-      '· 휴학생은 쓸 수 없고, 3개월 넘게 접속하지 않으면 아이디가 회수돼요. 필요하면 다시 요청할 수 있어요.',
-      '· 학교의 AI 활용 지침을 지켜서 써 주세요.',
-    ],
-    condition: 'ChatGPT Edu에 로그인해 보기',
-    completion: { kind: 'button' },
-    completionMessage: '공부할 때 든든한 도우미가 하나 더 생겼어요!',
-    places: [],
-    links: [
-      { label: 'ChatGPT', url: 'https://chatgpt.com' },
-      {
-        label: '생성형 AI(ChatGPT Edu) 서비스 이용 안내 (컴퓨터공학부 공지)',
-        url: 'https://cse.snu.ac.kr/community/notice/25201',
-      },
-    ],
-  },
-  {
-    key: 'ms365-campus-software',
-    order: 8,
-    category: 'study',
-    title: '캠퍼스 라이선스 소프트웨어 받기',
-    brief: '한글, MS Office, SPSS, MATLAB 같은 소프트웨어를 학교 라이선스로 받을 수 있어요.',
-    body: [
-      '서울대 구성원은 교육·연구에 쓰는 소프트웨어를 학교 라이선스로 무료로 쓸 수 있어요. Windows, 한글, MS Office, V3, 알툴즈, SPSS·SAS·Stata, MATLAB, ChemDraw 등이 있어요.',
-      '· 받는 곳: 학내에서 마이스누에 로그인한 뒤 캠퍼스·복지 → IT서비스 → 장비/SW대여 → 캠퍼스라이선스SW다운로드',
-      '· 순수 교육과 연구 목적으로만 쓸 수 있어요.',
-      '· Microsoft 365는 mso365.snu.ac.kr에서 SNU 아이디로 써요. 졸업하면 쓸 수 없어요.',
-    ],
-    condition: '캠퍼스 라이선스 소프트웨어 받는 곳 확인하기',
-    completion: { kind: 'button' },
-    completionMessage: '이제 필요한 프로그램을 사지 않고 학교 라이선스로 써 보세요!',
-    places: [],
-    links: [
-      {
-        label: '정보화본부 캠퍼스 라이선스 소프트웨어',
-        url: 'https://ist.snu.ac.kr/%ec%ba%a0%ed%8d%bc%ec%8a%a4-%eb%9d%bc%ec%9d%b4%ec%84%a0%ec%8a%a4-%ec%86%8c%ed%94%84%ed%8a%b8%ec%9b%a8%ec%96%b4/',
-      },
-      { label: 'Microsoft 365', url: 'https://mso365.snu.ac.kr/' },
-    ],
   },
 ];

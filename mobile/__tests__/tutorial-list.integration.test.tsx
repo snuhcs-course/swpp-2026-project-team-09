@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -69,9 +70,9 @@ describe('the start button', () => {
 
     expect(list().getByRole('header', { name: '새내기 튜토리얼' })).toBeVisible();
     expect(list().getByText('생활 0/4')).toBeVisible();
-    expect(list().getByText('0 / 15')).toBeVisible();
-    expect(CATEGORIES.map((label) => list().getByRole('tab', { name: label }))).toHaveLength(5);
-    expect(list().getByRole('tab', { name: '생활' })).toBeSelected();
+    expect(list().getByText('0 / 12')).toBeVisible();
+    expect(CATEGORIES.map((label) => list().getByRole('button', { name: label }))).toHaveLength(5);
+    expect(list().getByRole('button', { name: '생활' })).toBeSelected();
     expect(LIFE.map((title) => list().getByRole('button', { name: title }))).toHaveLength(4);
     expect(list().getByRole('button', { name: '튜토리얼 그만하기' })).toBeVisible();
     expect(list().queryByText('퀘스트 시작')).toBeNull();
@@ -128,13 +129,13 @@ describe("the list's categories", () => {
     const user = await openAsFreshman();
 
     await pressAndWait(user, START);
-    expect(list().getByRole('tab', { name: '공부·학사' })).toBeSelected();
-    expect(list().getByText('공부·학사 0/4')).toBeVisible();
-    expect(list().getByText('4 / 15')).toBeVisible();
+    expect(list().getByRole('button', { name: '공부·학사' })).toBeSelected();
+    expect(list().getByText('공부·학사 0/1')).toBeVisible();
+    expect(list().getByText('4 / 12')).toBeVisible();
     expect(list().getByRole('button', { name: rowName('kwanjeong', ' · 진행 중') })).toBeVisible();
     expect(list().getByText('진행 중')).toBeVisible();
 
-    await user.press(list().getByRole('tab', { name: '생활' }));
+    await user.press(list().getByRole('button', { name: '생활' }));
 
     expect(list().getByText('생활 4/4')).toBeVisible();
     expect(list().getByRole('button', { name: rowName('s-card', ' · 완료') })).toBeVisible();
@@ -194,7 +195,7 @@ describe('completing a quest from its guide', () => {
 
     await pressAndWait(user, '완료');
 
-    expect(list().getByRole('header', { name: '15 / 15' })).toBeVisible();
+    expect(list().getByRole('header', { name: '12 / 12' })).toBeVisible();
     await user.press(list().getAllByRole('button', { name: '닫기' }).at(-1) ?? button('닫기'));
     expect(findButton(START)).toBeNull();
   });

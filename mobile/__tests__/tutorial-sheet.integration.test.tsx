@@ -6,6 +6,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { openBrowserAsync } from 'expo-web-browser';
@@ -57,11 +58,12 @@ afterEach(() => {
 });
 
 describe("a quest's sheet", () => {
-  it('shows the dots, 🌐, the title, the paragraphs, the places and the links, and no 완료 조건', async () => {
+  it('shows the dots, the title, the paragraphs, the places and the links in one box, and no 완료 조건', async () => {
     await openSheet('s-card');
 
-    expect(within(screen.getByLabelText(SHEET)).getByText('새내기 튜토리얼 · 생활 · 1/15')).toBeVisible();
-    expect(button('외부 사이트 링크')).toBeVisible();
+    expect(within(screen.getByLabelText(SHEET)).getByText('새내기 튜토리얼 · 생활 · 1/12')).toBeVisible();
+    // Each link once, in the box: no 🌐 in the head (P06 ticket 55).
+    expect(findButton('외부 사이트 링크')).toBeNull();
     expect(screen.getByRole('header', { name: '학생증(S-CARD) 발급받기' })).toBeVisible();
     expect(screen.getByText('학생증(S-CARD)은 도서관 출입처럼 학교생활 곳곳에서 써요.')).toBeVisible();
     expect(screen.getByText('· 신청: MySNU에서 온라인으로 신청해요.')).toBeVisible();
@@ -75,14 +77,13 @@ describe("a quest's sheet", () => {
     expect(findButton('어시스턴트에게 예약 부탁하기')).toBeNull();
   });
 
-  it('opens a link in the browser, from the list and from 🌐', async () => {
+  it('opens a link in the browser from its row', async () => {
     const user = await openSheet('s-card');
 
     await user.press(button('MySNU 열기'));
     expect(openBrowserAsync).toHaveBeenCalledWith('https://my.snu.ac.kr');
 
-    await user.press(button('외부 사이트 링크'));
-    await user.press(screen.getByRole('link', { name: '학생처 S-CARD 발급 절차 열기 (외부 사이트)' }));
+    await user.press(button('학생처 S-CARD 발급 절차 열기'));
     expect(openBrowserAsync).toHaveBeenLastCalledWith(expect.stringContaining('student.snu.ac.kr'));
   });
 });
@@ -144,8 +145,8 @@ describe('completing a button quest', () => {
     await user.press(button('완료'));
     await pressAndWait(user, '퀘스트 완료');
 
-    expect(screen.getByRole('header', { name: '15 / 15' })).toBeVisible();
-    // The head's ✕ and the 닫기 under "15 / 15" close the list alike.
+    expect(screen.getByRole('header', { name: '12 / 12' })).toBeVisible();
+    // The head's ✕ and the 닫기 under "12 / 12" close the list alike.
     await user.press(screen.getAllByRole('button', { name: '닫기' }).at(-1) ?? button('닫기'));
     expect(findButton(START)).toBeNull();
     expect((await answered(apiClient.getTutorial())).state).toBe('finished');
@@ -171,8 +172,9 @@ describe('the 관정 quest, served as a button quest', () => {
     expect(screen.getByText('관정도서관 이용은 어떠셨나요? 도서관을 자주 이용해 보아요!')).toBeVisible();
     await pressAndWait(user, '퀘스트 완료');
     expect((await answered(apiClient.getTutorial())).quests[4]?.status).toBe('completed');
-    expect(screen.getAllByText('관정도서관 예약하기')).toHaveLength(2);
-    expect(button(rowName('su-grading-option'))).toBeVisible();
+    // The banner alone: the next quest, 행정관 셔틀, is in 이동, and the list is on it.
+    expect(screen.getAllByText('관정도서관 예약하기')).toHaveLength(1);
+    expect(button(rowName('admin-shuttle'))).toBeVisible();
   });
 });
 

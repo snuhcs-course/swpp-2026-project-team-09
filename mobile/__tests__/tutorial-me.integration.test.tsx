@@ -5,6 +5,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -122,7 +123,7 @@ describe('while the tutorial is active', () => {
     await answered(apiClient.completeTutorialQuest('admin-shuttle', 'button'));
     await openMe();
 
-    expect(screen.getByText('진행 중 · 완료 1/15 · 지도 화면 아래 버튼으로 이어서 해요')).toBeVisible();
+    expect(screen.getByText('진행 중 · 완료 1/12 · 지도 화면 아래 버튼으로 이어서 해요')).toBeVisible();
     expect(button('그만하기')).toBeVisible();
   });
 
@@ -139,7 +140,7 @@ describe('while the tutorial is active', () => {
 
     await user.press(screen.getByRole('tab', { name: '내 정보' }));
     await pressAndWait(user, '진행하기');
-    expect(screen.getByText('진행 중 · 완료 0/15 · 지도 화면 아래 버튼으로 이어서 해요')).toBeVisible();
+    expect(screen.getByText('진행 중 · 완료 0/12 · 지도 화면 아래 버튼으로 이어서 해요')).toBeVisible();
     await user.press(screen.getByRole('tab', { name: '지도' }));
     await pass(500);
     expect(button(START)).toBeVisible();

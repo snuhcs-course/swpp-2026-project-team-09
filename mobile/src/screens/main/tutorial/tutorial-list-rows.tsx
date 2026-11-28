@@ -2,21 +2,33 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
-import { color, font, Icon, iconOrFlag, radius, space, type TutorialCategoryTone, tutorialTone } from '@/design-system';
-import { toneOf } from './tone';
+import {
+  Badge,
+  ChipRow,
+  color,
+  font,
+  Glass,
+  Icon,
+  iconOrFlag,
+  radius,
+  space,
+  tutorialCategoryTone as tone,
+  tutorialTone,
+} from '@/design-system';
 import type { ShownList as Shown, TutorialFlow } from './use-tutorial-flow';
 
-// The tabs and the rows of the tutorial's list (MainTutorialPager).
+// The tabs and the rows of the tutorial's list (P06 ticket 55): the 행사 tab's word tabs, and a card for each quest.
 
-const TILE = 52;
-const BADGE = 18;
+const TILE = 44;
 
-// The Tutorial Categories' tabs, each with its colour's dot; the shown one filled with its soft colour.
+// The Tutorial Categories' tabs, words as the 행사 tab's filters: the shown one bold in navy on light blue. They scroll
+// sideways when they do not fit, so that none is squeezed.
 export function CategoryTabs({
   tutorial,
   shown,
@@ -27,121 +39,103 @@ export function CategoryTabs({
   flow: TutorialFlow;
 }): ReactElement {
   return (
-    <View accessibilityRole="tablist" style={styles.tabs}>
-      {tutorial.categories.map(({ key, label }) => {
-        const on = key === shown.category;
-        const tone = toneOf(tutorial, key);
-        return (
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
-            key={key}
-            onPress={() => {
-              flow.showCategory(key);
-            }}
-            style={[styles.tab, on ? { backgroundColor: tone.soft } : styles.tabOff]}
-          >
-            <View style={[styles.tabDot, { backgroundColor: tone.ink }]} />
-            <Text style={[styles.tabWords, { color: on ? tone.ink : color.inkMuted }]}>{label}</Text>
-          </Pressable>
-        );
-      })}
+    <View style={styles.tabs}>
+      <ChipRow
+        chips={tutorial.categories.map(({ key, label }) => ({ key, label }))}
+        onSelect={flow.showCategory}
+        selected={shown.category}
+      />
     </View>
   );
 }
 
 interface RowProps {
   quest: TutorialQuest;
-  tone: TutorialCategoryTone;
   next: boolean;
   onPress: () => void;
 }
 
-// A quest: its icon on its category's tile, its title with ✓ once completed, "진행 중" or "다음", and the chevron.
-export function QuestRow({ quest, tone, next, onPress }: RowProps): ReactElement {
+// The tag after a quest's title: 다음, 완료 in the 행사 tab's "내 파티" colours, or 진행 중.
+function Tag({ quest, next }: Pick<RowProps, 'quest' | 'next'>): ReactElement | null {
+  if (next) {
+    return (
+      <Badge icon={false} tone="official">
+        다음
+      </Badge>
+    );
+  }
+  if (quest.status === 'completed') {
+    return (
+      <Badge icon={false} tone="friend">
+        완료
+      </Badge>
+    );
+  }
+  return quest.status === 'started' ? <Badge>진행 중</Badge> : null;
+}
+
+// The card's ground: the panel's inner glass, or the light blue of the next quest, outlined.
+function Ground({ next, children }: { next: boolean; children: ReactNode }): ReactElement {
+  return next ? (
+    <View style={[styles.row, styles.rowNext]}>{children}</View>
+  ) : (
+    <Glass level="inner" style={styles.row}>
+      {children}
+    </Glass>
+  );
+}
+
+// A quest's card: its icon on the light blue tile, its title with its tag, its brief, and the chevron.
+export function QuestRow({ quest, next, onPress }: RowProps): ReactElement {
   const done = quest.status === 'completed';
   const started = quest.status === 'started';
-  const tag = next ? '다음' : started ? '진행 중' : null;
   return (
     <Pressable
       accessibilityLabel={`${quest.title}${done ? ' · 완료' : started ? ' · 진행 중' : ''}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={[
-        styles.row,
-        next
-          ? { borderWidth: 2, borderColor: tone.ink, backgroundColor: tone.soft }
-          : started && { borderColor: `${tone.ink}55` },
-      ]}
     >
-      <View style={[styles.tile, { backgroundColor: tone.soft }, done && styles.faded]}>
-        <Icon color={tone.ink} name={iconOrFlag(quest.icon)} size={24} />
-      </View>
-      <View style={styles.rowWords}>
-        <Text style={styles.rowTitle}>{quest.title}</Text>
-        {done ? (
-          <View style={styles.badge}>
-            <Icon color={color.onPrimary} name="check" size={12} />
+      <Ground next={next}>
+        <View style={[styles.tile, done && styles.faded]}>
+          <Icon color={tone.ink} name={iconOrFlag(quest.icon)} size={22} />
+        </View>
+        <View style={styles.rowWords}>
+          <View style={styles.titleLine}>
+            <Text style={styles.rowTitle}>{quest.title}</Text>
+            <Tag next={next} quest={quest} />
           </View>
-        ) : null}
-      </View>
-      {tag === null ? null : (
-        <Text style={[styles.tag, next ? styles.tagNext : { backgroundColor: tone.soft, color: tone.ink }]}>{tag}</Text>
-      )}
-      <Icon color={tutorialTone.faint} name="chevronRight" size={20} />
+          <Text style={styles.brief}>{quest.brief}</Text>
+        </View>
+        <Icon color={tutorialTone.faint} name="chevronRight" size={20} />
+      </Ground>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: radius.full,
-  },
-  tabOff: { borderWidth: 1, borderColor: color.border, backgroundColor: color.surface },
-  tabDot: { width: space[2], height: space[2], borderRadius: radius.full },
-  tabWords: { fontFamily: font.bold, fontSize: 14, lineHeight: 20 },
+  // The tabs span the panel, with their own room at the sides.
+  tabs: { marginHorizontal: -space[4] },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
-    padding: 10,
+    padding: space[3],
     borderWidth: 1,
-    borderColor: tutorialTone.idle,
-    borderRadius: 18,
-    backgroundColor: color.surface,
+    borderColor: color.border,
+    borderRadius: radius.lg,
   },
+  rowNext: { borderWidth: 2, borderColor: tone.ink, backgroundColor: tone.soft },
   tile: {
     alignItems: 'center',
     justifyContent: 'center',
     width: TILE,
     height: TILE,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
+    backgroundColor: tone.soft,
   },
   faded: { opacity: 0.55 },
-  rowWords: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  rowTitle: { flexShrink: 1, fontFamily: font.bold, fontSize: 16, lineHeight: 22, color: color.ink },
-  badge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: BADGE,
-    height: BADGE,
-    borderRadius: radius.full,
-    backgroundColor: tutorialTone.done,
-  },
-  tag: {
-    overflow: 'hidden',
-    height: 22,
-    paddingHorizontal: space[2],
-    borderRadius: radius.full,
-    fontFamily: font.bold,
-    fontSize: 11,
-    lineHeight: 22,
-  },
-  tagNext: { backgroundColor: color.snuBlue, color: color.onPrimary },
+  rowWords: { flex: 1, gap: 2 },
+  titleLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: space[1] },
+  rowTitle: { flexShrink: 1, fontFamily: font.bold, fontSize: 15, lineHeight: 20, color: color.ink },
+  brief: { fontFamily: font.medium, fontSize: 12, lineHeight: 17, color: color.inkMuted },
 });

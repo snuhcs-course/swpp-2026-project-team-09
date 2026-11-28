@@ -2,18 +2,30 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LatLng } from '@/api/types';
-import { color, font, Icon, iconOrFlag, type IconName, radius, shadow, size, space } from '@/design-system';
+import {
+  color,
+  font,
+  Glass,
+  Icon,
+  iconOrFlag,
+  type IconName,
+  radius,
+  size,
+  space,
+  tutorialCategoryTone,
+} from '@/design-system';
 import { kindOf, stepAt } from '@/features/tutorial/guide';
+import { kickerOf } from '@/features/tutorial/rules';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { GuideBubble } from './guide-bubble';
 import { GuidePanel, type GuideShown } from './guide-panel';
 import { useGuidePositions } from './guide-places';
-import { toneOf } from './tone';
 import type { TutorialFlow } from './use-tutorial-flow';
 import { WebLinks } from './web-links';
 
@@ -48,18 +60,20 @@ function BarButton({ label, icon, onPress }: { label: string; icon: IconName; on
   );
 }
 
-// ← to the list, the quest's icon and title, the chosen kind's chip, 🌐 and ✕.
-function Bar({ flow, quest, guide, view, tone }: Shown): ReactElement {
+// ← to the list, the quest's icon, "새내기 튜토리얼 · {category} · n/N" over its title, which takes a second line when
+// it needs one, the chosen kind's chip, 🌐 and ✕.
+function Bar({ flow, quest, guide, view, tone, kicker }: Shown & { kicker: string }): ReactElement {
   const kind = kindOf(guide, view.kind);
   return (
-    <View style={styles.bar}>
+    <Glass level="panel" style={styles.bar}>
       <BarButton icon="chevronLeft" label="튜토리얼 목록으로" onPress={flow.backToList} />
       <View style={[styles.tile, { backgroundColor: tone.soft }]}>
         <Icon color={tone.ink} name={iconOrFlag(quest.icon)} size={20} />
       </View>
-      <Text numberOfLines={1} style={styles.barTitle}>
-        {quest.title}
-      </Text>
+      <View style={styles.barWords}>
+        <Text style={styles.barKicker}>{kicker}</Text>
+        <Text style={styles.barTitle}>{quest.title}</Text>
+      </View>
       {kind === null ? null : (
         <Pressable
           accessibilityLabel={`${kind.label} · 종류 다시 고르기`}
@@ -75,7 +89,7 @@ function Bar({ flow, quest, guide, view, tone }: Shown): ReactElement {
       )}
       <WebLinks links={quest.links} />
       <BarButton icon="x" label="닫기" onPress={flow.closeGuide} />
-    </View>
+    </Glass>
   );
 }
 
@@ -92,13 +106,13 @@ export function TutorialGuideOverlay({
   if (view === null || quest === undefined || guide === undefined || tutorial === undefined) {
     return null;
   }
-  const shown: Shown = { flow, quest, guide, view, tone: toneOf(tutorial, quest.category) };
+  const shown: Shown = { flow, quest, guide, view, tone: tutorialCategoryTone };
   const step = stepAt(guide, view)?.step;
   const spot = step?.spots?.[view.spot];
   const place = spot === undefined ? step?.place : spot.place;
   return (
     <View style={styles.overlay}>
-      <Bar {...shown} />
+      <Bar {...shown} kicker={kickerOf(tutorial, quest)} />
       <GuideBubble
         guide={guide}
         onAsk={(words) => {
@@ -137,11 +151,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
-    height: BAR,
-    paddingHorizontal: 6,
-    borderRadius: 18,
-    backgroundColor: color.surface,
-    boxShadow: shadow.mapCard,
+    minHeight: BAR,
+    padding: 6,
+    borderRadius: 20,
   },
   barButton: {
     alignItems: 'center',
@@ -151,7 +163,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   tile: { alignItems: 'center', justifyContent: 'center', width: TILE, height: TILE, borderRadius: 10 },
-  barTitle: { flex: 1, fontFamily: font.bold, fontSize: 16, lineHeight: 22, color: color.ink },
+  barWords: { flex: 1 },
+  barKicker: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.1, color: color.inkMuted },
+  barTitle: { fontFamily: font.bold, fontSize: 16, lineHeight: 21, color: color.ink },
   kindChip: {
     flexDirection: 'row',
     alignItems: 'center',

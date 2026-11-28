@@ -11,7 +11,7 @@ The AI assistant, "SNU Now AI", answers on the map. Asked "배고파" or "민수
 is open, the time everyone is free, and each person's way there. One press sends the invitations, and each invited
 Friend gets a push notification with their own way and the time to leave. It also finds events, parties and study
 spaces, books 관정도서관 seats and rooms, and watches for new events a User cares about
-([Features](#features-at-the-end-of-iteration-4)). New students get a 새내기 튜토리얼 of fifteen tutorial quests,
+([Features](#features-at-the-end-of-iteration-4)). New students get a 새내기 튜토리얼 of twelve tutorial quests,
 shown as guides on the map. A screenshot of a timetable becomes classes, read by the AI when the User agrees. The
 app's screens are in Korean.
 

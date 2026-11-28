@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type Lookup, type PlacePoint } from '../src/assistant/dto/answer.dto.js';
@@ -26,6 +27,9 @@ export const plain = (text: string): { text: string; strong: boolean } => ({ tex
 
 // Board q10's three quests left: the 보건진료소, the 학생증, and the 분실물센터.
 export const BOARD_Q10 = ['health-clinic', 's-card', 'lost-and-found'];
+
+// A quest done online, at no place, which tutorialAt adds when its key is asked for.
+export const ONLINE = { key: 'online-quest', title: '온라인으로 하는 퀘스트' };
 
 export const CLINIC = '서울대 보건진료소 이용';
 export const LOST = '분실물센터 위치 알아두기';
@@ -67,9 +71,12 @@ export function tutorialAt(
     location: null,
     fromPlaceId: null,
     gatePlaceId: id('서울대 정문'),
-    quests: content.quests
-      .filter(({ key }) => keys.includes(key))
-      .map(({ key, title, places, visit }) => ({ key, title, places, visit: visit ?? null })),
+    quests: [
+      ...content.quests
+        .filter(({ key }) => keys.includes(key))
+        .map(({ key, title, places, visit }) => ({ key, title, places, visit: visit ?? null })),
+      ...(keys.includes(ONLINE.key) ? [{ ...ONLINE, places: [], visit: null }] : []),
+    ],
     placeIdOf: (place) => {
       if (!('place' in place)) {
         throw new Error('No quest of a point is open here');

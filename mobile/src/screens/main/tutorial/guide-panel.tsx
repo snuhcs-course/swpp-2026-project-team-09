@@ -3,12 +3,13 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TutorialGuide, TutorialQuest } from '@/api/tutorial-types';
-import { color, font, Icon, radius, shadow, space, type TutorialCategoryTone, tutorialTone } from '@/design-system';
+import { color, font, Glass, Icon, radius, space, type TutorialCategoryTone, tutorialTone } from '@/design-system';
 import { hasPrevious, mainButtonOf, stepAt, stepsOf } from '@/features/tutorial/guide';
 import type { GuideView } from './use-guide-flow';
 import type { TutorialFlow } from './use-tutorial-flow';
@@ -28,7 +29,8 @@ export interface GuideShown {
   tone: TutorialCategoryTone;
 }
 
-// The steps' tabs: the shown one filled, a passed one with ✓; no numbers in a guide of places side by side.
+// The steps' tabs: the shown one on light blue, a passed one with ✓; no numbers in a guide of places side by side. A
+// tab's name takes a second line rather than being cut.
 function Tabs({ flow, guide, view, tone, beside }: GuideShown & { beside: boolean }): ReactElement {
   const together = guide.together === true;
   const now = stepAt(guide, view)?.index ?? 0;
@@ -46,14 +48,14 @@ function Tabs({ flow, guide, view, tone, beside }: GuideShown & { beside: boolea
             onPress={() => {
               flow.goToStep(at);
             }}
-            style={[styles.tab, on ? { backgroundColor: tone.ink } : styles.tabOff]}
+            style={[styles.tab, on ? { backgroundColor: color.blue100 } : styles.tabOff]}
           >
             {together ? null : (
               <Text
                 style={[
                   styles.tabNumber,
                   on
-                    ? { backgroundColor: color.surface, color: tone.ink }
+                    ? { backgroundColor: tone.ink, color: color.onPrimary }
                     : past
                       ? styles.numberPast
                       : styles.numberOff,
@@ -63,8 +65,10 @@ function Tabs({ flow, guide, view, tone, beside }: GuideShown & { beside: boolea
               </Text>
             )}
             <Text
-              numberOfLines={1}
-              style={[styles.tabWords, { color: on ? color.onPrimary : past ? color.ink : color.inkFaint }]}
+              style={[
+                styles.tabWords,
+                on ? [styles.tabWordsOn, { color: tone.ink }] : { color: past ? color.ink : color.inkMuted },
+              ]}
             >
               {step.tab}
             </Text>
@@ -76,7 +80,7 @@ function Tabs({ flow, guide, view, tone, beside }: GuideShown & { beside: boolea
 }
 
 const MAIN_LOOK = {
-  choose: { label: '종류를 골라 주세요', icon: null, ground: tutorialTone.idle, ink: color.inkFaint },
+  choose: { label: '종류를 골라 주세요', icon: null, ground: color.surfaceSunken, ink: color.inkMuted },
   next: { label: '다음', icon: 'arrowRight', ground: color.snuBlue, ink: color.onPrimary },
   done: { label: '완료', icon: 'check', ground: tutorialTone.done, ink: color.onPrimary },
 } as const;
@@ -91,7 +95,7 @@ export function GuidePanel(shown: GuideShown): ReactElement {
   const inRow = guide.together === true && steps <= 3;
   const now = stepAt(guide, view)?.index ?? 0;
   return (
-    <View style={[styles.panel, inRow && styles.panelRow]}>
+    <Glass level="panel" style={[styles.panel, inRow && styles.panelRow]}>
       {tabs ? <Tabs {...shown} beside={inRow} /> : null}
       <View style={[styles.mainRow, inRow && (tabs ? styles.mainBeside : styles.mainAlone)]}>
         {hasPrevious(guide, view) ? (
@@ -127,20 +131,14 @@ export function GuidePanel(shown: GuideShown): ReactElement {
           <Text style={[styles.mainWords, { color: look.ink }]}>{look.label}</Text>
         </Pressable>
       </View>
-    </View>
+    </Glass>
   );
 }
 
 // The guide of the quest `flow.guide` names, over the map. Android's back button closes it.
 
 const styles = StyleSheet.create({
-  panel: {
-    gap: 10,
-    padding: space[3],
-    borderRadius: 20,
-    backgroundColor: color.surface,
-    boxShadow: shadow.mapCard,
-  },
+  panel: { gap: space[3], padding: 14, borderRadius: radius.xl },
   panelRow: { flexDirection: 'row' },
   tabs: { flexDirection: 'row', gap: 6 },
   // Only beside the main button: in the stacked panel, `flex: 1` left the row no height and the tabs fell under it.
@@ -151,11 +149,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    height: TAB,
+    minHeight: TAB,
+    paddingVertical: space[1],
     paddingHorizontal: space[1],
     borderRadius: radius.md,
   },
-  tabOff: { borderWidth: 1, borderColor: color.border, backgroundColor: color.surface },
+  tabOff: { borderWidth: 1, borderColor: color.border },
   tabNumber: {
     overflow: 'hidden',
     width: NUMBER,
@@ -168,7 +167,8 @@ const styles = StyleSheet.create({
   },
   numberPast: { backgroundColor: tutorialTone.done, color: color.onPrimary },
   numberOff: { backgroundColor: color.border, color: color.inkMuted },
-  tabWords: { flexShrink: 1, fontFamily: font.bold, fontSize: 13, lineHeight: 18 },
+  tabWords: { flexShrink: 1, fontFamily: font.medium, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  tabWordsOn: { fontFamily: font.bold },
   mainRow: { flexDirection: 'row', gap: space[2] },
   mainBeside: { flexBasis: 120, flexGrow: 0 },
   mainAlone: { flex: 1 },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     height: MAIN,
     borderWidth: 1,
     borderColor: color.border,
-    borderRadius: 14,
+    borderRadius: radius.md,
     backgroundColor: color.surface,
   },
   main: {
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space[2],
     height: MAIN,
-    borderRadius: 14,
+    borderRadius: radius.md,
   },
   mainWords: { fontFamily: font.bold, fontSize: 16, lineHeight: 22 },
 });

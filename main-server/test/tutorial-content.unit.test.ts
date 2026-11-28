@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -38,7 +39,7 @@ beforeAll(async () => {
 });
 
 describe("The tutorial's content", () => {
-  it("holds the P13 spec's fifteen quests in order, each in its category", () => {
+  it("holds the P13 spec's quests in order, each in its category, less the three P06 ticket 55 removed", () => {
     expect(
       content.quests.map(({ order, category, key, title, completion }) => [
         order,
@@ -53,16 +54,13 @@ describe("The tutorial's content", () => {
       [3, 'life', 'lost-and-found', '분실물센터 위치 알아두기', 'button'],
       [4, 'life', 'laptop-rental', '노트북 대여 서비스 알아두기', 'button'],
       [5, 'study', 'kwanjeong', '관정도서관 예약하기', 'kwanjeongCheck'],
-      [6, 'study', 'su-grading-option', '성적평가방법 선택제(S/U) 신청하기', 'button'],
-      [7, 'study', 'chatgpt-edu', 'ChatGPT Edu 무료로 쓰기', 'button'],
-      [8, 'study', 'ms365-campus-software', '캠퍼스 라이선스 소프트웨어 받기', 'button'],
-      [9, 'transit', 'admin-shuttle', '행정관 셔틀 이용하기', 'button'],
-      [10, 'transit', 'night-shuttle', '야간 셔틀 타기', 'button'],
-      [11, 'health', 'health-clinic', '서울대 보건진료소 이용', 'button'],
-      [12, 'health', 'counseling-center', '대학생활문화원 상담 알아두기', 'button'],
-      [13, 'culture', 'art-museum', '서울대 미술관/파워플랜트 관람', 'button'],
-      [14, 'culture', 'dure-practice-room', '두레문예관 연습실 예약하기', 'button'],
-      [15, 'culture', 'gwanaksan-engineering-trail', '공학관 코스로 관악산 오르기', 'button'],
+      [6, 'transit', 'admin-shuttle', '행정관 셔틀 이용하기', 'button'],
+      [7, 'transit', 'night-shuttle', '야간 셔틀 타기', 'button'],
+      [8, 'health', 'health-clinic', '서울대 보건진료소 이용', 'button'],
+      [9, 'health', 'counseling-center', '대학생활문화원 상담 알아두기', 'button'],
+      [10, 'culture', 'art-museum', '서울대 미술관/파워플랜트 관람', 'button'],
+      [11, 'culture', 'dure-practice-room', '두레문예관 연습실 예약하기', 'button'],
+      [12, 'culture', 'gwanaksan-engineering-trail', '공학관 코스로 관악산 오르기', 'button'],
     ]);
   });
 
@@ -86,16 +84,8 @@ describe('The Tutorial Categories', () => {
 });
 
 describe("The new quests' facts", () => {
-  it('leaves out of the campus software quest whether a personal laptop may hold it', () => {
-    const quest = content.quests.find(({ key }) => key === 'ms365-campus-software');
-    const words = JSON.stringify([quest?.body, quest?.facts]);
-
-    expect(words).not.toContain('노트북');
-    expect(words).not.toContain('개인 PC');
-  });
-
   it('gives every new quest its facts, each with a source and the day it was checked', () => {
-    const added = content.quests.filter(({ order }) => ![1, 5, 9, 11, 13].includes(order));
+    const added = content.quests.filter(({ order }) => ![1, 5, 6, 8, 10].includes(order));
 
     expect(added.filter(({ facts }) => facts.length === 0)).toEqual([]);
     expect(added.flatMap(({ facts }) => facts.map(({ checked }) => checked))).toEqual(
@@ -189,9 +179,6 @@ describe("The quests' icons and guides (P15 ticket 53)", () => {
       'box',
       'laptop',
       'book',
-      'grade',
-      'spark',
-      'download',
       'bus',
       'moon',
       'cross',

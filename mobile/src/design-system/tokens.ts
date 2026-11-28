@@ -18,6 +18,7 @@
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { IconName } from './icon';
@@ -36,6 +37,8 @@ export const color = {
   surfaceSubtle: '#F5F6F9',
   surfaceSunken: '#ECEEF3',
   scrim: 'rgba(14, 19, 48, 0.40)',
+  // Lighter, behind a panel that floats over the map, which stays in sight under it.
+  scrimLight: 'rgba(14, 19, 48, 0.12)',
   // Darker, for a tour that dims all but one control so that it stands out.
   scrimStrong: 'rgba(14, 19, 48, 0.64)',
   border: '#E2E5EC',
@@ -208,21 +211,22 @@ export const kindTone = {
 
 export type ToneKind = keyof typeof kindTone;
 
-// The 새내기 튜토리얼's warm look, as the `Main` and `Profile` frames draw it: the Quest colour's ink on a cream ground.
-// `round` is the 내 정보 row's round, `dotNow` the sheet's dot of the quest shown.
+// The 새내기 튜토리얼's look, in the 행사 tab's muted tone (P06 ticket 55): the key colour alone as its accent, for its
+// buttons, its pins, its ✓ and its progress, with the greys of `color`. `round` is the 내 정보 row's round and the
+// start button's, `dotNow` the sheet's dot of the quest shown.
 export const tutorialTone = {
-  ink: color.quest,
-  words: '#6B4500',
-  ground: '#FFFBF0',
-  border: '#F1DFAF',
-  box: '#FFF8E6',
-  round: '#FFF1C9',
-  dotNow: '#E8A400',
-  // As the canvas's 새내기 튜토리얼 boards draw the list and the guides (P15 ticket 53): the green of a completed quest,
-  // its ✓ and ✓ 완료, with its banner's ground and words; the grey of what is not there yet.
-  done: '#0B8A5B',
-  doneSoft: '#E6F6EF',
-  doneWords: color.live,
+  ink: color.snuBlue,
+  words: color.ink,
+  ground: color.surface,
+  border: color.border,
+  box: color.blue50,
+  round: color.blue50,
+  dotNow: color.snuBlue,
+  // A completed quest: its ✓, its segment of the progress and ✓ 완료 in the key colour, its banner on the light blue.
+  done: color.snuBlue,
+  doneSoft: color.blue50,
+  doneWords: color.snuBlue,
+  // The grey of what is not there yet.
   idle: '#EEF0F5',
   // The faint chevron and arrows.
   faint: '#A9B0C4',
@@ -232,17 +236,11 @@ export const tutorialTone = {
   link: color.blue600,
 } as const;
 
-// The Tutorial Categories' colours as the canvas's boards draw them: an ink and a soft ground for each, by the
-// category's place in the list (생활, 공부·학사, 이동, 건강, 문화·여가); a sixth starts again from the first.
-export const tutorialCategoryTones = [
-  { ink: '#E8590C', soft: '#FFF0E6' },
-  { ink: '#3D63D6', soft: '#EAF0FF' },
-  { ink: '#7048E8', soft: '#F1ECFF' },
-  { ink: '#0B8A5B', soft: '#E6F6EF' },
-  { ink: '#D6336C', soft: '#FFEAF1' },
-] as const;
+// A Tutorial Category's colours: the same for every one, the key colour on the light blue, so that a category is told
+// by its name and its quests' icons alone (P06 ticket 55 took out the five colours the canvas's boards drew).
+export const tutorialCategoryTone = { ink: color.snuBlue, soft: color.blue50 } as const;
 
-export type TutorialCategoryTone = (typeof tutorialCategoryTones)[number];
+export type TutorialCategoryTone = typeof tutorialCategoryTone;
 
 // The colours of a class in the timetable, by its place in it, as the `Profile` frame draws the week: the first class
 // navy, the eighth navy again.

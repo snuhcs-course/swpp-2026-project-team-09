@@ -20,6 +20,7 @@
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -97,7 +98,7 @@ export {
   text,
   textHalo,
   type ToneKind,
-  tutorialCategoryTones,
+  tutorialCategoryTone,
   type TutorialCategoryTone,
   tutorialTone,
 } from './tokens';

@@ -2,17 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import type { LatLng } from '@/api/types';
 import type { Tutorial, TutorialGuide, TutorialGuidePlace, TutorialStep } from '@/api/tutorial-types';
 import { type GuidePosition, isChoosing, placesOf, stepAt, stepsAtOnePlace, stepsOf } from '@/features/tutorial/guide';
+import { tutorialCategoryTone } from '@/design-system';
 import { type MapCamera, type MapLine, type MapMarker, type MarkerLook, useMarkerImages } from '@/map';
 import type { Room } from '../layout';
 import type { MainMap } from '../use-main-map';
 import { useGuidePositions } from './guide-places';
-import { toneOf } from './tone';
 import type { GuideView } from './use-guide-flow';
 import type { TutorialFlow } from './use-tutorial-flow';
 
@@ -158,7 +159,7 @@ function pinsOf(
   if (quest === undefined || guide === undefined) {
     return null;
   }
-  const { ink } = toneOf(tutorial, quest.category);
+  const { ink } = tutorialCategoryTone;
   const pins = isChoosing(guide, view.kind)
     ? choicePins(guide, ink, positionOf)
     : [...stepPins(guide, view, ink, positionOf), ...spotPins(guide, view, ink, positionOf)];
@@ -238,7 +239,7 @@ export function useGuideMap(deps: GuideMapDeps): GuideMap | null {
   if (drawn === null || view === null || tutorial === undefined) {
     return null;
   }
-  const ink = toneOf(tutorial, tutorial.quests.find(({ key }) => key === view.key)?.category).ink;
+  const { ink } = tutorialCategoryTone;
   const markers = drawn.pins.flatMap((pin, at): MapMarker[] => {
     const image = images[at];
     return image === undefined
