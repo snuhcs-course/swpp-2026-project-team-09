@@ -23,16 +23,19 @@
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { Logger } from '@nestjs/common';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   APICallError,
   generateText,
+  InvalidToolInputError,
   type LanguageModel,
   type LanguageModelMiddleware,
   RetryError,
   stepCountIs,
   type SystemModelMessage,
   tool,
+  type ToolCallRepairFunction,
   type ToolSet,
   wrapLanguageModel,
 } from 'ai';
@@ -42,7 +45,7 @@ import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 import { replyOf } from './run-reply.js';
-import { repairedToolCall } from './tool-input-repair.js';
+import { meantInput } from './tool-input-repair.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
 // feature over it. Tools and features do not import the SDK, so that moving to another library replaces this file.
@@ -252,6 +255,20 @@ function observed(
     }
   };
 }
+
+const toolInputLog = new Logger('ToolInput');
+
+// A tool call the SDK refused for its input, made again with what the model meant (`meantInput`, P05 tickets 82 and
+// 84), with one warning line that names the tool and its refused fields, never a value the model gave.
+const repairedToolCall: ToolCallRepairFunction<ToolSet> = async ({ toolCall, error, inputSchema }) => {
+  if (!InvalidToolInputError.isInstance(error)) {
+    return null;
+  }
+  const { toolName, input: written } = toolCall;
+  const { input, line } = meantInput({ toolName, input: written, schema: await inputSchema({ toolName }), error });
+  toolInputLog.warn(line);
+  return input === null ? null : { ...toolCall, input };
+};
 
 function toolSetOf({ tools }: Feature, context: ToolContext, observer: RunObserver | undefined): ToolSet {
   return Object.fromEntries(

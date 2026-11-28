@@ -124,3 +124,46 @@ describe("planMeal's ceiling written as a string, in the message after a lunch a
     expect(shown.at(-1)).toMatchObject({ date, meal: 'lunch', maxPrice: 7000 });
   });
 });
+
+// Every price wording of the rule that names a number, as the model gives it written as a string, in the same message
+// as the meal and in the next, the lunch on screen; today and a later day.
+const WORDINGS: [string, string, number][] = [
+  ['5천원 이하', '5000', 5000],
+  ['5천원까지', '5,000', 5000],
+  ['만원 안쪽', '10,000', 10_000],
+  ['6천원 정도', '6000원', 6000],
+  ['7000원 이하', '7,000', 7000],
+];
+
+const lunchOn = (date: string): MealInput => ({
+  kind: 'meal',
+  date,
+  meal: 'lunch',
+  people: [{ userId: ME, constraints: [] }],
+  window: { from: null, until: null },
+  placeId: null,
+});
+
+describe.each([
+  ['today', '2026-11-28'],
+  ['a later day', '2026-11-30'],
+])("A price wording's ceiling written as a string, %s", (_day, date) => {
+  it.each(WORDINGS)('%s (%s) in the same message plans with %d', async (words, written, read) => {
+    shown.length = 0;
+    model.script({ tool: 'planMeal', input: { date, meal: 'lunch', maxPrice: written } }, { text: '…' });
+
+    await runFeature(model.model, MEALS, asker, [{ role: 'user', text: `점심 ${words}` }], LIMITS);
+
+    expect(shown.at(-1)).toMatchObject({ maxPrice: read });
+  });
+
+  it.each(WORDINGS)('%s (%s) in the next message plans with %d', async (words, written, read) => {
+    shown.length = 0;
+    const onScreen: Request = { ...asker, context: { ...NO_CONTEXT, conditions: lunchOn(date) } };
+    model.script({ tool: 'planMeal', input: { date, meal: 'lunch', friendIds: [], maxPrice: written } }, { text: '…' });
+
+    await runFeature(model.model, MEALS, onScreen, [{ role: 'user', text: words }], LIMITS);
+
+    expect(shown.at(-1)).toMatchObject({ maxPrice: read });
+  });
+});
