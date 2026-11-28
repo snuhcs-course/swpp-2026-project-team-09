@@ -5,6 +5,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,10 +14,12 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { getAnimatedStyle } from 'react-native-reanimated';
-import { color, text } from '@/design-system';
+import { color, space, text } from '@/design-system';
+import { foldedTimeCardOf } from '@/screens/main/answer/card-caps';
 import type { Level } from '@/screens/main/answer/card-levels';
 import { FrameCard } from '@/screens/main/answer/frame-card';
 import { SHEET_HINT } from '@/screens/main/answer/sheet-hint';
+import { listsTop } from '@/screens/main/layout';
 
 // The answer's sheet as one surface (P04 tickets 61 and 63): its content is laid out once and moved between low, middle,
 // and high; low has one top edge for every footer, the meal answer's, which shows two lines of words, at the phone's
@@ -43,6 +46,8 @@ const BAR_ROOM = 132;
 const FADE = 12;
 const LOW = 12 + 2 * text.bodyLg.lineHeight + FADE;
 const MID = STAGE * 0.6 - BAR_ROOM;
+// High stands under the folded time card's place; the scrolling part is laid out at more, the most room any top leaves.
+const HIGH = STAGE - listsTop(0) - foldedTimeCardOf(1) - space[2] - BAR_ROOM;
 // A footer of the input alone: no main button.
 const BARE_ROOM = 12 + 50 + 12;
 const WORDS = '둘 다 가까운 302동식당을 추천해요.';
@@ -133,7 +138,7 @@ describe('the sheet’s steps', () => {
     await view.rerender(card('high'));
     await settle();
 
-    expect(shown()).toBe(heightOf('card-content'));
+    expect(shown()).toBe(HIGH);
     expect(mounts.content).toBe(1);
   });
 
@@ -150,7 +155,7 @@ describe('the sheet’s steps', () => {
     expect(shown()).toBe(MID);
     await view.rerender(card('high'));
     await settle();
-    expect(shown()).toBe(heightOf('card-content'));
+    expect(shown()).toBe(HIGH);
   });
 
   it('takes no room for a content that lays out nothing, as a meet whose Friend has a face on the map', async () => {
