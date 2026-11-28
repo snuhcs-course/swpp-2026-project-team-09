@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -62,6 +63,8 @@ export interface Mentions {
   mentions: Mention[];
   // The cursor the field is put at after a mention was put in or taken away; undefined otherwise.
   selection: Selection;
+  // Whether the field takes words now: only while the User is in it.
+  takes: () => boolean;
   onChangeText: (words: string) => void;
   onSelectionChange: (event: TextInputSelectionChangeEvent) => void;
   onFocus: () => void;
@@ -115,10 +118,8 @@ export function useMentions(
     matches: query === null ? [] : friendsMatching(friends, query.query),
     mentions: mentionsOf(state),
     selection,
+    takes: () => field.inField.current,
     onChangeText: (words) => {
-      if (!field.inField.current) {
-        return;
-      }
       const edited = editMentions(state, words);
       put(edited.state, edited.cursor, edited.whole);
     },

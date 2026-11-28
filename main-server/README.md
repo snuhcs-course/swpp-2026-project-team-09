@@ -2854,6 +2854,11 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
 - Each model call logs one line with the key's name, its provider and the outcome, such as
   `Model call with key default on OpenRouter: answered, finish stop`, or `failed` with its cause: never a key's value or
   what was sent.
+- A tool call the model library refuses for its input is made again once with what the model meant: a field given null
+  left out, and a number written as a string (`"7,000"`) read as that number on a field that takes a number. Each
+  refused call logs one warning with the tool, each refused field's issue code and the type it expected, and what was
+  changed, such as `The model's planMeal call was refused: maxPrice invalid_union; made again with read as a number:
+maxPrice`: field names alone, never a value the model gave, which may hold the User's words.
 - **Limits per message**, each a setting with its default: at most `ASSISTANT_MAX_STEPS` model calls (8; each tool
   call is one, and so is the answer), `ASSISTANT_TIMEOUT_MS` over all of them (30,000) and `ASSISTANT_MAX_OUTPUT_TOKENS`
   written in each call, reasoning included (4,000). A call that fails with 429 or 529 is sent once more, within the time,
@@ -4258,6 +4263,14 @@ the same Quest and invites the Friends new to it, decliners again. A Quest taken
 capacity 4, and the Holders are told (`step-changed`) only when the meal's step moves. A plan that leaves someone of it
 out answers 400 `PLAN_PEOPLE_CHANGED`. A User who holds no meal of that day but an invitation to one, asking for a
 Friend, has nothing planned; the model is told its Holders alone.
+
+So a plan under `adding` may not hold the Friends it names (P05 ticket 85, `asHeld`). When no plan has them in it, as
+for a Friend who arrives after the asker must leave, the answer is the meal as it is held: its one plan is planned for
+everyone of it but them, at its Restaurant and start, `noPlan` is null, and `note` says why they cannot join it,
+naming them ("지호는 이 점심에 시간이 안 돼요" when the reasons do not). `adding` still names them with `movesTo` null,
+and the press invites them to the same Quest at the same time; nobody of it is asked again or told. The model's
+`adding.fits` is then false, with `adding.why`. Only when the meal cannot be planned as it is held either does the
+answer keep `noPlan`; the app then offers 파티 보기 beside its reasons.
 
 A meeting is set aside the same way (`quests/held-meeting.ts`): a new meet's Plan takes the asker's meeting made from a
 meet's Plan that day, not started, that the model names by its ref (`planMeet`'s `questId`), else the one whose

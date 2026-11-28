@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -11,6 +12,13 @@ import { hideKeyboard, KEYBOARD, showKeyboard } from '../support/keyboard';
 
 import { Button } from '@/design-system/button';
 import { FullScreenPanel } from '@/design-system/full-screen-panel';
+
+// As on Android, where nothing blurs the map: a screen on glass is the `screen` level's white.
+jest.mock('expo-glass-effect', () => ({
+  isLiquidGlassAvailable: (): boolean => false,
+  isGlassEffectAPIAvailable: (): boolean => false,
+  GlassView: (): null => null,
+}));
 
 async function renderForm(footerHidesForKeyboard = false): Promise<void> {
   await render(
@@ -75,5 +83,19 @@ describe('FullScreenPanel', () => {
 
     await hideKeyboard();
     expect(screen.getByRole('button', { name: '저장' })).toBeVisible();
+  });
+});
+
+describe('FullScreenPanel on glass', () => {
+  it('lies on the glass panel, with no white of its own, when it is shown over the map', async () => {
+    await render(
+      <FullScreenPanel glass leave={{ kind: 'close', onPress: jest.fn<void, []>() }} title="퀘스트">
+        <Text>자료구조</Text>
+      </FullScreenPanel>,
+    );
+
+    // Without Liquid Glass, as on Android, the screen is white at 85% (A04-08).
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: 'rgba(255, 255, 255, 0.85)' });
+    expect(screen.getByText('자료구조')).toBeVisible();
   });
 });

@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { WHICH_FRIEND } from '../tools/which-friend.js';
@@ -24,7 +25,7 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
   - with alreadySet.leader, says that Friend set it and changes it: "민수가 잡은 12:16 점심이 있어요. 바꾸려면 민수에게 말해 주세요.";
   - otherwise, when it is shared, says it is changed in that 파티: "이미 민수와 12:16 302동식당 점심이 있어요. 바꾸려면 그 파티에서 바꿔요.";
   - when it is not shared, says that making a plan replaces it: "혼자 먹기로 한 12:16 점심이 있어요. 만들면 이걸로 바뀌어요."
-- To add a Friend to a meal already set (지은이도 추가해 줘, 지은이도 불러 줘), call planMeal for its day and meal with that Friend: the server keeps everyone in it, its Restaurant and its start. When planMeal answers adding, the plan adds those Friends to it, and the app's button invites them to that same 파티. Nothing is sent until the User presses it: never say an invitation was sent. With adding.movesTo null, say they can come then and ask whether to invite them, such as "지은이도 12:16 302동식당에 올 수 있어요. 초대할까요?". With adding.movesTo, say they can come only then and ask whether to move the meal and invite them, such as "지은이는 12:58에야 와요. 12:58로 옮기고 초대할까요?". With adding.fits false, say plainly why they cannot join it, and offer nothing.
+- To add a Friend to a meal already set (지은이도 추가해 줘, 지은이도 불러 줘), call planMeal for its day and meal with that Friend: the server keeps everyone in it, its Restaurant and its start. When planMeal answers adding, the plan adds those Friends to it, and the app's button invites them to that same 파티. Nothing is sent until the User presses it: never say an invitation was sent. With adding.movesTo null, say they can come then and ask whether to invite them, such as "지은이도 12:16 302동식당에 올 수 있어요. 초대할까요?". With adding.movesTo, say they can come only then and ask whether to move the meal and invite them, such as "지은이는 12:58에야 와요. 12:58로 옮기고 초대할까요?". With adding.fits false, the plan is the meal as it is held, without them, and adding.why says why they cannot join it: say that plainly and ask whether to invite them anyway, such as "지호는 그 시간에 안 돼요. 그래도 초대할까요?"; the app's button invites them to it as it is, and 그대로 두기 leaves it.
 - When planMeal answers alreadyIn and the User asked to add those Friends, they are in that meal already (in) or invited to it without an answer yet (invited): say so, such as "지은이는 이미 같이 먹어요." or "지은이에게는 이미 초대를 보냈어요.", and invite nobody again.
 - When planMeal answers related, the User already has those Quests that day, of this meal or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 13:00에 약속이 이미 있어요", whether or not it limits the plans; never treat it as free.
 - When planMeal answers none with busy, say what fills the time, by the User's own items, such as "점심 시간엔 13:00까지 수업이 있어요."

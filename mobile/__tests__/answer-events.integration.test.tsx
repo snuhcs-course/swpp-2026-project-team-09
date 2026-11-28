@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -90,6 +91,10 @@ describe('an events answer (board Alone 1)', () => {
 
     // The Plan's place is the map's pick and its clash is the time bar's words; the card says no line of it.
     expect(card().getByTestId('plan-count')).toHaveTextContent('3/3');
+    // At least as wide as "11/11", and wider at a large font rather than cut to "11/1…" (the user's phone, 2026-11-28,
+    // cut a clock in a column of fixed width the same way).
+    expect(card().getByTestId('plan-count')).toHaveStyle({ minWidth: 44 });
+    expect(card().getByTestId('plan-count')).not.toHaveStyle({ width: 44 });
     expect(mapThings()).toContain('기업 설명회 · 16:00 기업 설명회');
     expect(timeBar().getByText('16:00–17:00 · 수업과 겹쳐요')).toBeVisible();
     expect(card().queryByText('기업 설명회 · 16:00 문화관')).toBeNull();

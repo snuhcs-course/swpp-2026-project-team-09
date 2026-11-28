@@ -4,12 +4,13 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { NOT_AUTOFILLED } from './autofill';
+import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from './icon';
+import { TextEntry } from './text-entry';
 import { color, radius, size, space, text } from './tokens';
 
 // A second point of outline drawn outside the border, so that focus moves nothing.
@@ -54,8 +55,7 @@ export function TextField({
   return (
     <View style={styles.field}>
       <Label icon={labelIcon} label={label} />
-      <TextInput
-        {...NOT_AUTOFILLED}
+      <TextEntry
         accessibilityHint={help}
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{ disabled }}

@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -12,7 +13,7 @@ import { SearchField } from '@/design-system/search-field';
 
 function Search(): ReactElement {
   const [value, setValue] = useState('');
-  return <SearchField label="친구 검색" onChangeText={setValue} placeholder="이름, 학과 검색" value={value} />;
+  return <SearchField label="친구 검색" onChangeText={setValue} placeholder="친구 검색" value={value} />;
 }
 
 describe('SearchField', () => {
@@ -20,7 +21,7 @@ describe('SearchField', () => {
     await render(<Search />);
 
     expect(screen.getByLabelText('친구 검색')).toBeVisible();
-    expect(screen.getByPlaceholderText('이름, 학과 검색')).toBeVisible();
+    expect(screen.getByPlaceholderText('친구 검색')).toBeVisible();
     expect(screen.queryByRole('button', { name: '지우기' })).toBeNull();
   });
 

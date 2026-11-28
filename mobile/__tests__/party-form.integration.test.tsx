@@ -9,6 +9,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Keyboard } from 'react-native';
@@ -52,7 +53,7 @@ function submit(name: string): ReturnType<typeof screen.getByRole> {
 
 async function openForm(): Promise<User> {
   const user = await openAt('/party');
-  await user.press(screen.getByRole('button', { name: '만들기' }));
+  await user.press(screen.getByRole('button', { name: '파티 만들기' }));
   await pass(500);
   return user;
 }
@@ -148,7 +149,6 @@ describe('어디서, typed', () => {
     ['서울대입구역', { label: '서울대입구역' }],
   ])('posts %j as the Place it names, or as the words alone', async (words, place) => {
     server.on('GET /places', { status: 200, body: [ENGINEERING] });
-    server.on('GET /places/search', { status: 200, body: [] });
     const user = await openForm();
     await fillPublic(user);
 
