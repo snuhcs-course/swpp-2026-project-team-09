@@ -147,7 +147,8 @@ function PastRows({ items }: { items: readonly PastItem[] }): ReactElement | nul
 }
 
 // 오늘 일정: today's Quests, classes included, in time order, the rows over folded above "지금 HH:MM", and one line for
-// tomorrow. The classes already over and tomorrow's classes come from the timetable (#800's review, decided 2026-11-29). The 새내기 튜토리얼's quests are none of the User's Quests, so they are not here, as on the map.
+// tomorrow. The classes already over and tomorrow's classes come from the timetable (#800's review, decided
+// 2026-11-29). The 새내기 튜토리얼's quests are none of the User's Quests, so they are not here, as on the map.
 export function Day(): ReactElement {
   const { data: rows, isPending, refetch } = useQuestRows();
   const week = useWeek().data ?? [];
