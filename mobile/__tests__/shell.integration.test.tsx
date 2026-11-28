@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -107,11 +108,11 @@ describe('파티', () => {
     expect(screen.getByRole('tab', { name: '찾기' })).not.toBeSelected();
   });
 
-  it('opens 파티 만들기 with "만들기"', async () => {
+  it('opens 파티 만들기 with the 파티 tab’s floating 파티 만들기', async () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^파티/u }));
 
-    await user.press(screen.getByRole('button', { name: '만들기' }));
+    await user.press(screen.getByRole('button', { name: '파티 만들기' }));
 
     expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
   });

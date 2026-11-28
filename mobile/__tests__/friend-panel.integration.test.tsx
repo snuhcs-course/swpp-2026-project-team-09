@@ -124,12 +124,18 @@ describe("Android's back button over the friend panel", () => {
 });
 
 describe("the friend panel's search and chips", () => {
-  it('filters by name and by department, and says so when nobody is found', async () => {
+  // The user's word (2026-11-28): "학과 검색은 필요 없을 것 같아."
+  it('filters by name only, not by department, and says so when nobody is found', async () => {
     const user = await openPanel();
+    expect(screen.getByPlaceholderText('친구 검색')).toBeVisible();
 
     await user.type(screen.getByLabelText(SEARCH), '컴퓨터');
-    expect(shownFriends()).toEqual(['김민준', '정하은']);
-    expect(sectionHeaders()).toEqual(['공강 · 1', '수업 중 · 1']);
+    expect(screen.getByText('결과 없음')).toBeVisible();
+
+    await user.press(screen.getByRole('button', { name: '지우기' }));
+    await user.type(screen.getByLabelText(SEARCH), '김민');
+    expect(shownFriends()).toEqual(['김민준']);
+    expect(sectionHeaders()).toEqual(['공강 · 1']);
 
     await user.press(screen.getByRole('button', { name: '지우기' }));
     await user.type(screen.getByLabelText(SEARCH), '서지');
@@ -166,16 +172,16 @@ describe("the friend panel's search and chips", () => {
 });
 
 describe("the friend panel's search of Hangul being typed", () => {
-  // The phone's keyboard gives '커' before '컴', and 'ㅋ' before both (reported on 2026-11-28 with 'ㅋㅓㅁ' and 결과 없음).
+  // The phone's keyboard gives '미' before '민', and 'ㅁ' before both (reported on 2026-11-28 with 'ㅋㅓㅁ' and 결과 없음).
   it('narrows while a Hangul syllable is still being composed, and by first consonants', async () => {
     const user = await openPanel();
 
-    await user.type(screen.getByLabelText(SEARCH), '커');
-    expect(shownFriends()).toEqual(['김민준', '정하은']);
+    await user.type(screen.getByLabelText(SEARCH), '김미');
+    expect(shownFriends()).toEqual(['김민준']);
 
     await user.press(screen.getByRole('button', { name: '지우기' }));
-    await user.type(screen.getByLabelText(SEARCH), 'ㅋㅍㅌ');
-    expect(shownFriends()).toEqual(['김민준', '정하은']);
+    await user.type(screen.getByLabelText(SEARCH), 'ㅅㅈ');
+    expect(shownFriends()).toEqual(['서지우']);
   });
 });
 

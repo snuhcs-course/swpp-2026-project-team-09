@@ -30,7 +30,7 @@ import {
   useToast,
 } from '@/design-system';
 import type { FriendView } from '@/features/friends/adapter';
-import { matchesFriend } from '@/features/friends/matches-friend';
+import { FRIEND_SEARCH, matchesFriend } from '@/features/friends/matches-friend';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { useFriendRequests } from '@/features/friends/use-friend-requests';
 import { useFriends } from '@/features/friends/use-friends';
@@ -149,7 +149,7 @@ export function FriendsScreen(): ReactElement {
       title="친구"
       under={
         <View style={styles.search}>
-          <SearchField label="친구 검색" onChangeText={setQuery} placeholder="친구 검색" value={query} />
+          <SearchField label={FRIEND_SEARCH} onChangeText={setQuery} placeholder={FRIEND_SEARCH} value={query} />
         </View>
       }
     >

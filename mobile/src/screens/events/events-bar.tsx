@@ -7,15 +7,15 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, eventText, IconButton, radius, SearchField, size, space, TAB_BAR_ROW } from '@/design-system';
-import { EVENT_SEARCH_HINT, type EventFilter } from '@/features/events/adapter';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { color, eventText, radius, size, space } from '@/design-system';
+import type { EventFilter } from '@/features/events/adapter';
 
-// The 행사 tab's app bar and filters, as the `Events` frame draws them.
+// The 행사 tab's filters, as the `Events` frame draws them; its search is `TabScreen`'s.
 
 const FILTERS: readonly { key: EventFilter; label: string }[] = [
   { key: 'all', label: '전체' },
@@ -23,27 +23,6 @@ const FILTERS: readonly { key: EventFilter; label: string }[] = [
   { key: 'week', label: '이번 주' },
   { key: 'recruiting', label: '파티 모집 중' },
 ];
-
-interface SearchBarProps {
-  search: string;
-  onSearch: (words: string) => void;
-  onClose: () => void;
-}
-
-// The search field in place of the title, and ✕ that closes it, in the tab bar's row so the filters stay put.
-export function SearchBar({ search, onSearch, onClose }: SearchBarProps): ReactElement {
-  const { top } = useSafeAreaInsets();
-  return (
-    <View style={[styles.bar, { paddingTop: top }]}>
-      <View style={styles.barRow}>
-        <View style={styles.field}>
-          <SearchField label="행사 검색어" onChangeText={onSearch} placeholder={EVENT_SEARCH_HINT} value={search} />
-        </View>
-        <IconButton icon="x" label="검색 닫기" onPress={onClose} />
-      </View>
-    </View>
-  );
-}
 
 // The `Events` frame's filters: words on the white ground, the chosen one bold in navy on light blue.
 export function Filters({
@@ -89,16 +68,6 @@ const HIT_SLOP = { top: SLOP, bottom: SLOP };
 const ROW_PADDING = 10;
 
 const styles = StyleSheet.create({
-  bar: { backgroundColor: color.surface, borderBottomWidth: 1, borderBottomColor: color.border },
-  barRow: {
-    ...TAB_BAR_ROW,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    paddingRight: space[2],
-    paddingLeft: space[4],
-  },
-  field: { flex: 1 },
   // The row is 60 high: the room above and below the filters is padding on the scroller, as in `ChipRow`, so that
   // Android keeps it.
   filtersScroll: { flexGrow: 0, paddingVertical: ROW_PADDING },

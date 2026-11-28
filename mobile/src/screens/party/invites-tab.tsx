@@ -10,6 +10,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ import {
   LoadingState,
   space,
   text,
+  useListEnd,
 } from '@/design-system';
 import { planWords } from '@/features/party/posts';
 import { pointOnMap } from '@/features/places/point-on-map';
@@ -194,11 +196,12 @@ function SentRequests({ actions }: { actions: PartyActions }): ReactElement {
 export function InvitesTab(): ReactElement {
   const { data: invitations, isPending, refetch } = useInvitations();
   const actions = usePartyActions();
+  const end = useListEnd(space[6]);
   if (invitations === undefined) {
     return isPending ? <LoadingState /> : <ErrorState onRetry={refetch} />;
   }
   return (
-    <ScrollView contentContainerStyle={styles.body}>
+    <ScrollView contentContainerStyle={[styles.body, { paddingBottom: end }]} testID="invites-list">
       <View style={styles.section}>
         <Text accessibilityRole="header" style={styles.sectionTitle}>
           {`받은 초대 · ${invitations.length}`}
@@ -214,7 +217,7 @@ export function InvitesTab(): ReactElement {
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space[6], padding: space[4], paddingBottom: space[6] },
+  body: { gap: space[6], padding: space[4] },
   section: { gap: space[3] },
   sectionTitle: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   card: { gap: space[2] },
