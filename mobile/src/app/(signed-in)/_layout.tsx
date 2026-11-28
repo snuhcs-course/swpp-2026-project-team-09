@@ -45,6 +45,7 @@ type Edge = 'bottom' | 'right';
 // screen, the menu panel and an Invite Link's accept screen, from the right for the others.
 const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['quests', 'bottom'],
+  ['notifications', 'right'],
   ['profile-edit', 'right'],
   ['me/friends/index', 'right'],
   ['me/friends/requests', 'right'],
