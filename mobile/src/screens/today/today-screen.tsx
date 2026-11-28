@@ -180,7 +180,8 @@ function Page(): ReactElement {
       <Bookings bookings={bookings} />
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-      {data === undefined ? null : <Kept fresh={fresh} kept={kept} />}
+      {/* The whole list stays one press away while these lists load or fail: its kept Notifications may load. */}
+      {data === undefined ? <AllLink label="알림 모두 보기" /> : <Kept fresh={fresh} kept={kept} />}
     </ScrollView>
   );
 }

@@ -28,7 +28,7 @@ The tab is named 오늘, with the date under the title ("12월 1일 화요일").
   - "오늘 일정 없음" when there is none.
 - **지난 알림**: the newest five kept Notifications, with "알림 모두 보기 ›" to the whole list in 오늘 / 어제 / 이전, as a page above the tabs. The read marks follow what is shown, as 알림 marks them now.
 - Ticket 11 adds 예약 between 오늘 일정 and 지난 알림.
-- Decided while building (2026-11-29): the tab is `/today`, and "알림 모두 보기 ›" opens 알림's whole list above the tabs at `/notifications`, with 뒤로. 답할 것 shows the invitations first and three rows at most, with "답할 것 N개 모두 보기 ›" to the same list. The main server marks every kept Notification read at once, so 오늘 marks them read only while every unread one is among the five it shows; otherwise "알림 모두 보기" does. The screen review approved the page.
+- Decided while building (2026-11-29): the tab is `/today`, and "알림 모두 보기 ›" opens 알림's whole list above the tabs at `/notifications`, with 뒤로. 답할 것 shows the invitations first and three rows at most, with "답할 것 N개 모두 보기 ›" to the same list. The main server marks every kept Notification read at once, so 오늘 marks them read only while every unread one is among the five it shows; otherwise "알림 모두 보기" does. The screen review approved the page. After #800's first review (2026-11-29): the main server leaves out a Quest whose every step ended and sends today's Class Quests only, so the classes already over today and tomorrow's classes come from the timetable; a 파티 already over is not listed.
 - No inner tabs: the sections are capped so that the page stays about one screen and a half on a usual day (decided 2026-11-28).
 - The tour's words for this slot and the README follow the new name.
 
