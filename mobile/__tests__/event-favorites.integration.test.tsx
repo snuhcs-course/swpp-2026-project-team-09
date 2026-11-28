@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -18,6 +19,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { EVENT, lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { askMainServer, PHONE_NOW } from './support/server';
+import { eventText, space } from '@/design-system';
 import { FAVORITE_LABEL } from '@/screens/events/favorite-toggle';
 
 // Favorite Events against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the ☆ on the 행사
@@ -127,6 +129,34 @@ describe('the ☆ in the detail sheet', () => {
     expect(server.received(`PUT /global-events/${MAJOR.id}/favorite`)).toHaveLength(1);
     expect(star(card(MAJOR))).toBeSelected();
     expect(screen.getAllByRole('button', { name: FAVORITE_LABEL, selected: true })).toHaveLength(2);
+  });
+});
+
+// The user (2026-11-28): "별 위치가 아쉬운데 텍스트 첫줄과 높이를 맞출 수 있을까?" The ☆'s touch area of 44 stands
+// centred on the title's first line box: its top is where that line starts, less half of what it is taller.
+describe("the ☆'s place beside a title", () => {
+  const STAR_AREA = 44;
+
+  it("stands level with the first line of the row's title on the 행사 tab", async () => {
+    answerEvents(server);
+    await openEvents();
+
+    expect(star(card(MAJOR))).toHaveStyle({
+      position: 'absolute',
+      top: space[3],
+      marginTop: (eventText.title.lineHeight - STAR_AREA) / 2,
+    });
+  });
+
+  it("stands level with the first line of the detail sheet's title", async () => {
+    answerEvents(server);
+    const user = await openEvents();
+    await user.press(card(MAJOR).getByRole('button', { name: MAJOR.title }));
+    await pass(500);
+
+    expect(within(screen.getByTestId('event-detail')).getByRole('button', { name: FAVORITE_LABEL })).toHaveStyle({
+      marginTop: (eventText.sheetTitle.lineHeight - STAR_AREA) / 2,
+    });
   });
 });
 
