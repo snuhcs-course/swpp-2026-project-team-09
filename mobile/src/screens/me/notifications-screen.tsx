@@ -11,10 +11,12 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
+  Button,
   cardStyles,
+  Dialog,
   color,
   EmptyState,
   ErrorState,
@@ -32,7 +34,12 @@ import {
 import { openAddress } from '@/features/notifications/address';
 import { now } from '@/clock';
 import { type NoticeKind, type NoticeView, noticeDays, waitingNotices } from '@/features/notifications/adapter';
-import { useDeleteNotice, useMarkShownRead, useNotices } from '@/features/notifications/use-notices';
+import {
+  useDeleteAllNotices,
+  useDeleteNotice,
+  useMarkShownRead,
+  useNotices,
+} from '@/features/notifications/use-notices';
 import { PartyOnButton } from './party-on-button';
 import { SwipedNotice } from './swiped-notice';
 
@@ -167,6 +174,43 @@ function Notices({ notices, fresh }: { notices: readonly NoticeView[]; fresh: Re
   );
 }
 
+// The app bar's 모두 지우기, while 알림 shows `count` kept Notifications. It asks once, since nothing brings them back,
+// and leaves what waits.
+function DeleteAll({ count }: { count: number }): ReactElement | null {
+  const deleteAll = useDeleteAllNotices();
+  const [asking, setAsking] = useState(false);
+  if (count === 0) {
+    return null;
+  }
+  return (
+    <>
+      <Button
+        centred
+        onPress={() => {
+          setAsking(true);
+        }}
+        variant="ghost"
+      >
+        모두 지우기
+      </Button>
+      <Dialog
+        cancelLabel="취소"
+        confirmLabel="지우기"
+        onCancel={() => {
+          setAsking(false);
+        }}
+        onConfirm={() => {
+          setAsking(false);
+          deleteAll();
+        }}
+        title={`알림 ${count}개를 지울까요?`}
+        tone="danger"
+        visible={asking}
+      />
+    </>
+  );
+}
+
 // 알림, the panel of the `Profile` frame: the Notifications the main server keeps, then what waits for the User, from
 // the lists the main server serves. The count is of the rows that wait. The kept ones shown are then read, and those
 // that were unread stay marked new while 알림 is open.
@@ -174,8 +218,10 @@ export function NotificationsScreen(): ReactElement {
   const { data, isPending, refetch } = useNotices();
   const fresh = useMarkShownRead(data !== undefined);
   const count = waitingNotices(data ?? []).length;
+  const kept = (data ?? []).filter(({ keptId }) => keptId !== null).length;
   return (
     <FullScreenPanel
+      actions={<DeleteAll count={kept} />}
       count={count === 0 ? undefined : count}
       leave={{ kind: 'back', onPress: router.back }}
       subtle

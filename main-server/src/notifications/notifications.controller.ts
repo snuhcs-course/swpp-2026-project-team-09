@@ -26,6 +26,13 @@ export class NotificationsController {
     return this.notifications.markRead(user.id);
   }
 
+  // 알림's 모두 지우기: those of the User's whose time has come.
+  @Delete('notifications')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteCome(@CurrentUser() user: SignedInUser): Promise<void> {
+    return this.notifications.deleteCome(user.id);
+  }
+
   // `id` is the list's identity, URL-encoded. One that is not the User's, or is gone, deletes nothing.
   @Delete('notifications/:id')
   @HttpCode(HttpStatus.NO_CONTENT)

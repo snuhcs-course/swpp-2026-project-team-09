@@ -9,10 +9,10 @@ import { Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { type SharedValue, useAnimatedReaction, useAnimatedStyle } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { color, Icon } from '@/design-system';
+import { color, Icon, radius, space } from '@/design-system';
 
-// The red action's width once the row stands open on it.
-const ACTION_WIDTH = 80;
+// The width the row leaves the red action once it stands open on it, the gaps around the action included.
+const ACTION_WIDTH = 88;
 
 interface ActionProps {
   translation: SharedValue<number>;
@@ -22,8 +22,9 @@ interface ActionProps {
   onPress: () => void;
 }
 
-// The red ground with the white outlined trash, in the space the row leaves on its right. It widens with a swipe past
-// it, and tells whether the swipe has gone far enough to delete.
+// The red button with the white outlined trash, in the space the row leaves on its right: a gap from the row and from
+// the card's edge, a little shorter than the row and with rounded corners, so that it reads as a button and not as part
+// of the row. It widens with a swipe past it, and tells whether the swipe has gone far enough to delete.
 function DeleteAction({ translation, fullSwipe, onFullSwipe, onPress }: ActionProps): ReactElement {
   useAnimatedReaction(
     () => translation.value <= -fullSwipe,
@@ -35,7 +36,7 @@ function DeleteAction({ translation, fullSwipe, onFullSwipe, onPress }: ActionPr
   );
   const width = useAnimatedStyle(() => ({ width: Math.max(ACTION_WIDTH, -translation.value) }));
   return (
-    <Animated.View style={[styles.action, width]}>
+    <Animated.View style={width}>
       <Pressable accessibilityLabel="알림 지우기" accessibilityRole="button" onPress={onPress} style={styles.press}>
         <Icon color={color.onPrimary} name="trash" size={22} />
       </Pressable>
@@ -78,6 +79,13 @@ export function SwipedNotice({ children, onDelete }: { children: ReactNode; onDe
 const styles = StyleSheet.create({
   // Over the action, which shows only where the row slides away.
   row: { backgroundColor: color.surface },
-  action: { backgroundColor: color.danger },
-  press: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  press: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: space[2],
+    marginVertical: space[1],
+    borderRadius: radius.md,
+    backgroundColor: color.danger,
+  },
 });

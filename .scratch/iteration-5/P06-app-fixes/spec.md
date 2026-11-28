@@ -245,7 +245,7 @@ Decided on 2026-11-28 (37 to 40):
 - 37: the seven kinds (`became-leader`, `join-accepted`, `step-changed`, `arrived`, `late`, `accepted`, `declined`) are still kept under `party:<questId>`, so that a new one replaces an old one, and are listed and pushed with `room:<questId>`. A row and a tapped push open the 파티's room, those kept before included; the other kinds keep their addresses. The app OTA update goes out first or with the Release.
 - 38: read state lives on the main server: `Notification.readAt`, nullable, set for all the User's Notifications whose time has come when 알림 opens; the migration sets it on the rows that exist whose time has come, so a row still ahead counts when it rings. A write that rings a row again (`keep`, `replace` moving the time) makes it unread again; `renew` keeps it. The bell counts what waits plus the unread, without the two kinds a derived row stands for. 38 adds one database migration, a second exception to the rule below.
 - 39: a Notification whose time has not come is not listed (`GET /notifications` leaves it out). 오늘 / 어제 / 이전 by the Korea day of a Notification's time; what waits, which has no time, at the top of 오늘; an empty group is not shown.
-- 40: a swipe to the left on a kept Notification shows a red action with a white outlined trash icon; a press on it or a full swipe deletes it by `DELETE /notifications/:id`, `:id` being the list's identity. What waits does not swipe, nor anything not yet listed. No confirm and no undo.
+- 40: a swipe to the left on a kept Notification shows a red action with a white outlined trash icon; a press on it or a full swipe deletes it by `DELETE /notifications/:id`, `:id` being the list's identity. What waits does not swipe, nor anything not yet listed. No confirm and no undo. The red action is an inset button with rounded corners. 알림's app bar adds 모두 지우기, which asks "알림 N개를 지울까요?" once and then deletes, by `DELETE /notifications`, every kept Notification whose time has come; what waits stays (added 2026-11-28, from fyoon46's review of #754).
 - 41 (2026-11-28): the room's 일정 form sets 어디서 with the 파티 form's place sheet: a row with the place's words, its grey kind tag and a chevron opens the same sheet, and what is sent is unchanged. `WhereField` goes.
 
 For all tickets:
@@ -304,7 +304,7 @@ Every item received and where it went:
 | 20–33 파티·행사에서 사용자가 알 수 없는 것 (code audit, 2026-11-27) | Tickets 20 to 33, those the user took up; the rest held (Out of Scope) |
 | 8 파티 만들기 (added 2026-11-26) | Ticket 34, settled over four rounds on 2026-11-27 (the preview, typing in place, settings in place, the building search and its badge, no photo or tags) |
 | 팝업창이 부드럽게 내려가고, 바·빈 공간·스와이프로 닫히기 (added 2026-11-27) | Ticket 35 |
-| 알림 누르면 파티방, 안 읽은 알림 숫자, 오늘/어제/이전, 스와이프로 지우기 (added 2026-11-28) | Tickets 37 to 40 |
+| 알림 누르면 파티방, 안 읽은 알림 숫자, 오늘/어제/이전, 스와이프로 지우기, 모두 지우기 (added 2026-11-28) | Tickets 37 to 40 |
 | 파티 상세 일정의 장소도 같은 장소 시트로 (PR 712 review, 2026-11-28) | Ticket 41 |
 
 Notes for the tickets:

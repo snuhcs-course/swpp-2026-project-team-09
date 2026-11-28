@@ -43,6 +43,9 @@ const KINDS: ReadonlySet<string> = new Set<NotificationKind>([
   'late',
 ]);
 
+// The pushes' copies of what waits for the User, which 알림 shows from the lists that wait: 모두 지우기 keeps them.
+const WAITING_COPIES: readonly NotificationKind[] = ['join-asked', 'party-activated'];
+
 function kept(told: Told, at: Date): Kept {
   const words = wordsOf(told, at);
   // A card no address opens is refused before it is kept: every later reading of the User's list would fail on it.
@@ -109,6 +112,15 @@ export class NotificationsService {
       return;
     }
     await this.cancel(userId, kind, { kind: cardKind, id: cardId }, about ?? null);
+  }
+
+  // Those of the User's whose time has come, as 알림's 모두 지우기 deletes them. The Leader's `join-asked` and a running
+  // Party's `party-activated` stay: they are the pushes' copies of what waits, which 알림 shows from the lists that wait
+  // and does not delete. Tells the User only when one was deleted.
+  async deleteCome(userId: string): Promise<void> {
+    if (await this.store.forgetCome(userId, this.clock.now(), WAITING_COPIES)) {
+      this.signals.send([userId], 'notice');
+    }
   }
 
   // Those whose time has come by `until`, now by default: one kept ahead, such as tomorrow's 지금 나서요, is listed when

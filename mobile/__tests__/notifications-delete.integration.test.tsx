@@ -7,6 +7,8 @@
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { KeptNotification } from '@/api/waiting-types';
+import { StyleSheet } from 'react-native';
+import { color, radius, space } from '@/design-system';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -77,6 +79,17 @@ describe('the red action of a kept Notification', () => {
     expect(screen.getByRole('button', { name: ROW })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '윤태오님의 파티 초대 · 물리 실험 보고서' })).toBeOnTheScreen();
     expect(screen.getAllByRole('button', { name: '알림 지우기' })).toHaveLength(1);
+  });
+
+  it('is a red button with rounded corners, inset from the row and from the card’s edge', async () => {
+    await openNotifications();
+
+    expect(StyleSheet.flatten(screen.getByRole('button', { name: '알림 지우기' }).props.style)).toMatchObject({
+      backgroundColor: color.danger,
+      borderRadius: radius.md,
+      marginHorizontal: space[2],
+      marginVertical: space[1],
+    });
   });
 
   it('deletes the row by its identity when pressed, at once and without a confirm, and the bell no longer counts it', async () => {

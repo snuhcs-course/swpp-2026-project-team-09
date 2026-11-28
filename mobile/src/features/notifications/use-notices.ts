@@ -10,6 +10,7 @@
 import { type UseQueryResult, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
+import { isWaitingCopy } from '@/api/kept-notifications-client';
 import {
   NOTIFICATIONS_KEY,
   friendRequestsQuery,
@@ -113,6 +114,26 @@ export function useDeleteNotice(): (keptId: string) => void {
     onSettled: () => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
   });
   return mutate;
+}
+
+// 모두 지우기: deletes the kept Notifications whose time has come, but the pushes' copies of what waits. Their rows go at
+// once, as a swipe's does, and the list is fetched again after.
+export function useDeleteAllNotices(): () => void {
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation({
+    mutationFn: () => apiClient.deleteNotifications(),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_KEY });
+      const until = now().getTime();
+      queryClient.setQueryData(notificationsQuery.queryKey, (kept) =>
+        kept?.filter((notification) => isWaitingCopy(notification) || Date.parse(notification.at) > until),
+      );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
+  });
+  return () => {
+    mutate();
+  };
 }
 
 // The number on the bottom navigation's 파티: the rows of 알림 that wait for the User and concern 파티. It never fails a screen: while
