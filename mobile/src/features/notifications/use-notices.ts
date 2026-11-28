@@ -74,18 +74,23 @@ export function useBellCount(): number {
   return notices === undefined ? 0 : waitingNotices(notices).length + unreadKept(kept, now()).length;
 }
 
-// Marks read, on the main server, the kept Notifications 알림 shows once they are shown: each time an unread one is
+// Marks read, on the main server, the kept Notifications 알림 shows once they are shown: again for each new unread one
 // among them, as when one comes by the signal `notice` while 알림 is open. A failure leaves them unread, to be counted.
 export function useMarkShownRead(shown: boolean): void {
   const queryClient = useQueryClient();
   const kept = useQuery(notificationsQuery).data ?? [];
-  const unread = shown && unreadKept(kept, now()).length > 0;
+  // The unread ones' identities, so that a new one asks again and a refetch of the same ones does not.
+  const unread = shown
+    ? unreadKept(kept, now())
+        .map(({ id }) => id)
+        .join(' ')
+    : '';
   const { mutate } = useMutation({
     mutationFn: () => apiClient.markNotificationsRead(),
     onSettled: () => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
   });
   useEffect(() => {
-    if (unread) {
+    if (unread !== '') {
       mutate();
     }
   }, [unread, mutate]);

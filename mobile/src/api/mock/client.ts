@@ -64,7 +64,8 @@ type LibraryDetails = Pick<Profile, 'studentNumber' | 'registeredName' | 'affili
 const NO_LIBRARY_DETAILS: LibraryDetails = { studentNumber: null, registeredName: null, affiliation: null };
 let libraryDetails = NO_LIBRARY_DETAILS;
 
-// The kept Notifications the User has read in 알림, which the main server keeps on each row. In memory, as the switch.
+// The kept Notifications the User has read in 알림, which the main server keeps on each row. Kept in memory, like the
+// Master Switch.
 const readNotifications = new Set<string>();
 
 // For the tests: a new start of the app.

@@ -6,7 +6,8 @@
  ******************************************************************************/
 
 // Partitions of the check of `GET /notifications`: the documented shape, `ahead` left out, null, a text and of another
-// type, `read` given, left out and of another type, and each checked field wrong. Expected values: main-server's README (Notifications).
+// type, `read` given, left out and of another type, and each checked field wrong. Expected values: main-server's
+// README (Notifications).
 
 import { inList, omit, wrongFields } from '../support/answer-variants';
 import { isKeptNotifications } from '@/api/server/waiting-answers';
