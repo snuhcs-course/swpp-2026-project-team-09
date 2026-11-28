@@ -62,7 +62,7 @@ describe("the main screen's bottom navigation", () => {
     expect(screen.getByRole('tab', { name: /^파티/u })).not.toBeSelected();
     expect(screen.queryByRole('button', { name: '올리기' })).toBeNull();
     expect(screen.getByRole('tab', { name: '행사' })).toBeVisible();
-    expect(screen.getByRole('tab', { name: /^알림/u })).toBeVisible();
+    expect(screen.getByRole('tab', { name: /^오늘/u })).toBeVisible();
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeVisible();
   });
 
