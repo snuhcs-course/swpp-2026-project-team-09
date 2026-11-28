@@ -4,13 +4,14 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput, TimeBand } from '@/api/assistant-types';
 import type { BandLane } from '@/api/time-band-types';
 import { hasPeople, peopleOf } from './plan-input';
 import { lengthWords } from '@/library/cards/slot-band';
-import { clockAt, msOf, onBandDay } from './time-band';
+import { bandTimeAt, clockAt, msOf } from './time-band';
 
 // People picked in the time card (P04 ticket 64): after "＋ 같이" the User checks and unchecks Friends, the combined
 // bar following each check, and the conditions change once, at 완료, with everyone checked.
@@ -269,5 +270,5 @@ export function previewOf(band: TimeBand, lanes: readonly BandLane[]): Pick<Time
   const minutes = Math.round((end - start) / 60_000);
   const moved = start !== msOf(band.startAt) || end !== msOf(band.endAt);
   const text = previewWords(band.text, { from, until, minutes }, moved);
-  return { startAt: onBandDay(from, band), endAt: onBandDay(until, band), text };
+  return { startAt: bandTimeAt(start), endAt: bandTimeAt(end), text };
 }

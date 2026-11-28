@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Plan, PlanInput } from '@/api/assistant-types';
@@ -9,6 +10,7 @@ import type { OtherLane, TimeBand } from '@/api/time-band-types';
 import { koreaClock } from '@/korea-time';
 import { pickedLanes, pickedOf } from './people-picking';
 import { windowOf } from './plan-input';
+import { onBandDay } from './time-band';
 
 // What the time card is drawn from (P01 ticket 31): the Plan on screen, or for an answer with no Plan the frame it was
 // asked in, so that nothing set by hand is lost to a recalculation that finds no Plan. Its place is the Plan's, for
@@ -17,11 +19,6 @@ export interface Frame {
   band: TimeBand;
   parts: Plan['parts'];
   place: Plan['place'] | null;
-}
-
-// "HH:MM" on the band's day, as the band writes its times.
-function onBandDay(band: TimeBand, clock: string): string {
-  return `${band.startAt.slice(0, 11)}${clock}:00${band.startAt.slice(19)}`;
 }
 
 function at(iso: string, by: number): string {
@@ -33,14 +30,14 @@ function windowed(band: TimeBand, input: PlanInput): Pick<TimeBand, 'startAt' | 
   const { from, until } = windowOf(input);
   const length = new Date(band.endAt).getTime() - new Date(band.startAt).getTime();
   if (from !== null && until !== null) {
-    return { startAt: onBandDay(band, from), endAt: onBandDay(band, until) };
+    return { startAt: onBandDay(from, band), endAt: onBandDay(until, band) };
   }
   if (from !== null) {
-    const startAt = onBandDay(band, from);
+    const startAt = onBandDay(from, band);
     return { startAt, endAt: at(startAt, length) };
   }
   if (until !== null) {
-    const endAt = onBandDay(band, until);
+    const endAt = onBandDay(until, band);
     return { startAt: at(endAt, -length), endAt };
   }
   return { startAt: band.startAt, endAt: band.endAt };
