@@ -64,11 +64,13 @@ export function eventDate(event: EventTimes, now: Date): { day: string; line: st
   return { day: String(date), line: `${month}월 · ${name}` };
 }
 
-// How many recruiting Quests gather for each Global Event.
+// How many 파티 the User could enter gather for each Global Event: the recruiting list holds others' Quests that have
+// not ended, and of those it counts the ones with a place left. The 행사 row, its sheet and the map's event card count
+// by it alike (P06 ticket 30).
 export function recruitingCounts(recruiting: readonly RecruitingQuest[]): ReadonlyMap<string, number> {
   const counts = new Map<string, number>();
-  for (const { globalEvent } of recruiting) {
-    if (globalEvent !== null) {
+  for (const { globalEvent, holderCount, capacity } of recruiting) {
+    if (globalEvent !== null && holderCount < capacity) {
       counts.set(globalEvent.id, (counts.get(globalEvent.id) ?? 0) + 1);
     }
   }

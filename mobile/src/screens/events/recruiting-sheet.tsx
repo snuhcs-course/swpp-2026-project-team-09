@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -24,7 +25,7 @@ import {
   space,
   text,
 } from '@/design-system';
-import { type RecruitRowView, toRecruitRows } from '@/features/events/adapter';
+import { recruitingCounts, type RecruitRowView, toRecruitRows } from '@/features/events/adapter';
 
 interface RecruitingSheetProps {
   event: { id: string; title: string } | null;
@@ -79,10 +80,12 @@ function Rows({
     return <ErrorState onRetry={() => void recruiting.refetch()} />;
   }
   const rows = toRecruitRows(event.id, quests, recruiting.data, myUserId(), now());
+  // The 파티 the User could enter, as the event's row counts them; the User's own and the full ones are rows too.
+  const count = recruitingCounts(recruiting.data).get(event.id) ?? 0;
   return (
     <>
       <Text accessibilityRole="header" style={styles.count}>
-        {`모집 중인 파티 ${rows.length}`}
+        {`모집 중인 파티 ${String(count)}`}
       </Text>
       {rows.length === 0 ? (
         <EmptyState words="아직 모집 중인 파티가 없어요" />
