@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo, useState } from 'react';
 import type { TimeBand as TimeBandData } from '@/api/assistant-types';
-import { type BandBound, clockOf, onBandDay } from '@/features/assistant/time-band';
+import { bandClockOf, type BandBound, onBandDay } from '@/features/assistant/time-band';
 import type { HeldBand } from './band-body';
 
 // A handle moved by a drag, or let go and held while the recalculation it asked for is on its way.
@@ -52,7 +53,7 @@ export function useMovedBand(
         if (disabled) {
           return;
         }
-        const own = clockOf(next.bound === 'from' ? band.startAt : band.endAt);
+        const own = bandClockOf(next.bound === 'from' ? band.startAt : band.endAt, band);
         setMoved(next.clock === own ? null : next);
         if (next.clock !== own) {
           onDrop(next.bound, next.clock);
