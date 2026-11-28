@@ -247,7 +247,12 @@ export function NotificationsScreen(): ReactElement {
   const count = waitingNotices(data ?? []).length;
   const kept = (data ?? []).filter(({ keptId }) => keptId !== null).length;
   return (
-    <TabScreen actions={<DeleteAll count={kept} />} count={count === 0 ? undefined : count} title="알림">
+    <TabScreen
+      actions={<DeleteAll count={kept} />}
+      count={count === 0 ? undefined : count}
+      testID="notifications-screen"
+      title="알림"
+    >
       {focused ? <Shown /> : null}
     </TabScreen>
   );
