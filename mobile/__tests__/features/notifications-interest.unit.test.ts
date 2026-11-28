@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: a new match of a watched interest for an event and for a recruiting party. Expected values: P05 ticket
@@ -41,6 +42,7 @@ describe('toNotices of a new match of a watched interest', () => {
         questId: null,
         address: '/main?card=event:e1',
         time: '09:00',
+        at: '2026-11-17T09:00:00+09:00',
       },
     ]);
   });

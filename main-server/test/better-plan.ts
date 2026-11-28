@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -17,6 +18,8 @@ import { MealPlanStage, type Named } from './meal-plan.js';
 import { answerInvitation, getInvitations } from './quest-recruiting.js';
 import { withAccessToken } from './sign-in.js';
 import { type SignalEvent, type SignalWatcher, signalsWhile } from './signals.js';
+import { type NotificationDto } from '../src/notifications/dto/notification.dto.js';
+import { keptNotifications } from './kept-notifications.js';
 
 // The stage of the tests of a better Plan after a decline: the meal Plan's stage with the design's worked example, the
 // Quest the Leader makes of it at POST /plans with 민수 and 지은, and the two routes.
@@ -77,8 +80,9 @@ export class BetterPlanStage extends MealPlanStage {
     return withAccessToken(request(this.app.getHttpServer()).put(`/plans/${questId}`), user.accessToken).send(body);
   }
 
-  notificationsOf(user: TestUser): request.Test {
-    return withAccessToken(request(this.app.getHttpServer()).get('/notifications'), user.accessToken);
+  // Every Notification kept for the User, the time to leave kept ahead of its time included.
+  notificationsOf(user: TestUser): Promise<NotificationDto[]> {
+    return keptNotifications(this.app, user.id);
   }
 
   async invitationTo(user: TestUser, questId: string): Promise<string | undefined> {

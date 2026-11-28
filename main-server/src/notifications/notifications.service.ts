@@ -97,8 +97,10 @@ export class NotificationsService {
     await this.store.markRead(userId, this.clock.now());
   }
 
-  async listFor(userId: string): Promise<NotificationDto[]> {
-    return (await this.store.readAll(userId))
+  // Those whose time has come by `until`, now by default: one kept ahead, such as tomorrow's 지금 나서요, is listed when
+  // it rings. A later `until` reads what is kept for later, as the tests that keep it do.
+  async listFor(userId: string, until: Date = this.clock.now()): Promise<NotificationDto[]> {
+    return (await this.store.readCome(userId, until))
       .filter((row) => isKnown(row))
       .map((row) => {
         const card = { kind: row.cardKind, id: row.cardId };

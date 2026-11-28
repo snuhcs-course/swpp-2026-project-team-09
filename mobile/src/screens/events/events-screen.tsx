@@ -14,7 +14,7 @@
 
 import { type ReactElement, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { color, EmptyState, ErrorState, LoadingState, NO_RESULTS, space } from '@/design-system';
+import { ChipRow, color, EmptyState, ErrorState, LoadingState, NO_RESULTS, type RowChip, space } from '@/design-system';
 import {
   EVENT_SEARCH_HINT,
   type EventFilter,
@@ -28,9 +28,16 @@ import { showFind } from '../party/use-party-actions';
 import { TabScreen } from '../shell/tab-screen';
 import { EventDetailSheet } from './event-detail-sheet';
 import { EventRow } from './event-row';
-import { Filters } from './events-bar';
 import { EventSheets, type EventSheetsState, type PickedEvent, useEventSheets } from './event-sheets';
 import { type Focus, useFocus } from './use-focus';
+
+// The `Events` frame's filters, in the app's one row of filters.
+const FILTERS: readonly RowChip<EventFilter>[] = [
+  { key: 'all', label: '전체' },
+  { key: 'today', label: '오늘' },
+  { key: 'week', label: '이번 주' },
+  { key: 'recruiting', label: '파티 모집 중' },
+];
 
 interface ListProps extends Omit<Focus, 'focused'> {
   sources: EventSources;
@@ -142,7 +149,7 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
       title="행사"
     >
       <View style={styles.ground}>
-        <Filters filter={filter} onFilter={setFilter} />
+        <ChipRow chips={FILTERS} onSelect={setFilter} selected={filter} />
         {data === undefined && isPending ? <LoadingState /> : null}
         {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
         {data === undefined ? null : (

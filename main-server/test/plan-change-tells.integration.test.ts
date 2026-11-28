@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -25,9 +26,7 @@ describe('A plan changed in place', () => {
     const date = '2088-12-21';
     const { minsu, questId } = await stage.declined(date);
     await vi.waitFor(async () => {
-      expect(kindsSchema.parse((await stage.notificationsOf(minsu)).body).map(({ kind }) => kind)).toContain(
-        'leave-by',
-      );
+      expect(kindsSchema.parse(await stage.notificationsOf(minsu)).map(({ kind }) => kind)).toContain('leave-by');
     });
     const { input } = betterSchema.parse((await stage.getBetter(stage.asker, questId)).body);
 
@@ -40,10 +39,10 @@ describe('A plan changed in place', () => {
 
     expect(response.status).toBe(200);
     await vi.waitFor(async () => {
-      expect(kindsSchema.parse((await stage.notificationsOf(minsu)).body)).toEqual([{ kind: 'step-changed' }]);
+      expect(kindsSchema.parse(await stage.notificationsOf(minsu))).toEqual([{ kind: 'step-changed' }]);
     });
     await vi.waitFor(async () => {
-      expect((await stage.notificationsOf(stage.asker)).body).toContainEqual(
+      expect(await stage.notificationsOf(stage.asker)).toContainEqual(
         expect.objectContaining({ id: `leave-by:party:${questId}`, at: `${date}T12:12:00+09:00` }),
       );
     });
