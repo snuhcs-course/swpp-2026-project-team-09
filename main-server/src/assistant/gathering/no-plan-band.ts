@@ -8,7 +8,7 @@
 import { type AnswerReply, type MeetInput, type TimeBand } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
 import { type Interval, mealWindow } from '../free-time/meal-fit.js';
-import { bandRange, type PlaceHours } from '../free-time/band-range.js';
+import { bandRange, type RangeBounds } from '../free-time/band-range.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, type GatheringNaming, type Naming, type OtherFriend } from './answer-words.js';
 import { MINUTE_MS } from './gathering.js';
@@ -26,7 +26,7 @@ export interface WindowRange {
   // When later than the window's end, carries the range on to it, such as over the item that ends the window.
   reach?: Date;
   // The hours the range runs over (P01 ticket 43); the window's own when not given.
-  hours?: PlaceHours;
+  hours?: RangeBounds;
 }
 
 // Everyone's lanes over the window asked, from now when it has begun, and the window as the band's stretch, over the
@@ -44,7 +44,7 @@ export function windowBand(
     now: minute,
     date: koreaDate(window.start),
     span: { start, end },
-    hours,
+    bounds: hours,
     holds: reach === undefined ? [] : [reach],
   });
   return {

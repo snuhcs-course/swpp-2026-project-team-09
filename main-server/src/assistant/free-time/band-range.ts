@@ -30,11 +30,18 @@ export function halfHoursAround(earliest: number, latest: number): { from: Date;
   };
 }
 
-export interface PlaceHours {
-  // When the place opens on the band's day; null when that is not known, or it is open from before the day begins.
+// What bounds a range: the place's hours on the band's day, or for a meal the stretch around its span (`aroundSpan`).
+export interface RangeBounds {
+  // When the place opens; null when that is not known, or it is open from before the day begins.
   opens: Date | null;
   // When it closes; null when that is not known, or it stays open a day or more.
   closes: Date | null;
+}
+
+// A meal's bounds (P01 ticket 43 leaves them as they were, for the user to decide): from an hour before its span to half
+// an hour past it. A fixed band is drawn around the same stretch (`fixedRange`).
+export function aroundSpan({ start, end }: Interval): { opens: Date; closes: Date } {
+  return { opens: new Date(start.getTime() - HOUR_MS), closes: new Date(end.getTime() + HALF_HOUR_MS) };
 }
 
 export interface RangeAsked {
@@ -42,7 +49,7 @@ export interface RangeAsked {
   // The band's day.
   date: string;
   span: Interval;
-  hours: PlaceHours;
+  bounds: RangeBounds;
   // What else the range reaches: the window the User fixed, the end of what a left-out Class frees.
   holds?: readonly Date[];
 }
@@ -50,16 +57,16 @@ export interface RangeAsked {
 // Today from now, or the opening when later; another day from the opening, or an hour before the span when the opening
 // is not known; to the closing, at most RANGE_MOST_MS on and never past the day's last half hour; holding the span and
 // `holds` whole, which may make it longer. In half hours.
-export function bandRange({ now, date, span, hours, holds = [] }: RangeAsked): { from: Date; until: Date } {
+export function bandRange({ now, date, span, bounds, holds = [] }: RangeAsked): { from: Date; until: Date } {
   const today = koreaDate(now) === date;
-  const opens = hours.opens?.getTime() ?? null;
+  const opens = bounds.opens?.getTime() ?? null;
   const start = today
     ? Math.max(now.getTime(), opens ?? Number.NEGATIVE_INFINITY)
     : (opens ?? span.start.getTime() - HOUR_MS);
   const held = holds.map((one) => one.getTime());
   const { from } = halfHoursAround(Math.min(start, span.start.getTime(), ...held), 0);
   const end = Math.min(
-    hours.closes?.getTime() ?? Number.POSITIVE_INFINITY,
+    bounds.closes?.getTime() ?? Number.POSITIVE_INFINITY,
     from.getTime() + RANGE_MOST_MS,
     endOfDay(date).getTime() - DAY_END_MARGIN_MS,
   );
@@ -67,7 +74,7 @@ export function bandRange({ now, date, span, hours, holds = [] }: RangeAsked): {
 }
 
 // A place's opening and closing clocks on `date`, or none when they are not known.
-export function hoursOn(date: string, clocks: { open: string; close: string } | null): PlaceHours {
+export function hoursOn(date: string, clocks: { open: string; close: string } | null): RangeBounds {
   return clocks === null
     ? { opens: null, closes: null }
     : { opens: onDay(date, clocks.open), closes: onDay(date, clocks.close) };
@@ -78,8 +85,9 @@ export function windowHolds(date: string, { from, until }: { from: string | null
   return [from, until].flatMap((clock) => (clock === null ? [] : [onDay(date, clock)]));
 }
 
-// A band whose time is fixed, as an event's or a party's, is not dragged: its range is around its span, from an hour
-// before it, unless now is later, to half an hour past it.
-export function fixedRange(now: Date, { start, end }: Interval): { from: Date; until: Date } {
-  return halfHoursAround(Math.max(now.getTime(), start.getTime() - HOUR_MS), end.getTime() + HALF_HOUR_MS);
+// A band whose time is fixed, as an event's or a party's, is not dragged: its range is around its span
+// (`aroundSpan`), from now when that is later.
+export function fixedRange(now: Date, span: Interval): { from: Date; until: Date } {
+  const { opens, closes } = aroundSpan(span);
+  return halfHoursAround(Math.max(now.getTime(), opens.getTime()), closes.getTime());
 }

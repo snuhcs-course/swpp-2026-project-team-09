@@ -184,7 +184,7 @@ function bandOf({ booking, minutes }: GroupPick, args: GroupAnswerArgs): TimeBan
   const { date } = booking;
   const hours = hoursOn(date, args.hours);
   const holds = windowHolds(date, args.input.window);
-  const { from, until } = bandRange({ now: args.now, date, span: { start, end }, hours, holds });
+  const { from, until } = bandRange({ now: args.now, date, span: { start, end }, bounds: hours, holds });
   const label = args.placeLabel;
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },

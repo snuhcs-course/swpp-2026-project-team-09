@@ -94,7 +94,7 @@ function bandOf(fit: GatheringFit, naming: MeetNaming): TimeBand {
     now,
     date: input.date,
     span: { start, end },
-    hours: { opens: hours.start, closes: hours.end },
+    bounds: { opens: hours.start, closes: hours.end },
     holds: windowHolds(input.date, input.window),
   });
   return {

@@ -17,19 +17,20 @@ Native files: none. Releases: a main-server deploy.
   - Today it runs from now, floored to the half hour, or from the place's opening when that is later. On another day it starts at the opening, or an hour before the span when the opening is not known.
   - It ends at the place's closing.
   - It is at most 16 hours long, as the seat card's 관정관 day (07:00–23:00).
-  - It never ends past 23:30 of its day. The app puts a dropped time on the band's own day, and the main server reads a corrected window's clocks on the input's date, so 24:00 would read as 00:00 of that day.
+  - It never ends past 23:30 of its day. The app puts a dropped time on the band's own day, and the main server reads a corrected window's clocks on the input's date, so a time past midnight, or 24:00 itself, would read as early morning on that day. A 24-hour room at 10:10 shows 10:00–23:30. A span that crosses midnight (a study from 22:00, three hours guessed) is held whole, 21:30–01:00, as before.
   - It always holds the span whole, and the window the User fixed.
 - The place's hours, by kind:
   - a study plan: its first space's (the opening at now, or at the day's start on another day, and the close at the arrival);
   - a study together: the group rooms';
   - a meet: the day's meeting hours (09:00–22:00);
   - an answer without a plan: the meet's day hours, the group rooms', or none for a study.
-- A meal's range is left as it was, from an hour before the span to half an hour past it, until it is decided whether the one rule changes what a meal shows.
+- A meal is the one kind still on the old bounds. The page the user approved showed the meal answer unchanged, so widening it is his decision. Its band goes through the same function, its caller passing the meal's bounds (`aroundSpan`: an hour before the span, or now when later, to half an hour past it) in place of a place's hours.
 - A band whose time is fixed is not dragged. Its range stays around its span (`fixedRange`): an event's, and so a party's and a new party's. A way's and a shuttle's keep their own range (setting out to the deadline) and share the rounding.
 
 ## Acceptance criteria
 
-- [x] The range by partition: a place with hours, its opening later than now, a 24-hour place, the day's last half hour, a span outside the hours, a window held, another day with and without an opening, and a fixed band. (Unit test, new; fails on Main.)
+- [x] The range by partition: a place with hours, its opening later than now, a 24-hour place, the day's last half hour, a range that would cross midnight, a span that does, a span outside the hours, a window held, another day with and without an opening, a meal's own bounds, and a fixed band. (Unit test, new; fails on Main.)
+- [x] Every meal's range is as it was. (The meal unit tests pass unchanged.)
 - [x] The answers' tests whose exact ranges change are updated, each failing on Main.
 - [x] An event's band is unchanged.
 - [x] No native file changes; lint, format and types pass on the main server.

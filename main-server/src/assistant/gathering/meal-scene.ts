@@ -13,9 +13,9 @@
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
-import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
+import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
 import { mealWindow } from '../free-time/meal-fit.js';
-import { halfHoursAround } from '../free-time/band-range.js';
+import { aroundSpan, bandRange, windowHolds } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import {
   type GatheringNaming,
@@ -27,16 +27,12 @@ import {
   wayOn,
   withAnd,
 } from './answer-words.js';
-import { type GatheringFit, MINUTE_MS, minutesSaid, type PersonPart } from './gathering.js';
+import { type GatheringFit, minutesSaid, type PersonPart } from './gathering.js';
 import { freedReach } from './meal-plan-parts.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
 import { type SetOut, setOutOf } from './other-friends.js';
 
 // What the map draws of a plan, and its time band.
-
-// The band reaches this far before a plan's start, unless now is later, and this far past its end.
-const BAND_BEFORE_MS = 60 * MINUTE_MS;
-const BAND_AFTER_MS = 30 * MINUTE_MS;
 
 function scenePerson({ personId, origin, walkMinutes }: PersonPart, naming: GatheringNaming): MapScene['people'] {
   if (origin === null) {
@@ -221,25 +217,18 @@ export function skippedOf(items: readonly DayItem[], naming: Naming): NonNullabl
   return skippedBand(items, (item) => busyLabel(item, (placeId) => naming.placeLabel(placeId))).skipped ?? [];
 }
 
-// From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
-// an hour past its end, reaching out to the half hours around the window the User fixed, and over the time a Class left
-// out frees, so that the meal can be moved into it. `now` is given as it is, even outside the range.
+// The one range of a time card (`bandRange`) between a meal's own bounds, which P01 ticket 43 leaves as they were for
+// the user to decide (`aroundSpan`): from the later of now and an hour before the plan's start to half an hour past its
+// end, reaching out to the window the User fixed, and over the time a Class left out frees, so that the meal can be
+// moved into it. `now` is given as it is, even outside the range.
 export function bandOf(fit: GatheringFit, naming: Naming): TimeBand {
   const { start, end, togetherMinutes } = fit;
   const { now, input } = naming.args;
   const { items, skipped = [] } = naming.asker;
-  const opens = [Math.max(now.getTime(), start.getTime() - BAND_BEFORE_MS)];
-  const closes = [end.getTime() + BAND_AFTER_MS];
-  if (skipped.length > 0) {
-    closes.push(freedReach(items, skipped, mealWindow(input.date, input.meal).end).getTime());
-  }
-  if (input.window.from !== null) {
-    opens.push(onDay(input.date, input.window.from).getTime());
-  }
-  if (input.window.until !== null) {
-    closes.push(onDay(input.date, input.window.until).getTime());
-  }
-  const { from, until } = halfHoursAround(Math.min(...opens), Math.max(...closes));
+  const freed = skipped.length > 0 ? [freedReach(items, skipped, mealWindow(input.date, input.meal).end)] : [];
+  const span = { start, end };
+  const holds = [...windowHolds(input.date, input.window), ...freed];
+  const { from, until } = bandRange({ now, date: input.date, span, bounds: aroundSpan(span), holds });
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),

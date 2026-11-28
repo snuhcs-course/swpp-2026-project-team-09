@@ -24,7 +24,7 @@ import { MINUTE_MS } from '../gathering/gathering.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
 import { busyIn, busyLabel } from '../gathering/meal-scene.js';
-import { bandRange, type PlaceHours, windowHolds } from '../free-time/band-range.js';
+import { bandRange, type RangeBounds, windowHolds } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import { durationWords } from './day-lookup.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
@@ -64,7 +64,7 @@ export interface Ranked {
   end: Date;
   endsBy: EndsBy;
   // The first spot's hours on the plan's day, the time card's range (P01 ticket 43).
-  hours: PlaceHours;
+  hours: RangeBounds;
 }
 
 export interface Faded {
@@ -266,7 +266,7 @@ function bandOf({ stay, end, building, hours }: Ranked, { now, way, input, other
   const naming = new WayNaming(way);
   const { date, window } = input;
   const span = { start: stay.arrival, end };
-  const { from, until } = bandRange({ now, date, span, hours, holds: windowHolds(date, window) });
+  const { from, until } = bandRange({ now, date, span, bounds: hours, holds: windowHolds(date, window) });
   const label = (placeId: string): string => naming.placeLabel(placeId);
   const plan = { date: input.date, now, placeId: building.place.id, start: stay.arrival, end };
   return {
