@@ -291,7 +291,9 @@ describe('지난 알림', () => {
     await user.press(section('kept').getByRole('button', { name: /^알림 7/u }));
     await pass(500);
 
-    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+    // The map's tab, which may hide the bar while its card is open: read by the address.
+    expect(shownAddress()).toMatch(/^\/main/u);
+    expect(screen.queryByRole('header', { name: '오늘' })).toBeNull();
     expect(router.canDismiss()).toBe(false);
   });
 });
