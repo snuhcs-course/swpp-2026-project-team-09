@@ -274,14 +274,18 @@ function onTheList(quest: Quest): boolean {
   return timed(quest) || timedSubQuest(quest) !== null || quest.subQuests.length === 0;
 }
 
-// The list's order: by start, the Quests whose time is not set after every other in the order they were made, and one
-// without a made time after those.
+// The list's order: by start, and the Quests whose time is not set after every other, ended ones included, in the
+// order they were made. Quests of the same start keep the order they came in.
 function byStartThenMade(first: Quest, second: Quest): number {
-  const byStart = startOf(first) - startOf(second);
-  if (!Number.isNaN(byStart) && byStart !== 0) {
-    return byStart;
+  const firstUntimed = !timed(first);
+  if (firstUntimed !== !timed(second)) {
+    return firstUntimed ? 1 : -1;
   }
-  return madeAt(first) - madeAt(second);
+  if (firstUntimed) {
+    return madeAt(first) - madeAt(second);
+  }
+  const byStart = startOf(first) - startOf(second);
+  return Number.isNaN(byStart) ? 0 : byStart;
 }
 
 function madeAt(quest: Quest): number {
@@ -298,9 +302,9 @@ function kindOf(quest: Quest): QuestRowView['kind'] {
 // The rows of the Quest list, the earliest first, and the Quests whose time is not set last, as they were made.
 export function toQuestRows(sources: QuestSources): QuestRowView[] {
   const { quests, myParty, parties, meId, now } = sources;
-  const byStart = quests.filter((quest) => onTheList(quest)).toSorted(byStartThenMade);
-  const nextClass = byStart.find((quest) => quest.classQuest && startOf(quest) > now.getTime());
-  return byStart.map((quest) => {
+  const listed = quests.filter((quest) => onTheList(quest)).toSorted(byStartThenMade);
+  const nextClass = listed.find((quest) => quest.classQuest && startOf(quest) > now.getTime());
+  return listed.map((quest) => {
     const subQuest = timedSubQuest(quest);
     const tone = toneOf(quest);
     const start = subQuest?.startsAt ?? null;

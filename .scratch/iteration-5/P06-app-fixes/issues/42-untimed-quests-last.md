@@ -47,3 +47,10 @@ Positions are as of `origin/5.0/Main` b4b1379c, under `mobile/src/`.
 - [x] No native file changes; lint, format and types pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 35 minutes, an estimate. One session, from 17:42 to about 18:25 KST, without the waits for the user's answers.
+- Tokens, this session's part from the request to the pull request, with the two review subagents (an estimate, since the session went on after it was counted):
+  - input 12,446,972: 250 uncached, 12,202,720 cache reads and 244,002 cache writes;
+  - output 56,765.
