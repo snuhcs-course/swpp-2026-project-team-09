@@ -1,7 +1,7 @@
 # 22: A 파티 that ends and a member who is removed are told apart, by a push and in 알림
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.
@@ -31,9 +31,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] 없애기 and 내보내기 keep the Notifications above, the waiting ones' without a push. (Main server integration test, which fails before the change.)
-- [ ] The toast says which happened, and a row of a gone 파티 says so when pressed. (App integration test.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] 없애기 and 내보내기 keep the Notifications above, the waiting ones' without a push. (Main server integration test, which fails before the change.)
+- [x] The toast says which happened, and a row of a gone 파티 says so when pressed. (App integration test.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

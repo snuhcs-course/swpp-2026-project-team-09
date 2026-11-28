@@ -1,7 +1,7 @@
 # 20: A request to join is answered in 알림 and by a push, and a new one reaches the Leader by a push
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.
@@ -31,9 +31,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] Accepting and declining keep one Notification for the one who asked, which rings; asking keeps one for the Leader, replaced while unread. (Main server integration test, which fails before the change.)
-- [ ] 알림 shows each with its words and opens the 파티 or 보낸 신청. (App integration test.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] Accepting and declining keep one Notification for the one who asked, which rings; asking keeps one for the Leader, replaced while unread. (Main server integration test, which fails before the change.)
+- [x] 알림 shows each with its words and opens the 파티 or 보낸 신청. (App integration test.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

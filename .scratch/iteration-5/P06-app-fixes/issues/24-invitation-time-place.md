@@ -1,7 +1,7 @@
 # 24: An invitation card says when and where the 파티 meets
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.
@@ -26,9 +26,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] A received invitation carries its Quest's next start and place. (Main server integration test, which fails before the change.)
-- [ ] The card shows them in the server build. (App integration test against the fake main server, which fails before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] A received invitation carries its Quest's next start and place. (Main server integration test, which fails before the change.)
+- [x] The card shows them in the server build. (App integration test against the fake main server, which fails before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

@@ -1,7 +1,7 @@
 # 11: The class form takes a time slot per set of hours
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

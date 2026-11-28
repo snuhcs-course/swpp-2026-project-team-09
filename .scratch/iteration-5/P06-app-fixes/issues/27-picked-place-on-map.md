@@ -1,7 +1,7 @@
 # 27: A place picked on the map opens a map with its pin
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -25,8 +25,8 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] A picked place opens a map sheet with its pin; a typed one does not. (App integration test, which fails before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] A picked place opens a map sheet with its pin; a typed one does not. (App integration test, which fails before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 
@@ -36,3 +36,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 - Tokens, this ticket's share of that session, subagents included and split by the same time (so also an estimate):
   - input 25,073,210: 210 uncached, 24,883,000 cache reads and 190,000 cache writes;
   - output 44,000.
+
+### Agent usage, added (2026-11-28)
+
+- The entry above stops at 02:33 KST. The session went on until about 03:00 KST: the review's fix of this ticket (#721's last commits), the merges of `5.0/Main` into the session's branches and the usage entries themselves.
+- Agent time: about 18 minutes, an estimate (gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 20,765,745 (cache reads 20,739,228, cache writes 26,435, uncached 82); output 16,709. Subagents included.

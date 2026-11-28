@@ -1,7 +1,7 @@
 # 25: A changed step says which 파티 and when, and 지금 나서요 is kept again
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: 26 (the date words).
 
 Native files: none. Releases: a main server Release.
@@ -27,9 +27,9 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] The words name the 파티 and the date. (Unit test.)
-- [ ] After a change, each Holder whose way is known has one 지금 나서요 at the new time. (Main server integration test, which fails before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] The words name the 파티 and the date. (Unit test.)
+- [x] After a change, each Holder whose way is known has one 지금 나서요 at the new time. (Main server integration test, which fails before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 

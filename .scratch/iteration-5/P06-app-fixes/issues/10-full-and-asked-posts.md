@@ -1,7 +1,7 @@
 # 10: 찾기 leaves out full 파티, and a card whose request waits offers 신청 취소
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

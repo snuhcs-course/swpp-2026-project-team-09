@@ -1,7 +1,7 @@
 # 26: A time away from today says its day
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-human (built; waits for review)
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.
@@ -31,8 +31,8 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 
 ## Acceptance criteria
 
-- [ ] Each of the four says the day for a time not today. (Tests, which fail before the change.)
-- [ ] No native file changes; lint, format and types pass.
+- [x] Each of the four says the day for a time not today. (Tests, which fail before the change.)
+- [x] No native file changes; lint, format and types pass.
 
 ## Comments
 
