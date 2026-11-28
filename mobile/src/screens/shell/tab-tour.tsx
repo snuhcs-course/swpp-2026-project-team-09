@@ -28,7 +28,7 @@ const STEPS: readonly { slot: number; title: string; words: string; looks?: true
     words: '캠퍼스 지도에서 친구와 행사를 보고, AI에게 물어봐요. 지도에서 누르면 AI를 내리고, 다시 누르면 올려요.',
     looks: true,
   },
-  { slot: 3, title: '알림', words: '답할 초대와 신청, 지난 알림을 한곳에서 봐요.' },
+  { slot: 3, title: '오늘', words: '답할 초대와 신청, 오늘 일정, 지난 알림을 한 페이지에서 봐요.' },
   { slot: 4, title: '내 정보', words: '시간표, 친구, 위치 공유를 관리해요. 이 안내도 여기서 다시 볼 수 있어요.' },
 ];
 

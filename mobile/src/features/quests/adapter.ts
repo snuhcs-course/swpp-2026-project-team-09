@@ -14,6 +14,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
@@ -58,6 +59,9 @@ export interface QuestRowView {
   daysAway: number | null;
   // Every Sub Quest of it ended or was cancelled.
   ended: boolean;
+  // It is over by now: it ended, or the end of the Sub Quest it shows has passed, as a class in the morning is by the
+  // afternoon. 오늘 folds such rows (A04 ticket 10).
+  over: boolean;
   // Where the map goes on a press. Null for a Quest without a place.
   position: LatLng | null;
 }
@@ -299,6 +303,10 @@ function kindOf(quest: Quest): QuestRowView['kind'] {
   return heldAlone(quest) ? 'quest' : 'party';
 }
 
+function endedBy(end: string | null, now: Date): boolean {
+  return end !== null && Date.parse(end) <= now.getTime();
+}
+
 // The rows of the Quest list, the earliest first, and the Quests whose time is not set last, as they were made.
 export function toQuestRows(sources: QuestSources): QuestRowView[] {
   const { quests, myParty, parties, meId, now } = sources;
@@ -329,6 +337,7 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
       time: untimed ? UNTIMED : start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),
       ended: subQuest === null && quest.subQuests.length > 0,
+      over: subQuest === null ? quest.subQuests.length > 0 : endedBy(subQuest.endsAt, now),
       position: positionOf(subQuest),
     };
     if (request !== null) {

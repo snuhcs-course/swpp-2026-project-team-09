@@ -12,7 +12,7 @@ import { TabEdgeBack } from '@/navigation/edge-back';
 import { AiRaisedProvider } from '@/screens/shell/ai-raised';
 import { TabBar } from '@/screens/shell/tab-bar';
 
-// The bottom navigation's tabs: the map (`main`, the bar's middle), 파티, 행사, 알림 and 내 정보. The map is the first
+// The bottom navigation's tabs: the map (`main`, the bar's middle), 파티, 행사, 오늘 and 내 정보. The map is the first
 // route, whatever the bar's order. A tab stays mounted while another is shown, so the map keeps its native view, its
 // camera and what is open on it. Android's back button on another tab shows the map, and on the map it leaves the app.
 // A swipe from the left edge does the same on another tab, and nothing on the map, whose edges the map's drags need.
@@ -42,7 +42,7 @@ export default function TabsLayout(): ReactElement {
       <Tabs.Screen name="main" />
       <Tabs.Screen name="party" />
       <Tabs.Screen name="events" />
-      <Tabs.Screen name="notifications" />
+      <Tabs.Screen name="today" />
       <Tabs.Screen name="me" />
     </Tabs>
     </AiRaisedProvider>

@@ -71,6 +71,8 @@ async function openNotifications(bell: string): Promise<void> {
   const user = await openMain();
   await user.press(screen.getByRole('tab', { name: bell }));
   await pass(500);
+  await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
+  await pass(500);
 }
 
 const GROUPS: ReadonlySet<unknown> = new Set(['오늘', '어제', '이전']);
@@ -104,7 +106,7 @@ describe('the groups of 알림', () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
     server.on('GET /notifications', { status: 200, body: [LAST_WEEK, YESTERDAY, TWO_DAYS_AGO, TODAY] });
 
-    await openNotifications('알림, 새 소식 1개');
+    await openNotifications('오늘, 새 소식 1개');
 
     expect(shownOrder()).toEqual([
       '# 오늘',
@@ -121,7 +123,7 @@ describe('the groups of 알림', () => {
   it('leave out a group with no rows', async () => {
     server.on('GET /notifications', { status: 200, body: [LAST_WEEK] });
 
-    await openNotifications('알림');
+    await openNotifications('오늘');
 
     expect(shownOrder()).toEqual(['# 이전', '박지훈님이 초대를 수락했어요']);
   });
@@ -129,7 +131,7 @@ describe('the groups of 알림', () => {
   it('are not shown with no rows at all, which leaves "새 알림이 없어요"', async () => {
     server.on('GET /notifications', { status: 200, body: [] });
 
-    await openNotifications('알림');
+    await openNotifications('오늘');
 
     expect(shownOrder()).toEqual([]);
     expect(screen.getByText('새 알림이 없어요')).toBeVisible();

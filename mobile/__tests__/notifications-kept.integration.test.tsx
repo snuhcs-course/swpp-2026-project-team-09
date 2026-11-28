@@ -57,12 +57,14 @@ async function openNotifications(bell: string): Promise<Awaited<ReturnType<typeo
   const user = await openMain();
   await user.press(screen.getByRole('tab', { name: bell }));
   await pass(500);
+  await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
+  await pass(500);
   return user;
 }
 
 describe('a kept Notification in 알림', () => {
   it('is a row with its title, its line and its time', async () => {
-    await openNotifications('알림');
+    await openNotifications('오늘');
 
     expect(screen.getByRole('button', { name: ROW })).toBeVisible();
     expect(screen.getByText('김민준님이 초대를 수락했어요')).toBeVisible();
@@ -70,7 +72,7 @@ describe('a kept Notification in 알림', () => {
   });
 
   it("goes to the main screen and opens the party's card when pressed", async () => {
-    const user = await openNotifications('알림');
+    const user = await openNotifications('오늘');
 
     await user.press(screen.getByRole('button', { name: ROW }));
     await pass(500);
@@ -100,7 +102,7 @@ describe('a kept Notification in 알림', () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
     server.on('GET /notifications', { status: 200, body: [{ ...ACCEPTED, read: true }] });
 
-    await openNotifications('알림, 새 소식 1개');
+    await openNotifications('오늘, 새 소식 1개');
 
     expect(screen.getByRole('header', { name: '알림 1' })).toBeVisible();
     expect(screen.getByRole('button', { name: ROW })).toBeVisible();
@@ -132,16 +134,16 @@ describe('an unread kept Notification', () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('tab', { name: '알림, 새 소식 2개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 새 소식 2개' })).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티, 새 소식 1개', includeHiddenElements: true })).toBeOnTheScreen();
 
-    await user.press(screen.getByRole('tab', { name: '알림, 새 소식 2개' }));
+    await user.press(screen.getByRole('tab', { name: '오늘, 새 소식 2개' }));
     await pass(500);
     expect(screen.getByRole('button', { name: `새 알림 · ${ROW}` })).toBeVisible();
     expect(server.received('POST /notifications/read')).toHaveLength(1);
     await backToMe(user);
 
-    expect(screen.getByRole('tab', { name: '알림, 새 소식 1개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 새 소식 1개' })).toBeVisible();
   });
 
   it('is not counted while its time is still to come, nor when it is a kind 알림 leaves out', async () => {
@@ -154,7 +156,7 @@ describe('an unread kept Notification', () => {
 
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('tab', { name: '알림' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘' })).toBeVisible();
   });
 
   it('is counted from the signal `notice` that brings it', async () => {
@@ -164,7 +166,7 @@ describe('an unread kept Notification', () => {
     await socketServer((socket) => {
       socket.accept();
     });
-    expect(screen.getByRole('tab', { name: '알림' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘' })).toBeVisible();
 
     keepOnServer([{ ...ACCEPTED, read: false }]);
     await socketServer((socket) => {
@@ -172,7 +174,7 @@ describe('an unread kept Notification', () => {
     });
     await pass(100);
 
-    expect(screen.getByRole('tab', { name: '알림, 새 소식 1개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 새 소식 1개' })).toBeVisible();
   });
 });
 
@@ -181,7 +183,7 @@ describe('the time to leave in 알림', () => {
     // Listed once its time has come; the phone's clock a little behind the main server's still shows its title.
     jest.setSystemTime(new Date('2026-10-06T12:17:00+09:00'));
     server.on('GET /notifications', { status: 200, body: [LEAVE_BY] });
-    const user = await openNotifications('알림');
+    const user = await openNotifications('오늘');
 
     const row = screen.getByRole('button', { name: '지금 나서요 · 학생회관식당까지 걸어서 15분 · 12:18' });
     expect(screen.queryByText('12:18 나설 시각')).toBeNull();

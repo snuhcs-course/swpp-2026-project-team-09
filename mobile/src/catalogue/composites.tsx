@@ -104,7 +104,7 @@ export function BottomNavs(): ReactElement {
           { icon: 'users', label: '파티', badge: 2 },
           { icon: 'calendar', label: '행사' },
           { icon: 'mapSpark', label: '지도', round: true, raised },
-          { icon: 'bell', label: '알림', badge: 3 },
+          { icon: 'today', label: '오늘', badge: 3 },
           { icon: 'user', label: '내 정보' },
         ]}
         line={false}

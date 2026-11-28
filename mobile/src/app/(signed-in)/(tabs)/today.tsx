@@ -6,9 +6,9 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { NotificationsScreen } from '@/screens/me/notifications-screen';
+import { TodayScreen } from '@/screens/today/today-screen';
 
-// The 알림 tab (A04 ticket 09): what waits for the User and the kept Notifications.
-export default function NotificationsRoute(): ReactElement {
-  return <NotificationsScreen />;
+// The 오늘 tab (A04 ticket 10): what waits for the User's answer, today's Quests and the newest kept Notifications.
+export default function TodayRoute(): ReactElement {
+  return <TodayScreen />;
 }

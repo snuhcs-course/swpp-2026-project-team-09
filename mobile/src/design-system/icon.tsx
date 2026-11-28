@@ -29,6 +29,9 @@ const ICONS = {
   map: [{ path: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z' }, { path: 'M9 4v14' }, { path: 'M15 6v14' }],
   // Not the design system's: the bottom bar's middle, the map and the AI (A04 ticket 09), a folded map whose top
   // right corner is a sparkle, as the proposal's 권장 boards draw it.
+  // Not the design system's: the bottom bar's 오늘 (A04 ticket 10), a rounded square with a check, as the proposal's
+  // 권장 boards draw it.
+  today: [{ rect: [4, 4.5, 16, 16, 3.5] }, { path: 'M8.5 12.5l2.5 2.5 4.5-5' }],
   mapSpark: [
     { path: 'M3 7.5l5-1.8 6 1.8 4-1.5v7M21 16.5v1.5l-6 2-6-2-6 2V7.5' },
     { path: 'M8 5.7v12.3M14 7.5v6' },

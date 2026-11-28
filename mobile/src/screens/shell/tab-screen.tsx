@@ -50,8 +50,8 @@ export interface TabToggle {
 
 interface TabScreenProps {
   title: string;
-  // A number after the title, such as the 4 of "알림 4".
-  count?: number;
+  // Muted words after the title, such as 오늘's date.
+  aside?: string;
   // Beside the magnifier.
   actions?: ReactNode;
   search?: TabSearch;
@@ -87,7 +87,7 @@ function SearchBar({ search, words }: { search: TabSearch; words: string }): Rea
 
 // A tab other than 지도, as the `Party`, `Events` and `Profile` frames draw it: the tab's app bar on the grey ground,
 // and a toast 16 above the navigation while the tab is in front.
-export function TabScreen({ title, count, actions, search, toggle, children }: TabScreenProps): ReactElement {
+export function TabScreen({ title, aside, actions, search, toggle, children }: TabScreenProps): ReactElement {
   const { bottom } = useSafeAreaInsets();
   useToastAbove(takenUnderToastOverNav(bottom), useIsFocused());
   const magnifier =
@@ -113,7 +113,7 @@ export function TabScreen({ title, count, actions, search, toggle, children }: T
               {actions}
             </>
           }
-          count={count}
+          aside={aside}
           title={title}
         />
       ) : (

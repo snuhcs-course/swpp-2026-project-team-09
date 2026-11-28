@@ -9,7 +9,7 @@
 import { cardToShow, countOf, type FirstRunCard, type FirstRunFacts } from '@/features/first-run/rules';
 
 // The tour of the bottom tabs (P06 ticket 07): one step for each of the bar's five slots, in its order (A04 ticket
-// 09): 파티, 행사, the map and the AI in the middle, 알림 and 내 정보.
+// 09): 파티, 행사, the map and the AI in the middle, 오늘 and 내 정보.
 export const TOUR_STEPS = 5;
 
 // Whether the first run (P05 ticket 09) is done with the User, so that the tour can follow it: no card waits, or

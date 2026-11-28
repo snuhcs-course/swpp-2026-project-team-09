@@ -25,7 +25,8 @@ import EventsScreen from '@/app/(signed-in)/(tabs)/events';
 import MainScreen from '@/app/(signed-in)/(tabs)/main';
 import MeScreen from '@/app/(signed-in)/(tabs)/me';
 import PartyScreen from '@/app/(signed-in)/(tabs)/party';
-import NotificationsScreen from '@/app/(signed-in)/(tabs)/notifications';
+import TodayScreen from '@/app/(signed-in)/(tabs)/today';
+import NotificationsScreen from '@/app/(signed-in)/notifications';
 import PartyFormScreen from '@/app/(signed-in)/party-form';
 import PlaceMapScreen from '@/app/(signed-in)/place-map';
 import PostScreen from '@/app/(signed-in)/post/[questId]';
@@ -83,9 +84,10 @@ export async function startApp(
       '(signed-in)/(tabs)/main': MainScreen,
       '(signed-in)/(tabs)/party': PartyScreen,
       '(signed-in)/(tabs)/events': EventsScreen,
-      '(signed-in)/(tabs)/notifications': NotificationsScreen,
+      '(signed-in)/(tabs)/today': TodayScreen,
       '(signed-in)/(tabs)/me': MeScreen,
       '(signed-in)/quests': QuestsScreen,
+      '(signed-in)/notifications': NotificationsScreen,
       '(signed-in)/profile-edit': ProfileEditScreen,
       '(signed-in)/me/friends/index': FriendsScreen,
       '(signed-in)/me/friends/requests': FriendRequestsScreen,

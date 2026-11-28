@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { JoinPolicy, MyParty, Party, Person, Quest, SubQuest } from '@/api/types';
@@ -231,5 +232,26 @@ describe("a Quest's meta on another day", () => {
     ]);
 
     expect(rows.map(({ meta }) => meta.split(' · ')[0])).toEqual(['17:40', '내일 18:00', '10/9(금) 12:21']);
+  });
+});
+
+// A04 ticket 10: 오늘 folds the rows over by now.
+describe("a row's being over", () => {
+  it('is over once the end of the step it shows has passed, or every step ended', () => {
+    const morning = withStep(quest('아침', { startsAt: '2026-10-06T09:00:00+09:00' }), {
+      endsAt: '2026-10-06T10:00:00+09:00',
+    });
+    const later = withStep(quest('저녁', { startsAt: '2026-10-06T18:00:00+09:00' }), {
+      endsAt: '2026-10-06T19:00:00+09:00',
+    });
+    const open = quest('열린', { startsAt: '2026-10-06T09:00:00+09:00' });
+    const ended = withStep(quest('끝난', { startsAt: '2026-10-06T09:00:00+09:00' }), { ended: true });
+
+    expect(rowsOf([morning, later, open, ended]).map(({ title, over }) => [title, over])).toEqual([
+      ['아침 퀘스트', true],
+      ['열린 퀘스트', false],
+      ['저녁 퀘스트', false],
+      ['끝난 퀘스트', true],
+    ]);
   });
 });
