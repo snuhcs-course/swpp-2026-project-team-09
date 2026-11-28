@@ -23,16 +23,16 @@ The user on 2026-11-28, on the 행사 tab:
 
 ## Checked: buttons whose words grow
 
-| Button | Words | Was | Now |
-|---|---|---|---|
-| 행사 sheet's party button (`events/event-detail-sheet.tsx`) | a count | "모집 중인 파티 1 · 찾…" | "모집 중인 파티 1"; would wrap, never cut |
-| Map card's main button (`main/card.tsx`, `card.primary.label`) | a Friend's name, a place | one line, "…" | wraps |
-| Answer actions (`main/answer/plan-action.tsx`, `choice-row.tsx`, `confirm-row.tsx`, `lookup-card.tsx`, `row-four-buttons.tsx`) | times, names, places | one line, "…" | wrap |
-| 모집글 and card join buttons (`party/post-footer.tsx`, `party/post-card.tsx`) | "참여하기" / "참여 신청" / count words | one line, "…" | wrap |
-| 파티 form's submit (`party/form/party-form-screen.tsx`, `words.submit`) | "n명 초대하고 올리기"-type words | one line, "…" | wraps |
-| 친구 초대 sheet (`party/form/friend-sheet.tsx`) | "n명 초대" | one line | wraps |
-| Dialogs (`design-system/dialog.tsx`), empty-state action (`states.tsx`) | the caller's words | one line, "…" | wrap |
-| Room's action (`room/room-screen.tsx`) | the action's words | one line, "…" | wraps |
+| Button                                                                                                                         | Words                                  | Was                      | Now                                       |
+| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- | ------------------------ | ----------------------------------------- |
+| 행사 sheet's party button (`events/event-detail-sheet.tsx`)                                                                    | a count                                | "모집 중인 파티 1 · 찾…" | "모집 중인 파티 1"; would wrap, never cut |
+| Map card's main button (`main/card.tsx`, `card.primary.label`)                                                                 | a Friend's name, a place               | one line, "…"            | wraps                                     |
+| Answer actions (`main/answer/plan-action.tsx`, `choice-row.tsx`, `confirm-row.tsx`, `lookup-card.tsx`, `row-four-buttons.tsx`) | times, names, places                   | one line, "…"            | wrap                                      |
+| 모집글 and card join buttons (`party/post-footer.tsx`, `party/post-card.tsx`)                                                  | "참여하기" / "참여 신청" / count words | one line, "…"            | wrap                                      |
+| 파티 form's submit (`party/form/party-form-screen.tsx`, `words.submit`)                                                        | "n명 초대하고 올리기"-type words       | one line, "…"            | wraps                                     |
+| 친구 초대 sheet (`party/form/friend-sheet.tsx`)                                                                                | "n명 초대"                             | one line                 | wraps                                     |
+| Dialogs (`design-system/dialog.tsx`), empty-state action (`states.tsx`)                                                        | the caller's words                     | one line, "…"            | wrap                                      |
+| Room's action (`room/room-screen.tsx`)                                                                                         | the action's words                     | one line, "…"            | wraps                                     |
 
 ## Acceptance
 
