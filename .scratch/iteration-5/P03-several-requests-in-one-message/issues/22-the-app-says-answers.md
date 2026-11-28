@@ -34,3 +34,8 @@ Native files: none. Releases: an app OTA update, after the main server's Release
 - With one step left, the steps card stays with that one step, under the refusal's words, rather than turning back into the single answer's screen. This is the smallest change that keeps its answer chosen. The phone check decides whether it reads right.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 50 minutes, an estimate. That is 48 minutes from the session's transcript, 01:31 to 02:40 UTC, which covers the build, the tests and the emulator screens; and a few minutes listing what had to be true first, before P05 ticket 79. It counts gaps under five minutes and leaves out time spent waiting for a person.
+- Tokens, 01:31 to 02:40 UTC: input 58,882,833, of which 58,697,251 were cache reads, 185,308 cache writes and 274 uncached. Output 73,511. No subagents.
