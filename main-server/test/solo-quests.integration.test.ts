@@ -58,7 +58,13 @@ describe('A Quest of one’s own made alone', () => {
     const response = await makeQuest(app, user, { ...alone, ...more });
 
     expect(response.status).toBe(201);
-    expect(response.body).toMatchObject({ takenAlone: true, capacity: 1, joinPolicy: 'closed', board: null });
+    expect(response.body).toMatchObject({
+      takenAlone: true,
+      seatStay: false,
+      capacity: 1,
+      joinPolicy: 'closed',
+      board: null,
+    });
   });
 
   it('is among the User’s Quests, marked taken alone, as the app draws a Quest of one’s own', async () => {

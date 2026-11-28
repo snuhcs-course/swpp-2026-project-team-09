@@ -97,6 +97,9 @@ describe('POST /library/seat-stays', () => {
         capacity: 1,
         joinPolicy: 'closed',
         takenAlone: true,
+        // The room tells a seat's stay, which still refuses 수정 and an invitation, from other Quests taken alone (P05
+        // ticket 89).
+        seatStay: true,
         holders: [{ id: user.id }],
         subQuests: [
           {
@@ -128,6 +131,18 @@ describe('POST /library/seat-stays', () => {
     const response = await stay(user, { ...SEAT, spaceId: '4F-group-6' }).expect(400);
 
     expect(response.body).toMatchObject({ code: 'NOT_A_SEAT' });
+  });
+});
+
+describe("A seat's stay among the User's Quests", () => {
+  it('is marked a seat’s stay, which the room reads (P05 ticket 89)', async () => {
+    const user = await student('목록좌석', null);
+    const { quest } = z.object({ quest: z.object({ id: z.string() }) }).parse((await stay(user).expect(201)).body);
+
+    const listed = await withAccessToken(request(app.getHttpServer()).get('/quests'), user.accessToken).expect(200);
+
+    const mine = z.array(z.object({ id: z.string(), seatStay: z.boolean() })).parse(listed.body);
+    expect(mine.find(({ id }) => id === quest.id)).toMatchObject({ seatStay: true });
   });
 });
 

@@ -1236,6 +1236,9 @@ A Quest reads:
   its `leave-by` goes, as attending gathers it; an invitation also sends `party_creation_completed` (P05 ticket 87). A
   seat's stay (`seatStay`), one person's booking, gathers nobody: an invitation and a change of its settings are
   refused with 409 `QUEST_TAKEN_ALONE` (P03 ticket 17).
+- `seatStay` is `true` for a booked seat's stay at 관정관 (`POST /library/seat-stays`), one person's booking, and
+  `false` for every other Quest, a Class Quest's included (P05 ticket 89). It tells the one Quest taken alone that never
+  gathers: its room offers no 수정 and no invitation.
 - `waitingJoinRequests` is the number of requests to join waiting for the Leader's answer when the reading User leads
   the Quest, and `0` otherwise.
 - `roomRequest` is set on a booking party, the Quest a room request made (Group study room requests), for the map's
