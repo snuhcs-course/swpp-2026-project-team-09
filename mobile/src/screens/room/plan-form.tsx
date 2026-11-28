@@ -6,18 +6,21 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { SubQuestContent } from '@/api/room-types';
 import type { SubQuest } from '@/api/types';
 import { Button, color, font, Icon, radius, space, TextField } from '@/design-system';
-import { type PickedPlace, waitForPlace } from '@/features/places/picked-place';
+import type { PickedPlace } from '@/features/places/picked-place';
 import { usePlaceToSend } from '@/features/places/typed-place';
 import { pointOf } from '@/features/quests/adapter';
 import { DateTimeSheet, whenWords } from '../date-time-sheet';
+import { KindTag, usePlaceKind } from '../place-sheet/place-kind';
+import { PlaceSheet } from '../place-sheet/place-sheet';
+import { usePlaceSheet } from '../place-sheet/use-place-sheet';
 
 interface PlanFormProps {
   // The Sub Quest edited, or null for a new one.
@@ -82,54 +85,46 @@ export function WhenField({
   );
 }
 
-interface WhereFieldProps {
+interface PlaceFieldProps {
   words: string;
   picked: PickedPlace | null;
-  onWords: (words: string) => void;
-  onPicked: (place: PickedPlace | null) => void;
-  // Before the label, as `WhenField`'s.
-  icon?: ReactNode;
+  onSet: (words: string, picked: PickedPlace | null) => void;
 }
 
-// `어디서`: words of the User's own, and the map view, whose choice fills them. Emptied words drop the choice. Words
-// without a choice are the Place they name, or else the words alone.
-export function WhereField({ words, picked, onWords, onPicked, icon }: WhereFieldProps): ReactElement {
+// `어디서`: the place's words, or 장소 검색 in grey, with the grey tag of its kind, in a box like `언제`'s. A press
+// opens the 파티 form's place sheet, which replaces the place but never removes it.
+function PlaceField({ words, picked, onSet }: PlaceFieldProps): ReactElement {
+  const kind = usePlaceKind(words, picked);
+  const { open, sheet } = usePlaceSheet(words, onSet);
+  const unset = words.trim() === '';
+  const shown = unset ? '장소 검색' : words;
   return (
-    <View style={styles.where}>
-      <View style={styles.whereField}>
-        <TextField
-          label="어디서"
-          labelIcon={icon}
-          onChangeText={(next) => {
-            onWords(next);
-            if (next.trim() === '') {
-              onPicked(null);
-            }
-          }}
-          placeholder="직접 입력"
-          value={words}
-        />
-      </View>
+    <View style={styles.field} testID="place-row">
+      <Text style={styles.label}>어디서</Text>
       <Pressable
-        accessibilityLabel="지도에서 선택"
+        accessibilityLabel={`어디서 ${shown}`}
         accessibilityRole="button"
         onPress={() => {
-          waitForPlace((place) => {
-            onPicked(place);
-            onWords(place.words);
-          });
-          router.push('/place-map');
+          // The keyboard goes first, so that the sheet is never behind it.
+          Keyboard.dismiss();
+          open();
         }}
-        style={[styles.mapButton, picked !== null && styles.mapPicked]}
+        style={[styles.when, styles.where]}
       >
-        <Icon color={color.snuBlue} name="map" size={20} />
+        <Icon color={unset ? color.inkSubtle : color.inkMuted} name="pin" size={18} />
+        <Text numberOfLines={1} style={[styles.whenWords, styles.whereWords, unset && styles.unset]}>
+          {shown}
+        </Text>
+        {kind === null ? null : <KindTag kind={kind} />}
+        <Icon color={color.inkSubtle} name="chevronRight" size={16} />
       </Pressable>
+      <PlaceSheet sheet={sheet} />
     </View>
   );
 }
 
-// The room's inline form for a Sub Quest, on a grey box: `내용`, `언제`, `어디서` with the map, `취소` and `추가` or
-// `수정`, which waits for the content and the time.
+// The room's inline form for a Sub Quest, on a grey box: `내용`, `언제`, `어디서` with the place sheet, `취소` and `추가`
+// or `수정`, which waits for the content and the time.
 export function PlanForm({ editing, onCancel, onSave }: PlanFormProps): ReactElement {
   const [title, setTitle] = useState(editing?.title ?? '');
   const [startsAt, setStartsAt] = useState(editing?.startsAt ?? null);
@@ -152,7 +147,14 @@ export function PlanForm({ editing, onCancel, onSave }: PlanFormProps): ReactEle
     <View style={styles.form}>
       <TextField label="내용" maxLength={30} onChangeText={setTitle} placeholder="301동 앞에서 만나기" value={title} />
       <WhenField onPick={setStartsAt} startsAt={startsAt} />
-      <WhereField onPicked={setPicked} onWords={setWords} picked={picked} words={words} />
+      <PlaceField
+        onSet={(set, place) => {
+          setWords(set);
+          setPicked(place);
+        }}
+        picked={picked}
+        words={words}
+      />
       <View style={styles.buttons}>
         <Button onPress={onCancel} variant="secondary">
           취소
@@ -165,7 +167,7 @@ export function PlanForm({ editing, onCancel, onSave }: PlanFormProps): ReactEle
   );
 }
 
-const MAP_BUTTON = 50;
+const FIELD = 50;
 
 const styles = StyleSheet.create({
   form: {
@@ -183,7 +185,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: MAP_BUTTON,
+    height: FIELD,
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: color.border,
@@ -192,18 +194,8 @@ const styles = StyleSheet.create({
   },
   whenWords: { fontFamily: font.regular, fontSize: 16, lineHeight: 24, color: color.ink },
   unset: { color: color.inkSubtle },
-  where: { flexDirection: 'row', alignItems: 'flex-end', gap: space[2] },
-  whereField: { flex: 1 },
-  mapButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: MAP_BUTTON,
-    height: MAP_BUTTON,
-    borderWidth: 1,
-    borderColor: color.border,
-    borderRadius: radius.md,
-    backgroundColor: color.surface,
-  },
-  mapPicked: { borderWidth: 2, borderColor: color.snuBlue, backgroundColor: color.blue50 },
+  // `언제`'s box, with the pin before the words and the tag and the chevron after them.
+  where: { justifyContent: 'flex-start', gap: 10 },
+  whereWords: { flex: 1, minWidth: 0 },
   buttons: { flexDirection: 'row', justifyContent: 'flex-end', gap: space[2] },
 });

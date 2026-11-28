@@ -4,6 +4,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { use } from 'react';
@@ -19,12 +20,12 @@ import { skippedLineOf } from './skipped-classes';
 import { LANE_HEIGHT } from './time-band';
 import { TUCK_STRIP } from './time-card-grip';
 import { SheetLinkContext } from './sheet-link';
-import { topRoomOf } from './top-stops';
+import { type TopStops, topRoomOf } from './top-stops';
 
 // The answer sheet's steps as heights (moved out of `open-card.tsx` for its length, P04 ticket 61). Low has one top
 // edge for every answer and for the list of questions: the meal answer's, its header, two lines of words, the main
 // button's row, and the input (P04 ticket 63). Middle covers `MID_SHARE` of the screen. High stands just under the time
-// card.
+// card. The sheet is laid out once, at the most room any top leaves.
 
 // Low shows this many lines of the meal answer's words, at the phone's font size, over the fade.
 export const LOW_LINES = 2;
@@ -41,7 +42,7 @@ const FOOTER = AI_INPUT.bottom + AI_INPUT.height + space[2] + MAIN_ROW + space[3
 export const MID_SHARE = 0.6;
 
 export interface Caps extends LevelHeights {
-  // The scrolling part's laid-out height: the highest step's.
+  // The scrolling part's laid-out height: high's under the strip at the stage's top, the most room any top leaves.
   room: number;
   // At low, the room under the last whole line of words that the footer's band hides, so that no line shows cut in half.
   band: number;
@@ -67,13 +68,36 @@ export function foldedTimeCardOf(fontScale: number, skippedLine = false): number
   return space[3] + head + space[1] + LANE_HEIGHT + space[1] + ends + skipped + space[1] + TUCK_STRIP;
 }
 
+// The room over high's edge, from the lists' top. High's top edge is one line for every answer and state: just under the
+// place the folded time card takes, whether one stands there or not, tucked away or not, whatever its measured height
+// (h1, h2, k4; the user's phone, 2026-11-26: while an answer loaded, before its time card, high covered the whole
+// screen). Only the top of several requests unfolded, with a Plan's bar under the steps card, reaches lower, and high
+// stands under it then. Under the bar of several requests, how far the top is folded moves the edge (P01 ticket 22):
+// under the grip strip at the stage's top at stop 0, under the steps card and the strip under it at 1, and at 2 as
+// above. Each stop's edge stays where it is while an answer loads. An answer to one request keeps the one edge. The top
+// is read as the stops hold it, in the same render as the stop: the height the top tells (`stepsTop`) reaches here two
+// renders after it, and at each unfold high stood for a quarter of a second under the top as it was (P01 ticket 45).
+function topRoomUnder(
+  stops: TopStops | undefined,
+  { stepsTop, unfolded, folded, lists }: { stepsTop: number; unfolded: number; folded: number; lists: number },
+): number {
+  if (stops === undefined || stepsTop === 0) {
+    return folded;
+  }
+  return topRoomOf(stops.stop, { stepsHeight: stops.stepsHeight, folded: Math.max(folded, unfolded), lists });
+}
+
 // The most the scrolling part shows at each step, under the card's header (`above`); null until the stage is laid out.
+// The stage runs from under the status bar, `top` high, to the screen's bottom. Where high's place reaches lower than
+// middle, middle is high.
 export function useCaps(props: FrameCardProps, above: number, padTop: number): Caps | null {
   const { stageHeight, barRoom, raising, fit = false } = props;
   const { top, bottom } = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
-  // The bar of several requests comes from its layout: a fraction of a point moves no step (`steady.ts`).
+  const stops = use(SheetLinkContext).top;
+  // The top's heights come from its layout: a fraction of a point moves no step (`steady.ts`).
   const stepsTop = useSteady(props.stepsTop ?? 0);
+  const unfolded = useSteady(stops?.unfoldedHeight ?? 0);
   if (stageHeight === null) {
     return null;
   }
@@ -81,32 +105,24 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
     const half = Math.max(LEAST_CONTENT, (contentMaxOf(stageHeight, barRoom) ?? LEAST_CONTENT) - above);
     return { low: half, mid: half, high: half, room: half, band: 0, fixedSteps: false };
   }
-  // High's top edge is one line for every answer and state: just under the place the folded time card takes, whether
-  // one stands there or not, tucked away or not, whatever its measured height (h1, h2, k4; the user's phone, 2026-11-26:
-  // while an answer loaded, before its time card, high covered the whole screen). Only the bar of several requests,
-  // with a Plan's bar under it, reaches lower, and high stands under it then. The stage runs from under the status bar,
-  // `top` high, to the screen's bottom. Where that place reaches lower than middle, middle is high.
-  // Under the bar of several requests, how far the top is folded moves the edge (P01 ticket 22): under the grip strip
-  // at the stage's top at stop 0, under the steps card and the strip under it at 1, and at 2 as above. Each stop's edge
-  // stays where it is while an answer loads. An answer to one request keeps the one edge.
-  const folded = Math.max(foldedTimeCardOf(fontScale, props.skippedLine), stepsTop);
-  const topStops = use(SheetLinkContext).top;
-  const topRoom =
-    topStops === undefined || stepsTop === 0
-      ? folded
-      : topRoomOf(topStops.stop, { stepsHeight: topStops.stepsHeight, folded, lists: listsTop(top) });
-  const pillRoom = listsTop(top) + topRoom + space[2];
-  const under = stageHeight - pillRoom - barRoom - above;
+  const folded = foldedTimeCardOf(fontScale, props.skippedLine);
+  const topRoom = topRoomUnder(stops, { stepsTop, unfolded, folded, lists: listsTop(top) });
+  const free = stageHeight - barRoom - above;
+  const under = free - listsTop(top) - topRoom - space[2];
   const mid = Math.max(LEAST_CONTENT, Math.min(under, (stageHeight + top) * MID_SHARE - barRoom - above));
   const high = Math.max(mid, under);
+  // Laid out at the most room any top leaves, under the strip at the stage's top, so that no fold, step, or line of
+  // left-out Classes lays the sheet out again: laid out at high, at each fold it was laid out again while it stood at
+  // middle, its place on the UI thread came a frame after that layout, and its top edge dipped (P01 ticket 45).
+  const room = Math.max(high, free - TUCK_STRIP - space[2]);
   if (fit) {
-    return { low: mid, mid, high, room: high, band: 0, fixedSteps: false };
+    return { low: mid, mid, high, room, band: 0, fixedSteps: false };
   }
   const [low, band] = lowOf(mid, padTop, {
     line: text.bodyLg.lineHeight * fontScale,
     footer: bottom + FOOTER - barRoom,
   });
-  return { low, mid, high, room: high, band, fixedSteps: true };
+  return { low, mid, high, room, band, fixedSteps: true };
 }
 
 // Under a stepped card's content, the room that lets its last row come clear of the fade; a card without steps shows

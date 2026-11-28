@@ -12,7 +12,7 @@ import { color, font, radius } from '@/design-system';
 import type { PickedPlace } from '@/features/places/picked-place';
 import { type PlaceKind, placeKindOf, placeToSend } from '@/features/places/typed-place';
 
-// The kind of a place as the 파티 form names it, everywhere in one grey tag (reviewed on 2026-11-28).
+// The kind of a place, in one grey tag wherever a place is set (reviewed on 2026-11-28).
 export const PLACE_KIND_WORDS: Record<PlaceKind, string> = {
   building: '학교 건물',
   point: '지도 위치',

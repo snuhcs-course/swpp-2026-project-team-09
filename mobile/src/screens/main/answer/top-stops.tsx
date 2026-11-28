@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo, useState } from 'react';
@@ -23,6 +24,11 @@ export interface TopStops {
   // was while an answer loads.
   stepsHeight: number;
   setStepsHeight: (height: number) => void;
+  // What stands at the top at stop 2, as laid out: the steps card with the chosen step's top card under it, or with
+  // its strip for a step with none. Held here beside the stop, the sheet's high at each stop is measured in the same
+  // render as the stop (P01 ticket 45).
+  unfoldedHeight: number;
+  setUnfoldedHeight: (height: number) => void;
   // How far the steps card is pushed up, 0 or less, moved on the UI thread by the time card's grip
   // (`time-card-grip.ts`), or by the strip of a step with no time card (`steps-strip.tsx`).
   lift: SharedValue<number>;
@@ -31,8 +37,12 @@ export interface TopStops {
 export function useTopStops(): TopStops {
   const [stop, setStop] = useState<TopStop>(2);
   const [stepsHeight, setStepsHeight] = useState(0);
+  const [unfoldedHeight, setUnfoldedHeight] = useState(0);
   const lift = useSharedValue(0);
-  return useMemo(() => ({ stop, setStop, stepsHeight, setStepsHeight, lift }), [stop, stepsHeight, lift]);
+  return useMemo(
+    () => ({ stop, setStop, stepsHeight, setStepsHeight, unfoldedHeight, setUnfoldedHeight, lift }),
+    [stop, stepsHeight, unfoldedHeight, lift],
+  );
 }
 
 // Where the steps card rests at a stop, which React holds so that a commit of React's lays it there again: at 0 its
@@ -42,8 +52,8 @@ export function restingLift(stop: TopStop, stepsBottom: number): number {
 }
 
 // The room over the answer sheet's high edge, from the lists' top (`lists`, from the stage's top), that a stop leaves:
-// the strip at the stage's top at 0, the steps card and the strip under it at 1, and at 2 what stands there today
-// (`folded`, the folded time card's place or the bar of steps reaching lower).
+// the strip at the stage's top at 0, the steps card and the strip under it at 1, and at 2 what stands there (`folded`,
+// the folded time card's place or the top unfolded reaching lower).
 export function topRoomOf(
   stop: TopStop,
   { stepsHeight, folded, lists }: { stepsHeight: number; folded: number; lists: number },

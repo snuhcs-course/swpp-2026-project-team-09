@@ -290,6 +290,7 @@ export function StepsTop({ control, drawCard, onHeight }: StepsTopProps): ReactE
   const { heights, onSteps, onCard } = useHeights(stops?.setStepsHeight);
   const { steps, activeStep, setActiveStep } = control;
   useTold(toldOf(stops?.stop ?? 2, heights, drawCard !== null), onHeight);
+  useTold(toldOf(2, heights, drawCard !== null), stops?.setUnfoldedHeight ?? nothing);
   if (steps === null) {
     return null;
   }
@@ -331,6 +332,10 @@ function useHeights(setStepsHeight?: (height: number) => void): {
     setHeights((last) => (last.card === height ? last : { ...last, card: height }));
   }, []);
   return { heights, onSteps, onCard };
+}
+
+function nothing(): void {
+  // No stops to tell: the top outside the answer's sheet link.
 }
 
 function useTold(told: number, onHeight: (height: number) => void): void {
