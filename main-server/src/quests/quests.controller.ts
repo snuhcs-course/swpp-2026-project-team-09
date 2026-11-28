@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query } from '@nestjs/common';
@@ -28,6 +29,7 @@ import {
 } from './dto/quest-requests.dto.js';
 import { QuestDto, RecruitingQuestDto, SubQuestDto } from './dto/quest.dto.js';
 import { LeaderService } from './leader.service.js';
+import { QuestParty } from './quest-party.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
 import { SubQuestsService } from './sub-quests.service.js';
@@ -39,6 +41,7 @@ export class QuestsController {
     private readonly subQuests: SubQuestsService,
     private readonly recruiting: RecruitingService,
     private readonly leader: LeaderService,
+    private readonly questParty: QuestParty,
   ) {}
 
   // A repeat gives the same Quest, so it takes no Idempotency-Key.
@@ -79,7 +82,7 @@ export class QuestsController {
     @CurrentUser() user: SignedInUser,
     @Param('questId', { schema: z.uuid() }) questId: string,
   ): Promise<void> {
-    await this.quests.drop(user.id, questId);
+    await this.questParty.drop(user.id, questId);
     await this.leader.forgetTimeToLeave(user.id, questId);
   }
 

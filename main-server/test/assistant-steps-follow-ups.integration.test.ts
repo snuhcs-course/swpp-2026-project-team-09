@@ -11,6 +11,7 @@ import {
   chainFrom,
   clock,
   DATE,
+  eventPlanned,
   meal,
   OLD_APP,
   said,
@@ -64,15 +65,17 @@ describe('A follow-up that moves the seat', () => {
 
 describe('A follow-up that moves dinner later', () => {
   it('brings the event on screen back as not done, without giving its answer again', async () => {
-    await eventAt('저녁 공연', '19:00', '20:30');
+    const id = await eventAt('저녁 공연', '19:00', '20:30');
     const first = await asked(
-      [meal('dinner', { from: '17:30' }), { tool: 'planEvents', input: { date: DATE } }, said],
+      [meal('dinner', { from: '17:30' }), ...eventPlanned(id), said],
       '5시 반에 저녁 먹고 공연 가자',
     );
     expect(first.steps?.map(({ status }) => status)).toEqual(['shown', 'shown']);
     const [dinner, events] = first.answers ?? [];
 
-    const context = { conditions: dinner?.input, answers: [dinner?.input, events?.input], steps: first.steps };
+    // As the app sends them back: the answers' conditions in the order of their steps.
+    const answers = first.steps?.map(({ shows }) => first.answers?.find(({ key }) => key === shows?.key)?.input);
+    const context = { conditions: dinner?.input, answers, steps: first.steps };
     const reply = await asked(
       [meal('dinner', { from: '18:30' }), { text: '저녁을 6시 반으로 옮겼어요.' }],
       '저녁 6시 반으로',

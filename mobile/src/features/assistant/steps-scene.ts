@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, LibrarySpace, MapScene, Plan, ReplyStep } from '@/api/assistant-types';
@@ -11,7 +12,8 @@ import { koreaClock, koreaDayWord } from '@/korea-time';
 import { seatWords } from '@/library/cards/bookings';
 import type { Slot } from '@/library/cards/payloads';
 import { clockOf, minutesOf } from '@/library/cards/times';
-import type { Draft } from './answer-groups';
+import { type Draft, inKind } from './answer-groups';
+import { stepTone } from './answer-tone';
 import { bookingTitle } from './booking-scene';
 import { meAndWalk } from './proposal-scene';
 import { turnOf } from './turn';
@@ -42,6 +44,9 @@ export interface StepsNow {
   plan: Plan | null;
   index: number;
   card: { key: string; slot: Slot } | null;
+  // When the steps name their answers by key (P03 ticket 21): each step's answer as on screen, its Plan, and whether
+  // either moved from the reply's. Left out, the one answer above stands for every answer step.
+  answerOf?: (key: string) => { answer: AnswerReply; plan: Plan | null; moved: boolean } | null;
 }
 
 // The answer's step at the Plan on screen, as the main server makes it of a Plan (`answerStep`), or not done with the
@@ -65,12 +70,17 @@ function slotStretch({ date, start, minutes }: Slot): Pick<ReplyStep, 'startAt' 
 // The steps as they stand now (P10 ticket 29). The reply's steps are the main server's of the moment it answered: the
 // answer's step is of the reply's first Plan, and a booking's of the time its card offered. Once the Plan on screen is
 // another, a candidate browsed or an answer recalculated by a band moved or Friends added, the answer's step is drawn at
-// it; a booking's step is drawn at the time its card holds. Drawn over the reply's steps until steps carry their own
-// answers.
+// it; a booking's step is drawn at the time its card holds. Steps that name their answers by key are each drawn at their
+// own answer (P03 ticket 21).
 export function liveStepsOf(shown: ShownSteps, now: StepsNow): ShownSteps {
-  const { reply, answer, plan, index, card } = now;
+  const { reply, answer, plan, index, card, answerOf } = now;
   const moved = answer !== null && (answer !== reply || index !== 0);
   const steps = shown.steps.map((step) => {
+    const key = step.shows?.kind === 'answer' ? step.shows.key : undefined;
+    if (key !== undefined && answerOf !== undefined) {
+      const own = answerOf(key);
+      return own?.moved === true ? answerStepAt(step, own.answer, own.plan) : step;
+    }
     if (step.shows?.kind === 'answer') {
       return moved ? answerStepAt(step, answer, plan) : step;
     }
@@ -150,6 +160,20 @@ export function stepsScene(steps: readonly ReplyStep[], me: LatLng | null): MapS
   return { people: mine, places: [], routes: [...walk, ...between], flags: [] };
 }
 
+// The user's choices for the steps' marks, awaiting his decision from use (2026-11-28, P03 ticket 24), one function
+// each. Their colour is `stepTone`'s, the one table of each kind's colour (`kindTone`), as the same answer's mark alone;
+// choice 2, a room's step in the study colour as a seat's, is that table's (`answerTone`).
+// Choice 1: what a seat's or a room's round holds: its number, as every step's, not the 관정 booking pick's book.
+export function bookingStepHolds(): 'number' | 'book' {
+  return 'number';
+}
+
+// Choice 3: how a step's round is drawn: solid, as a pick, for every step done, the chosen one or not; grey for one
+// not done.
+export function stepMarkRole({ status }: Pick<ReplyStep, 'status'>): 'pick' | 'dropped' {
+  return status === 'shown' ? 'pick' : 'dropped';
+}
+
 // Each step with a place as a numbered flag: ① ② by the steps' order, its title with "›" when a press does something,
 // its line, and faded when it was not done.
 export function stepDrafts(
@@ -165,22 +189,23 @@ export function stepDrafts(
       return [];
     }
     const number = index + 1;
-    const done = step.status === 'shown';
+    const role = stepMarkRole(step);
+    const book = (step.kind === 'seat' || step.kind === 'room') && bookingStepHolds() === 'book';
     const title = (opens[index] ?? true) ? `${titles[index] ?? step.title} ›` : (titles[index] ?? step.title);
     const line = lines[index] ?? null;
-    return [
-      {
-        id: `${STEP_ID}${String(number)}`,
-        name: `${String(number)} ${title} · ${line ?? ''}`,
-        position: { latitude: place.latitude, longitude: place.longitude },
-        planId: null,
-        group: done ? 'pick' : 'dropped',
-        symbol: { type: 'dot', role: done ? 'pick' : 'dropped', number },
-        tone: done ? 'pick' : 'dropped',
-        title,
-        line,
-        number,
-      },
-    ];
+    const draft: Draft = {
+      id: `${STEP_ID}${String(number)}`,
+      name: `${String(number)} ${title} · ${line ?? ''}`,
+      position: { latitude: place.latitude, longitude: place.longitude },
+      planId: null,
+      group: role,
+      symbol: { type: 'dot', role, number: book ? null : number, ...(book ? { study: true } : {}) },
+      tone: role,
+      title,
+      line,
+      number,
+    };
+    // A step done in its kind's colour, as its answer's pick; one not done grey.
+    return [inKind(draft, stepTone(step))];
   });
 }

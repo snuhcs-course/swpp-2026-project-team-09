@@ -7,14 +7,16 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
+import type { MemberFace, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
 import type { Board, JoinPolicy, Person, SubQuest } from '@/api/types';
 import type { MyJoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
 import { dayAndClock } from '@/korea-time';
+import { type PointOnMap, pointOnMap } from '@/features/places/point-on-map';
 import { shownSubQuest } from '@/features/quests/adapter';
 
 // A recruiting post, as 찾기's cards and 파티 모집글 show it: another's recruiting Quest, or one of the User's own
@@ -53,13 +55,13 @@ export interface PostView {
   time: string;
   // "버들골 (100동) 입구", or "장소 미정".
   place: string;
+  // The point of a place picked on the map, which its words open on a map; null for any other place.
+  point: PointOnMap | null;
   // "최유나 외 2명 · 친구 1명 포함", "최유나 외 2명", or "최유나".
   members: string;
   createdAt: string;
   role: PostRole;
-  // The mocked parts (`@/api/quest-parts/`): the photo, the tags without '#', and up to three members' faces.
-  photo: QuestPhoto | null;
-  tags: string[];
+  // The mocked part (`@/api/quest-parts/`): up to three members' faces.
   faces: MemberFace[];
   // The names of the User's Friends among the members, the Leader first.
   friends: string[];
@@ -98,8 +100,6 @@ interface Head {
   createdAt: string;
   next: Next;
   role: PostRole;
-  photo: QuestPhoto | null;
-  tags: string[];
   faces: MemberFace[];
   friends: string[];
 }
@@ -110,6 +110,7 @@ function postOf({ next, ...head }: Head): PostView {
     fill: `${String(head.holders)}/${String(head.capacity)}명`,
     startsAt: next?.startsAt ?? null,
     ...planWords(next),
+    point: pointOnMap(next?.place),
     members: membersOf(head.leader.name, head.holders, head.friends.length),
   };
 }
@@ -147,8 +148,6 @@ export function entryPost(
     createdAt: entry.createdAt,
     next: entry.nextSubQuest,
     role: asks ? { kind: 'approval', requestId: waiting?.id ?? null, removed } : { kind: 'open' },
-    photo: entry.photo,
-    tags: entry.tags,
     faces: entry.faces,
     friends: friendsOfSummary(entry, friends),
   });
@@ -176,39 +175,13 @@ export function questPost(quest: ShownQuest, meId: string, friends: readonly Kno
     createdAt,
     next: shownSubQuest(quest),
     role: leader.id === meId ? { kind: 'leader' } : { kind: 'holder' },
-    photo: quest.photo,
-    tags: quest.tags,
     faces: quest.faces,
     friends: holders.filter(({ id }) => ids.has(id)).map(({ name }) => name),
   });
-}
-
-function newestFirst(one: PostView, other: PostView): number {
-  return other.createdAt.localeCompare(one.createdAt);
 }
 
 // A post another User may still enter: its Holders are fewer than its capacity. The lists of recruiting posts leave the
 // rest out, so that nobody presses 참여하기 to hear "자리가 다 찼어요".
 export function hasRoom(post: Pick<PostView, 'holders' | 'capacity'>): boolean {
   return post.holders < post.capacity;
-}
-
-// A board's posts: the recruiting Quests of others with a place left, and the User's own Open or Approval Quests on it
-// with a Sub Quest ahead, which the recruiting list leaves out. The newest first.
-export function boardPosts(
-  board: Board,
-  entries: readonly ShownRecruitingQuest[],
-  quests: readonly ShownQuest[],
-  requests: readonly MyJoinRequest[],
-  meId: string,
-  removedIds: readonly string[] = [],
-): PostView[] {
-  const own = quests
-    .filter((quest) => quest.board === board && quest.joinPolicy !== 'closed' && shownSubQuest(quest) !== null)
-    .flatMap((quest) => questPost(quest, meId) ?? []);
-  const others = entries
-    .filter((entry) => entry.board === board)
-    .map((entry) => entryPost(entry, requests, [], removedIds))
-    .filter((post) => hasRoom(post));
-  return [...own, ...others].toSorted(newestFirst);
 }

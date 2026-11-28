@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -200,13 +201,13 @@ describe('the swipe from the left edge over a side panel or a bottom sheet', () 
 
   it('closes a bottom sheet and stays on the screen under it', async () => {
     const user = await openAt('/party-form');
-    await user.press(screen.getByRole('button', { name: '게시판 게시판 선택' }));
-    expect(screen.getByLabelText('게시판 고르기')).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '친구 초대 고르기' }));
+    expect(screen.getByLabelText('친구 초대')).toBeVisible();
 
     await swipe('edge-close', { fromX: 10, dx: WIDTH * 0.6 });
     await pass(400);
 
-    expect(screen.queryByLabelText('게시판 고르기')).toBeNull();
+    expect(screen.queryByLabelText('친구 초대')).toBeNull();
     expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
   });
 

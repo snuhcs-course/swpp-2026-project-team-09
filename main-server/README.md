@@ -1151,7 +1151,8 @@ Friend is a Closed Quest the User makes and invites the Friend into. The routes,
   out each Quest whose Sub Quests have all ended, that is each is cancelled or past its end time; the User's marks of
   done do not count. `GET /quests/:questId` answers one, ended or not.
 - `DELETE /quests/:questId` drops the Quest and answers 204. It removes the User as a Holder, with the User's progress.
-  The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests.
+  The other Holders keep the Quest. When the last Holder drops it, it is deleted with its Sub Quests, and its running
+  Party, if any, is closed with it in the same transaction (`QuestParty.drop`), its members told `party-changed`.
 - `POST /quests/:questId/sub-quests` adds a Sub Quest and answers 201 with it. It requires an `Idempotency-Key` (see
   [Making a handler safe to repeat](#making-a-handler-safe-to-repeat)). The body:
   `{ "title": "카페", "startsAt": "...", "endsAt": "...", "place": ... }`. The title has 1 to 50 characters, the times
@@ -1408,12 +1409,15 @@ the lists are the newest first.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
   Quest, with their progress. The removal is kept in `quest_removals` in the same transaction, so that the User comes
   back only by asking to join and the Leader accepting, even to an Open Quest; entering the Quest in any way deletes
-  it. A Holder who drops the Quest leaves no removal.
+  it. A Holder who drops the Quest leaves no removal. A Holder in the Quest's running Party leaves it in the same
+  transaction, as leaving it does (`QuestParty.leave`), so that its members no longer see them by it, and the Party's
+  audience is told `party-changed`.
 - `POST /quests/:questId/end` ends the Quest for every Holder and answers 204: it is deleted with its Sub Quests, the
-  Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and a running Party
-  for it goes on with `quest: null`. A repeat is refused as a Quest the User does not hold, so it takes no
-  `Idempotency-Key`. An entry, an answer or another control at the same moment runs after it and is refused as for a
-  Quest that is gone. `DELETE /quests/:questId` stays one Holder's drop.
+  Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and its running
+  Party is closed with it, members included (`QuestParty.close`): the members' rows are locked, in the order of their
+  ids, before the Quest and then the Party, as a Party's end does. A repeat is refused as a Quest the User does not
+  hold, so it takes no `Idempotency-Key`. An entry, an answer or another control at the same moment runs after it and
+  is refused as for a Quest that is gone. `DELETE /quests/:questId` stays one Holder's drop.
 
 Accepting a request and removing a Holder lock that User before the Quest, as entering does, and every control checks
 the Leader once the Quest is locked, so that a control and a change of Leader at the same moment run one after the
@@ -1533,8 +1537,9 @@ The User's Party reads:
 }
 ```
 
-- `quest` is `null` for a Party tied to no Quest, and becomes `null` when the last Holder drops the Quest or its Leader
-  ends it; the Party goes on. Its `globalEvent` is `null` for a Quest without one.
+- `quest` is `null` for a Party tied to no Quest. A Party whose Quest is deleted, by its last Holder's drop or its
+  Leader's end, is closed with it; one whose Quest is deleted another way, such as a room request's booking party,
+  goes on with `quest: null`. Its `globalEvent` is `null` for a Quest without one.
 - `sharing` is the reading User's own switch for the Party. The members are in the order they entered, the reading
   User among them, and `visible` says whether the reading User can see each on the map now, never why not (see
   [Location Sharing](#location-sharing)).
@@ -1627,6 +1632,8 @@ Party's Quest leaves the membership as it is.
   is refused.
 - `PUT /parties/mine/leader` with `{ "userId": "..." }` hands the role to that member and answers 204.
 - `DELETE /parties/mine/members/:userId` removes that member and answers 204. A removed member may enter again.
+  A User the Leader removed from the Party's Quest (`quest_removals`) left the Party with that removal, so the call for
+  them answers 204 too, rather than `NOT_PARTY_MEMBER`: the app from before P06 ticket 23 sends it after 내보내기.
 - `POST /parties/mine/end` ends the Party for every member and answers 204: every member is taken out, and the Party is
   deleted with its requests and invitations, as when its last member leaves. A repeat is refused as a User in no Party,
   so it takes no `Idempotency-Key`. It locks every member, in the order of their ids, and then the Party, so a User
@@ -2568,10 +2575,21 @@ Anthropic API as the AI's key says
     `key`, the server's name for its request: its kind and day, a meal's meal, a study plan alone or together, the
     Quests of one Global Event. The key is opaque: the app compares keys and never builds one. An answer replaces the
     one of the same key on screen and is added otherwise, and an answer on screen the reply does not name stays.
-  - `withdrawn`: the keys of the requests that ended with no answer (a meal over for today, one the User was only
-    invited to). The app takes those answers off. It is left out when there is none.
+  - `withdrawn`: the keys of the answers that leave. They come from a request that ended with none, on any of the
+    paths `clears` lists above (P05 ticket 79, `src/assistant/taken-off.ts`):
+    - the request's own key, for a meal over for today or one the User was only invited to;
+    - the keys of the answers on screen it stood for, by `takenOff`: the same request on another day or with other
+      conditions (the same kind, the same meal, the same alone or together). Answers of other requests stay, so
+      dinner over for today keeps tomorrow's lunch;
+    - every answer on screen, for a refusal plainly not about them.
+
+    The keys on screen are those of `context.steps`, or, with no steps, the key of the answer open (`conditions`). The
+    app takes those answers off. It is left out when there is none.
+
   - `select.key`: the request whose answer holds the plan chosen in words, when one of `answers` does.
-  - `clears` is never sent to it: the answers on screen may be of requests other than the one that ended with none.
+  - `clears` only when nothing stays on screen. That is when every step on screen is among `withdrawn` (a booking
+    step never is), or, with no steps, the answer open is; a refusal plainly not about the plans always clears. While
+    another answer or a booking stays, it is left out, and the app takes off only the keys `withdrawn` names.
   - `POST /assistant/answers` from it answers with `key` too. A changed condition may make the answer another request
     (a Friend added makes a study place one together, the bar's other meal makes lunch dinner), and the app keeps the
     answer under that key from then on.
@@ -2659,9 +2677,12 @@ Anthropic API as the AI's key says
   A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
-  `reason`, and what `shows` it (the card's key or the answer). A meal planned after a booking sets out from 관정 when
-  the booking ends, unless the User named its start (`planMeal`'s `startPlaceId`); `planMeal` plans from the steps shown
-  before it, and the run plans the meal again when the model planned it first (`src/assistant/steps/plan-steps.ts`).
+  `reason`, and what `shows` it (the card's key or the answer). For every app, a meal sets out from the step before it
+  among the message's bookings and answers, such as 관정 when a booking ends or a study place when the stay ends, unless
+  the User named its start (`planMeal`'s `startPlaceId`) or an item of their day lies between; for an app before
+  `answers` the chain is the asker's own (`source: 'asker'`, P05 ticket 78). `planMeal` plans from the steps shown
+  before it, and the run plans the meal again when the model planned it first (`src/assistant/steps/all-steps.ts`,
+  `src/assistant/steps/plan-steps.ts`).
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -4150,6 +4171,7 @@ calls throw when the database fails too, so a caller that must not fail catches 
 | `party-removed`        | The Holder removed                            | The Leader removes them                                                                                                        | `파티에서 내보내졌어요`                                    | None                           | `<Quest's title> · <Leader's name>님의 파티`                                                     | `party-gone:<questId>`                       | Yes   |
 | `join-cancelled`       | Each User whose request to join waited        | The Leader ends the Quest                                                                                                      | `파티가 없어져 신청이 취소됐어요`                          | None                           | `<Quest's title> · <Leader's name>님의 파티`                                                     | `party-gone:<questId>`                       | No    |
 | `invitation-cancelled` | Each User whose invitation waited             | The Leader ends the Quest                                                                                                      | `파티가 없어져 초대가 취소됐어요`                          | None                           | `<Quest's title> · <Leader's name>님의 파티`                                                     | `party-gone:<questId>`                       | No    |
+| `became-leader`        | The Holder who leads the Quest now            | The Leader leaves it (`DELETE /quests/:questId`) and they entered earliest, or the Leader hands it over                        | `파티장이 됐어요`                                          | None                           | `<Quest's title> · <Leader's name>님이 나갔어요`, or `… 넘겼어요`                   | `party:<questId>`                            | No    |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
 `leave-by`, `<Place>까지 걸어서 <N>분이에요.`; for a room request's kinds, the line as a sentence ("모두 동의했어요" adds
@@ -4173,6 +4195,10 @@ again and again; and once none waits it is cancelled, so the next request rings 
 but the Leader, after it is deleted, without the answer waiting; the Leader's own `join-asked` for it is cancelled.
 `party-removed` is kept by `LeaderService.remove` for the Holder removed. Their card, `party-gone:<questId>`, is on no
 map: the app says the 파티 is gone. A Quest that ends because its time passed, and a Holder's own drop, keep none.
+
+`became-leader` is kept for the Holder who leads a Quest now, in 알림 only: by `QuestParty.drop` when the Leader's drop
+makes the Holder who entered earliest Leader (`QuestsService.removeHolder` answers them), and by `LeaderService.handOver`.
+Other ways a Leader leaves a Quest, such as replacing a held meal, tell nobody.
 
 `step-changed`, `arrived` and `late` stand for the words a party's members cannot say to each other, for the room has
 no chat. Each is kept once per member who caused it (`about`), so a later one replaces the earlier and rings again.

@@ -3,12 +3,13 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { type ReactElement, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { type ReactElement, useState } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { placeSearchQuery, placesQuery } from '@/api/queries';
+import { placesQuery } from '@/api/queries';
 import type { Place } from '@/api/types';
 import {
   color,
@@ -22,9 +23,8 @@ import {
   space,
   text,
 } from '@/design-system';
+import { usePlaceSearch } from '@/features/places/use-place-search';
 import { useBackToClose } from '@/hooks/use-back-to-close';
-
-const SEARCH_AFTER_MS = 300;
 
 interface PlacePickerProps {
   // The id of the Place chosen before, which the list checks.
@@ -34,26 +34,12 @@ interface PlacePickerProps {
   onClose: () => void;
 }
 
-// The words once they have not changed for a while.
-function useSettled(words: string): string {
-  const [settled, setSettled] = useState(words);
-  useEffect(() => {
-    const timer = setTimeout(setSettled, SEARCH_AFTER_MS, words);
-    return (): void => {
-      clearTimeout(timer);
-    };
-  }, [words]);
-  return settled;
-}
-
 const NO_MATCH_HINT = '건물 이름이나 동 번호로 다시 찾아 보세요';
 
 // The list of Places, or the search's once the User stopped typing. The previous list stays while the next is asked.
 function usePlaces(words: string): { places: Place[] | undefined; asked: string; isError: boolean; retry: () => void } {
-  const settled = useSettled(words.trim());
-  const asked = words.trim() === '' ? '' : settled;
+  const { asked, found } = usePlaceSearch(words);
   const all = useQuery(placesQuery);
-  const found = useQuery({ ...placeSearchQuery(asked), enabled: asked !== '', placeholderData: keepPreviousData });
   const shown = asked === '' ? all : found;
   return {
     places: shown.data,

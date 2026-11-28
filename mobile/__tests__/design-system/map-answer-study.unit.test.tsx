@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -23,10 +24,10 @@ describe('MapAnswerMark: a study pick', () => {
     expect(screen.getByTestId('m:book')).toBeOnTheScreen();
   });
 
-  it('keeps every other pick gold, with no book', async () => {
+  it("draws every other pick in the Quest's navy, with no book", async () => {
     await render(<MapAnswerMark label={null} symbol={{ type: 'dot', role: 'pick', number: null }} testID="m" />);
 
-    expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.quest });
+    expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.snuBlue });
     expect(screen.queryByTestId('m:book')).toBeNull();
   });
 

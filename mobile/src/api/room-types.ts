@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { JoinPolicy, Place } from './types';
@@ -19,7 +20,8 @@ export type SubQuestPlace = PlaceChoice | { label: string };
 // The body of adding a Sub Quest and of replacing one.
 export interface SubQuestContent {
   title: string;
-  startsAt: string;
+  // Null for a step with no time yet, as a 파티 made without one has.
+  startsAt: string | null;
   place?: SubQuestPlace;
 }
 

@@ -13,7 +13,7 @@
 
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
-import { fromCardReplyOf } from '@/features/assistant/app-turn';
+import { holdsAnswer } from '@/features/assistant/answer-holder';
 import { modelWordsOf } from '@/features/assistant/model-words';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import { turnsOf } from '@/features/assistant/turn';
@@ -30,12 +30,9 @@ import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
-import { StepsTop } from './steps-bar';
-import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 import type { TellAct } from '../library/act-stage';
 import type { LibraryCardActions } from '../library/use-library-call';
-import { offeredAnswer } from '@/features/assistant/meal-offered';
 import { SENTENCE } from './line-types';
 import { useSlotHeld } from './sentence-slot';
 
@@ -62,8 +59,7 @@ function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
 
 export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
   const { shown, invitation } = onScreen;
-  const { answer } = bubble;
-  const fromReply = answer !== undefined && answer !== null && offeredAnswer(answer) === shown.source;
+  const fromReply = holdsAnswer(bubble, shown.source);
   // A plan chosen in words is the plan's card, opened at its Restaurant (P05 ticket 56).
   const chosen = bubble.select !== undefined && shown.answer?.plans.some(({ id }) => id === bubble.select) === true;
   if ((fromReply || keepsShown(bubble) || chosen) && shown.answer !== null) {
@@ -190,53 +186,6 @@ export function Words(props: WordsProps): ReactElement {
   const lines =
     answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? (modelWordsOf(bubble.text) === '' ? lookup?.lines : undefined);
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
-}
-
-interface TopBarProps {
-  control: ChatSheetControl;
-  focus: BandFocus;
-  onClose: () => void;
-  onHeight: (height: number) => void;
-}
-
-// The time bar of the turn on screen, while it has a time, a booking's on the map first (P04 ticket 07): none once 그대로 두기 left a Quest already set as it is, for
-// the Plan is gone (P04 ticket 20).
-export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): ReactElement | null {
-  const { answer: shown, invitation, booking, steps } = control;
-  if (steps !== null) {
-    return <StepsTop control={control} focus={focus} onClose={onClose} onHeight={onHeight} />;
-  }
-  if (booking !== null) {
-    return <BookingBar booking={booking} chat={control.chat} onHeight={onHeight} />;
-  }
-  const bar = barOf(control.chat.bubbles, onScreenOf(control));
-  if (bar === null) {
-    return null;
-  }
-  if (bar.kind === 'lookup') {
-    return <LookupBar lookup={bar.lookup} onHeight={onHeight} />;
-  }
-  const leftAlone = invitation.left !== null && invitation.made === null && invitation.changed === null;
-  // An answer with no Plan keeps the time card it was asked in (P01 ticket 31).
-  const fromCard = fromCardReplyOf(control.chat.bubbles, shown.source);
-  return shown.answer === null || shown.frame === null || leftAlone ? null : (
-    <PlanBar
-      answer={shown.answer}
-      focus={focus}
-      invitation={invitation}
-      onClose={onClose}
-      onHeight={onHeight}
-      plan={shown.frame}
-      shown={shown}
-      toCard={
-        fromCard === null
-          ? null
-          : () => {
-              control.chat.takeBackTurn(fromCard);
-            }
-      }
-    />
-  );
 }
 
 const styles = StyleSheet.create({

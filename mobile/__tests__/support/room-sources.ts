@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The sources of a Quest's room for the room adapter's unit tests, in Korea's time.
@@ -46,8 +47,6 @@ export function quest(more: Partial<ShownQuest> = {}): ShownQuest {
     board: 'meal',
     description: '학관에서 저녁',
     createdAt: '2026-10-05T09:00:00.000Z',
-    photo: null,
-    tags: ['AI커리어'],
     faces: [],
     ...more,
   };

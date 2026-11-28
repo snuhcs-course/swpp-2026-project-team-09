@@ -9,6 +9,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { requireNativeView } from 'expo';
@@ -30,6 +31,7 @@ import { useMotionAllowed } from '@/hooks/use-reduce-motion';
 import { IMAGE_MARGIN } from './marker-images';
 import { NATIVE_MAP_MODULE } from './native-module';
 import { type CameraRules, fit, lowestZoom, outerRules, project, type Size, unproject } from './projection';
+import { sentToView } from './view-calls';
 import type {
   FitOptions,
   FitPadding,
@@ -223,7 +225,8 @@ function useScaleShift(size: Size | null): { shift: number; reported: () => void
 // The interface's handle on the module's view. A fit is worked out here, by `fit` of `projection.ts`, and sent as a
 // move of the camera, because the module's own `fitTo` takes neither a padding for each edge nor a closest zoom.
 // Until the view is laid out its size is not known here, and the module's `fitTo` is asked with the largest side of
-// the padding. A zoom is sent less the scale's `shift`.
+// the padding. A zoom is sent less the scale's `shift`. Each call goes through `sentToView`, which takes the rejection
+// of a call made as the native view goes.
 function useHandle(
   ref: Ref<MapHandle> | undefined,
   view: RefObject<NativeMapView | null>,
@@ -235,17 +238,17 @@ function useHandle(
     () => ({
       moveCamera: ({ centre, zoom, animated }): void => {
         const sent = zoom === undefined ? undefined : zoom - shift;
-        void view.current?.moveCamera({ ...centre, zoom: sent, animated: animated ?? false });
+        void sentToView(view.current?.moveCamera({ ...centre, zoom: sent, animated: animated ?? false }));
       },
       fitTo: (points, options): void => {
         const animated = options?.animated ?? false;
         if (rules === null) {
-          void view.current?.fitTo(points, widestPadding(options?.padding), animated);
+          void sentToView(view.current?.fitTo(points, widestPadding(options?.padding), animated));
           return;
         }
         const camera = fit(points, options ?? {}, rules);
         if (camera !== null) {
-          void view.current?.moveCamera({ ...camera.centre, zoom: camera.zoom - shift, animated });
+          void sentToView(view.current?.moveCamera({ ...camera.centre, zoom: camera.zoom - shift, animated }));
         }
       },
     }),

@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Cuisine, MapScene, Plan } from '@/api/assistant-types';
@@ -52,7 +53,7 @@ type PickBase = Pick<Draft, 'id' | 'position' | 'planId' | 'group' | 'tone' | 'n
 function studyPickDraft(base: PickBase, plan: Plan, kind: Cuisine | null): Draft {
   const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number: base.number, meal: true, study: true };
   const words = { ...mealPickLabel(plan, plan.place.label, kind), action: null };
-  return { ...base, coral: true, study: true, symbol, ...words };
+  return { ...base, listed: true, study: true, symbol, ...words };
 }
 
 interface PickArgs {
@@ -63,16 +64,16 @@ interface PickArgs {
   day: string | undefined;
   kind: Cuisine | null;
   meal: boolean;
-  coral: boolean;
+  listed: boolean;
   // A 관정 booking's start, which makes its pick the study one (P01 ticket 10); null for any other pick.
   study: string | null;
 }
 
 // The chosen place of a scene: a meal answer's with menus says its time and main dish (`mealPickLabel`); any other its
-// flag's words, its day, and its first dish (`pickLine`). Any meal answer's, menus or none, is coral (P04 ticket 90).
+// flag's words, its day, and its first dish (`pickLine`). Any meal answer's, menus or none, is listed (P04 ticket 90).
 export function pickDraft(pick: PickArgs, flagText: string | null): Draft {
-  const { title, position, number, plan, day, kind, meal, coral, study } = pick;
-  const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number, ...(coral ? { meal: true } : {}) };
+  const { title, position, number, plan, day, kind, meal, listed, study } = pick;
+  const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number, ...(listed ? { meal: true } : {}) };
   const base = {
     id: 'answer:pick',
     position,
@@ -80,7 +81,7 @@ export function pickDraft(pick: PickArgs, flagText: string | null): Draft {
     group: 'pick',
     tone: 'pick',
     number,
-    ...(coral ? { coral } : {}),
+    ...(listed ? { listed } : {}),
   } as const;
   if (meal && plan?.study !== undefined) {
     return studyPickDraft(base, plan, kind);
@@ -168,7 +169,7 @@ function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'
 export function candidateDraft(
   plans: readonly Plan[],
   item: MapScene['places'][number],
-  { kind = null, meal = false, coral = false }: { kind?: Cuisine | null; meal?: boolean; coral?: boolean } = {},
+  { kind = null, meal = false, listed = false }: { kind?: Cuisine | null; meal?: boolean; listed?: boolean } = {},
 ): Draft {
   const { place, tag } = item;
   const title = tag ?? place.label;
@@ -184,9 +185,9 @@ export function candidateDraft(
   const time = plan === undefined ? null : koreaClock(plan.startAt);
   const sub = menuLine(plan?.menu, kind);
   const said = [time, sub].flatMap((words) => words ?? []);
-  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number, ...(coral ? { meal: true } : {}) };
+  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number, ...(listed ? { meal: true } : {}) };
   return {
-    ...(coral ? { coral } : {}),
+    ...(listed ? { listed } : {}),
     id: `answer:candidate:${place.label}`,
     name: number === null ? title : [`후보 ${String(number)}`, title, ...said].join(' · '),
     position: { latitude: place.latitude, longitude: place.longitude },

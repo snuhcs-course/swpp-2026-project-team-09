@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -14,8 +15,9 @@ import type { MenuView } from '@/api/lookup-types';
 import type { Meal, MenuLine, RestaurantMenus } from '@/api/menu-types';
 import { menusQuery } from '@/api/queries';
 import { now } from '@/clock';
-import { color, font, radius, RoundNumber, size, space, text } from '@/design-system';
+import { color, font, kindTone, radius, RoundNumber, size, space, text, type ToneKind } from '@/design-system';
 import { cornersOf, hoursOf, type MenuCorner, planCorner } from '@/features/assistant/meal-menus';
+import { answerTone } from '@/features/assistant/answer-tone';
 import { travelWords } from '@/features/assistant/answer-walks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { MEAL_NAMES, won } from '@/features/dining/adapter';
@@ -133,19 +135,19 @@ function Head({
   name,
   line,
   why,
-  study = false,
+  tone = 'meal',
 }: {
   number: number | null;
   name: string;
   line: string;
   why: boolean;
-  // A study place's number is in the study colour (P10 ticket 19).
-  study?: boolean;
+  // The answer's kind, whose colour the number takes, as on the map and in the list (P04 ticket 85, P10 ticket 19).
+  tone?: ToneKind;
 }): ReactElement {
   return (
     <View style={styles.head}>
       {number === null ? null : (
-        <View style={[styles.badge, study && styles.studyBadge]} testID="meal-menu-number">
+        <View style={[styles.badge, { backgroundColor: kindTone[tone].ink }]} testID="meal-menu-number">
           <RoundNumber inside={BADGE} number={number} style={styles.number} />
         </View>
       )}
@@ -226,7 +228,7 @@ export function MealMenu({ answer, plan, shown, library, bubbleId }: MealMenuPro
         line={study === undefined ? whenOf(plan) : studyLineOf(plan, seat !== null && study.book !== null)}
         name={plan.place.label}
         number={shown.index + 1}
-        study={study !== undefined}
+        tone={answerTone(answer.input.kind)}
         why={false}
       />
       {study === undefined ? (
@@ -281,10 +283,7 @@ const styles = StyleSheet.create({
     width: BADGE,
     height: BADGE,
     borderRadius: radius.full,
-    // The opened Restaurant is the one chosen: coral, as on the map and in the list (P04 ticket 85).
-    backgroundColor: color.meal,
   },
-  studyBadge: { backgroundColor: color.svcStudy },
   number: { ...text.label, fontFamily: font.bold, color: color.onPrimary },
   names: { flex: 1, gap: 2 },
   name: { ...text.title, color: color.ink },
@@ -303,7 +302,8 @@ const styles = StyleSheet.create({
   tabWords: { ...text.label, color: color.ink },
   tabWordsOn: { color: color.onPrimary },
   corner: { gap: space[1] },
-  cornerTitle: { ...text.label, fontFamily: font.bold, color: color.quest },
+  // A corner of the meal's menu in the meal's colour; gold is for clock times alone.
+  cornerTitle: { ...text.label, fontFamily: font.bold, color: kindTone.meal.ink },
   served: { ...text.body, color: color.ink },
   ordered: { flexDirection: 'row', justifyContent: 'space-between', gap: space[2] },
   orderedName: { ...text.body, flexShrink: 1, color: color.ink },

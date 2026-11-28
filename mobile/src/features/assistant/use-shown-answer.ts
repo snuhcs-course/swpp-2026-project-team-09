@@ -19,6 +19,7 @@ import type { LatLng } from '@/api/types';
 import {
   type AnswerState,
   arrivedState,
+  type ChosenAnswer,
   type ChangeBy,
   firstState,
   replaced,
@@ -283,20 +284,29 @@ function changesOf(
   };
 }
 
-// The answer on screen and the Plan on screen, which the map and the card read. The conversation's last reply gives
-// the source: a new one, told by its bubble since a reply may bring the same object again, shows its first Plan with
-// the basis closed and drops anything a recalculation brought. A recalculation's answer replaces the one on screen,
-// unless a new reply came while it was on its way.
-export function useShownAnswer(
-  bubbles: readonly ChatBubble[],
-  recalculation: Recalculation = NO_RECALCULATION,
-): ShownAnswer {
+// The state of the answer on screen: a new reply's, or the step chosen's, as each arrives.
+function useAnswerState(bubbles: readonly ChatBubble[], step: ChosenAnswer | null): [AnswerState, SetStored] {
   const reply = lastReply(bubbles);
-  const [stored, setStored] = useState<AnswerState>(() => firstState(reply, bubbles));
-  const current = stored.replyId === (reply?.id ?? null) ? stored : arrivedState(reply, stored, bubbles);
+  const [stored, setStored] = useState<AnswerState>(() => firstState(reply, bubbles, step));
+  const same = stored.replyId === (reply?.id ?? null) && stored.key === (step?.key ?? null);
+  const current = same ? stored : arrivedState(reply, stored, bubbles, step);
   if (current !== stored) {
     setStored(current);
   }
+  return [current, setStored];
+}
+
+// The answer on screen and the Plan on screen, which the map and the card read. The step chosen among several gives its
+// own answer (`step`, P03 ticket 21), as a new reply does; otherwise the conversation's last reply gives the source: a
+// new one, told by its bubble since a reply may bring the same object again, shows its first Plan with the basis closed
+// and drops anything a recalculation brought. A recalculation's answer replaces the one on screen, unless a new reply
+// or another step came while it was on its way.
+export function useShownAnswer(
+  bubbles: readonly ChatBubble[],
+  recalculation: Recalculation = NO_RECALCULATION,
+  step: ChosenAnswer | null = null,
+): ShownAnswer {
+  const [current, setStored] = useAnswerState(bubbles, step);
   const ask = useChange(current, setStored, recalculation);
   const browsing = useBrowsing(setStored);
   const chooseKind = useKindChoice(setStored);

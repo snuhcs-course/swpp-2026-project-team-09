@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -57,8 +58,8 @@ describe('the route drawn when the main screen opens', () => {
     expect(screen.getByLabelText(ROUTE)).toBeVisible();
     const dashes = screen.getAllByTestId('route-stroke');
     expect(dashes.length).toBeGreaterThan(12);
-    // A dash of 2 with round ends, 3 wide, in the Quest's colour.
-    expect(dashes[0]).toHaveStyle({ width: 5, height: 3, backgroundColor: '#865600' });
+    // A dash of 2 with round ends, 3 wide, in the Quest's colour, the party's navy (the user's rule of 2026-11-28).
+    expect(dashes[0]).toHaveStyle({ width: 5, height: 3, backgroundColor: '#001A72' });
     expect(screen.queryByText(/길 안내/u)).toBeNull();
   });
 

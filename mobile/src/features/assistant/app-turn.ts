@@ -4,10 +4,12 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback } from 'react';
 import type { AnswerReply } from '@/api/assistant-types';
+import { holdsAnswer } from './answer-holder';
 import type { Bubbles, Chat, ChatBubble } from './use-chat';
 
 // A turn of the conversation the app asks itself and answers without the model, such as a tap on an interest mark of
@@ -87,6 +89,6 @@ export function useAppTurn(
 // The reply of the answer on screen when the app asked it from a card, which taking every Friend out of the answer
 // takes back; null for any other answer.
 export function fromCardReplyOf(bubbles: readonly ChatBubble[], source: AnswerReply | null): number | null {
-  const reply = source === null ? undefined : bubbles.findLast(({ answer }) => answer === source);
+  const reply = bubbles.findLast((bubble) => holdsAnswer(bubble, source));
   return reply?.fromCard === true ? reply.id : null;
 }

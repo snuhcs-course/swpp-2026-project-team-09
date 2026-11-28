@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
@@ -12,7 +13,7 @@ import { leftOutNow } from '../free-time/left-out-classes.js';
 import { KWANJEONG_PLACE_NUMBER } from '../library/catalogue.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { mealAfterSteps, presentAllSteps } from '../steps/all-steps.js';
-import { afterStepsShown, bookingSteps, pointOf, presentSteps } from '../steps/plan-steps.js';
+import { presentSteps } from '../steps/plan-steps.js';
 
 // The chat's steps of a message that asked for several things (P03). An app that says `answers` gets them over every
 // answer, each step that can move set out from the one before it (P05 ticket 74); any other, a meal after a booking, as
@@ -28,20 +29,14 @@ const kwanjeongOf =
   (): PlaceDto | null =>
     places.numbered(KWANJEONG_PLACE_NUMBER);
 
-// The meal's conditions set out from the step before it among those shown so far, as planMeal plans it.
+// The meal's conditions set out from the step before it among this message's bookings and answers, as planMeal plans it;
+// for an app before `answers` too, which is shown the meal alone (P05 ticket 78).
 export function mealStartAfter(
   freeTime: FreeTimeServices,
 ): (input: MealInput, context: ToolContext) => Promise<MealInput> {
   const kwanjeong = kwanjeongOf(freeTime);
-  return (input, context) => {
-    if (context.capabilities.has('answers')) {
-      return mealAfterSteps(input, context, kwanjeong, freeTime.days);
-    }
-    const place = kwanjeong();
-    return Promise.resolve(
-      afterStepsShown(input, bookingSteps(context.presented, place === null ? null : pointOf(place))),
-    );
-  };
+  return (input, context) =>
+    mealAfterSteps(input, context, kwanjeong, freeTime.days, context.capabilities.has('answers') ? 'step' : 'asker');
 }
 
 // What a run that answered does last: the steps of the message.
