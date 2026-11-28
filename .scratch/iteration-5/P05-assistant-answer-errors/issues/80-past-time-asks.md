@@ -34,7 +34,7 @@ A meal had a check of its own on the server (P01 ticket 23): a meal asked for af
 
 - **Prompt rules:** every rule and tool description under `main-server/src/assistant` was searched for a past time (`passed`, `지났`, `tomorrow`, `next day`, `before now`, `later than now`). None moves a time to the next day. `findWay` says that a deadline that has passed is said so; a way is a question of facts and keeps it.
 - **Server code:** every `addDays(` was read. None moves a request's day forward, other than the old meal-over offer, now the ask.
-- **Tests and evals:** every eval case was read at its world's clock or its own `now` (474 cases, in `eval/cases`, `eval/p4/cases`, `eval/p5/cases`, `eval/p5/large-world-v1/cases` and `eval/p6/cases`). None names, for today, a time that has passed. The two integration tests of the old meal offer now expect the ask. The app's `answer-words-rest` test uses a question back of its own words and is unchanged.
+- **Tests and evals:** every eval case was read at its world's clock or its own `now` (474 cases, in `eval/cases`, `eval/p4/cases`, `eval/p5/cases`, `eval/p5/large-world-v1/cases` and `eval/p6/cases`). None names, for today, a time that has passed. The two integration tests of the old meal offer now expect the new buttons: the ask for lunch named at 15:00, and 내일로 beside the reply for "배고파" at 21:20. The app's `answer-words-rest` test uses a question back of its own words and is unchanged.
 
 ## Tests
 
@@ -56,7 +56,7 @@ A meal had a check of its own on the server (P01 ticket 23): a meal asked for af
   - two times that passed ask once;
   - an app before `answers` gets the same;
   - 저녁 7시 is planned as asked.
-- `assistant-meal-by-clock` and `assistant-meal-after-hours` (integration) now expect the ask; `assistant-cached-prefix` (unit) the Past times line among the per-request lines.
+- `assistant-meal-by-clock` and `assistant-meal-after-hours` (integration) now expect the ask and the 내일로 button; `assistant-cached-prefix` (unit) the Past times line among the per-request lines.
 - Before the change: 7 of these 10 integration tests failed, and the unit files did not load (no `past-time` module).
 - `main-server/eval/cases/past-times.yaml` (new, 8 cases, not run):
   - the library and lunch at 11:13, and lunch at 15:00;
