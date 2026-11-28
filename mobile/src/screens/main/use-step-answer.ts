@@ -8,11 +8,8 @@ import { type RefObject, useCallback, useEffect, useMemo, useState } from 'react
 import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { now } from '@/clock';
 import type { ChosenAnswer } from '@/features/assistant/answer-state';
-import {
-  type ConversationAnswers,
-  conversationAnswersOf,
-  withRecalculated,
-} from '@/features/assistant/conversation-answers';
+import { type ConversationAnswers, conversationAnswersOf } from '@/features/assistant/conversation-answers';
+import { type Kept, keptOnScreen, keptWith, recalculatedConversation } from '@/features/assistant/kept-answers';
 import { chosenOnReply, firstSeenIndex, renamedChoice, stepIdOf } from '@/features/assistant/step-choice';
 import { dueStepOf, type ShownSteps, type StepsNow } from '@/features/assistant/steps-scene';
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -22,15 +19,6 @@ import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 // step chosen gives the answer on screen its own answer; what each step's answer became on screen, a recalculation and
 // the plan the User was last on, is kept by key for the next time it is chosen and for the next request. Steps without
 // keys keep the rule of before (`step-choice.ts`).
-
-// What became of a step's answer on screen: recalculated (`answer`, null when it is the reply's), and the plan last on;
-// `from` is the key it had when the reply gave it, and `after` the reply it was kept after.
-export interface Kept {
-  from: string;
-  answer: AnswerReply | null;
-  index: number;
-  after: number;
-}
 
 export interface StepAnswer {
   // The steps by the keys their answers have now, and the conversation's answers as recalculated on screen.
@@ -50,32 +38,6 @@ const keyOf = ({ shows }: ReplyStep): string | null => (shows?.kind === 'answer'
 
 const lastReplyId = (bubbles: readonly ChatBubble[]): number =>
   bubbles.findLast(({ role }) => role === 'assistant')?.id ?? 0;
-
-// Whether a reply after the one a recalculation was kept after gave that answer again: the main server's is then newer.
-const givenAgain = (bubbles: readonly ChatBubble[], kept: Kept, key: string): boolean =>
-  bubbles.some(
-    ({ id, answers = [] }) =>
-      id > kept.after && answers.some((answer) => answer.key === kept.from || answer.key === key),
-  );
-
-// What is kept of each step's answer, less what a later reply gave again: the main server's answer is then newer, and
-// it opens as that reply opens it (TaeHyun79's review of #725).
-export function keptOnScreen(
-  kept: ReadonlyMap<string, Kept>,
-  bubbles: readonly ChatBubble[],
-): ReadonlyMap<string, Kept> {
-  const stale = [...kept].filter(([key, one]) => givenAgain(bubbles, one, key));
-  return stale.length === 0 ? kept : new Map([...kept].filter(([key, one]) => !givenAgain(bubbles, one, key)));
-}
-
-// The conversation's answers with each recalculation on screen in its place.
-function recalculatedConversation(given: ConversationAnswers, kept: ReadonlyMap<string, Kept>): ConversationAnswers {
-  return [...kept].reduce(
-    (conversation, [, one]) =>
-      one.answer === null ? conversation : withRecalculated(conversation, one.from, one.answer),
-    given,
-  );
-}
 
 interface Choice {
   // The conversation, by its first bubble, whose steps the choice is of: "＋ 새 대화" drops it (rule 8).
@@ -182,14 +144,9 @@ function useKeep(
       if (key !== chosen.key) {
         rename(chosen.key, key);
       }
-      setKept((last) => {
-        const was = keptOnScreen(last, bubbles).get(key);
-        if (was !== undefined && was.answer === recalculated && was.index === index) {
-          return last;
-        }
-        const from = last.get(chosen.key)?.from ?? chosen.key;
-        return new Map(last).set(key, { from, answer: recalculated, index, after: lastReplyId(bubbles) });
-      });
+      setKept((last) =>
+        keptWith(last, chosen.key, { key, answer: recalculated, index, after: lastReplyId(bubbles) }, bubbles),
+      );
     },
     [chosen, bubbles, setKept, rename],
   );

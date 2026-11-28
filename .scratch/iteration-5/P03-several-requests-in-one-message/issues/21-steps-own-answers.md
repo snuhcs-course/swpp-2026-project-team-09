@@ -44,6 +44,7 @@ Steps without keys keep the rule of before: a main server before P05 ticket 74, 
 - [x] A plan chosen in words opens at its step. (Integration test, `answer-steps-own-answers`.)
 - [x] A later reply that gives an answer again replaces what was kept of it: the plan browsed and the recalculation, for the step chosen and the steps drawn (TaeHyun79's review). (Integration test, `answer-steps-own-answers`.)
 - [x] A recalculation that gives the answer another key keeps its step chosen. (Integration test, `answer-steps-own-answers`.)
+- [x] A step keeps one entry: after two or three key changes, back to an earlier key or not, it shows its last answer and stays chosen, and the conversation's answers and steps hold that answer (TaeHyun79's second review). (Integration test, `answer-steps-own-answers`; unit test, `features/kept-answers`.)
 - [x] Rules 1, 2 and 6, by their partitions. (Unit test, `features/step-choice`.)
 - [x] A single answer, steps without keys and #706's live steps behave as before. (The existing steps, sheet and booking tests, unchanged.)
 

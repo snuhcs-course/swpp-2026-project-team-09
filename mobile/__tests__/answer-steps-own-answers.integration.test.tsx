@@ -147,18 +147,14 @@ function dinnerOf(reply: AssistantReply): AnswerReply {
   return dinner;
 }
 
-// Dinner recalculated half an hour later, under `key`, as the main server answers a moved band.
-function laterDinner(key: string | undefined): AnswerReply {
+// Dinner recalculated from `start` to `end`, under `key`, as the main server answers a moved band.
+function laterDinner(key: string | undefined, start = '17:30', end = '18:30'): AnswerReply {
   const dinner = dinnerOf(twoMeals());
   const [first] = dinner.plans;
   if (first === undefined) {
     throw new Error('No dinner plan');
   }
-  const plan = {
-    ...first,
-    startAt: first.startAt.replace('17:00', '17:30'),
-    endAt: first.endAt.replace('18:00', '18:30'),
-  };
+  const plan = { ...first, startAt: first.startAt.replace('17:00', start), endAt: first.endAt.replace('18:00', end) };
   return { ...dinner, key, plans: dinner.plans.with(0, plan) };
 }
 
@@ -205,5 +201,34 @@ describe('A step of lunch and dinner kept on screen', () => {
     await moveDinner(laterDinner('meal 2026-10-07 dinner together'));
 
     expect(screen.getByRole('button', { name: /^2번 저녁 17:30–18:30/u })).toBeSelected();
+  });
+});
+
+// TaeHyun79's second review of #725: a key changed and changed back, as "＋ 같이" does to a study (a Friend added and
+// taken out: `… alone` → `… together` → `… alone`) and the bar's other meal to a meal (lunch → dinner → lunch), driven
+// here by the main server's recalculations of a moved band under those keys. Partitions: two changes back to the first
+// key; three.
+describe('A step whose answer changed key and changed back', () => {
+  it('stays chosen at its last answer after a second change back to its first key', async () => {
+    const user = await asked(twoMeals());
+    const key = dinnerOf(twoMeals()).key ?? '';
+    await choose(user, 2);
+
+    await moveDinner(laterDinner(`${key} together`));
+    await moveDinner(laterDinner(key, '18:00', '19:00'));
+
+    expect(screen.getByRole('button', { name: /^2번 저녁 18:00–19:00/u })).toBeSelected();
+  });
+
+  it('stays chosen at its last answer after three changes back to its first key', async () => {
+    const user = await asked(twoMeals());
+    const key = dinnerOf(twoMeals()).key ?? '';
+    await choose(user, 2);
+
+    await moveDinner(laterDinner('meal 2026-10-07 lunch'));
+    await moveDinner(laterDinner('meal 2026-10-07 late', '17:45', '18:45'));
+    await moveDinner(laterDinner(key, '18:00', '19:00'));
+
+    expect(screen.getByRole('button', { name: /^2번 저녁 18:00–19:00/u })).toBeSelected();
   });
 });
