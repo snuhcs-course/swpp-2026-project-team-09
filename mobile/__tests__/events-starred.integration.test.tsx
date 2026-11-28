@@ -85,18 +85,22 @@ describe("the ☆ in the 행사 tab's header", () => {
   });
 });
 
-describe("the ☆ in the 행사 tab's header, with a change made while it is on", () => {
-  it('keeps the row of an event unstarred while it is on, so that a wrong press is undone where it was made', async () => {
-    answerEvents(server, { events: [CAREER, { ...MAJOR, favorite: true }, BOOK_TALK] });
+describe("the ☆ in the 행사 tab's header, with a star taken off while it is on", () => {
+  // The user (2026-11-28): "관심 표시를 누른 상태에서 항목의 별을 취소하면 그대로 목록에 남아있다는거야."
+  it('takes an event unstarred while it is on off the list at once, and says so when none is left', async () => {
+    answerEvents(server, { events: [CAREER, { ...MAJOR, favorite: true }, { ...BOOK_TALK, favorite: true }] });
     server.on(`DELETE /global-events/${MAJOR.id}/favorite`, { status: 204 });
+    server.on(`DELETE /global-events/${BOOK_TALK.id}/favorite`, { status: 204 });
     const user = await openEvents();
     await user.press(starredOnly());
 
     await user.press(card(MAJOR).getByRole('button', { name: FAVORITE_LABEL }));
-    await pass(500);
+    expect(shownEvents()).toEqual([BOOK_TALK.title]);
 
-    expect(shownEvents()).toEqual([MAJOR.title]);
-    expect(card(MAJOR).getByRole('button', { name: FAVORITE_LABEL })).not.toBeSelected();
+    await user.press(card(BOOK_TALK).getByRole('button', { name: FAVORITE_LABEL }));
+    await pass(500);
+    expect(shownEvents()).toEqual([]);
+    expect(screen.getByText('별표한 행사가 없어요')).toBeVisible();
   });
 
   it('searches within the starred events while it is on', async () => {

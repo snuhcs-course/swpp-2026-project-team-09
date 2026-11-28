@@ -211,7 +211,7 @@ describe('the detail sheet', () => {
     await user.press(card(CAREER).getByRole('button', { name: CAREER.title }));
     await pass(500);
 
-    expect(screen.getByRole('button', { name: '모집 중인 파티 2 · 찾기/모집' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '모집 중인 파티 2' })).toBeVisible();
   });
 });
 
