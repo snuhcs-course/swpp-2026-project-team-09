@@ -11,14 +11,15 @@ import type { ArmedAct } from '@/api/library-card-types';
 import { now } from '@/clock';
 import { Button, cardStyles, color, SectionHeader, space, text } from '@/design-system';
 import { koreaDateKey } from '@/korea-time';
-import { bookingDeadline, canCancel, canReturn, ticketOfBooking } from '@/library/cards/bookings';
+import { bookingDeadline, canCancel, canReturn, shownBookings, ticketOfBooking } from '@/library/cards/bookings';
 import { confirmWords } from '@/library/cards/done';
 import { dayAfter, siteDate } from '@/library/cards/times';
 import { library } from '@/library/library';
 import type { LibraryBooking } from '@/library/replies';
-import { seatStayQuestIds } from '@/library/seat-stays';
+import { seatStays } from '@/library/seat-stays';
 import { BookedTicket, TicketLine, TicketWithLine, ticketWords } from '../main/library/booked-ticket';
 import { type Loaded, needsLogin, useLibraryLoad, useLogInReload } from '../main/library/use-library-call';
+import { ACT_WORDS } from '../main/library/use-confirming';
 import { bookingsAddress } from '../main/use-asked-bookings';
 import { useAiRaised } from '../shell/ai-raised';
 
@@ -31,26 +32,23 @@ const DAYS_ON = 3;
 export interface TodayBookings {
   loaded: Loaded<LibraryBooking[]>;
   reload: () => void;
-  // The Quests of the seats' stays (P05-14), which leave 오늘 일정 while the bookings are listed, so that no booking
-  // reads twice. None while the bookings are not read: a stay then stays in 오늘 일정.
-  stays: ReadonlySet<string>;
+  // The Quests of the stays (P05-14) of the seats listed here, which leave 오늘 일정 so that no booking reads twice.
+  // None while the bookings are not read, and none for a booking not listed: such a stay stays in 오늘 일정.
+  hiddenStays: ReadonlySet<string>;
 }
 
-// Booked or in use, soonest first, as 내 예약 shows them.
-function shown(bookings: readonly LibraryBooking[]): LibraryBooking[] {
-  return bookings
-    .filter((booking) => canCancel(booking) || canReturn(booking))
-    .toSorted((one, other) => one.USESTART.localeCompare(other.USESTART));
-}
+const NONE: ReadonlySet<string> = new Set();
 
-function useStays(read: boolean): ReadonlySet<string> {
-  const [stays, setStays] = useState<ReadonlySet<string>>(new Set());
+// The stays' Quests of the listed bookings, by their BSEQNO.
+function useHiddenStays(listed: readonly LibraryBooking[] | null): ReadonlySet<string> {
+  const [stays, setStays] = useState<Readonly<Record<string, string>>>({});
+  const read = listed !== null && listed.length > 0;
   useEffect(() => {
     let current = true;
     if (read) {
-      void seatStayQuestIds().then((ids) => {
+      void seatStays().then((map) => {
         if (current) {
-          setStays(new Set(ids));
+          setStays(map);
         }
       });
     }
@@ -58,7 +56,10 @@ function useStays(read: boolean): ReadonlySet<string> {
       current = false;
     };
   }, [read]);
-  return read ? stays : new Set();
+  if (!read) {
+    return NONE;
+  }
+  return new Set(listed.flatMap(({ BSEQNO }) => stays[String(BSEQNO)] ?? []));
 }
 
 // The bookings, read as the page mounts, which it does each time 오늘 comes to the front.
@@ -66,9 +67,13 @@ export function useTodayBookings(): TodayBookings {
   const today = koreaDateKey(now());
   const start = siteDate(today);
   const end = siteDate(dayAfter(today, DAYS_ON));
-  const { loaded, reload } = useLibraryLoad(async () => shown(await library.myBookings(start, end)), `${start}-${end}`);
-  const stays = useStays(loaded.state === 'ready' && loaded.value.length > 0);
-  return { loaded, reload, stays };
+  // Booked or in use, soonest first, as 내 예약 shows them.
+  const { loaded, reload } = useLibraryLoad(
+    async () => shownBookings(await library.myBookings(start, end), { until: null }, today),
+    `${start}-${end}`,
+  );
+  const hiddenStays = useHiddenStays(loaded.state === 'ready' ? loaded.value : null);
+  return { loaded, reload, hiddenStays };
 }
 
 function actOf(booking: LibraryBooking): ArmedAct['act'] | null {
@@ -78,7 +83,8 @@ function actOf(booking: LibraryBooking): ArmedAct['act'] | null {
   return canReturn(booking) ? 'return' : null;
 }
 
-const LINK_WORDS: Record<ArmedAct['act'], string> = { cancel: '예약 취소', return: '반납' };
+// As 내 예약's links read.
+const LINK_WORDS: Record<ArmedAct['act'], string> = { cancel: ACT_WORDS.cancel.confirm, return: '반납' };
 
 // To the map with the AI raised and the AI's 내 예약, its act armed for a link: the red button beside the input acts,
 // and nothing is sent from here.

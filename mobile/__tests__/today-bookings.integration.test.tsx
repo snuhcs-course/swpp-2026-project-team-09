@@ -116,21 +116,6 @@ describe('예약', () => {
     expectNoWrite(library);
   });
 
-  it('is hidden with no booking, and its seat stay stays in 오늘 일정', async () => {
-    await openToday();
-
-    expect(screen.queryByTestId('today-bookings')).toBeNull();
-    expect(day().getByText(STAY.title)).toBeVisible();
-  });
-
-  it('takes the seat’s stay out of 오늘 일정 while it lists the seat', async () => {
-    library.addBooking(SEAT);
-    await openToday();
-
-    expect(tickets()).toEqual([SEAT_TICKET]);
-    expect(day().queryByText(STAY.title)).toBeNull();
-  });
-
   it('is one line with 로그인 while logged out, and the seat’s stay stays in 오늘 일정', async () => {
     library.addBooking(SEAT);
     await openToday({ loggedIn: false });
@@ -152,6 +137,32 @@ describe('예약', () => {
     await user.press(screen.getByRole('tab', { name: /^오늘/u }));
     await pass(500);
     expect(library.requestsTo('getMyBookingList')).toHaveLength(read + 1);
+  });
+});
+
+// A seat's stay leaves 오늘 일정 only while 예약 lists its booking.
+describe('a seat’s stay and 예약', () => {
+  it('is hidden with no booking, and its seat stay stays in 오늘 일정', async () => {
+    await openToday();
+
+    expect(screen.queryByTestId('today-bookings')).toBeNull();
+    expect(day().getByText(STAY.title)).toBeVisible();
+  });
+
+  it('takes the seat’s stay out of 오늘 일정 while it lists the seat', async () => {
+    library.addBooking(SEAT);
+    await openToday();
+
+    expect(tickets()).toEqual([SEAT_TICKET]);
+    expect(day().queryByText(STAY.title)).toBeNull();
+  });
+
+  it('keeps the seat’s stay in 오늘 일정 while it lists only another booking', async () => {
+    library.addBooking(ROOM);
+    await openToday();
+
+    expect(tickets()).toEqual(['예약됨 · 내일 10:00–12:00, 4층 그룹스터디실, 방 G411']);
+    expect(day().getByText(STAY.title)).toBeVisible();
   });
 });
 

@@ -176,7 +176,7 @@ function Page(): ReactElement {
   return (
     <ScrollView contentContainerStyle={styles.body}>
       <Waiting waiting={waitingNotices(notices)} />
-      <Day listed={bookings.stays} />
+      <Day hidden={bookings.hiddenStays} />
       <Bookings bookings={bookings} />
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}

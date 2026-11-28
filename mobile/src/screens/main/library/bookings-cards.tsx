@@ -249,16 +249,20 @@ function useGuideTold(held: boolean): ActTold | null {
 
 // The act armed as the card opens, as 오늘's "예약 취소 ›" or "반납 ›" asks (A04 ticket 11): once the bookings are read,
 // that booking's act stands as a link pressed, if the booking is still there and the act is still its own.
+// It is armed once for its bubble: a card drawn again, as when the conversation is taken up again, keeps what the User
+// did since.
+const armedBubbles = new Set<number>();
+
 function useArmed(
   armed: LibraryCardData['armed'],
   bookings: readonly LibraryBooking[] | null,
   setActing: (acting: { booking: LibraryBooking; act: Act }) => void,
+  bubbleId: number,
 ): void {
-  const [used, setUsed] = useState(false);
-  if (used || armed === undefined || bookings === null) {
+  if (armedBubbles.has(bubbleId) || armed === undefined || bookings === null) {
     return;
   }
-  setUsed(true);
+  armedBubbles.add(bubbleId);
   const booking = bookings.find(({ BSEQNO }) => BSEQNO === armed.bseqno);
   if (booking !== undefined && actOf(booking) === armed.act) {
     setActing({ booking, act: armed.act });
@@ -273,7 +277,7 @@ export function MyBookingsCard({ card, bubbleId, actions }: CardProps): ReactEle
   const logIn = useLogInReload(reload);
   const [acting, setActing] = useState<{ booking: LibraryBooking; act: Act } | null>(null);
   const bookings = loaded.state === 'ready' ? shownBookings(loaded.value, card, today) : [];
-  useArmed(card.armed, loaded.state === 'ready' ? bookings : null, setActing);
+  useArmed(card.armed, loaded.state === 'ready' ? bookings : null, setActing, bubbleId);
   const walk = actions.bookingWalk?.()?.minutes ?? null;
   const guide = useGuideTold(bookings.some((booking) => actOf(booking) !== null));
   useTellAct(actions.act ?? null, bubbleId, acting === null ? guide : null);

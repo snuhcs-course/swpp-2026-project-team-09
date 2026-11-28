@@ -1093,6 +1093,19 @@ and sends today's Class Quests only, so the classes already over and tomorrow's 
 with "알림 모두 보기 ›", which stays while the lists load or fail. The main server marks every kept Notification read at once, so 오늘 marks them read only
 while every unread one is among the five it shows; otherwise "알림 모두 보기" does.
 
+오늘's **예약** (`src/screens/today/bookings.tsx`, A04 ticket 11) stands between 오늘 일정 and 지난 알림: the
+관정도서관 bookings of today to three days on that are booked or in use, soonest first, read with `getMyBookingList`
+once each time 오늘 comes to the front and never polled, each as 내 예약's ticket (`BookedTicket`) with its confirm
+time and "예약 취소 ›" or "반납 ›". It is hidden while it is read and with none, except right after its own 로그인
+finds none, when it says "예정된 관정도서관 예약이 없어요". Logged out, or the session ended, it is one line, "관정도서관에
+로그인하면 예약이 보여요" with 로그인; a read that failed, "예약을 불러오지 못했어요" with 다시 시도. While it lists the
+bookings, a seat's stay Quest (`seat-stays.ts`) leaves 오늘 일정. A press on a ticket goes to the map with the AI raised
+by `/main?myBookings=open`, and a link by `/main?myBookings=<BSEQNO>:cancel` or `:return`: the map starts a new
+conversation with the app's own turn "내 예약" (`askOwn`, `features/assistant/own-turn.ts`), whose reply is the 내 예약
+card made on the phone (`myBookingsCardOf`) with that booking's act armed (`armed`), so that only the red button beside
+the input sends. Nothing goes to the model. The mock build keeps three bookings of its own
+(`api/mock/library-transport.ts`) and starts logged in; every other library call goes to the site.
+
 알림 (`notifications-screen.tsx`), every row, above the tabs, is composed from the main server's lists (`useNotices()` of the notifications
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
 time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A Notification whose time is still to

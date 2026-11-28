@@ -29,10 +29,10 @@ async function readMap(): Promise<Record<string, string>> {
   }
 }
 
-// The Quests of the stays the phone keeps, which 오늘 leaves out of 오늘 일정 while its 예약 lists the seats (A04
+// The stays the phone keeps, each Quest by its booking's BSEQNO: 오늘 leaves a listed seat's out of 오늘 일정 (A04
 // ticket 11).
-export async function seatStayQuestIds(): Promise<string[]> {
-  return Object.values(await readMap());
+export function seatStays(): Promise<Readonly<Record<string, string>>> {
+  return readMap();
 }
 
 export async function keepSeatStay(bseqno: string, questId: string): Promise<void> {

@@ -149,12 +149,12 @@ function PastRows({ items }: { items: readonly PastItem[] }): ReactElement | nul
 // 오늘 일정: today's Quests, classes included, in time order, the rows over folded above "지금 HH:MM", and one line for
 // tomorrow. The classes already over and tomorrow's classes come from the timetable (#800's review, decided
 // 2026-11-29). The 새내기 튜토리얼's quests are none of the User's Quests, so they are not here, as on the map. A seat's
-// stay whose booking 예약 lists is left out (`listed`, A04 ticket 11).
-export function Day({ listed }: { listed: ReadonlySet<string> }): ReactElement {
+// stay whose booking 예약 lists is left out (`hidden`, A04 ticket 11).
+export function Day({ hidden }: { hidden: ReadonlySet<string> }): ReactElement {
   const { data: rows, isPending, refetch } = useQuestRows();
   const week = useWeek().data ?? [];
   const at = now();
-  const today = (rows ?? []).filter(({ id, daysAway }) => daysAway === 0 && !listed.has(id));
+  const today = (rows ?? []).filter(({ id, daysAway }) => daysAway === 0 && !hidden.has(id));
   const classesTomorrow = week.filter(({ day }) => day === blockDay(new Date(at.getTime() + DAY_MS))).length;
   const tomorrow = tomorrowWords(
     (rows ?? []).filter(({ daysAway, kind }) => daysAway === 1 && kind !== 'class'),
