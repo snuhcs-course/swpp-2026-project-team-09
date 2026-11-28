@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -88,6 +89,7 @@ describe('The Leader accepting a request to join', () => {
           line: '점심 같이 · 홍길동님의 파티',
           at: AT,
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });
@@ -112,6 +114,7 @@ describe('The Leader declining a request to join', () => {
           line: '점심 같이 · 홍길동님의 파티',
           at: AT,
           url: `/main?card=find-parties:${questId}`,
+          read: false,
         },
       ]);
     });
@@ -133,6 +136,7 @@ describe('Asking to join', () => {
           line: '점심 같이 · 김철수님',
           at: AT,
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });

@@ -17,6 +17,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { IconName } from './icon';
@@ -146,6 +147,9 @@ export const glass = {
   // Outer bars, bottom sheets and cards over the map: the line, the board's floating shadow (between `shadow.float`
   // and `shadow.mapCard`), and white at 80% where the panel is not blurred (A04-03).
   panel: { ground: 'rgba(255, 255, 255, 0.8)', shadow: '0 4px 16px rgba(14, 19, 48, 0.16)' },
+  // A whole screen over the map, such as the Quest list (A04 ticket 08): blurred as a panel, and where nothing blurs a
+  // denser white than a panel's, since its rows stand over the map's own names on every line.
+  screen: { ground: 'rgba(255, 255, 255, 0.85)' },
   // Chips, boxes, white buttons and light coloured chips inside a panel: white at 90%, above the 80% of the changelog
   // of 11.24, so that they stand out on an unblurred panel's 80% (A04-03).
   inner: { ground: 'rgba(255, 255, 255, 0.9)' },
