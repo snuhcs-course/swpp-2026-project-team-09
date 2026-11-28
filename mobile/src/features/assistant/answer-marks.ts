@@ -264,24 +264,28 @@ export function drawingOfScene(
   const asMeal = meal !== undefined || setting.studyPick !== undefined;
   const hidden = hiddenRoutes(meal, scene);
   const places = scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []);
-  // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
-  const drafts = withOpenMarks(
-    meal === undefined ? (setting.opens ?? false) : false,
-    mealDrafts(
-      meal,
-      scene,
-      [
-        ...personDrafts(scene, setting.standings),
-        ...places.map((draft) => inKind(draft, setting.toneKind)),
-        ...flagDrafts(scene),
-        ...keptDrafts(setting.kept),
-        ...(setting.drafts ?? []),
-        // A 관정 booking's way carries its minutes, as a meal Plan's way there (P01 ticket 10).
-        ...(setting.study === undefined ? [] : wayMinutesDrafts(scene, setting.ways)),
-      ],
-      setting.ways,
+  // A meal pick's label says "메뉴 ›" in place of the "›" after its name. Marks made beside the scene's own carry their
+  // own words, "›" included, and look: a step's beside an answer drawn as alone is no pick of the answer's (P03 ticket
+  // 26).
+  const drafts = [
+    ...withOpenMarks(
+      meal === undefined ? (setting.opens ?? false) : false,
+      mealDrafts(
+        meal,
+        scene,
+        [
+          ...personDrafts(scene, setting.standings),
+          ...places.map((draft) => inKind(draft, setting.toneKind)),
+          ...flagDrafts(scene),
+          ...keptDrafts(setting.kept),
+          // A 관정 booking's way carries its minutes, as a meal Plan's way there (P01 ticket 10).
+          ...(setting.study === undefined ? [] : wayMinutesDrafts(scene, setting.ways)),
+        ],
+        setting.ways,
+      ),
     ),
-  );
+    ...(setting.drafts ?? []),
+  ];
   const placed = placeAll(drafts, view, asMeal).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),

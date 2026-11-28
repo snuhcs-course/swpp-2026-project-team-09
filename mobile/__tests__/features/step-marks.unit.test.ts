@@ -6,6 +6,7 @@
 
 import type { AnswerReply, ReplyStep } from '@/api/assistant-types';
 import { EVENTS_ANSWER } from '@/api/mock/data/events-answer';
+import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
 import { NEW_QUEST_ANSWER } from '@/api/mock/data/new-quest-answer';
@@ -132,6 +133,26 @@ describe("The steps' marks, by kind", () => {
     expect(answerTone('room')).toBe('study');
     expect(stepMarkRole({ status: 'shown' })).toBe('pick');
     expect(stepMarkRole({ status: 'not-done' })).toBe('dropped');
+  });
+});
+
+// Partitions: a step's mark beside an answer drawn as alone, a meal without menus (its pick opens a card, "›") and with
+// menus (its pick is the meal's). Expected values: the emulator, 2026-11-28: the seat's flag beside dinner read
+// "관정 7층 열람실 › ›", the answer's own "›" added again to a mark that carries its own.
+describe("A step's mark beside an answer drawn as alone", () => {
+  it.each<[string, AnswerReply]>([
+    ['a meal whose menus are not known', MEAL_ANSWER],
+    ['a meal with menus', MEAL_ANSWER_MENUS],
+  ])('keeps its own words and look beside %s', (_, answer) => {
+    const [seat] = stepsReplyOn('2026-11-02').steps ?? [];
+    if (seat === undefined) {
+      throw new Error('No seat step');
+    }
+    const beside = stepDrafts([seat], ['17:30–19:00'], ['관정 7층 열람실']);
+    const { label, symbol } = seen(drawingOf(answer, 0, undefined, null, undefined, beside), 'answer:step:1');
+
+    expect(label?.title).toBe('관정 7층 열람실 ›');
+    expect(symbol).toMatchObject({ icon: 'bookOpen', number: null });
   });
 });
 
