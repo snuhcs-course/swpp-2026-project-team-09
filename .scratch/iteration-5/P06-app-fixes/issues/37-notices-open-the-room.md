@@ -1,7 +1,7 @@
 # 37: A 파티's own news opens its room, not its card on the map
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.
