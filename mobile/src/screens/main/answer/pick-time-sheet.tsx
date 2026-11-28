@@ -4,13 +4,14 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { PickTimeOffer } from '@/api/pick-types';
 import { now } from '@/clock';
-import { BottomSheet, Button, color, font, radius, space, text } from '@/design-system';
+import { BottomSheet, Button, color, font, radius, SheetTitle, space, text } from '@/design-system';
 import { isFreeAt, wheelTimes } from '@/features/assistant/use-picking';
 import { koreaClock, koreaDateKey, koreaDayWord, koreaWeekdayName } from '@/korea-time';
 
@@ -106,10 +107,7 @@ function PickTime({
   };
   const chosen = times[index] ?? null;
   return (
-    <View style={styles.sheet} testID="pick-time-sheet">
-      <Text accessibilityRole="header" style={styles.title}>
-        {`${dayWords(offer.date)} 몇 시에?`}
-      </Text>
+    <View style={styles.sheet}>
       <Wheel
         first={first}
         free={offer.free}
@@ -141,15 +139,21 @@ function PickTime({
 // sends the time in the middle as "HH:MM에". It stays mounted, so that it slides down when it closes (P06 ticket 35).
 export function PickTimeSheet({ offer, onPick, onClose }: PickTimeSheetProps): ReactElement {
   return (
-    <BottomSheet label="시간 고르기" onClose={onClose} open={offer !== null}>
+    <BottomSheet
+      head={offer === null ? undefined : <SheetTitle>{`${dayWords(offer.date)} 몇 시에?`}</SheetTitle>}
+      label="시간 고르기"
+      onClose={onClose}
+      open={offer !== null}
+      pullBody={false}
+      testID="pick-time-sheet"
+    >
       {offer === null ? null : <PickTime offer={offer} onPick={onPick} />}
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: { gap: space[3], paddingHorizontal: space[4], paddingBottom: space[4] },
-  title: { ...text.bodyLg, fontFamily: font.semiBold, color: color.ink },
+  sheet: { gap: space[3], paddingHorizontal: space[5], paddingBottom: space[4] },
   wheel: { height: ROW * (PAD * 2 + 1) },
   middle: {
     position: 'absolute',

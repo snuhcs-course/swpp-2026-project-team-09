@@ -3,6 +3,7 @@
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, screen } from '@testing-library/react-native';
@@ -22,8 +23,12 @@ interface HeldDrag {
   letGo: (dy: number, velocityY?: number) => Promise<void>;
 }
 
-export async function holdHandleDrag(firstMove = PAN_STARTS): Promise<HeldDrag> {
-  const { handlerTag } = getByGestureTestId('sheet-drag');
+// `gesture` is the handle bar's and the head's drag, or the body's pull (P06 ticket 53).
+export async function holdHandleDrag(
+  firstMove = PAN_STARTS,
+  gesture: 'sheet-drag' | 'sheet-body-drag' = 'sheet-drag',
+): Promise<HeldDrag> {
+  const { handlerTag } = getByGestureTestId(gesture);
   const event = { handlerTag, numberOfPointers: 1, x: 100, y: 10, absoluteX: 100, absoluteY: 10, translationX: 0 };
   const stateChange = (state: State, oldState: State, translationY: number, velocityY = 0): void => {
     DeviceEventEmitter.emit('onGestureHandlerStateChange', { ...event, state, oldState, translationY, velocityY });
@@ -49,6 +54,13 @@ export async function holdHandleDrag(firstMove = PAN_STARTS): Promise<HeldDrag> 
       });
     },
   };
+}
+
+// A whole pull on the sheet's body, `dy` down, let go at `velocityY` points a second.
+export async function dragBody(dy: number, velocityY = 0): Promise<void> {
+  const held = await holdHandleDrag(Math.sign(dy) * PAN_STARTS, 'sheet-body-drag');
+  await held.move(dy);
+  await held.letGo(dy, velocityY);
 }
 
 // A whole drag on the handle bar, `dy` down, let go at `velocityY` points a second.
