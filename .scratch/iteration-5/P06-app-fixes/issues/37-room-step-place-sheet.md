@@ -1,7 +1,7 @@
 # 37: The room's 일정 form sets its place with the 파티 form's place sheet and shows the same kind tag
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None. Ticket 34 (PR 712, merged on 2026-11-28) added the place sheet, the kind tag and the shared help bubble.
 
 Native files: none. Releases: an app OTA update only.
@@ -72,11 +72,23 @@ Positions are as of `origin/5.0/Main` ec8337d6, under `mobile/src/`.
 
 ## Acceptance criteria
 
-- [ ] In the room's 일정 form, 어디서 is a row with the place's words and its grey kind tag, and a press opens the place sheet. (App integration test, which fails before the change.)
-- [ ] A building, a map point and words alone, each set with 이 장소로 정하기, reach `addSubQuest` / `editSubQuest` as a `placeId`, a point and words. A map pick inside a building goes as that building. (App integration test, which fails before the change.)
-- [ ] An edited 일정 shows its place's kind tag, and its sheet opens on its words with nothing chosen. (App integration test.)
-- [ ] `WhereField` is gone, and nothing imports it.
+- [x] In the room's 일정 form, 어디서 is a row with the place's words and its grey kind tag, and a press opens the place sheet. (App integration test, which fails before the change.)
+- [x] A building, a map point and words alone, each set with 이 장소로 정하기, reach `addSubQuest` / `editSubQuest` as a `placeId`, a point and words. A map pick inside a building goes as that building. (App integration test, which fails before the change.)
+- [x] An edited 일정 shows its place's kind tag, and its sheet opens on its words with nothing chosen. (App integration test.)
+- [x] `WhereField` is gone, and nothing imports it.
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+Estimates. Agent time is this session's working time from 14:45 to about 15:10 (Korea time) on 2026-11-28, about 25 minutes. About 7 minutes of it were Jest runs. It covers the tests written first, the room's place row, the move of the place sheet to `screens/place-sheet/`, the updated room tests, the checks and the draft pull request. The ticket itself was written in the orchestrating session, and its time is not counted here.
+
+No subagents. Tokens are counted up to this entry, so this commit and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 37 (tests first, the place row, the moved place sheet, the room tests, the draft pull request) | about 25 minutes | 11,250,909 | 11,077,435 | 173,340 | 134 | 51,267 |
+
+Without cache reads, the input is 173,474.
