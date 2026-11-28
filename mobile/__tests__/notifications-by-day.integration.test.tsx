@@ -81,9 +81,11 @@ function textOf(node: Host): string {
   return node.children.map((child) => (typeof child === 'string' ? child : textOf(child))).join('');
 }
 
-// The groups' headings, "# 오늘", and the rows' titles, in the order they stand on the screen.
+// The groups' headings, "# 오늘", and the rows' titles, in the order they stand in 알림. Read inside its panel: the
+// screens under it stay mounted, with buttons of their own.
 function shownOrder(): string[] {
-  return screen.container
+  return screen
+    .getByTestId('full-screen-panel')
     .queryAll(() => true)
     .flatMap((node): string[] => {
       const role: unknown = node.props.accessibilityRole;
