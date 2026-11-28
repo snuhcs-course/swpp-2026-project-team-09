@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -68,7 +69,8 @@ async function restart(): Promise<void> {
   await pass(500);
 }
 
-const TITLES = ['지도', '파티', '행사', '내 정보'];
+// In the bar's order (A04 ticket 09): the map's round tab is the middle.
+const TITLES = ['파티', '행사', '지도와 AI', '알림', '내 정보'];
 
 // The title of the tour's step on screen, or null without the tour.
 function stepShown(): string | null {
@@ -90,7 +92,7 @@ function finishOnboardingWithAll(): Promise<User> {
 }
 
 describe('the tour after Onboarding', () => {
-  it('waits for the first run, then points at the four tabs one at a time', async () => {
+  it('waits for the first run, then points at the five slots one at a time', async () => {
     const user = await finishOnboarding();
     expect(cardsShown()).toEqual([TIMETABLE]);
     expect(stepShown()).toBeNull();
@@ -101,15 +103,17 @@ describe('the tour after Onboarding', () => {
     await later(user);
     expect(cardsShown()).toEqual([]);
 
-    expect(stepShown()).toBe('지도');
-    expect(screen.getByText('1/4')).toBeVisible();
-    await press(user, '다음');
     expect(stepShown()).toBe('파티');
+    expect(screen.getByText('1/5')).toBeVisible();
     await press(user, '다음');
     expect(stepShown()).toBe('행사');
     await press(user, '다음');
+    expect(stepShown()).toBe('지도와 AI');
+    await press(user, '다음');
+    expect(stepShown()).toBe('알림');
+    await press(user, '다음');
     expect(stepShown()).toBe('내 정보');
-    expect(screen.getByText('4/4')).toBeVisible();
+    expect(screen.getByText('5/5')).toBeVisible();
     await press(user, '완료');
     expect(stepShown()).toBeNull();
 
@@ -121,19 +125,34 @@ describe('the tour after Onboarding', () => {
     await finishOnboardingWithAll();
 
     expect(cardsShown()).toEqual([]);
-    expect(stepShown()).toBe('지도');
+    expect(stepShown()).toBe('파티');
   });
+});
 
+describe("the tour's slots", () => {
   it('lights only the tab of its step, in the tab bar’s five slots of one width', async () => {
     const user = await finishOnboardingWithAll();
-    // The test's window is 750 wide: a slot is 150, and 올리기 is the third.
+    // The test's window is 750 wide: a slot is 150, each of the five lit in turn.
     expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 0, width: 150 });
     await press(user, '다음');
     expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 150 });
     await press(user, '다음');
+    expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 300 });
+    await press(user, '다음');
     expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 450 });
     await press(user, '다음');
     expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 600 });
+  });
+
+  it("shows on the middle's step what its filled and its outlined look mean", async () => {
+    const user = await finishOnboardingWithAll();
+    expect(screen.queryByTestId('tab-tour-raised')).toBeNull();
+
+    await press(user, '다음');
+    await press(user, '다음');
+
+    expect(screen.getByTestId('tab-tour-raised')).toBeVisible();
+    expect(screen.getByTestId('tab-tour-lowered')).toBeVisible();
   });
 });
 
@@ -146,7 +165,7 @@ describe('leaving the tour', () => {
     expect(stepShown()).toBeNull();
 
     await restart();
-    expect(stepShown()).toBe('지도');
+    expect(stepShown()).toBe('파티');
   });
 
   it('is turned off for good with 다시 보지 않기', async () => {
@@ -180,7 +199,7 @@ describe('the tour from 내 정보', () => {
     await user.press(screen.getByRole('button', { name: '탭 안내 다시 보기' }));
     await pass(500);
 
-    expect(stepShown()).toBe('지도');
+    expect(stepShown()).toBe('파티');
     await press(user, '건너뛰기');
     expect(stepShown()).toBeNull();
   });

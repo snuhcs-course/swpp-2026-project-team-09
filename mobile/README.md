@@ -442,15 +442,22 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
 `PositionSending` inside it (see "The User's position"), and a stack:
 
 - **The tabs** (`(signed-in)/(tabs)/`): Expo Router's `Tabs`, with `TabBar` (`src/screens/shell/tab-bar.tsx`)
-  drawing the design system's `BottomNav`. 지도 is the main screen at `/main`; 파티 is `/party`, 행사 `/events`, 내
-  정보 `/me`. 올리기 is no tab: it opens 파티 만들기 (`/party-form`) empty above the tabs, and 뒤로 shows the tab it
-  was pressed on. A tab stays mounted while another is shown, so the map keeps its native view, its camera, the open
-  card, the route and the collapsed lists. The bar has no line on top but the
-  frames' shadow (`shadow.nav`), and under its items 16 or the phone's own inset, whichever is larger
-  (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is `usePartyBadge()`: the rows of 알림
-  that wait for the User and concern 파티, every row but the kept Notifications and the Friend Requests. While the
-  lists load, and when every one failed, there is no badge.
-- 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
+  drawing the design system's `BottomNav`. The bar reads 파티 (`/party`), 행사 (`/events`), the map in the middle, 알림
+  (`/notifications`) and 내 정보 (`/me`) (A04 ticket 09). The middle is the main screen's tab at `/main`, a round tab
+  whose name, "지도", is not drawn; the map stays the first route, so Android's back and the edge swipe on another tab
+  show it. On the map the middle raises and lowers the AI: lowered, the AI input and the lines over it ("이어서 · …"
+  and a made Quest's line) are gone, the input mounted and hidden so that what was typed comes back; on another tab
+  it shows the map with the AI raised. Raised, it is filled `snuBlue` with a white icon; lowered, or on another tab,
+  white with a `snuBlue` ring and icon; on the map it has the selected tab's light ring and is `expanded` while
+  raised. Whether the AI is raised is held by `AiRaisedProvider` (`src/screens/shell/ai-raised.tsx`) in the tabs'
+  layout, in memory only, and the tabs start raised. 파티 만들기 is the 파티 tab's pencil button. A tab stays mounted
+  while another is shown, so the map keeps its native view, its camera, the open card, the route and the collapsed
+  lists. The bar has no line on top but the frames' shadow (`shadow.nav`), and under its items 16 or the phone's own
+  inset, whichever is larger (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is
+  `usePartyBadge()`: the rows of 알림 that wait for the User and concern 파티, every row but the kept Notifications and
+  the Friend Requests. The number on 알림 is `useBellCount()`: the rows that wait and the kept Notifications unread.
+  While the lists load, and when every one failed, there is no badge.
+- 파티, 행사, 알림 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
   A tab with a search gives `TabScreen` its `search`: the magnifier at the bar's top right, which turns the title's
   row into the field, focused at once so the keyboard rises, and ✕ "검색 닫기". The field is `SearchField`'s `bare`
   variant: no box, the magnifier and the words (18 SemiBold, `text.title`) in the title's place on the bar's white,
@@ -462,8 +469,7 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   above the button); its address names the tab (`/party?tab=invites`). 내 정보's
   address can ask for its 위치 공유 card (`/me?show=sharing`), and 행사's marks one Global Event (`/events?focus=<id>`).
   파티, 행사 and 내 정보 are described below.
-- **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
-  (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
+- **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
   (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 파티
   모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
   `/party-form?questId=<id>` for its edit mode). Each is a `FullScreenPanel`
@@ -986,9 +992,8 @@ title, the place and the time. A class's row closes the screen and goes back to 
 Quest list on the map carries out as a press of its own row; any other row opens the Quest's room above it. Without a
 Quest it says "퀘스트가 없어요"; while the Quests load and after a failure it shows the shared states.
 
-**내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has the bell, "알림" or "알림 {n}개" with the
-number of rows of 알림 that wait for the User in red, the kept Notifications left out ("9+" above nine), and four
-cards from the top:
+**내 정보** (`src/screens/me/me-screen.tsx`, the `Profile` frame) has four cards from the top; its bell went with
+알림 into the tabs (A04 ticket 09):
 
 - the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
   admission year), "SNU 계정 인증됨" and "프로필 편집";
@@ -1076,7 +1081,7 @@ phone over that list, so a syllable still being typed narrows it). The timetable
 A plan with a Friend is a 비공개 파티: the Meetup of Iteration 1, with its form and its invitations, was retired in
 Iteration 2 (P06), and commit `2f4f201` holds its code.
 
-알림 (`notifications-screen.tsx`) is composed from the main server's lists (`useNotices()` of the notifications
+알림 (`notifications-screen.tsx`), a tab with no 뒤로, is drawn while it is in front, each time anew, and is composed from the main server's lists (`useNotices()` of the notifications
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its
 time at the right: "HH:MM" on today's date in Korea, "M월 D일" on another day. A Notification whose time is still to
 come shows its title for that (`ahead`), such as "12:18 나설 시각" for the time to leave (`leave-by`, a clock on the
@@ -1555,9 +1560,10 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 - **Font**: Pretendard, one file per weight in `assets/fonts/`, loaded by the root layout before any screen appears.
   A style sets `fontFamily` from `font` and never `fontWeight`.
 - **Components**: Icon, Button, Chip, Badge, Avatar, MapPin, EventCard, TextField, ChatInput, BottomNav and Switch,
-  with the names and properties of the design system's types. `BottomNav` has two additions that the `Main` wireframe draws:
-  an item with `action` is the one action in the middle, its icon of 22 in white on a round fill of 44 in `snuBlue`
-  with the shadow `shadow.navAction`, inside the bar, its label not shown and kept as what a screen reader says; and
+  with the names and properties of the design system's types. `BottomNav` has two additions: an item with `round` is
+  the round tab in the middle (A04 ticket 09), its icon of 28 on a circle of 56 inside the bar, filled `snuBlue` with
+  `shadow.navAction` while current and `raised`, else white with a ring of 3 in `snuBlue` and `shadow.navRound`, and
+  a light ring of 4 in `blue100` while current, its label not shown and kept as what a screen reader says; and
   `line={false}` leaves out the line on top, for a screen that draws its own edge above the bar. A component of the design system that no screen uses yet is
   ported by the task that needs it. Where the web's differ from React Native's, the app's follow React Native: a press
   is `onPress`, and an image is a `source`. The design system's sizes do not count a border, so a size here adds it:

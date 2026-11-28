@@ -66,7 +66,7 @@ afterEach(() => {
 async function pressTheRow(): Promise<void> {
   const user = await openMain();
   await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-  await user.press(screen.getByRole('button', { name: '알림' }));
+  await user.press(screen.getByRole('tab', { name: /^알림/u }));
   await pass(500);
   await user.press(screen.getByRole('button', { name: ROW }));
   await pass(500);

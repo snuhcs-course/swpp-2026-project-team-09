@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -136,6 +137,19 @@ describe('the map screen with a conversation kept', () => {
     expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.queryByTestId('past-chats')).toBeNull();
     expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '이어서 말하기');
+  });
+});
+
+// A04 ticket 09: the middle of the bar lowers the AI, and the chip goes with the input.
+describe('the map screen with a conversation kept and the AI lowered', () => {
+  it('has no chip until the AI is raised again', async () => {
+    const user = await closedAfterAsking();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    expect(screen.queryByTestId('past-chats')).toBeNull();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    expect(screen.getByRole('button', { name: `이어서, ${SHUTTLE}` })).toBeVisible();
   });
 });
 

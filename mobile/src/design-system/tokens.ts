@@ -18,6 +18,7 @@
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { IconName } from './icon';
@@ -107,9 +108,11 @@ export const shadow = {
   mapName: '0 1px 3px rgba(14, 19, 48, 0.25)',
   // Under a place's dot on the map.
   dot: '0 1px 4px rgba(14, 19, 48, 0.35)',
-  // Under the round action in the middle of the main screen's bottom navigation, in the key colour, as the `Main`
-  // frame draws it.
+  // Under the bottom navigation's round tab in the middle while it is filled, in the key colour, as the proposal's
+  // 권장 boards draw it (A04 ticket 09).
   navAction: '0 4px 12px rgba(0, 26, 114, 0.28)',
+  // Under the same tab while it is white with its navy ring, lighter.
+  navRound: '0 2px 8px rgba(0, 26, 114, 0.16)',
   // Around a small mark that sits on the map itself, as the `Main` frame draws it: the dot of a Friend's row and the
   // round of a Quest's row. A white ring of 2 over a soft shadow.
   mapMark: '0 0 0 2px #FFFFFF, 0 1px 4px rgba(14, 19, 48, 0.25)',
