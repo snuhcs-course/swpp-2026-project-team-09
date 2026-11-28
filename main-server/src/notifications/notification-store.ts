@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -34,17 +35,18 @@ function fieldsOf({ at, title, ahead, line, body, rings }: Kept): Fields {
 export class NotificationStore {
   constructor(private readonly prisma: PrismaService) {}
 
-  // A schedule makes it to be sent again, even when it was sent.
+  // A schedule makes it to be sent again, even when it was sent, and unread again.
   async keep(userId: string, kept: Kept): Promise<void> {
     const key = keyOf(userId, kept.kind, kept.card, kept.about);
     await this.prisma.notification.upsert({
       where: { userId_kind_cardKind_cardId_about: key },
       create: { ...key, ...fieldsOf(kept) },
-      update: { ...fieldsOf(kept), sentAt: null },
+      update: { ...fieldsOf(kept), sentAt: null, readAt: null },
     });
   }
 
-  // Keeps it as `keep` does, but one kept already keeps whether it was sent: it rings once while it is kept.
+  // Keeps it as `keep` does, but one kept already keeps whether it was sent, and whether it was read: it rings once
+  // while it is kept.
   async renew(userId: string, kept: Kept): Promise<void> {
     const key = keyOf(userId, kept.kind, kept.card, kept.about);
     await this.prisma.notification.upsert({
@@ -54,14 +56,15 @@ export class NotificationStore {
     });
   }
 
-  // A replace keeping the time does not send a sent one again; one that moves the time does, at the new time.
+  // A replace keeping the time does not send a sent one again; one that moves the time does, at the new time, and makes
+  // it unread again.
   async replace(userId: string, kept: Kept): Promise<boolean> {
     const key = keyOf(userId, kept.kind, kept.card, kept.about);
     const [sameTime, newTime] = await this.prisma.$transaction([
       this.prisma.notification.updateMany({ where: { ...key, at: kept.at }, data: fieldsOf(kept) }),
       this.prisma.notification.updateMany({
         where: { ...key, at: { not: kept.at } },
-        data: { ...fieldsOf(kept), sentAt: null },
+        data: { ...fieldsOf(kept), sentAt: null, readAt: null },
       }),
     ]);
     return sameTime.count + newTime.count > 0;
@@ -70,6 +73,14 @@ export class NotificationStore {
   // Whether one was kept.
   async forget(userId: string, kind: NotificationKind, card: Card, about: string | null): Promise<boolean> {
     return (await this.prisma.notification.deleteMany({ where: keyOf(userId, kind, card, about) })).count > 0;
+  }
+
+  // Those of the User whose time has come by `now` and that are unread.
+  async markRead(userId: string, now: Date): Promise<void> {
+    await this.prisma.notification.updateMany({
+      where: { userId, at: { lte: now }, readAt: null },
+      data: { readAt: now },
+    });
   }
 
   // The latest time first.

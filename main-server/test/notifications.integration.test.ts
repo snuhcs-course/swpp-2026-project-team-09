@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -81,6 +82,7 @@ describe('GET /notifications', () => {
         line: '점심',
         at: '2026-11-14T12:10:00+09:00',
         url: '/main?card=party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
+        read: false,
       },
       {
         id: 'accepted:party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b:c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f',
@@ -90,6 +92,7 @@ describe('GET /notifications', () => {
         line: '저녁 같이',
         at: '2026-11-14T11:58:00+09:00',
         url: '/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b',
+        read: false,
       },
     ]);
   });

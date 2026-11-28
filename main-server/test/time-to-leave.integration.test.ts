@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
@@ -56,6 +57,7 @@ describe('A party made from the worked example with 민수 and 지은', () => {
           line: '학생회관식당까지 걸어서 15분',
           at: `${date}T12:18:00+09:00`,
           url: `/main?card=party:${questId}`,
+          read: false,
         },
       ]);
     });

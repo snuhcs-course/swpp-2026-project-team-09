@@ -12,6 +12,7 @@
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -35,8 +36,7 @@ import {
   space,
   text,
 } from '@/design-system';
-import { waitingNotices } from '@/features/notifications/adapter';
-import { useNotices } from '@/features/notifications/use-notices';
+import { useBellCount } from '@/features/notifications/use-notices';
 import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
 import { OffQuestion } from '../friends/off-question';
@@ -56,9 +56,9 @@ import { WeekCard } from './week-card';
 // How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
 const OUTLINE_MS = 1200;
 
-// The bell on the app bar, with the number of rows of 알림 that wait for the User in red.
+// The bell on the app bar, with the number of rows of 알림 that wait for the User and of those unread, in red.
 function Bell(): ReactElement {
-  const count = waitingNotices(useNotices().data ?? []).length;
+  const count = useBellCount();
   return (
     <Pressable
       accessibilityLabel={count > 0 ? `알림 ${count}개` : '알림'}

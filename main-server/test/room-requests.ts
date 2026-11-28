@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -86,6 +87,7 @@ const notificationSchema = z.strictObject({
   line: z.string(),
   at: z.string(),
   url: z.string(),
+  read: z.boolean(),
 });
 
 export type NotificationBody = z.infer<typeof notificationSchema>;

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import request from 'supertest';
@@ -130,6 +131,7 @@ const leaveByOf = (date: string, questId: string, clock: string, line: string): 
   line,
   at: time(date, clock),
   url: `/main?card=party:${questId}`,
+  read: false,
 });
 
 // 민수's card for 302동 앞: his Class ends in 302동 itself at 12:15.

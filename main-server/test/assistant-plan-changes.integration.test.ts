@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -236,7 +237,7 @@ describe('The lines of the request context', () => {
     expect(
       text.endsWith(
         `\n\n[Plan on screen: {"plan":"학생회관식당","date":"${date}","meal":"lunch","friendIds":["${friend.id}"],` +
-          `"from":null,"until":"12:30","placeId":null}]\n\n[Tapped: place ${placeId}]`,
+          `"until":"12:30"}]\n\n[Tapped: place ${placeId}]`,
       ),
     ).toBe(true);
   });
