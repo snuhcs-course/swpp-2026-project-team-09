@@ -76,7 +76,7 @@ Positions are as of `origin/5.0/Main` ec8337d6, under `mobile/src/`.
 - [x] A building, a map point and words alone, each set with 이 장소로 정하기, reach `addSubQuest` / `editSubQuest` as a `placeId`, a point and words. A map pick inside a building goes as that building. (App integration test, which fails before the change.)
 - [x] An edited 일정 shows its place's kind tag, and its sheet opens on its words with nothing chosen. (App integration test.)
 - [x] `WhereField` is gone, and nothing imports it.
-- [ ] Checked on the user's phone with the pull request's release build.
+- [x] Checked on the user's phone with the pull request's release build.
 - [x] No native file changes; lint, format and types pass on the changed files.
 
 ## Comments
@@ -92,3 +92,7 @@ No subagents. Tokens are counted up to this entry, so this commit and the pull r
 | Ticket 41 (tests first, the place row, the moved place sheet, the room tests, the draft pull request) | about 25 minutes | 11,250,909 | 11,077,435 | 173,340 | 134 | 51,267 |
 
 Without cache reads, the input is 173,474.
+
+### Phone check (2026-11-28)
+
+The user checked the release build of 87784e03 on their phone on 2026-11-28 and approved it.
