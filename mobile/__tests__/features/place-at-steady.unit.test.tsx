@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';
 import { apiClient } from '@/api/client';
 import type { PlaceAt } from '@/api/room-types';
@@ -43,7 +43,11 @@ function wrapper({ children }: { children: ReactNode }): ReactElement {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
+// The main server answers the oldest question asked, once it has been asked.
 async function answer(at: PlaceAt): Promise<void> {
+  await waitFor(() => {
+    expect(answers.length).toBeGreaterThan(0);
+  });
   await act(async () => {
     answers.shift()?.(at);
     await Promise.resolve();
@@ -57,7 +61,9 @@ describe('usePlaceAt while the map moves', () => {
       wrapper,
     });
     await answer({ place: ENGINEERING_1, relation: 'inside' });
-    expect(view.result.current.shown?.words).toBe('제1공학관 301동');
+    await waitFor(() => {
+      expect(view.result.current.shown?.words).toBe('제1공학관 301동');
+    });
     expect(view.result.current.chosen?.words).toBe('제1공학관 301동');
 
     await view.rerender({ point: AT_302 });
@@ -65,7 +71,9 @@ describe('usePlaceAt while the map moves', () => {
     expect(view.result.current.chosen).toBeUndefined();
 
     await answer({ place: ENGINEERING_2, relation: 'inside' });
-    expect(view.result.current.shown?.words).toBe('제2공학관 302동');
+    await waitFor(() => {
+      expect(view.result.current.shown?.words).toBe('제2공학관 302동');
+    });
     expect(view.result.current.chosen?.words).toBe('제2공학관 302동');
   });
 
