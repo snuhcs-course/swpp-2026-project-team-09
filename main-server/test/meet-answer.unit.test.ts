@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -97,11 +98,12 @@ describe('a5 on the map', () => {
 });
 
 describe("a5's time band", () => {
-  it('spans the band from 12:00 to 18:30, each busy stretch named by its Class', () => {
+  // From now to the end of a meeting's day hours, 22:00 (P01 ticket 43).
+  it('spans the band from 12:00 to 22:00, each busy stretch named by its Class', () => {
     const [first] = meetOf([me(), minsu()]).plans;
 
     expect(first?.band).toEqual({
-      range: { startAt: time('12:00'), endAt: time('18:30') },
+      range: { startAt: time('12:00'), endAt: time('22:00') },
       now: time('12:10'),
       lanes: [
         {
@@ -157,8 +159,8 @@ describe('a6: 민수, the band let go at 14:00', () => {
     ]);
   });
 
-  it('keeps the band over 12:00 to 18:30', () => {
-    expect(a6().plans[0]?.band.range).toEqual({ startAt: time('12:00'), endAt: time('18:30') });
+  it('keeps the band over 12:00 to 22:00', () => {
+    expect(a6().plans[0]?.band.range).toEqual({ startAt: time('12:00'), endAt: time('22:00') });
   });
 });
 

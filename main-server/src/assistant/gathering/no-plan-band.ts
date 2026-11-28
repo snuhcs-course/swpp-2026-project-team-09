@@ -2,16 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type MeetInput, type TimeBand } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
 import { type Interval, mealWindow } from '../free-time/meal-fit.js';
-import { koreaTime } from '../korea-time.js';
+import { bandRange, type PlaceHours } from '../free-time/band-range.js';
+import { koreaDate, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, type GatheringNaming, type Naming, type OtherFriend } from './answer-words.js';
 import { MINUTE_MS } from './gathering.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
-import { busyLabel, halfHoursAround, lanesOf, otherLane, skippedOf } from './meal-scene.js';
+import { busyLabel, lanesOf, otherLane, skippedOf } from './meal-scene.js';
 import { meetHours, meetWindow } from './meet-gathering.js';
 import { windowOf } from './plan-conditions.js';
 
@@ -20,18 +22,31 @@ import { windowOf } from './plan-conditions.js';
 
 export type BandRows = Pick<TimeBand, 'lanes' | 'others' | 'skipped'>;
 
-// Everyone's lanes over the window asked, from now when it has begun, and the window as the band's stretch. `reach`,
-// when later than the window's end, carries the range on to it, such as over the item that ends the window.
+export interface WindowRange {
+  // When later than the window's end, carries the range on to it, such as over the item that ends the window.
+  reach?: Date;
+  // The hours the range runs over (P01 ticket 43); the window's own when not given.
+  hours?: PlaceHours;
+}
+
+// Everyone's lanes over the window asked, from now when it has begun, and the window as the band's stretch, over the
+// one range of a time card (`bandRange`).
 export function windowBand(
   window: Interval,
   now: Date,
   rowsOf: (from: Date, until: Date) => BandRows,
-  reach?: Date,
+  { reach, hours = { opens: window.start, closes: window.end } }: WindowRange = {},
 ): TimeBand {
   const minute = new Date(Math.ceil(now.getTime() / MINUTE_MS) * MINUTE_MS);
   const start = window.start < minute && minute < window.end ? minute : window.start;
   const end = window.end > start ? window.end : start;
-  const { from, until } = halfHoursAround(start.getTime(), Math.max(end.getTime(), reach?.getTime() ?? 0));
+  const { from, until } = bandRange({
+    now: minute,
+    date: koreaDate(window.start),
+    span: { start, end },
+    hours,
+    holds: reach === undefined ? [] : [reach],
+  });
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
@@ -71,16 +86,20 @@ export function mealNoPlanBand(naming: Naming): TimeBand {
   }));
 }
 
-// A meeting's: the day's hours as the User narrowed them, or the day's own when that left none, and the Classes left out
-// (P05 ticket 70).
+// A meeting's: the day's hours as the User narrowed them, or the day's own when that left none, over the day's hours,
+// and the Classes left out (P05 ticket 70).
 export function meetNoPlanBand(naming: GatheringNaming<GatheringArgs<MeetInput>>): TimeBand {
   const { input, now, others } = naming.args;
   const asked = meetWindow(input);
   const { skipped = [] } = naming.asker;
   const label = (placeId: string): string => naming.placeLabel(placeId);
-  return windowBand(asked.start < asked.end ? asked : meetHours(input.date), now, (from, until) => ({
+  const hours = meetHours(input.date);
+  const rows = (from: Date, until: Date): BandRows => ({
     lanes: lanesOf(naming, from, until),
     ...othersWithoutPlace(others, { from, until, label }),
     ...skippedBand(skipped, (item) => busyLabel(item, label)),
-  }));
+  });
+  return windowBand(asked.start < asked.end ? asked : hours, now, rows, {
+    hours: { opens: hours.start, closes: hours.end },
+  });
 }

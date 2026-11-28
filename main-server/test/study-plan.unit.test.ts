@@ -2,95 +2,23 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
-import { type AnswerReply, type StudyInput } from '../src/assistant/dto/answer.dto.js';
-import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
+import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
+import { onDay } from '../src/assistant/free-time/free-time.js';
 import { type StudyArea } from '../src/assistant/lookup/study-near.js';
-import { readyAt, studyPlanAnswer } from '../src/assistant/lookup/study-plan.js';
-import { CATALOGUE_FILE, type Catalogue, readCatalogue } from '../src/assistant/library/catalogue.js';
-import { type WayArgs } from '../src/assistant/lookup/way.js';
-import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { type StudyBuildingDto } from '../src/study-spaces/dto/study-spaces.dto.js';
-import { type Calendar, openAt, type Schedule } from '../src/study-spaces/study-hours.js';
-import { STUDY_SPACES_FILE, studySpacesSchema } from '../src/study-spaces/study-spaces-file.js';
-import { ENGINEERING_AREA, MOUNTAIN_AREA, studyBuildingsFor } from './study-area-example.js';
-import { classAt, id, ME, numbered, position, readCampus, TUESDAY, wayArgs } from './way-example.js';
+import { readyAt } from '../src/assistant/lookup/study-plan.js';
+import { ENGINEERING_AREA, MOUNTAIN_AREA } from './study-area-example.js';
+import { asked, readStudySeed } from './study-plan-example.js';
+import { classAt, ME, numbered, TUESDAY } from './way-example.js';
 import { withoutBand } from './no-plan.js';
 
 // "공부할 자리 있어?" ranked over the seed's buildings and hours (P10 ticket 03), on Tuesday 2026-11-17, a term
 // weekday, by the seed's calendar. The User is at 301동 unless given otherwise.
 
-let schedules = new Map<string, Schedule>();
-let calendar: Calendar;
-let catalogue: Catalogue;
-const buildingsBy = new Map<string, StudyBuildingDto[]>();
-
-beforeAll(async () => {
-  await readCampus();
-  catalogue = await readCatalogue(CATALOGUE_FILE);
-  const file = await readSeedFile(SEED_DIRECTORY, STUDY_SPACES_FILE, studySpacesSchema);
-  schedules = new Map(file.buildings.flatMap(({ spaces }) => spaces.map(({ key, schedule }) => [key, schedule])));
-  calendar = file.calendar;
-  const departments = ['경제학부', '컴퓨터공학부', '화학생물공학부'];
-  const listed = await Promise.all(departments.map((department) => studyBuildingsFor(department)));
-  for (const [index, department] of departments.entries()) {
-    buildingsBy.set(department, listed[index] ?? []);
-  }
-});
-
-interface Asked {
-  clock: string;
-  date?: string;
-  department?: string;
-  what?: StudyInput['what'];
-  area?: StudyArea | null;
-  items?: DayItem[];
-  location?: WayArgs['location'];
-}
-
-const at301 = (): WayArgs['location'] => ({ at: position('제1공학관'), placeId: id('제1공학관'), onCampus: true });
-
-function asked({
-  clock,
-  department = '경제학부',
-  what = 'any',
-  area = null,
-  items = [],
-  date = TUESDAY,
-  ...given
-}: Asked): AnswerReply {
-  const now = onDay(date, clock);
-  const input: StudyInput = {
-    kind: 'study',
-    date,
-    what,
-    people: [{ userId: ME, constraints: [] }],
-    together: false,
-    window: { from: null, until: null },
-    area,
-    minutes: null,
-    chosen: { seatSpaceId: null, roomSpaceId: null },
-  };
-  return studyPlanAnswer({
-    input,
-    way: wayArgs(now, {
-      me: { userId: ME, name: '유상', items },
-      location: given.location === undefined ? at301() : given.location,
-    }),
-    now,
-    buildings: buildingsBy.get(department) ?? [],
-    hoursOf: (key, when) => {
-      const schedule = schedules.get(key);
-      if (schedule === undefined) {
-        throw new Error(`No hours for ${key}`);
-      }
-      return { opening: openAt(schedule, calendar, when), confidence: schedule.confidence };
-    },
-    catalogue,
-  });
-}
+beforeAll(readStudySeed);
 
 const known = ({ study }: AnswerReply['plans'][number]): boolean => study?.spaces[0]?.open === 'open';
 const ids = ({ plans }: AnswerReply): string[] => plans.map(({ id: planId }) => planId);
@@ -191,15 +119,16 @@ describe('Study places in the area the User sees', () => {
 });
 
 // An answer without a plan keeps its time card (P05 ticket 67), as a meal's does (ticket 65): the User's lane from when
-// they are ready to the end they set, else their next item, else three hours on.
+// they are ready to the end they set, else their next item, else three hours on. Its range is a time card's without a
+// place's hours (P01 ticket 43): from now to the day's last half hour.
 const at = (clock: string): string => `${TUESDAY}T${clock}:00+09:00`;
 
 describe('A study answer without a plan', () => {
-  it('with nothing open, keeps the time card over the three hours from now', () => {
+  it('with nothing open, keeps the time card over the three hours from now, its range on to 23:30', () => {
     const { noPlan } = asked({ clock: '07:30', area: socialSciencesArea() });
 
     expect(noPlan?.band).toEqual({
-      range: { startAt: at('07:30'), endAt: at('10:30') },
+      range: { startAt: at('07:30'), endAt: at('23:30') },
       now: at('07:30'),
       lanes: [{ userId: ME, name: '나', busy: [] }],
       startAt: at('07:30'),
@@ -214,7 +143,7 @@ describe('A study answer without a plan', () => {
 
     expect(plans).toEqual([]);
     expect(noPlan?.band).toMatchObject({
-      range: { startAt: at('11:30'), endAt: at('13:00') },
+      range: { startAt: at('11:30'), endAt: at('23:30') },
       lanes: [{ userId: ME, name: '나', busy: [{ startAt: at('12:00'), endAt: at('13:00') }] }],
       startAt: at('11:56'),
       endAt: at('12:00'),
@@ -248,6 +177,21 @@ describe('A study plan before the next Class', () => {
     const sinyang = plans.find(({ id: planId }) => planId === '공대 신양학술정보관');
 
     expect(sinyang?.band.text).toBe('12:18–14:52 · 2시간 34분');
+  });
+});
+
+// A time card's range (P01 ticket 43): from now to the space's closing, at most 16 hours, so that the start can be
+// moved far in one drag. The user's own case: at 01:10, a 24-hour room drew 01:00–05:00.
+const rangeOf = (clock: string, planId: string): { startAt: string; endAt: string } | undefined =>
+  asked({ clock }).plans.find(({ id: plan }) => plan === planId)?.band.range;
+
+describe("A study plan's time card", () => {
+  it('at a 24-hour room at night, runs 16 hours from now', () => {
+    expect(rangeOf('01:10', '공대 신양학술정보관')).toEqual({ startAt: at('01:00'), endAt: at('17:00') });
+  });
+
+  it('at 관정관 by day, runs from now to its closing', () => {
+    expect(rangeOf('10:10', '관정관')).toEqual({ startAt: at('10:00'), endAt: at('23:00') });
   });
 });
 

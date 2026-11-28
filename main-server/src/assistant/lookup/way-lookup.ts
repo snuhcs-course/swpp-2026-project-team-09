@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -17,7 +18,8 @@ import {
 import { clockOf } from '../free-time/free-time.js';
 import { withCopula, withTopic } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
-import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
+import { busyIn } from '../gathering/meal-scene.js';
+import { halfHoursAround } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import {
   NOT_RUNNING,

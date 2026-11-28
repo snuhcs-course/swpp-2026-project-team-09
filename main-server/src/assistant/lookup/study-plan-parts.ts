@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type StudyBuildingDto, type StudySpaceDto } from '../../study-spaces/dto/study-spaces.dto.js';
@@ -22,7 +23,8 @@ import { clockOf } from '../free-time/free-time.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
-import { busyIn, busyLabel, halfHoursAround } from '../gathering/meal-scene.js';
+import { busyIn, busyLabel } from '../gathering/meal-scene.js';
+import { bandRange, type PlaceHours, windowHolds } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import { durationWords } from './day-lookup.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
@@ -61,6 +63,8 @@ export interface Ranked {
   stay: StudyStay & { minutes: number };
   end: Date;
   endsBy: EndsBy;
+  // The first spot's hours on the plan's day, the time card's range (P01 ticket 43).
+  hours: PlaceHours;
 }
 
 export interface Faded {
@@ -96,10 +100,6 @@ export const bookOf = (what: StudyInput['what']): { spaceId: string } | null =>
 // `chosen`), else the first 7층 seat for a quiet place or any.
 export const seatToBook = ({ what, chosen }: Pick<StudyInput, 'what' | 'chosen'>): { spaceId: string } | null =>
   chosen.seatSpaceId === null ? bookOf(what) : { spaceId: chosen.seatSpaceId };
-
-// The band reaches an hour before the arrival, unless now is later, and half an hour past the end.
-const BAND_BEFORE_MS = 60 * MINUTE_MS;
-const BAND_AFTER_MS = 30 * MINUTE_MS;
 
 const strong = (text: string): AnswerLine[number] => ({ text, strong: true });
 const plain = (text: string): AnswerLine[number] => ({ text, strong: false });
@@ -262,12 +262,11 @@ function sceneOf(ranked: Ranked, index: number, context: PlanContext): MapScene 
   };
 }
 
-function bandOf({ stay, end, building }: Ranked, { now, way, input, others }: PlanContext): TimeBand {
+function bandOf({ stay, end, building, hours }: Ranked, { now, way, input, others }: PlanContext): TimeBand {
   const naming = new WayNaming(way);
-  const { from, until } = halfHoursAround(
-    Math.max(now.getTime(), stay.arrival.getTime() - BAND_BEFORE_MS),
-    end.getTime() + BAND_AFTER_MS,
-  );
+  const { date, window } = input;
+  const span = { start: stay.arrival, end };
+  const { from, until } = bandRange({ now, date, span, hours, holds: windowHolds(date, window) });
   const label = (placeId: string): string => naming.placeLabel(placeId);
   const plan = { date: input.date, now, placeId: building.place.id, start: stay.arrival, end };
   return {

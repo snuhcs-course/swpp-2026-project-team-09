@@ -6,6 +6,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -20,10 +21,11 @@ import {
 import { clockOf } from '../free-time/free-time.js';
 import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, GatheringNaming } from './answer-words.js';
-import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid } from './gathering.js';
+import { endedByItem, type GatheringFit, minutesSaid } from './gathering.js';
 import { basisOf, meetingOf, originChip, personChips, subQuestsOf, untilChip } from './meal-answer.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
-import { busyLabel, halfHoursAround, lanesOf, othersOf, sceneOf } from './meal-scene.js';
+import { bandRange, windowHolds } from '../free-time/band-range.js';
+import { busyLabel, lanesOf, othersOf, sceneOf } from './meal-scene.js';
 import { meetHours, meetWindow } from './meet-gathering.js';
 import { meetNoPlanBand, withBand } from './no-plan-band.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
@@ -35,9 +37,6 @@ export type MeetAnswerArgs = GatheringArgs<MeetInput>;
 type MeetNaming = GatheringNaming<MeetAnswerArgs>;
 
 const MEETING_WORD = '만남';
-
-// The band reaches this far past a plan's end.
-const BAND_AFTER_MS = 30 * MINUTE_MS;
 
 const plain = (text: string): AnswerLine => [{ text, strong: false }];
 
@@ -85,22 +84,19 @@ function linesOf(fit: GatheringFit, now: Date): AnswerLine[] {
   ];
 }
 
-// From the half hour at or before the later of now and the day's hours, to the half hour at or after the later of half
-// an hour past the plan's end and the end of the last item in anyone's day within those hours: the stretch of the day
-// the band can be dragged over.
+// Over the day's hours of a meeting (P01 ticket 43): the stretch of the day the band can be dragged over.
 function bandOf(fit: GatheringFit, naming: MeetNaming): TimeBand {
   const { start, end, togetherMinutes } = fit;
-  const { now, people, input } = naming.args;
+  const { now, input } = naming.args;
   const { skipped } = naming.asker;
   const hours = meetHours(input.date);
-  const ends = people
-    .flatMap(({ items }) => items)
-    .filter((item) => item.start < hours.end)
-    .map((item) => Math.min(item.end.getTime(), hours.end.getTime()));
-  const { from, until } = halfHoursAround(
-    Math.max(now.getTime(), hours.start.getTime()),
-    Math.max(end.getTime() + BAND_AFTER_MS, ...ends),
-  );
+  const { from, until } = bandRange({
+    now,
+    date: input.date,
+    span: { start, end },
+    hours: { opens: hours.start, closes: hours.end },
+    holds: windowHolds(input.date, input.window),
+  });
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),

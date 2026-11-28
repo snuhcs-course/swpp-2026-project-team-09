@@ -9,11 +9,13 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
 import { mealWindow } from '../free-time/meal-fit.js';
+import { halfHoursAround } from '../free-time/band-range.js';
 import { koreaTime } from '../korea-time.js';
 import {
   type GatheringNaming,
@@ -32,7 +34,6 @@ import { type SetOut, setOutOf } from './other-friends.js';
 
 // What the map draws of a plan, and its time band.
 
-const HALF_HOUR_MS = 30 * MINUTE_MS;
 // The band reaches this far before a plan's start, unless now is later, and this far past its end.
 const BAND_BEFORE_MS = 60 * MINUTE_MS;
 const BAND_AFTER_MS = 30 * MINUTE_MS;
@@ -142,14 +143,6 @@ export function sceneOf(fit: GatheringFit, naming: GatheringNaming, word: string
     places: scenePlaces(fit, naming),
     routes: routes(fit, naming),
     flags: flags(fit, naming, word),
-  };
-}
-
-// From the half hour at or before `earliest` to the half hour at or after `latest`, both in milliseconds.
-export function halfHoursAround(earliest: number, latest: number): { from: Date; until: Date } {
-  return {
-    from: new Date(Math.floor(earliest / HALF_HOUR_MS) * HALF_HOUR_MS),
-    until: new Date(Math.ceil(latest / HALF_HOUR_MS) * HALF_HOUR_MS),
   };
 }
 
