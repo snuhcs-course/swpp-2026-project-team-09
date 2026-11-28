@@ -52,11 +52,6 @@ export async function pull(drag: string, dy: number): Promise<void> {
   await pass(50);
 }
 
-// High's height: the sheet's scrolling part is laid out at it.
-export function highHeight(): number {
-  return Number(styleOf(screen.getByTestId('answer-card-content')).height);
-}
-
 // The top of "17시 반에 관정 갔다가 19시쯤 저녁 먹을래" (① a seat, ② a dinner Plan) as laid out: the steps card 120 high,
 // the time card 100 folded, its strip 20; so behind the steps card the time card goes up the gap and 100 − 20.
 export const STEPS = 120;

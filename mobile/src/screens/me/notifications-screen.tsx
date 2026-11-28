@@ -80,11 +80,19 @@ function usePress(): (notice: NoticeView) => void {
   };
 }
 
-function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }): ReactElement {
+interface NoticeProps {
+  notice: NoticeView;
+  // Unread when 알림 showed it: a small red dot before its time, and "새 알림" first in its label.
+  fresh: boolean;
+  onPress: () => void;
+}
+
+function Notice({ notice, fresh, onPress }: NoticeProps): ReactElement {
   const { ink, ground } = noticeTone[TONE[notice.kind]];
+  const words = [notice.title, notice.sub, ...(notice.time === null ? [] : [notice.time])];
   return (
     <ListRow
-      label={[notice.title, notice.sub, ...(notice.time === null ? [] : [notice.time])].join(' · ')}
+      label={[...(fresh ? ['새 알림'] : []), ...words].join(' · ')}
       leading={<RoundIcon fill={ground} icon={notice.icon} ink={ink} />}
       lines={[notice.sub]}
       onPress={onPress}
@@ -94,7 +102,10 @@ function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }
           <Icon color={color.inkFaint} name="chevronRight" size={16} />
         ) : (
           <View style={styles.aside}>
-            <Text style={styles.time}>{notice.time}</Text>
+            <View style={styles.timeLine}>
+              {fresh ? <View style={styles.dot} /> : null}
+              <Text style={styles.time}>{notice.time}</Text>
+            </View>
             {notice.kind === 'leave-by' && notice.questId !== null ? <PartyOnButton questId={notice.questId} /> : null}
           </View>
         )
@@ -104,11 +115,12 @@ function Notice({ notice, onPress }: { notice: NoticeView; onPress: () => void }
 }
 
 // A row of 알림. A kept Notification's swipes to the left to be deleted; a row of what waits does not.
-function Row({ notice }: { notice: NoticeView }): ReactElement {
+function Row({ notice, fresh }: { notice: NoticeView; fresh: boolean }): ReactElement {
   const press = usePress();
   const deleteNotice = useDeleteNotice();
   const row = (
     <Notice
+      fresh={fresh}
       notice={notice}
       onPress={() => {
         press(notice);
@@ -130,8 +142,8 @@ function Row({ notice }: { notice: NoticeView }): ReactElement {
   );
 }
 
-// The rows under 오늘, 어제 and 이전, each group in its own card.
-function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement {
+// The rows under 오늘, 어제 and 이전, each group in its own card. `fresh` holds the keys of the rows marked new.
+function Notices({ notices, fresh }: { notices: readonly NoticeView[]; fresh: ReadonlySet<string> }): ReactElement {
   if (notices.length === 0) {
     return (
       <View style={[cardStyles.card, styles.card]}>
@@ -146,7 +158,7 @@ function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement 
           <SectionHeader>{day.title}</SectionHeader>
           <View style={[cardStyles.card, styles.card]}>
             {day.notices.map((notice) => (
-              <Row key={notice.key} notice={notice} />
+              <Row fresh={fresh.has(notice.key)} key={notice.key} notice={notice} />
             ))}
           </View>
         </View>
@@ -156,10 +168,11 @@ function Notices({ notices }: { notices: readonly NoticeView[] }): ReactElement 
 }
 
 // 알림, the panel of the `Profile` frame: the Notifications the main server keeps, then what waits for the User, from
-// the lists the main server serves. The count is of the rows that wait. The kept ones shown are then read.
+// the lists the main server serves. The count is of the rows that wait. The kept ones shown are then read, and those
+// that were unread stay marked new while 알림 is open.
 export function NotificationsScreen(): ReactElement {
   const { data, isPending, refetch } = useNotices();
-  useMarkShownRead(data !== undefined);
+  const fresh = useMarkShownRead(data !== undefined);
   const count = waitingNotices(data ?? []).length;
   return (
     <FullScreenPanel
@@ -169,7 +182,7 @@ export function NotificationsScreen(): ReactElement {
       title="알림"
     >
       <View style={styles.body}>
-        {data === undefined ? null : <Notices notices={data} />}
+        {data === undefined ? null : <Notices fresh={fresh} notices={data} />}
         {data === undefined && isPending ? <LoadingState /> : null}
         {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       </View>
@@ -182,5 +195,7 @@ const styles = StyleSheet.create({
   card: { paddingVertical: 0 },
   days: { gap: space[2] },
   aside: { alignItems: 'flex-end', gap: space[1], paddingVertical: space[2] },
+  timeLine: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.danger },
   time: { ...text.label, color: color.inkFaint },
 });

@@ -10,7 +10,7 @@ import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type Vie
 import type { Place } from '@/api/types';
 import { BottomSheet, Button, color, font, Icon, type IconName, radius, SearchField, space } from '@/design-system';
 import { usePlaceSearch } from '@/features/places/use-place-search';
-import { type Help, HelpButton } from '../../help-bubble';
+import { type Help, HelpButton } from '../help-bubble';
 import { KindTag, PLACE_KIND_WORDS, usePlaceKind } from './place-kind';
 import { type PlaceChoice, placeOfChoice, type PlaceSheetState } from './use-place-sheet';
 
@@ -182,8 +182,8 @@ function ChoiceLine({ choice }: { choice: PlaceChoice }): ReactElement {
   );
 }
 
-// 장소, the 파티 form's place sheet (reviewed on 2026-11-28): the ? of the kinds, the search, the buildings found and
-// the two other ways, the row chosen named above 이 장소로 정하기, which alone sets it.
+// 장소, the place sheet of the 파티 form and of the room's 일정 form (reviewed on 2026-11-28): the ? of the kinds, the
+// search, the buildings found and the two other ways, the row chosen named above 이 장소로 정하기, which alone sets it.
 export function PlaceSheet({ sheet }: { sheet: PlaceSheetState }): ReactElement {
   const typed = sheet.search.trim();
   const found = useFound(sheet.search);

@@ -8,7 +8,7 @@
  ******************************************************************************/
 
 import { type UseQueryResult, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { apiClient } from '@/api/client';
 import {
   NOTIFICATIONS_KEY,
@@ -23,7 +23,7 @@ import { type ScreenData, askAgain, somePending } from '@/api/screen-data';
 import type { JoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
-import { type NoticeView, takesJoinRequests, toNotices, unreadKept, waitingNotices } from './adapter';
+import { keptKey, type NoticeView, takesJoinRequests, toNotices, unreadKept, waitingNotices } from './adapter';
 
 function answerOf<Answer>(result: UseQueryResult<Answer>): Answer | null {
   return result.data ?? null;
@@ -76,26 +76,28 @@ export function useBellCount(): number {
 
 // Marks read, on the main server, the kept Notifications 알림 shows once they are shown: again for each new unread one
 // among them, as when one comes by the signal `notice` while 알림 is open. A failure leaves them unread, to be counted.
-export function useMarkShownRead(shown: boolean): void {
+// Answers the keys of the rows that were unread when shown, which 알림 marks new while it is open, though they are read
+// by then.
+export function useMarkShownRead(shown: boolean): ReadonlySet<string> {
   const queryClient = useQueryClient();
   const kept = useQuery(notificationsQuery).data ?? [];
-  const unread = shown ? unreadKept(kept, now()).map(({ id }) => id) : [];
-  // The unread ones already asked for. Only one not among them asks again: a refetch of the same ones does not, nor a
-  // row deleted from among them.
-  const asked = useRef(new Set<string>());
-  const fresh = unread.filter((id) => !asked.current.has(id)).join(' ');
+  const [shownUnread, setShownUnread] = useState<ReadonlySet<string>>(new Set());
+  // The unread rows not yet asked for: a refetch of the same ones asks nothing.
+  const fresh = (shown ? unreadKept(kept, now()) : [])
+    .map(({ id }) => keptKey(id))
+    .filter((key) => !shownUnread.has(key))
+    .join(' ');
   const { mutate } = useMutation({
     mutationFn: () => apiClient.markNotificationsRead(),
     onSettled: () => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
   });
   useEffect(() => {
     if (fresh !== '') {
-      for (const id of fresh.split(' ')) {
-        asked.current.add(id);
-      }
+      setShownUnread((before) => new Set([...before, ...fresh.split(' ')]));
       mutate();
     }
   }, [fresh, mutate]);
+  return shownUnread;
 }
 
 // Deletes a kept Notification by its identity. Its row, and its count on the bell, go at once, before the main server

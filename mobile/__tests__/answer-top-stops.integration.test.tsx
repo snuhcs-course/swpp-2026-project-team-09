@@ -12,19 +12,18 @@ import { markLibraryLoggedIn } from '@/library/flag';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { lowerCard, raiseCard } from './support/card-grip';
+import { laidHeight, lowerCard, raiseCard, shownHeight } from './support/card-grip';
 import type { FakeServer } from './support/fake-server';
 import { sendFromBar, startLibraryChat } from './support/library-chat';
 import { hideKeyboard } from './support/keyboard';
 import { layStage } from './support/lists';
 import { openMain } from './support/main';
-import { layFolded, stepGrip } from './support/time-card';
+import { layFolded, layRows, stepGrip } from './support/time-card';
 import {
   atStep,
   BEHIND,
   FOLDED,
   frame,
-  highHeight,
   layStepsCard,
   pressGrip,
   pull,
@@ -159,19 +158,26 @@ describe('a step chosen at a folded stop', () => {
 
 // Partitions: the sheet's high at each stop; the sheet rising to high from stop 2. Expected values: at 2 high stands
 // under the steps card, the gap and the time card, 120 + 8 + 100; at 1 under the steps card and the strip, 120 + 20;
-// at 0 under the strip at the stage's top.
+// at 0 under the strip at the stage's top. Rising to high folds the time card behind the steps card (stop 1); it is
+// let down to 2 with the sheet high.
 describe("the answer sheet's high at each stop", () => {
   it('stands under what is left at the top', async () => {
     await atDinner();
     const lists = Number(styleOf(stepsCard()).top);
-    const atTwo = highHeight();
+    await raiseCard();
+    await raiseCard();
+    await pass(50);
+    const atOne = shownHeight();
+    await stepGrip('untuck');
+    await pass(50);
+    const atTwo = shownHeight();
 
     await stepGrip('tuck');
     await pass(50);
-    const atOne = highHeight();
+    expect(shownHeight()).toBe(atOne);
     await stepGrip('tuck');
     await pass(50);
-    const atZero = highHeight();
+    const atZero = shownHeight();
 
     expect(atOne).toBe(atTwo + (STEPS + space[2] + FOLDED) - (STEPS + STRIP));
     expect(atZero).toBe(atOne + (STEPS + STRIP) - (STRIP - lists));
@@ -191,6 +197,40 @@ describe("the answer sheet's high at each stop", () => {
   });
 });
 
+// The user's phone (2026-11-28, P01 ticket 45): with the sheet at middle, each fold and unfold of the time card made the
+// sheet's top edge dip for a frame. The sheet was laid out again at the new high while it stood at middle, and its place
+// on the UI thread came a frame after that layout. It is laid out once, at the most room any top leaves, so that no
+// change at the top lays it out again, and at low and middle it stands where it was.
+// Partitions: low and middle; the stops in order and back; the person rows opened and shut; the other step chosen and
+// back. Expected values: the sheet as it was laid out and as it showed before the first change.
+describe('the answer sheet at low and middle as the top changes', () => {
+  it.each(['low', 'mid'] as const)('is laid out as it was and stands where it was at %s', async (level) => {
+    const user = await atDinner();
+    if (level === 'mid') {
+      await raiseCard();
+      await pass(50);
+    }
+    const before = [laidHeight(), shownHeight()];
+    const expectStill = async (change: () => Promise<void>): Promise<void> => {
+      await change();
+      await pass(50);
+      expect([laidHeight(), shownHeight()]).toEqual(before);
+    };
+
+    await expectStill(() => stepGrip('tuck'));
+    await expectStill(() => stepGrip('tuck'));
+    await expectStill(() => stepGrip('untuck'));
+    await expectStill(() => stepGrip('untuck'));
+    await expectStill(async () => {
+      await layRows(80);
+      await stepGrip('untuck');
+    });
+    await expectStill(() => stepGrip('tuck'));
+    await expectStill(() => user.press(screen.getByTestId('step-word-1')));
+    await expectStill(() => user.press(screen.getByTestId('step-word-2')));
+  });
+});
+
 // #686's review: an answer drawn without the steps card took its high edge from a stop an earlier answer left in the
 // sheet link. A follow-up in words keeps the earlier scene, steps card and stop included (P01 ticket 31); a new answer to
 // one request draws its own top. Partitions: that answer asked first, then again after several requests folded to 0.
@@ -203,8 +243,12 @@ describe('an answer to one request, after a fold of several', () => {
     await sendFromBar(user, '배고파');
     await hideKeyboard();
     await layFolded(FOLDED);
+    await raiseCard();
+    await raiseCard();
     await pass(50);
-    const plain = highHeight();
+    const plain = shownHeight();
+    await lowerCard();
+    await lowerCard();
 
     server.on('POST /assistant/messages', { status: 200, body: stepsReplyOn('2026-11-02') });
     await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
@@ -226,7 +270,10 @@ describe('an answer to one request, after a fold of several', () => {
 
     expect(screen.queryByTestId('steps-top')).toBeNull();
     expect(shiftOf(screen.getByTestId('time-bar'))).toBe(0);
-    expect(highHeight()).toBe(plain);
+    await raiseCard();
+    await raiseCard();
+    await pass(50);
+    expect(shownHeight()).toBe(plain);
   });
 });
 

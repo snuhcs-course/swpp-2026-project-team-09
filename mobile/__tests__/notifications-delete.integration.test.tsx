@@ -34,7 +34,8 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const FRIEND_ID = 'c1d2e3f4-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
 // Unread, so that the bell counts it: 알림's mark of read fails below.
 const KEPT: KeptNotification = { ...ACCEPTED, id: `accepted:party:${DINNER.id}:${FRIEND_ID}`, read: false };
-const ROW = '김민준님이 초대를 수락했어요 · 저녁 약속 · 12:58';
+// Marked new: it was unread when 알림 showed it.
+const ROW = '새 알림 · 김민준님이 초대를 수락했어요 · 저녁 약속 · 12:58';
 const DELETE = `DELETE /notifications/${encodeURIComponent(KEPT.id)}`;
 
 let server: FakeServer;
