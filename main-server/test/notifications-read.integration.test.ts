@@ -8,10 +8,10 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { z } from 'zod';
 import { type NotificationsService } from '../src/notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { signInUser, TestUser } from './friends.js';
+import { keptNotifications } from './kept-notifications.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -44,12 +44,9 @@ function markRead(user: TestUser | null): request.Test {
   return withAccessToken(request(app.getHttpServer()).post('/notifications/read'), user?.accessToken);
 }
 
-const listed = z.array(z.looseObject({ id: z.string(), read: z.boolean() }));
-
-// Each listed Notification's identity with whether it is read.
+// Each kept Notification's identity with whether it is read, those whose time is still to come included.
 async function readById(user: TestUser): Promise<Record<string, boolean>> {
-  const response = await withAccessToken(request(app.getHttpServer()).get('/notifications'), user.accessToken);
-  return Object.fromEntries(listed.parse(response.body).map(({ id, read }) => [id, read]));
+  return Object.fromEntries((await keptNotifications(app, user.id)).map(({ id, read }) => [id, read]));
 }
 
 const accepted = (friendName: string, questId = QUEST_ID) =>

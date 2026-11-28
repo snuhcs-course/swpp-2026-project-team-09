@@ -8,11 +8,11 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { JoinPolicy, MyParty, Party, Person, Quest } from '@/api/types';
+import type { JoinPolicy, MyParty, Party, Person, Quest, SubQuest } from '@/api/types';
 import { type QuestRowView, toQuestGroups, toQuestRows } from '@/features/quests/adapter';
 
 // The rows of the Quest list on the map and on `MainQuests`, by the `Main` frame: each Quest looks public or private
-// by its own Join Policy, keeps its own title, and is left out without a time.
+// by its own Join Policy, keeps its own title, and goes last under 시간 미정 without a time (P06 ticket 42).
 
 // 13:00 in Korea on a Tuesday.
 const NOW = new Date('2026-10-06T13:00:00+09:00');
@@ -28,11 +28,18 @@ interface Shape {
   holders?: Person[];
   startsAt?: string | null;
   classQuest?: boolean;
+  createdAt?: string;
 }
 
 function quest(
   id: string,
-  { joinPolicy = 'open', holders = [ME], startsAt = '2026-10-06T17:40:00+09:00', classQuest = false }: Shape = {},
+  {
+    joinPolicy = 'open',
+    holders = [ME],
+    startsAt = '2026-10-06T17:40:00+09:00',
+    classQuest = false,
+    createdAt = '2026-10-05T09:00:00.000Z',
+  }: Shape = {},
 ): Quest {
   return {
     id,
@@ -60,7 +67,7 @@ function quest(
     waitingJoinRequests: 0,
     board: null,
     description: '',
-    createdAt: classQuest ? null : '2026-10-05T09:00:00.000Z',
+    createdAt: classQuest ? null : createdAt,
   };
 }
 
@@ -141,18 +148,61 @@ describe('a row of the Quest list', () => {
   });
 });
 
-describe('a Quest without a time', () => {
-  it('is left out of the rows, and so of the groups and every count', () => {
-    const rows = rowsOf([
-      quest('보드게임', { startsAt: null }),
-      quest('저녁', { joinPolicy: 'closed', startsAt: null }),
-      quest('러닝'),
-    ]);
-    expect(rows.map(({ id }) => id)).toEqual(['러닝']);
-    expect(toQuestGroups(rows, NOW).map(({ title }) => title)).toEqual(['오늘 · 10월 6일 (화)']);
+// Two Quests whose time is not set, the later made first, between two with a time.
+const WITH_UNTIMED = [
+  quest('보드게임', { startsAt: null, createdAt: '2026-10-05T10:00:00.000Z' }),
+  quest('러닝'),
+  quest('저녁', { joinPolicy: 'closed', startsAt: null, createdAt: '2026-10-05T08:00:00.000Z' }),
+  quest('배드민턴', { startsAt: '2026-10-20T18:00:00+09:00' }),
+];
+
+// The Quest with its one step changed.
+function withStep(of: Quest, change: Partial<SubQuest>): Quest {
+  const [step] = of.subQuests;
+  if (step === undefined) {
+    throw new Error(`${of.id} has no step`);
+  }
+  return { ...of, subQuests: [{ ...step, ...change }] };
+}
+
+describe('a Quest whose time is not set (P06 ticket 42)', () => {
+  it('comes after every Quest with a time, the first made first', () => {
+    expect(rowsOf(WITH_UNTIMED).map(({ id }) => id)).toEqual(['러닝', '배드민턴', '저녁', '보드게임']);
   });
 
-  it('is not one when a later step has a time, and takes its time and place from that step', () => {
+  it('says 시간 미정 for its time and in its line', () => {
+    const row = rowsOf(WITH_UNTIMED).find(({ id }) => id === '저녁');
+
+    expect(row).toMatchObject({ time: '시간 미정', meta: '시간 미정 · 301동 앞', daysAway: null, ended: false });
+  });
+
+  it('is under 시간 미정, the last group of the whole screen', () => {
+    const groups = toQuestGroups(rowsOf(WITH_UNTIMED), NOW);
+
+    expect(groups.map(({ title }) => title)).toEqual(['오늘 · 10월 6일 (화)', '그 이후', '시간 미정']);
+    expect(groups.at(-1)?.rows.map(({ id }) => id)).toEqual(['저녁', '보드게임']);
+  });
+
+  it('is on the list with no step at all, and left out once every step of it ended', () => {
+    const noStep = { ...quest('모임', { startsAt: null }), subQuests: [] };
+    const ended = withStep(quest('산책', { startsAt: null }), { ended: true });
+
+    expect(rowsOf([noStep, ended, quest('러닝')]).map(({ id }) => id)).toEqual(['러닝', '모임']);
+  });
+
+  it('comes after an ended Quest that had a time, even one made later', () => {
+    const untimed = quest('보드게임', { startsAt: null, createdAt: '2026-10-05T08:00:00.000Z' });
+    const over = withStep(quest('러닝', { createdAt: '2026-10-05T10:00:00.000Z' }), { ended: true });
+
+    expect(rowsOf([untimed, over]).map(({ id, ended }) => [id, ended])).toEqual([
+      ['러닝', true],
+      ['보드게임', false],
+    ]);
+  });
+});
+
+describe('a Quest without a time on its first step', () => {
+  it('takes its time and place from a later step that has one, and is no untimed Quest', () => {
     const gathering = quest('저녁', { startsAt: null });
     const dinner = {
       ...gathering.subQuests[0],

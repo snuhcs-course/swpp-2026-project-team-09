@@ -11,7 +11,7 @@ import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Friend } from '@/api/types';
 import { Avatar, Chip, color, EmptyState, font, Icon, NO_RESULTS, radius, SearchField, space } from '@/design-system';
-import { matchesFriend } from '@/features/friends/matches-friend';
+import { FRIEND_SEARCH, matchesFriend } from '@/features/friends/matches-friend';
 import { FieldHead } from './field-head';
 
 interface FriendPickerProps {
@@ -78,7 +78,7 @@ export function FriendPicker({ friends, chosen, most, hint, onChosen }: FriendPi
             ))}
         </View>
       )}
-      <SearchField label="친구 검색" onChangeText={setSearch} placeholder="친구 검색" value={search} />
+      <SearchField label={FRIEND_SEARCH} onChangeText={setSearch} placeholder={FRIEND_SEARCH} value={search} />
       <View style={styles.list}>
         {found.length === 0 && friends.length > 0 ? <EmptyState words={NO_RESULTS} /> : null}
         {found.map((friend) => {

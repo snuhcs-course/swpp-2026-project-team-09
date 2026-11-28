@@ -5,6 +5,7 @@
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -119,7 +120,7 @@ export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRow
           {event.mine ? <MineMark /> : null}
         </View>
       </View>
-      <FavoriteToggle eventId={event.id} style={styles.favorite} />
+      <FavoriteToggle besideLine={eventText.title.lineHeight} eventId={event.id} style={styles.favorite} />
     </Pressable>
   );
 }
@@ -165,6 +166,6 @@ const styles = StyleSheet.create({
   partyRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[1] },
   mine: { alignSelf: 'center', justifyContent: 'center' },
   partySome: { paddingHorizontal: space[3], backgroundColor: color.blue100 },
-  // Level with the title's first line.
-  favorite: { position: 'absolute', top: 0, right: -space[2] },
+  // Where the title's first line starts: the row's padding. `besideLine` centres the ☆ on that line.
+  favorite: { position: 'absolute', top: space[3], right: -space[2] },
 });

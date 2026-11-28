@@ -53,7 +53,7 @@ function submit(name: string): ReturnType<typeof screen.getByRole> {
 
 async function openForm(): Promise<User> {
   const user = await openAt('/party');
-  await user.press(screen.getByRole('button', { name: '만들기' }));
+  await user.press(screen.getByRole('button', { name: '파티 만들기' }));
   await pass(500);
   return user;
 }

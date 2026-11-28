@@ -14,17 +14,30 @@
 
 import { type ReactElement, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { color, EmptyState, ErrorState, IconButton, LoadingState, NO_RESULTS, space } from '@/design-system';
-import { type EventFilter, type EventSources, type EventView, toEventViews } from '@/features/events/adapter';
+import { ChipRow, color, EmptyState, ErrorState, LoadingState, NO_RESULTS, type RowChip, space } from '@/design-system';
+import {
+  EVENT_SEARCH_HINT,
+  type EventFilter,
+  type EventSources,
+  type EventView,
+  toEventViews,
+} from '@/features/events/adapter';
 import type { Quest } from '@/api/types';
 import { useEventSources } from '@/features/events/use-events';
 import { showFind } from '../party/use-party-actions';
 import { TabScreen } from '../shell/tab-screen';
 import { EventDetailSheet } from './event-detail-sheet';
 import { EventRow } from './event-row';
-import { Filters, SearchBar } from './events-bar';
 import { EventSheets, type EventSheetsState, type PickedEvent, useEventSheets } from './event-sheets';
 import { type Focus, useFocus } from './use-focus';
+
+// The `Events` frame's filters, in the app's one row of filters.
+const FILTERS: readonly RowChip<EventFilter>[] = [
+  { key: 'all', label: '전체' },
+  { key: 'today', label: '오늘' },
+  { key: 'week', label: '이번 주' },
+  { key: 'recruiting', label: '파티 모집 중' },
+];
 
 interface ListProps extends Omit<Focus, 'focused'> {
   sources: EventSources;
@@ -108,33 +121,35 @@ interface EventsScreenProps {
 export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElement {
   const { data, isPending, refetch } = useEventSources();
   const [filter, setFilter] = useState<EventFilter>('all');
-  const [search, setSearch] = useState('');
-  const [searching, setSearching] = useState(false);
+  // The words searched, or null while the title shows.
+  const [search, setSearch] = useState<string | null>(null);
   const [opened, setOpened] = useState<EventView | null>(null);
   const showAll = useCallback(() => {
     setFilter('all');
-    setSearch('');
-    setSearching(false);
+    setSearch(null);
   }, []);
   const focusing = useFocus(focus, data !== undefined, onFocused, showAll);
   const quests = data?.quests ?? [];
   const sheets = useEventSheets();
   return (
     <TabScreen
-      actions={
-        <IconButton
-          icon="search"
-          label="행사 검색"
-          onPress={() => {
-            setSearching(true);
-          }}
-        />
-      }
-      bar={searching ? <SearchBar onClose={showAll} onSearch={setSearch} search={search} /> : undefined}
+      search={{
+        label: '행사 검색',
+        field: '행사 검색어',
+        placeholder: EVENT_SEARCH_HINT,
+        words: search,
+        onWords: (words) => {
+          if (words === null) {
+            showAll();
+          } else {
+            setSearch(words);
+          }
+        },
+      }}
       title="행사"
     >
       <View style={styles.ground}>
-        <Filters filter={filter} onFilter={setFilter} />
+        <ChipRow chips={FILTERS} onSelect={setFilter} selected={filter} />
         {data === undefined && isPending ? <LoadingState /> : null}
         {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
         {data === undefined ? null : (
@@ -143,7 +158,7 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
             filter={filter}
             onOpen={setOpened}
             onParty={sheets.setRecruitEvent}
-            search={search}
+            search={search ?? ''}
             sources={data}
           />
         )}

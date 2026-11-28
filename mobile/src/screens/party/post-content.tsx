@@ -4,6 +4,7 @@
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -96,18 +97,25 @@ export function InfoBox({ children }: { children: ReactNode }): ReactElement {
   return <View style={styles.box}>{children}</View>;
 }
 
-// The 모집글: the board and the fill, the title, the Leader, a grey box with the time, the place, the members and the
-// event, the description and 추천 이유.
-export function PostContent({ post, reasons }: PostDetailView): ReactElement {
+// The 모집글's head: the board and the fill, and the title. The sheet draws it as its own head, over the rule.
+export function PostHead({ post }: { post: PostView }): ReactElement {
+  return (
+    <View style={styles.head}>
+      <PostTop post={post} />
+      <Text accessibilityRole="header" style={styles.title}>
+        {post.title}
+      </Text>
+    </View>
+  );
+}
+
+// The 모집글: its head unless `headed` is false (the sheet draws it as its head), the Leader, a grey box with the time,
+// the place, the members and the event, the description and 추천 이유.
+export function PostContent({ post, reasons, headed = true }: PostDetailView & { headed?: boolean }): ReactElement {
   const placeOnMap = usePlaceOnMap();
   return (
     <View style={styles.content}>
-      <View style={styles.head}>
-        <PostTop post={post} />
-        <Text accessibilityRole="header" style={styles.title}>
-          {post.title}
-        </Text>
-      </View>
+      {headed ? <PostHead post={post} /> : null}
       <PostHost
         line={`${post.leader.department} · ${agoWords(post.createdAt, now())}`}
         name={post.leader.name}

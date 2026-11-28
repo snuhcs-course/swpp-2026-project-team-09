@@ -40,7 +40,7 @@ import {
   text,
 } from '@/design-system';
 import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
-import { matchesFriend } from '@/features/friends/matches-friend';
+import { FRIEND_SEARCH, matchesFriend } from '@/features/friends/matches-friend';
 import { profileLabel } from '@/features/friends/profile';
 import { useFriends } from '@/features/friends/use-friends';
 import { useCoverMap } from './map-cover';
@@ -173,7 +173,7 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
         title="친구"
       />
       <View style={styles.search}>
-        <SearchField label="친구 검색" onChangeText={setQuery} placeholder="이름, 학과 검색" value={query} />
+        <SearchField label={FRIEND_SEARCH} onChangeText={setQuery} placeholder={FRIEND_SEARCH} value={query} />
       </View>
       {friends === undefined ? null : (
         <ChipRow

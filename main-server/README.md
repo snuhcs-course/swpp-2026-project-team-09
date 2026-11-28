@@ -4264,6 +4264,14 @@ capacity 4, and the Holders are told (`step-changed`) only when the meal's step 
 out answers 400 `PLAN_PEOPLE_CHANGED`. A User who holds no meal of that day but an invitation to one, asking for a
 Friend, has nothing planned; the model is told its Holders alone.
 
+So a plan under `adding` may not hold the Friends it names (P05 ticket 85, `asHeld`). When no plan has them in it, as
+for a Friend who arrives after the asker must leave, the answer is the meal as it is held: its one plan is planned for
+everyone of it but them, at its Restaurant and start, `noPlan` is null, and `note` says why they cannot join it,
+naming them ("지호는 이 점심에 시간이 안 돼요" when the reasons do not). `adding` still names them with `movesTo` null,
+and the press invites them to the same Quest at the same time; nobody of it is asked again or told. The model's
+`adding.fits` is then false, with `adding.why`. Only when the meal cannot be planned as it is held either does the
+answer keep `noPlan`; the app then offers 파티 보기 beside its reasons.
+
 A meeting is set aside the same way (`quests/held-meeting.ts`): a new meet's Plan takes the asker's meeting made from a
 meet's Plan that day, not started, that the model names by its ref (`planMeet`'s `questId`), else the one whose
 people are the Friends asked for (the others not declined, or the declined ones when every other declined). One the
@@ -4335,8 +4343,9 @@ test moves the clock with `vi.spyOn(app.get(CLOCK), 'now')` and calls `sendDue()
 the rows of every User, so the sender's tests keep their Notifications in a year before every other test file's. The
 timer does not keep the process alive and stops at shutdown.
 
-`GET /notifications` answers the signed-in User's Notifications, the latest time first, and 401 without a sign-in. One
-whose time is still to come is in the answer:
+`GET /notifications` answers the signed-in User's Notifications whose time has come by the Quests' `CLOCK`, the latest
+time first, and 401 without a sign-in. One whose time is still to come, such as tomorrow's 지금 나서요, is left out
+until it comes, when the sender rings it and sends `notice`:
 
 ```json
 [
@@ -4356,8 +4365,8 @@ whose time is still to come is in the answer:
 `id` is the identity, `at` the time in Korea with its offset, and `url` the address that opens the card,
 `/main?card=<kind>:<id>`. `cardAddress()` from `src/notifications/card-address.ts` makes it and refuses a card kind
 outside lowercase letters and `-`, or an id outside letters, digits, `-`, `.` and `,`. `ahead` is the title while `at`
-is still to come, with `at` in Korea in it, and null for a kind that has none: the service reads no clock, and the
-phone shows `ahead` while `at` is after its own now. `read` is whether the User has read it.
+is still to come, with `at` in Korea in it, and null for a kind that has none. The list never shows it, since it lists
+only what has come. `read` is whether the User has read it.
 
 `POST /notifications/read` marks read every Notification of the signed-in User whose time has come by the Quests'
 `CLOCK`, answering 204, and 401 without a sign-in. 알림 calls it once it shows its rows, and the bell counts those

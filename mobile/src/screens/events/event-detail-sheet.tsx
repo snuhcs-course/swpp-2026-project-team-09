@@ -4,11 +4,23 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, eventText, eventTone, Icon, type IconName, radius, space } from '@/design-system';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import {
+  BottomSheet,
+  Button,
+  color,
+  eventText,
+  eventTone,
+  Icon,
+  type IconName,
+  radius,
+  SheetScroll,
+  space,
+} from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
 import { type DescriptionLine, descriptionLines } from './description-lines';
 import { FavoriteToggle } from './favorite-toggle';
@@ -50,22 +62,28 @@ function Description({ lines }: { lines: DescriptionLine[] }): ReactElement {
   );
 }
 
+// The sheet's head: the title and ☆, which stay on top while the rest scrolls.
+function Head({ event }: { event: EventView }): ReactElement {
+  return (
+    <View style={styles.head}>
+      <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
+        {event.title}
+      </Text>
+      <FavoriteToggle besideLine={eventText.sheetTitle.lineHeight} eventId={event.id} style={styles.favorite} />
+    </View>
+  );
+}
+
 function Details({ event }: { event: EventView }): ReactElement {
   const lines = descriptionLines(event.description);
   return (
-    <ScrollView contentContainerStyle={styles.details} style={styles.scroll} testID="event-detail">
-      <View style={styles.head}>
-        <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
-          {event.title}
-        </Text>
-        <FavoriteToggle eventId={event.id} style={styles.favorite} />
-      </View>
+    <SheetScroll contentContainerStyle={styles.details} style={styles.scroll}>
       <View style={styles.facts}>
         <Fact icon="clock" name="언제" words={event.time} />
         {event.place === null ? null : <Fact icon="pin" name="어디" words={event.place} />}
       </View>
       {lines.length === 0 ? null : <Description lines={lines} />}
-    </ScrollView>
+    </SheetScroll>
   );
 }
 
@@ -144,10 +162,17 @@ interface EventDetailSheetProps {
 }
 
 // The `EventsDetail` frame: an event in a sheet, with its time and place, its description, "원문 보기" and the button
-// of the screen that opened it. The top part scrolls when the description is long, the buttons staying under it.
+// of the screen that opened it. The title stays on top; the time, the place and the description scroll when the
+// description is long, the buttons staying under them.
 export function EventDetailSheet({ event, onClose, action }: EventDetailSheetProps): ReactElement {
   return (
-    <BottomSheet label={event?.title ?? '행사'} onClose={onClose} open={event !== null}>
+    <BottomSheet
+      head={event === null ? undefined : <Head event={event} />}
+      label={event?.title ?? '행사'}
+      onClose={onClose}
+      open={event !== null}
+      testID="event-detail"
+    >
       {event === null ? null : (
         <View style={styles.body}>
           <Details event={event} />
@@ -165,7 +190,6 @@ const BOX_GAP = 10;
 const BOX_PADDING = 14;
 const FACT_ICON = 18;
 const ICON_DROP = (eventText.value.lineHeight - FACT_ICON) / 2;
-const FAVORITE_REACH = { marginTop: -6, marginRight: -10 };
 const LINE_GAP = 7;
 const PARAGRAPH_GAP = 14;
 
@@ -175,7 +199,7 @@ const styles = StyleSheet.create({
   details: { gap: space[4] },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
   title: { ...eventText.sheetTitle, flex: 1, minWidth: 0, color: color.ink },
-  favorite: FAVORITE_REACH,
+  favorite: { marginRight: -10 },
   facts: {
     gap: BOX_GAP,
     paddingVertical: BOX_PADDING,

@@ -9,6 +9,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -26,7 +27,8 @@ import { answer } from './support/room';
 import { answerParty, cardName, CODING, invitationTo, JAZZ, openAt, RUN } from './support/party';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// 찾기: the board filters, the search at their end and the plain cards, against the fake main server (P06 ticket 12).
+// 찾기: the board filters and the plain cards, against the fake main server (P06 ticket 12). The app bar's search and
+// 파티 만들기 are in `party-header-search`.
 // The 모집글 a card opens is in `party-find-sheet`.
 
 jest.mock('expo-location');
@@ -79,14 +81,6 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('the 파티 header', () => {
-  it('stands + 만들기 in the middle of the bar', async () => {
-    await openAt('/party');
-
-    expect(screen.getByRole('button', { name: '만들기' })).toHaveStyle({ alignSelf: 'center' });
-  });
-});
-
 describe('what 찾기 no longer has', () => {
   it('has no search field in the list, no 모집 중인 파티 heading and no 전체 게시판', async () => {
     await openAt('/party');
@@ -136,16 +130,14 @@ describe('the board filters', () => {
     expect(shownTitles()).toEqual([RUN.title, CODING.title, JAZZ.title]);
   });
 
-  it('fades the row’s end before the magnifier, over the chips that scroll under it, taking no press', async () => {
-    const user = await openAt('/party');
+  it('fades the row’s end over the chips that scroll under it, taking no press, with no magnifier in the row', async () => {
+    await openAt('/party');
 
     const fade = screen.getByTestId('find-filters-fade');
     expect(fade).toBeOnTheScreen();
     expect(fade).toHaveProp('pointerEvents', 'none');
     expect(within(screen.getByTestId('find-list')).queryByTestId('find-filters-fade')).toBeNull();
-
-    await user.press(screen.getByRole('button', { name: '파티 검색' }));
-    expect(screen.queryByTestId('find-filters-fade')).toBeNull();
+    expect(screen.getAllByRole('button', { name: '파티 검색' })).toHaveLength(1);
   });
 
   it('keeps today’s empty state for 전체 with no post', async () => {
@@ -153,34 +145,6 @@ describe('the board filters', () => {
     await openAt('/party');
 
     expect(screen.getByText('결과 없음')).toBeVisible();
-  });
-});
-
-describe('the search', () => {
-  it('turns the filters into the field, finds across boards, and ✕ brings the filters back at 전체', async () => {
-    const user = await openAt('/party');
-    await user.press(screen.getByRole('button', { name: '취미' }));
-
-    await user.press(screen.getByRole('button', { name: '파티 검색' }));
-    expect(screen.queryByRole('button', { name: '취미' })).toBeNull();
-    expect(screen.getByPlaceholderText('파티 검색')).toBeVisible();
-    await user.type(screen.getByLabelText('파티 검색어'), '코드 리뷰');
-    expect(shownTitles()).toEqual([CODING.title]);
-
-    await user.clear(screen.getByLabelText('파티 검색어'));
-    await user.type(screen.getByLabelText('파티 검색어'), '없는 파티');
-    expect(screen.getByText('결과 없음')).toBeVisible();
-
-    await user.press(screen.getByRole('button', { name: '검색 닫기' }));
-    expect(screen.queryByLabelText('파티 검색어')).toBeNull();
-    expect(screen.getByRole('button', { name: '전체' })).toBeSelected();
-    expect(shownTitles()).toEqual([RUN.title, CODING.title, JAZZ.title]);
-  });
-
-  it('is on 찾기 alone', async () => {
-    await openAt('/party?tab=mine');
-
-    expect(screen.queryByRole('button', { name: '파티 검색' })).toBeNull();
   });
 });
 

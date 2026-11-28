@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import request from 'supertest';
@@ -11,6 +12,7 @@ import { MealPlanStage } from './meal-plan.js';
 import * as planQuests from './plan-quests.js';
 import { dropQuest, getQuests } from './quests.js';
 import { withAccessToken } from './sign-in.js';
+import { keptNotifications } from './kept-notifications.js';
 
 // "여기로" for a meal (P03 ticket 15): a Plan taken alone at POST /plans over the started server with the seed's walking
 // table and Places, the design's worked example for the asker alone (a Tuesday at 11:50 at 301동, the Class at 24동 at
@@ -40,11 +42,8 @@ const takenSchema = z.object({
 const rowsSchema = z.array(z.object({ kind: z.string(), title: z.string(), line: z.string(), url: z.string() }));
 
 async function leaveBys(): Promise<z.infer<typeof rowsSchema>> {
-  const response = await withAccessToken(
-    request(stage.app.getHttpServer()).get('/notifications'),
-    stage.asker.accessToken,
-  );
-  return rowsSchema.parse(response.body).filter(({ kind }) => kind === 'leave-by');
+  const kept = await keptNotifications(stage.app, stage.asker.id);
+  return rowsSchema.parse(kept).filter(({ kind }) => kind === 'leave-by');
 }
 
 async function heldIds(): Promise<string[]> {

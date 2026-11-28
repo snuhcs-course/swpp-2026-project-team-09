@@ -14,6 +14,7 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { type NotificationsService } from '../src/notifications/notifications.service.js';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { signInUser, TestUser } from './friends.js';
 import { connectToDatabase } from './quests.js';
 import { withAccessToken } from './sign-in.js';
@@ -39,6 +40,10 @@ beforeAll(async () => {
   notifications = app.get(registered);
   redis = app.get<Redis>(REDIS);
   prisma = connectToDatabase();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -105,6 +110,24 @@ describe('GET /notifications', () => {
 
   it('answers 401 without a sign-in', async () => {
     expect((await getNotifications(null)).status).toBe(401);
+  });
+});
+
+describe('GET /notifications and the time', () => {
+  it('leaves out one whose time has not come, until it comes', async () => {
+    const user = await signInUser(app);
+    const clock = vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date('2026-11-14T03:00:00Z'));
+    await notifications.schedule(user.id, accepted('민수'), new Date('2026-11-14T02:58:00Z'));
+    await notifications.schedule(user.id, accepted('지은', OTHER_QUEST_ID), new Date('2026-11-14T03:00:01Z'));
+
+    expect((await getNotifications(user)).body).toEqual([expect.objectContaining({ title: '민수가 수락했어요' })]);
+
+    clock.mockReturnValue(new Date('2026-11-14T03:00:01Z'));
+
+    expect((await getNotifications(user)).body).toEqual([
+      expect.objectContaining({ title: '지은이 수락했어요' }),
+      expect.objectContaining({ title: '민수가 수락했어요' }),
+    ]);
   });
 });
 

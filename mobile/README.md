@@ -451,7 +451,15 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   that wait for the User and concern 파티, every row but the kept Notifications and the Friend Requests. While the
   lists load, and when every one failed, there is no badge.
 - 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
-  파티 has "+ 만들기" and the tabs 찾기, 내 파티 and 초대; its address names the tab (`/party?tab=invites`). 내 정보's
+  A tab with a search gives `TabScreen` its `search`: the magnifier at the bar's top right, which turns the title's
+  row into the field, focused at once so the keyboard rises, and ✕ "검색 닫기". The field is `SearchField`'s `bare`
+  variant: no box, the magnifier and the words (18 SemiBold, `text.title`) in the title's place on the bar's white,
+  and no clear ✕ of its own, since the one ✕ closes the search and drops the words; Android's back closes an open search
+  before it leaves the tab. The words narrow the list together with the tab's filters. 파티 has the search and the
+  tabs 찾기, 내 파티 and 초대, and 파티 만들기 floats over all three (`FloatingActionArea`: a navy rounded square of 56
+  with a white pencil, 16 from the right and 12 above the navigation, which gives way while the keyboard is up; every
+  list inside ends with `useListEnd`, which keeps `FLOATING_ACTION_ROOM` free so that the last card scrolls wholly
+  above the button); its address names the tab (`/party?tab=invites`). 내 정보's
   address can ask for its 위치 공유 card (`/me?show=sharing`), and 행사's marks one Global Event (`/events?focus=<id>`).
   파티, 행사 and 내 정보 are described below.
 - **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
@@ -913,7 +921,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
 screen, on the glass layer's `inner` level over the map; while it is open, what floats over the map and the tab bar
-give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department as `matchesWords` matches, with
+give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "친구 검색", by name only as `matchesWords` matches, with
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
 and the department, the detail (or the line where the app has no detail), and the round glass calendar button
@@ -926,7 +934,7 @@ own status says.
 **The friend screens** (`src/screens/friends/`, the `Friends` and `FriendsAdd` frames) are screens above the tabs that
 slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to where it was opened from:
 
-- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department as `matchesWords` matches, with "결과 없음"; the row
+- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name only as `matchesWords` matches, with "결과 없음"; the row
   "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
   order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and no level or 위치 공유 line:
   each Friend's level is chosen on 위치 공유. A press on a Friend opens a bottom sheet with
@@ -1170,8 +1178,8 @@ invitations (`초대 {n}`, red).
 
 - **찾기**: the recruiting Quests with a place left that the User did not hide, those sharing more tags with the User
   first, then the newest. Under the tabs, outside the list that scrolls, the board filters 전체 · 식사 · 진로 · 취미 ·
-  공연 (`ChipRow` without counts, `find-bar.tsx`), fading at their end, with the magnifier `파티 검색` after them,
-  which turns them into the search field over every board; its ✕ `검색 닫기` brings the filters back at 전체. A board
+  공연 (`ChipRow` without counts, `find-bar.tsx`), fading at their end. The app bar's search `파티 검색` narrows the
+  board chosen; opened from 내 파티 or 초대 it shows 찾기, leaving 찾기 closes it, and its ✕ `검색 닫기` keeps the board. A board
   with no post says "{식사} 게시판에 모집 중인 파티가 없어요". A card (`find-card.tsx`) has the board, the fill, the title, the next Sub
   Quest's time and place on their own lines ("시간 미정", "장소 미정") and the event of a 파티 for one in blue; a press
   opens the 모집글 as a sheet over 찾기 (`post-sheet.tsx`). Its `참여하기`, or `참여 신청` for an Approval Quest,
@@ -1217,8 +1225,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 **행사** (`src/screens/events/`, the `Events` frame, `/events`) lists the published Global Events (`GET
 /global-events`) by their start, with the data of `useEventSources()` and the words of `src/features/events/adapter.ts`:
 
-- The app bar (`events-bar.tsx`) has "행사" and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
-  place of the title and keeps the events whose title, place or description holds the words.
+- The app bar has "행사" and `TabScreen`'s search "행사 검색", which keeps the events whose title, place or
+  description the words find; its ✕ "검색 닫기" also sets the filters back to 전체.
 - The filters "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest
   the User can join; the User's own 파티 is not one) filter the list; the chosen one is bold navy on light blue. Under them, on the white ground,
   "다가오는 행사" heads the list. Empty: "여기서는 학교 행사를 모아 볼 수 있어요" with "파티 찾기" without any event,
@@ -1237,8 +1245,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   frame's 분류 tabs and "대상" are not drawn: a Global Event has no category or audience. AI matching left the main
   UI on 2026-11-10 (P06-03), and its calls and the routes and server behind them left the code in
   Iteration 4 (A04). The chat's event cards are `event-item.tsx`, with "자세히" and "파티 찾기/모집".
-- The ☆ at a row's top right and in the detail sheet (`favorite-toggle.tsx`), named "즐겨찾기" as everywhere in the
-  app, keeps the event or drops it (`PUT` and `DELETE /global-events/:id/favorite`): a Favorite
+- The ☆ at a row's top right and in the detail sheet (`favorite-toggle.tsx`), level with the title's first line
+  (`besideLine`: its touch area of 44 is centred on that line's box), named "즐겨찾기" as everywhere in the app, keeps the event or drops it (`PUT` and `DELETE /global-events/:id/favorite`): a Favorite
   Event. It changes at once and back with "즐겨찾기를 바꾸지 못했어요" when the main server refuses. The chat's event
   cards have it as the ☆ "즐겨찾기", and so does the map's card of one event, left of the X; a grouped pin's card
   marks a Favorite Event's row with ★ instead. Whether the User starred an event is read from `GET /global-events`
@@ -1566,8 +1574,10 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
     A `Button` with an icon and no words is the icon alone in a square of 40, read by its `label`.
   - `FullScreenPanel`: a screen above the tabs, white, with an app bar, what stays under it, a body that scrolls and
     an optional footer.
-  - `SidePanel` (from the left, 324 wide, radius 24 at its right, the scrim) and `BottomSheet` (a handle, top radius
-    24, the scrim). The scrim, Android's back button and, for the sheet, a drag down from its handle close them.
+  - `SidePanel` (from the left, 324 wide, radius 24 at its right, the scrim) and `BottomSheet` (a handle, its
+    `head` under it closed by a thin rule, top radius 24, the scrim). The scrim and Android's back button close
+    them; the sheet also closes by a drag down on its handle or head, and by a pull down on its body, which a
+    `SheetScroll` hands over only once its content is scrolled to the top (`pullBody={false}` for a body of wheels).
     They slide over 0.28 s, or appear at once where the phone asks for less motion (`use-slide.ts`), and are drawn
     in the `OverlayHost` (`Overlay`).
   - `SegmentedTabs` (48 high, the selected one underlined in navy, a count pill in grey or red), `ChipRow` (chips

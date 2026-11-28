@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, space, text } from '@/design-system';
+import { BottomSheet, Button, color, SheetTitle, space, text } from '@/design-system';
 
 // A question the room asks before a step: its words, "취소", and the step's button, red for one that stops something.
 export interface Ask {
@@ -27,12 +28,14 @@ interface ConfirmSheetProps {
 // The frames' confirm sheets of the room: `활성화 확인` and `파티 나가기 확인`.
 export function ConfirmSheet({ ask, label, onClose }: ConfirmSheetProps): ReactElement {
   return (
-    <BottomSheet label={label} onClose={onClose} open={ask !== null}>
+    <BottomSheet
+      head={ask === null ? undefined : <SheetTitle>{ask.title}</SheetTitle>}
+      label={label}
+      onClose={onClose}
+      open={ask !== null}
+    >
       {ask === null ? null : (
         <View style={styles.body}>
-          <Text accessibilityRole="header" style={styles.title}>
-            {ask.title}
-          </Text>
           <Text style={styles.words}>{ask.body}</Text>
           <View style={styles.buttons}>
             <View style={styles.button}>
@@ -62,7 +65,6 @@ export function ConfirmSheet({ ask, label, onClose }: ConfirmSheetProps): ReactE
 
 const styles = StyleSheet.create({
   body: { gap: space[3], paddingHorizontal: space[5] },
-  title: { ...text.title, color: color.ink },
   words: { ...text.body, color: color.inkMuted },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[1] },
   button: { flex: 1 },
