@@ -129,7 +129,12 @@ export const isQuestRemovals = listOf(isQuestRemoval);
 
 function isKeptNotification(value: unknown): value is KeptNotification {
   const ahead = field(value, 'ahead');
-  return hasTexts(value, ['id', 'kind', 'title', 'line', 'at', 'url']) && (ahead === undefined || isTextOrNull(ahead));
+  const read = field(value, 'read');
+  return (
+    hasTexts(value, ['id', 'kind', 'title', 'line', 'at', 'url']) &&
+    (ahead === undefined || isTextOrNull(ahead)) &&
+    (read === undefined || typeof read === 'boolean')
+  );
 }
 
 export const isKeptNotifications = listOf(isKeptNotification);

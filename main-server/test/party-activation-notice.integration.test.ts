@@ -79,6 +79,7 @@ describe('Activating a 파티', () => {
             line: '나도 참여하면 서로 위치를 볼 수 있어요',
             at: '2026-11-14T11:58:00+09:00',
             url: `/main?card=party:${questId}`,
+            read: false,
           },
         ]);
       });

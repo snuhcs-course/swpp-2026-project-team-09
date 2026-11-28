@@ -3,12 +3,14 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import type { KeptNotification } from '@/api/waiting-types';
 import { pass, screen, shownAddress } from './support/app';
 import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -94,14 +96,83 @@ describe('a kept Notification in 알림', () => {
     expect(server.received('GET /notifications')).toHaveLength(before + 1);
   });
 
-  it('is counted neither by the badge on 파티 nor on the bell, nor in the title of 알림', async () => {
+  it('is counted neither by the badge on 파티 nor on the bell once read, nor in the title of 알림', async () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
+    server.on('GET /notifications', { status: 200, body: [{ ...ACCEPTED, read: true }] });
 
     await openNotifications('알림 1개');
 
     expect(screen.getByRole('header', { name: '알림 1' })).toBeVisible();
     expect(screen.getByRole('button', { name: ROW })).toBeVisible();
     expect(screen.getByRole('tab', { name: '파티, 새 소식 1개', includeHiddenElements: true })).toBeOnTheScreen();
+  });
+});
+
+// The main server's kept rows, which `POST /notifications/read` marks read where their time has come, as it does.
+function keepOnServer(rows: readonly KeptNotification[]): void {
+  const kept = structuredClone(rows);
+  server.on('GET /notifications', () => ({ status: 200, body: kept }));
+  server.on('POST /notifications/read', () => {
+    for (const row of kept.filter(({ at }) => Date.parse(at) <= Date.now())) {
+      row.read = true;
+    }
+    return { status: 204 };
+  });
+}
+
+async function backToMe(user: Awaited<ReturnType<typeof openMain>>): Promise<void> {
+  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await pass(500);
+}
+
+describe('an unread kept Notification', () => {
+  it('is counted on the bell with what waits, until 알림 is opened, and not by the badge on 파티', async () => {
+    server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
+    keepOnServer([{ ...ACCEPTED, read: false }]);
+    const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
+
+    expect(screen.getByRole('button', { name: '알림 2개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '파티, 새 소식 1개', includeHiddenElements: true })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: '알림 2개' }));
+    await pass(500);
+    expect(screen.getByRole('button', { name: ROW })).toBeVisible();
+    expect(server.received('POST /notifications/read')).toHaveLength(1);
+    await backToMe(user);
+
+    expect(screen.getByRole('button', { name: '알림 1개' })).toBeVisible();
+  });
+
+  it('is not counted while its time is still to come, nor when it is a kind 알림 leaves out', async () => {
+    keepOnServer([
+      { ...ACCEPTED, id: 'ahead', at: '2026-10-06T13:30:00+09:00', read: false },
+      { ...ACCEPTED, id: 'asked', kind: 'join-asked', read: false },
+      { ...ACCEPTED, id: 'activated', kind: 'party-activated', read: false },
+    ]);
+    const user = await openMain();
+
+    await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
+
+    expect(screen.getByRole('button', { name: '알림' })).toBeVisible();
+  });
+
+  it('is counted from the signal `notice` that brings it', async () => {
+    keepOnServer([]);
+    const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
+    await socketServer((socket) => {
+      socket.accept();
+    });
+    expect(screen.getByRole('button', { name: '알림' })).toBeVisible();
+
+    keepOnServer([{ ...ACCEPTED, read: false }]);
+    await socketServer((socket) => {
+      socket.send('notice');
+    });
+    await pass(100);
+
+    expect(screen.getByRole('button', { name: '알림 1개' })).toBeVisible();
   });
 });
 

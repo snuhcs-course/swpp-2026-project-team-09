@@ -4,10 +4,14 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type UseQueryResult, useQueries } from '@tanstack/react-query';
+import { type UseQueryResult, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { apiClient } from '@/api/client';
 import {
+  NOTIFICATIONS_KEY,
   friendRequestsQuery,
   joinRequestsQuery,
   notificationsQuery,
@@ -19,7 +23,7 @@ import { type ScreenData, askAgain, somePending } from '@/api/screen-data';
 import type { JoinRequest } from '@/api/waiting-types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
-import { type NoticeView, takesJoinRequests, waitingNotices, toNotices } from './adapter';
+import { type NoticeView, takesJoinRequests, toNotices, unreadKept, waitingNotices } from './adapter';
 
 function answerOf<Answer>(result: UseQueryResult<Answer>): Answer | null {
   return result.data ?? null;
@@ -60,6 +64,31 @@ export function useNotices(): ScreenData<NoticeView[]> {
     isError,
     refetch: askAgain(asked),
   };
+}
+
+// The number on the bell: the rows of 알림 that wait for the User, and the kept Notifications they have not read. Nothing
+// while the lists load or when every one failed.
+export function useBellCount(): number {
+  const notices = useNotices().data;
+  const kept = useQuery(notificationsQuery).data ?? [];
+  return notices === undefined ? 0 : waitingNotices(notices).length + unreadKept(kept, now()).length;
+}
+
+// Marks read, on the main server, the kept Notifications 알림 shows once they are shown: each time an unread one is
+// among them, as when one comes by the signal `notice` while 알림 is open. A failure leaves them unread, to be counted.
+export function useMarkShownRead(shown: boolean): void {
+  const queryClient = useQueryClient();
+  const kept = useQuery(notificationsQuery).data ?? [];
+  const unread = shown && unreadKept(kept, now()).length > 0;
+  const { mutate } = useMutation({
+    mutationFn: () => apiClient.markNotificationsRead(),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY }),
+  });
+  useEffect(() => {
+    if (unread) {
+      mutate();
+    }
+  }, [unread, mutate]);
 }
 
 // The number on the bottom navigation's 파티: the rows of 알림 that wait for the User and concern 파티. It never fails a screen: while
