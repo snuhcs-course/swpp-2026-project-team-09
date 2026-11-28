@@ -111,28 +111,6 @@ describe('the middle on the map', () => {
   });
 });
 
-function zoom(): ReturnType<typeof screen.getByTestId> {
-  return screen.getByTestId('zoom-control');
-}
-
-function layers(): ReturnType<typeof screen.getByRole> {
-  return screen.getByRole('button', { name: '편의기능 (식당 · 셔틀버스 · 공부공간)' });
-}
-
-// A04 ticket 12 (asked by the user on 2026-11-29): what stood over the AI input comes down into its place.
-describe('the map with the AI lowered', () => {
-  it('brings the zoom control and the 편의기능 button down by the input and the room above it', async () => {
-    const user = await openMain();
-    expect(zoom()).toHaveStyle({ bottom: 136 });
-    expect(layers()).toHaveStyle({ bottom: 78 });
-
-    await user.press(screen.getByRole('tab', { name: '지도' }));
-
-    expect(zoom()).toHaveStyle({ bottom: 136 - 62 });
-    expect(layers()).toHaveStyle({ bottom: 78 - 62 });
-  });
-});
-
 describe('the middle on another tab', () => {
   it('shows the map with the AI raised, also after it was lowered', async () => {
     const user = await openMain();

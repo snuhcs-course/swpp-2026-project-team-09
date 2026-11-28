@@ -30,7 +30,7 @@ import { restoreOf } from '@/features/assistant/restore';
 import { nextMeal } from '@/features/dining/adapter';
 import type { FirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
-import { useTellReady } from '../shell/ai-raised';
+import { useAiRaised, useTellReady } from '../shell/ai-raised';
 import { AiInput } from './ai-input';
 import { sendWithKeyboardDown, useKeyboardLift } from './input-keyboard';
 import { AnswerFrame } from './answer/answer-frame';
@@ -48,7 +48,6 @@ import { KeyboardScrim } from './keyboard-scrim';
 import {
   aiInputTop,
   interestsHintBottom,
-  loweredBy,
   madeLineBottom,
   PAST_CHATS,
   pastChatsBottom,
@@ -150,8 +149,8 @@ function EverydayBottom(props: EverydayProps): ReactElement {
   const { bottomCard } = taken;
   return (
     <>
-      <BottomControls cardOpen={bottomCard} drop={loweredBy(room)} onActiveParty={onParty} />
-      {bottomCard ? null : <LayerControls drop={loweredBy(room)} stack={stack} />}
+      <BottomControls cardOpen={bottomCard} onActiveParty={onParty} />
+      {bottomCard ? null : <LayerControls stack={stack} />}
       {room.tutorialStart && !keyboardUp ? (
         <TutorialStartButton bottom={tutorialStartBottom(room)} onPress={tutorial.openList} />
       ) : null}
@@ -205,6 +204,13 @@ function inputStateOf(chat: MapBottomProps['chat']): { listOpen: boolean; inputG
   };
 }
 
+// Whether the bar's middle lowered the AI (A04 ticket 09): the input, mounted so that a draft is kept, and the lines
+// over it go. Only on the everyday map: an answer frame hides the bar, and its card keeps its input; nor while the
+// 새내기 튜토리얼's list or a quest's sheet is open, which keep the input as they show it.
+function useLowered(chat: MapBottomProps['chat'], tutorial: TutorialFlow): boolean {
+  return !useAiRaised().raised && !chat.framed && tutorial.list === null && tutorial.sheet === null;
+}
+
 // What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
 // card at the bottom hides the row and the button. While the keyboard is up and the input is empty, the examples stand
 // above it. A message sent from the main map starts a new conversation and shows the answer frame, which hides the
@@ -221,7 +227,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   // While a quest's guide is open it takes the whole map. The AI input stays mounted, hidden, so that a draft is kept.
   const guided = tutorial.guide !== null;
-  const lowered = room.lowered === true;
+  const lowered = useLowered(chat, tutorial);
   // What the AI has ready, which the bar's middle counts while these lines are out of sight (A04 ticket 12).
   useTellReady((mapChipOf(chat)?.kind === 'continue' ? 1 : 0) + unasked.made.waiting);
   const cardShown = invitation.shown || made.shown !== null;

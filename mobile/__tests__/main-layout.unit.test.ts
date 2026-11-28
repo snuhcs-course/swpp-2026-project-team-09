@@ -2,13 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
- * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
   interestsHintBottom,
   listRows,
-  loweredBy,
   madeLineBottom,
   mapInset,
   type Room,
@@ -143,29 +141,5 @@ describe("the friend list's window on a low screen", () => {
   ] as const)('ends 8 above the credit %s', (_case, room, height) => {
     expect(listRows({ ...room, stage: { width: 360, height } }, 0).friends).toBe(3);
     expect(listRows({ ...room, stage: { width: 360, height: height - 1 } }, 0).friends).toBe(2);
-  });
-});
-
-// A04 ticket 12 (asked by the user on 2026-11-29): with the AI lowered by the bar's middle, what stood over the AI input
-// comes down into its place, 62 lower: the row and the lines at the left, and the credit with them.
-describe('what stands above the AI input while the AI is lowered', () => {
-  it('comes down by the input and the room above it', () => {
-    expect(loweredBy({ ...NO_PARTY, lowered: true })).toBe(62);
-    expect(loweredBy(NO_PARTY)).toBe(0);
-  });
-
-  it("puts the row in the input's place, and the lines over it", () => {
-    const room: Room = { ...IN_PARTY, tutorialStart: true, interestsHint: true, lowered: true };
-
-    expect([tutorialStartBottom(room), interestsHintBottom(room)]).toEqual([134 - 62, 176 - 62]);
-  });
-
-  it("puts the lowest line at the left in the row's lowered place in no Party", () => {
-    expect(tutorialStartBottom({ ...NO_PARTY, ...START, lowered: true })).toBe(16);
-  });
-
-  it('leaves the credit and the logo over what is left, never over an empty place', () => {
-    expect(mapInset({ ...NO_PARTY, lowered: true }).bottom).toBe(0);
-    expect(mapInset({ ...NO_PARTY, ...START, lowered: true }).bottom).toBe(16 + 34);
   });
 });

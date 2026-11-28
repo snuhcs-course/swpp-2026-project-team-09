@@ -10,7 +10,6 @@
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
- * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
@@ -162,8 +161,6 @@ function LayerToggle({ label, icon, tint, on, onPress }: Toggle): ReactElement {
 
 interface LayerControlsProps {
   stack: LayerStack;
-  // How far it comes down while the AI is lowered (`loweredBy`, A04 ticket 12). Left out, none.
-  drop?: number;
 }
 
 // The button, navy while the stack is open, with a dot in the colour of each layer that is on.
@@ -171,12 +168,10 @@ function LayersButton({
   open,
   on,
   onPress,
-  drop,
 }: {
   open: boolean;
   on: readonly Toggle[];
   onPress: () => void;
-  drop: number;
 }): ReactElement {
   return (
     <Pressable
@@ -185,7 +180,7 @@ function LayersButton({
       accessibilityState={{ expanded: open }}
       aria-expanded={open}
       onPress={onPress}
-      style={[styles.button, { bottom: LAYERS_BUTTON.bottom - drop }, open && styles.buttonOpen]}
+      style={[styles.button, open && styles.buttonOpen]}
     >
       <Icon color={open ? color.onPrimary : color.snuBlue} name="layers" size={22} />
       <View aria-hidden style={styles.dots}>
@@ -199,7 +194,7 @@ function LayersButton({
 
 // The 편의기능 button and the stack of the `MainLayers` frame, which rises above it: the toggles from the bottom up,
 // 식당, 셔틀버스 and 공부공간. The menus open from a 식당 pin's 메뉴 보기. A transparent scrim over the map closes it.
-export function LayerControls({ stack, drop = 0 }: LayerControlsProps): ReactElement {
+export function LayerControls({ stack }: LayerControlsProps): ReactElement {
   const { shown, progress } = useSlide(stack.open);
   const toggles: Toggle[] = [
     { label: '식당', icon: 'meal', tint: kindTone.meal.ink, on: stack.layers.dining, onPress: stack.toggleDining },
@@ -233,17 +228,14 @@ export function LayerControls({ stack, drop = 0 }: LayerControlsProps): ReactEle
         <Animated.View
           accessibilityLabel="편의기능 레이어"
           role="group"
-          style={[
-            styles.stack,
-            { bottom: LAYER_STACK.bottom - drop, opacity: progress, transform: [{ translateY: rise }] },
-          ]}
+          style={[styles.stack, { opacity: progress, transform: [{ translateY: rise }] }]}
         >
           {toggles.map((toggle) => (
             <LayerToggle key={toggle.label} {...toggle} />
           ))}
         </Animated.View>
       ) : null}
-      <LayersButton drop={drop} on={toggles.filter(({ on }) => on)} onPress={stack.toggleOpen} open={stack.open} />
+      <LayersButton on={toggles.filter(({ on }) => on)} onPress={stack.toggleOpen} open={stack.open} />
     </>
   );
 }

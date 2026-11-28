@@ -2,7 +2,6 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
- * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -11,8 +10,6 @@ import { color, Icon, type IconName, radius, shadow } from '@/design-system';
 import { ZOOM_CONTROL } from './layout';
 
 interface ZoomControlProps {
-  // How far it comes down while the AI is lowered (`loweredBy`, A04 ticket 12). Left out, none.
-  drop?: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onMyPosition: () => void;
@@ -41,9 +38,9 @@ function Control({ label, icon, iconSize, tint, onPress }: ControlProps): ReactE
 }
 
 // The `Main` frame's zoom control: zoom in, zoom out and "내 위치로 이동" in one white pill at the right of the map.
-export function ZoomControl({ drop = 0, onZoomIn, onZoomOut, onMyPosition }: ZoomControlProps): ReactElement {
+export function ZoomControl({ onZoomIn, onZoomOut, onMyPosition }: ZoomControlProps): ReactElement {
   return (
-    <View style={[styles.pill, { bottom: ZOOM_CONTROL.bottom - drop }]} testID="zoom-control">
+    <View style={styles.pill}>
       <Control icon="plus" iconSize={20} label="확대" onPress={onZoomIn} tint={color.ink} />
       <View style={styles.divider} />
       <Control icon="minus" iconSize={20} label="축소" onPress={onZoomOut} tint={color.ink} />

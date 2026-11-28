@@ -12,7 +12,6 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
- * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -78,8 +77,6 @@ export interface Room {
   buttonRow?: boolean;
   // The AI input's own height, without the keyboard's lift. Left out, one line's (`AI_INPUT`).
   inputHeight?: number;
-  // The bottom bar's middle lowered the AI (A04 tickets 09 and 12): what stood over the input comes down into its place.
-  lowered?: boolean;
 }
 
 // The two columns never share a point. The Quest column keeps the frame's 182, which a title of 146 beside its round
@@ -132,12 +129,6 @@ export function listWindow(rows: number): number {
 // high, so its top is 62 above the navigation, 10 under a card's bottom.
 export const AI_INPUT = { side: space[4], bottom: 12, height: 50 } as const;
 
-// How far what stood over the AI input comes down while the AI is lowered: the input and the room above it, so that
-// the row stands 16 above the navigation, as it stood 16 above the input.
-export function loweredBy({ lowered = false }: Room): number {
-  return lowered ? AI_INPUT.height + space[3] : 0;
-}
-
 // The AI input's top while the keyboard is down. It grows upward while it holds more than a line.
 export function aiInputTop({ inputHeight = AI_INPUT.height }: Room): number {
   return AI_INPUT.bottom + inputHeight;
@@ -158,16 +149,16 @@ export const MADE_LINE = { left: space[4], height: 34 } as const;
 
 // The bottom of the next one at the left: 8 over `top`, the top of what stands under it, or the row's place while
 // nothing does.
-function bottomOver(top: number | null, room: Room): number {
-  return top === null ? BUTTON_ROW.bottom - loweredBy(room) : top + space[2];
+function bottomOver(top: number | null): number {
+  return top === null ? BUTTON_ROW.bottom : top + space[2];
 }
 
-function rowTop(room: Room): number | null {
-  return room.buttonRow === true ? BUTTON_ROW.bottom - loweredBy(room) + BUTTON_ROW.height : null;
+function rowTop({ buttonRow = false }: Room): number | null {
+  return buttonRow ? BUTTON_ROW.bottom + BUTTON_ROW.height : null;
 }
 
 export function tutorialStartBottom(room: Room): number {
-  return bottomOver(rowTop(room), room);
+  return bottomOver(rowTop(room));
 }
 
 function tutorialStartTop(room: Room): number | null {
@@ -175,7 +166,7 @@ function tutorialStartTop(room: Room): number | null {
 }
 
 export function interestsHintBottom(room: Room): number {
-  return bottomOver(tutorialStartTop(room), room);
+  return bottomOver(tutorialStartTop(room));
 }
 
 function interestsHintTop(room: Room): number | null {
@@ -183,7 +174,7 @@ function interestsHintTop(room: Room): number | null {
 }
 
 export function madeLineBottom(room: Room): number {
-  return bottomOver(interestsHintTop(room), room);
+  return bottomOver(interestsHintTop(room));
 }
 
 function madeLineTop(room: Room): number | null {
@@ -194,7 +185,7 @@ function madeLineTop(room: Room): number | null {
 export const PAST_CHATS = { left: space[4], height: 34 } as const;
 
 export function pastChatsBottom(room: Room): number {
-  return bottomOver(madeLineTop(room), room);
+  return bottomOver(madeLineTop(room));
 }
 
 // The top of what stands at the left above the AI input while no card is open, null while nothing does.
@@ -205,7 +196,7 @@ function leftControlsTop(room: Room): number | null {
 // What the credit and the logo stand over while no card is open: what stands at the left above the AI input, or the
 // input's top where nothing does or the input is higher. Never an empty place.
 function underCredit(room: Room): number {
-  return Math.max(leftControlsTop(room) ?? 0, room.lowered === true ? 0 : aiInputTop(room));
+  return Math.max(leftControlsTop(room) ?? 0, aiInputTop(room));
 }
 
 // The 편의기능 button: a round of 48 at the right of that row, 16 from the side.
