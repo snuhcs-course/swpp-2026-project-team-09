@@ -8,6 +8,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -97,9 +98,9 @@ function CategoryPin({ muted, ...props }: CategoryPinProps): ReactElement {
   return <MapTag {...props} />;
 }
 
-// A marker over the map. `me` is the only use of the `me` colour. A Friend is an Avatar with the friend ring. A 행사,
-// a 파티 and a 퀘스트 are light tags (`MapTag`); a 식당 and a 공부공간 are small rounds with a tail; the shuttle is a
-// rounded square.
+// A marker over the map. `me` is the only use of the `me` colour. A Friend is an Avatar with the friend ring. A 행사
+// and a 파티 are bold rounds and a 퀘스트 a light tag (`MapTag`); a 식당 and a 공부공간 are small rounds with a tail;
+// the shuttle is a rounded square.
 export function MapPin(props: MapPinProps): ReactElement {
   if (props.kind === 'me') {
     return (
@@ -124,7 +125,7 @@ export function MapPin(props: MapPinProps): ReactElement {
   return <CategoryPin {...props} />;
 }
 
-// A place from far away, when the whole campus is in view. A 행사, a 파티 and a 퀘스트 are the tag's smaller round. A
+// A place from far away, when the whole campus is in view. A 행사, a 파티 and a 퀘스트 are their tags' smaller rounds. A
 // campus service's is a small square in its colour; a selected one is 4 larger, inside a ring of the key colour.
 export function MapDot({ kind, selected = false }: { kind: MapPlaceKind; selected?: boolean }): ReactElement {
   const { fill, service, name } = placeKindLook(kind);
