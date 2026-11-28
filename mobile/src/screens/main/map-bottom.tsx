@@ -204,6 +204,13 @@ function inputStateOf(chat: MapBottomProps['chat']): { listOpen: boolean; inputG
   };
 }
 
+// Whether the bar's middle lowered the AI (A04 ticket 09): the input, mounted so that a draft is kept, and the lines
+// over it go. Only on the everyday map: an answer frame hides the bar, and its card keeps its input; nor while the
+// 새내기 튜토리얼's list or a quest's sheet is open, which keep the input as they show it.
+function useLowered(chat: MapBottomProps['chat'], tutorial: TutorialFlow): boolean {
+  return !useAiRaised().raised && !chat.framed && tutorial.list === null && tutorial.sheet === null;
+}
+
 // What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
 // card at the bottom hides the row and the button. While the keyboard is up and the input is empty, the examples stand
 // above it. A message sent from the main map starts a new conversation and shows the answer frame, which hides the
@@ -220,9 +227,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   // While a quest's guide is open it takes the whole map. The AI input stays mounted, hidden, so that a draft is kept.
   const guided = tutorial.guide !== null;
-  // The bar's middle lowered the AI (A04 ticket 09): the input, mounted so that a draft is kept, and the lines over it go.
-  // Only on the everyday map: an answer frame hides the bar, and its card keeps its input.
-  const lowered = !useAiRaised().raised && !chat.framed;
+  const lowered = useLowered(chat, tutorial);
   const cardShown = invitation.shown || made.shown !== null;
   const { listOpen, inputGone, inputShown } = inputStateOf(chat);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;
