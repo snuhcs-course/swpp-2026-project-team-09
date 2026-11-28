@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -22,8 +23,9 @@ import { earliest, type Interval, latest } from '../free-time/meal-fit.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
-import { busyIn, busyLabel, halfHoursAround } from '../gathering/meal-scene.js';
-import { windowBand } from '../gathering/no-plan-band.js';
+import { busyIn, busyLabel } from '../gathering/meal-scene.js';
+import { bandRange, hoursOn, windowHolds } from '../free-time/band-range.js';
+import { type BandRows, windowBand } from '../gathering/no-plan-band.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { durationWords } from '../library/booking-rules.js';
 import { type ClockRange } from '../library/catalogue.js';
@@ -60,9 +62,6 @@ export interface GroupAnswerArgs {
   // The group study rooms' hours, which an answer without a plan draws its band over; null when not known.
   hours: ClockRange | null;
 }
-
-const BAND_BEFORE_MS = 60 * MINUTE_MS;
-const BAND_AFTER_MS = 30 * MINUTE_MS;
 
 const strong = (text: string): AnswerLine[number] => ({ text, strong: true });
 const plain = (text: string): AnswerLine[number] => ({ text, strong: false });
@@ -178,13 +177,14 @@ function sceneOf(parts: readonly PlanPart[], { booking, room }: GroupPick, { kwa
   };
 }
 
+// Over the group study rooms' hours on its day (P01 ticket 43).
 function bandOf({ booking, minutes }: GroupPick, args: GroupAnswerArgs): TimeBand {
   const start = at(booking.date, booking.start);
   const end = at(booking.date, booking.end);
-  const { from, until } = halfHoursAround(
-    Math.max(args.now.getTime(), start.getTime() - BAND_BEFORE_MS),
-    end.getTime() + BAND_AFTER_MS,
-  );
+  const { date } = booking;
+  const hours = hoursOn(date, args.hours);
+  const holds = windowHolds(date, args.input.window);
+  const { from, until } = bandRange({ now: args.now, date, span: { start, end }, bounds: hours, holds });
   const label = args.placeLabel;
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
@@ -217,12 +217,12 @@ function askedWindow({ date, window }: StudyInput, hours: ClockRange | null): In
 }
 
 // The band of an answer without a plan (P05 ticket 65): everyone's lanes and the asker's other Friends over the window
-// asked, each Friend with their walk to 관정관 for it.
+// asked, each Friend with their walk to 관정관 for it, over the rooms' hours (P01 ticket 43).
 function noPlanBand(args: GroupAnswerArgs): TimeBand {
   const { input, now, people, others, kwanjeong, placeLabel: label } = args;
   const window = askedWindow(input, args.hours);
   const plan = { date: input.date, now, placeId: kwanjeong.placeId, start: window.start, end: window.end };
-  return windowBand(window, now, (from, until) => ({
+  const rows = (from: Date, until: Date): BandRows => ({
     lanes: people.map(({ userId, name, me, itemsByDate }) => ({
       userId,
       name: me ? '나' : name,
@@ -230,7 +230,8 @@ function noPlanBand(args: GroupAnswerArgs): TimeBand {
     })),
     ...studyOthers(others, plan, { from, until, label }),
     ...askerSkipped(args, input.date),
-  }));
+  });
+  return windowBand(window, now, rows, { hours: hoursOn(input.date, args.hours) });
 }
 
 // The asker's Classes the conversation leaves out on `date`, drawn apart on the band (P05 ticket 70).

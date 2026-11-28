@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type LibraryCardSpace } from '../../src/assistant/library/library-card.js';
@@ -192,9 +193,10 @@ function sceneOf(friends: typeof FRIENDS, tag: string): Plan['scene'] {
   };
 }
 
+// Tomorrow's, from the group rooms' opening to their closing (P01 ticket 43).
 function bandOf(friends: typeof FRIENDS): Plan['band'] {
   return {
-    range: { startAt: at('14:00'), endAt: at('17:30') },
+    range: { startAt: at('09:00'), endAt: at('23:00') },
     now: NOW,
     lanes: [
       { userId: ME, name: '나', busy: [{ startAt: at('14:00'), endAt: at('14:45'), label: '301동 수업' }] },

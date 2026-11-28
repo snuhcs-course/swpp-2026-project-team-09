@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type StudyBuildingDto, type StudySpaceDto } from '../../study-spaces/dto/study-spaces.dto.js';
@@ -12,7 +13,7 @@ import {
   type StudyInput,
   type TimeBand,
 } from '../dto/answer.dto.js';
-import { onDay } from '../free-time/free-time.js';
+import { onDay, startOfDay } from '../free-time/free-time.js';
 import { latest } from '../free-time/meal-fit.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
@@ -141,24 +142,31 @@ function judge({ building, usable }: Fitting, day: StudyDay, args: StudyPlanArgs
   }
   const { until } = args.input.window;
   const close = closesIn(best);
+  const closes =
+    open.length === 0 || close === Number.POSITIVE_INFINITY
+      ? null
+      : new Date(stay.arrival.getTime() + close * MINUTE_MS);
   const { end, endsBy } = endOf(stay.arrival, [
     [stay.leaveBy, 'next'],
     [until === null ? null : onDay(args.input.date, until), 'until'],
-    [
-      open.length === 0 || close === Number.POSITIVE_INFINITY
-        ? null
-        : new Date(stay.arrival.getTime() + close * MINUTE_MS),
-      'close',
-    ],
+    [closes, 'close'],
   ]);
   const minutes = (end.getTime() - stay.arrival.getTime()) / MINUTE_MS;
   if (minutes <= 0) {
     return { kind: 'no-time' };
   }
+  const hours = { opens: opensOf(best, args), closes };
   return {
     kind: 'plan',
-    ranked: { building, spots: [best, ...rest], open: open.length > 0, stay: { ...stay, minutes }, end, endsBy },
+    ranked: { building, spots: [best, ...rest], open: open.length > 0, stay: { ...stay, minutes }, end, endsBy, hours },
   };
+}
+
+// When the space opens on the plan's day, today after now, for the time card's range (P01 ticket 43): null when it is
+// open by then, or that is not known.
+function opensOf({ space }: Spot, { hoursOf, now, input: { date } }: StudyPlanArgs): Date | null {
+  const { opening } = hoursOf(space.key, koreaDate(now) === date ? now : startOfDay(date));
+  return opening.state === 'closed' && opening.opensAt !== null ? onDay(date, opening.opensAt) : null;
 }
 
 const strong = (text: string): AnswerLine[number] => ({ text, strong: true });
@@ -218,7 +226,7 @@ function byLongEnough(group: readonly Ranked[]): Ranked[] {
 
 // The time card of an answer without a plan (P05 ticket 67), as a meal's keeps (ticket 65): the User's lane and their
 // other Friends, with no walk, from when they are ready to the end they set, else their next item, which the range
-// shows, else three hours on.
+// shows, else three hours on. No place is known, so the range is a time card's without hours (P01 ticket 43).
 function noPlanBand({ input, way, now, others }: StudyPlanArgs, { ready, next }: StudyDay): TimeBand {
   const guessed = new Date(ready.getTime() + GUESSED_STAY_MINUTES * MINUTE_MS);
   const end = input.window.until === null ? (next?.start ?? guessed) : onDay(input.date, input.window.until);
@@ -229,7 +237,11 @@ function noPlanBand({ input, way, now, others }: StudyPlanArgs, { ready, next }:
     ...othersWithoutPlace(others, { from, until, label }),
     ...skippedBand(way.me.skipped, (item) => busyLabel(item, label)),
   });
-  return windowBand({ start: ready, end }, now, rows, next?.end);
+  const reach = next?.end;
+  return windowBand({ start: ready, end }, now, rows, {
+    ...(reach === undefined ? {} : { reach }),
+    hours: { opens: null, closes: null },
+  });
 }
 
 export function studyPlanAnswer(args: StudyPlanArgs): AnswerReply {
