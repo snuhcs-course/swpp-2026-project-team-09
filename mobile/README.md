@@ -1061,7 +1061,8 @@ waits for a name, a day, both times with the end after the start and a Place, an
 
 장소 선택 (`src/screens/places/place-picker.tsx`) is a component, not a route: the screen that needs a Place draws
 `<PlacePicker picked onPick onClose />` over itself, and Android's back closes it. It lists `GET /places`, and
-`GET /places/search?q=` once the User has stopped typing for 300 ms. The timetable's class form is its only user.
+once words are typed the Places whose name `matchesWords` finds or whose number they are (`usePlaceSearch`, on the
+phone over that list, so a syllable still being typed narrows it). The timetable's class form is its only user.
 
 A plan with a Friend is a 비공개 파티: the Meetup of Iteration 1, with its form and its invitations, was retired in
 Iteration 2 (P06), and commit `2f4f201` holds its code.

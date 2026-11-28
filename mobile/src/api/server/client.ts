@@ -18,6 +18,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -180,7 +181,6 @@ export const serverClient: ApiClient = {
     await call('DELETE', '/timetable/classes', isNothing);
   },
   listPlaces: () => call('GET', '/places', isPlaces),
-  searchPlaces: (words) => call('GET', '/places/search', isPlaces, { query: { q: words } }),
   listParties: () => call('GET', '/parties', isParties),
   getMyParty: async () => {
     try {

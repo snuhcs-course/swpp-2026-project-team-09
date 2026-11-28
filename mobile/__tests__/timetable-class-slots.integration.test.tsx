@@ -68,7 +68,7 @@ async function pickPlace(user: User, button: string): Promise<void> {
   await user.press(screen.getByRole('button', { name: button }));
   await pass(500);
   await user.type(screen.getByLabelText('장소 검색'), '302');
-  // The User stops typing for 300 ms, and the search is answered.
+  // The Places are listed, and the words find 302동 among them.
   await pass(300);
   await pass(500);
   await user.press(screen.getByRole('button', { name: '제2공학관 302동' }));
