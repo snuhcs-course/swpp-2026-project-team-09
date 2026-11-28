@@ -3,11 +3,12 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import type { NotificationResponse } from 'expo-notifications';
 import { useEffect, useRef } from 'react';
+import { openCard } from './asked-card';
 import { readCardAddress } from './card-address';
 import { clearLastPushTap, lastPushTap, onPushTap } from './device';
 
@@ -29,14 +30,7 @@ export function useNotificationLinks(here: boolean): void {
         return;
       }
       handled.current = identifier;
-      const target = { pathname: '/main', params: { card: `${address.kind}:${address.id}` } } as const;
-      // `navigate` from a screen above the tabs pushes a second tab navigator over it, and `dismissTo` from the tabs
-      // reaches the tab navigator, which ignores it.
-      if (router.canDismiss()) {
-        router.dismissTo(target);
-      } else {
-        router.navigate(target);
-      }
+      openCard(address);
       clearLastPushTap();
     };
     open(lastPushTap());

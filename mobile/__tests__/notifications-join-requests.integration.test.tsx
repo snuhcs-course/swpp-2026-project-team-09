@@ -3,6 +3,7 @@
  *
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -13,6 +14,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
+import { recordMoves } from './support/moves';
 import { answerMainScreen, askMainServer, DINNER, JOIN_REQUESTS, PHONE_NOW, STUDY } from './support/server';
 
 // The Notifications of a request to join in 알림: the Leader's answer, told to the one who asked, and the requests
@@ -101,8 +103,9 @@ describe('a request to join accepted, in 알림', () => {
 });
 
 describe('a request to join declined, in 알림', () => {
-  it('is a row with its words, which opens 찾기 for another 파티', async () => {
+  it('is a row with its words, which opens 찾기 for another 파티 in one move, not by the map (P06 ticket 63)', async () => {
     const user = await openNotifications('알림');
+    const moves = recordMoves();
 
     const row = screen.getByRole('button', {
       name: '참여 신청이 거절됐어요 · 코딩 테스트 스터디 · 김민준님의 파티 · 12:50',
@@ -110,8 +113,8 @@ describe('a request to join declined, in 알림', () => {
     await user.press(row);
     await pass(500);
 
-    // The test router still prints the main screen's cleared parameter's name, as `card=undefined`.
-    expect(shownAddress()).toMatch(/^\/party\?(?:card=undefined&)?tab=find$/u);
+    expect(moves()).toEqual([['dismissTo', { pathname: '/party', params: { tab: 'find' } }]]);
+    expect(shownAddress()).toBe('/party?tab=find');
   });
 });
 
