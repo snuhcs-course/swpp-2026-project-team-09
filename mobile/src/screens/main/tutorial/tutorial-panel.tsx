@@ -22,7 +22,7 @@ interface TutorialPanelProps {
   children: ReactNode;
 }
 
-// The 새내기 튜토리얼's list and a quest's window (P06 ticket 55): a glass panel that floats over the map, 12 from the
+// The 새내기 튜토리얼's list and a quest's window (P06 ticket 60): a glass panel that floats over the map, 12 from the
 // sides and 12 above the navigation, over a light dim that leaves the map in sight. Its content scrolls when it is
 // higher than the room above the navigation.
 export function TutorialPanel({

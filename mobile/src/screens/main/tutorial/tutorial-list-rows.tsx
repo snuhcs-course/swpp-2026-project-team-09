@@ -23,7 +23,7 @@ import {
 } from '@/design-system';
 import type { ShownList as Shown, TutorialFlow } from './use-tutorial-flow';
 
-// The tabs and the rows of the tutorial's list (P06 ticket 55): the 행사 tab's word tabs, and a card for each quest.
+// The tabs and the rows of the tutorial's list (P06 ticket 60): the 행사 tab's word tabs, and a card for each quest.
 
 const TILE = 44;
 
@@ -135,7 +135,8 @@ const styles = StyleSheet.create({
   },
   faded: { opacity: 0.55 },
   rowWords: { flex: 1, gap: 2 },
-  titleLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: space[1] },
-  rowTitle: { flexShrink: 1, fontFamily: font.bold, fontSize: 15, lineHeight: 20, color: color.ink },
+  // The title takes what the tag leaves and wraps there: a title in a wrapping row was cut on Android.
+  titleLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  rowTitle: { flex: 1, fontFamily: font.bold, fontSize: 15, lineHeight: 20, color: color.ink },
   brief: { fontFamily: font.medium, fontSize: 12, lineHeight: 17, color: color.inkMuted },
 });

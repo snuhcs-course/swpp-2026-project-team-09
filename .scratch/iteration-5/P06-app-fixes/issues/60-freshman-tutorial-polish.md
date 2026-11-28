@@ -1,4 +1,4 @@
-# 55: The 새내기 튜토리얼 floats over the map in the 행사 tab's muted tone, cuts no words, and has twelve quests
+# 60: The 새내기 튜토리얼 floats over the map in the 행사 tab's muted tone, cuts no words, and has twelve quests
 
 Parent: [P06 spec](../spec.md)
 Status: ready-for-human (built; waits for review)

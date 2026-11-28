@@ -142,7 +142,7 @@ export const BUTTON_ROW = { left: space[4], right: 70, bottom: 78, height: 48, g
 
 // The 새내기 튜토리얼's start button, the first run's line that asks for interests, and the line of a Quest made from a
 // Plan stand at the left in that order, 16 from the left and 8 above the one under it: the start button a glass pill
-// 44 high (P06 ticket 55), the lines 34. The lowest stands 8 above the row of buttons while that is drawn, else in the
+// 44 high (P06 ticket 60), the lines 34. The lowest stands 8 above the row of buttons while that is drawn, else in the
 // row's place: 16 above the AI input's top, in line with the 편의기능 button.
 export const TUTORIAL_START = { left: space[4], height: 44 } as const;
 export const INTERESTS_HINT = { left: space[4], height: 34 } as const;

@@ -140,7 +140,7 @@ function Done({ tutorial, onClose }: { tutorial: Tutorial; onClose: () => void }
   );
 }
 
-// The tutorial's list, a glass panel over the map above the navigation (P06 ticket 55), in place of the pager
+// The tutorial's list, a glass panel over the map above the navigation (P06 ticket 60), in place of the pager
 // (MainTutorialPager): the shown category's quests under its tabs; a press on a quest starts it and opens its guide.
 // Android's back button closes it.
 export function TutorialList({ flow }: { flow: TutorialFlow }): ReactElement | null {
@@ -205,7 +205,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     justifyContent: 'center',
     minHeight: CLOSE,
-    marginVertical: space[1],
+    marginTop: space[1],
+    marginBottom: space[2],
     paddingHorizontal: space[3],
   },
   stopWords: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.inkMuted },

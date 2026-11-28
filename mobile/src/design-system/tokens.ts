@@ -211,7 +211,7 @@ export const kindTone = {
 
 export type ToneKind = keyof typeof kindTone;
 
-// The 새내기 튜토리얼's look, in the 행사 tab's muted tone (P06 ticket 55): the key colour alone as its accent, for its
+// The 새내기 튜토리얼's look, in the 행사 tab's muted tone (P06 ticket 60): the key colour alone as its accent, for its
 // buttons, its pins, its ✓ and its progress, with the greys of `color`. `round` is the 내 정보 row's round and the
 // start button's, `dotNow` the sheet's dot of the quest shown.
 export const tutorialTone = {
@@ -237,7 +237,7 @@ export const tutorialTone = {
 } as const;
 
 // A Tutorial Category's colours: the same for every one, the key colour on the light blue, so that a category is told
-// by its name and its quests' icons alone (P06 ticket 55 took out the five colours the canvas's boards drew).
+// by its name and its quests' icons alone (P06 ticket 60 took out the five colours the canvas's boards drew).
 export const tutorialCategoryTone = { ink: color.snuBlue, soft: color.blue50 } as const;
 
 export type TutorialCategoryTone = typeof tutorialCategoryTone;

@@ -164,7 +164,7 @@ export const ADDED_QUEST = {
   links: [],
 };
 
-// A quest done online, at no place, for the tests of such a quest: content/tutorial.yaml has none since P06 ticket 55.
+// A quest done online, at no place, for the tests of such a quest: content/tutorial.yaml has none since P06 ticket 60.
 export const ONLINE_QUEST = {
   key: 'online-quest',
   order: 13,

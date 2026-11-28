@@ -16,7 +16,7 @@ import { TUTORIAL_START } from '../layout';
 const ROUND = 32;
 
 // "새내기 튜토리얼 시작하기" at the bottom left, above the row of buttons or in its place (MainTutorialStart): a glass pill
-// over the map with the flag on its light blue round (P06 ticket 55). It opens the tutorial's list. Whether it shows is
+// over the map with the flag on its light blue round (P06 ticket 60). It opens the tutorial's list. Whether it shows is
 // the main screen's (`showsStartButton`, and no card, chat or guide open).
 export function TutorialStartButton({ bottom, onPress }: { bottom: number; onPress: () => void }): ReactElement {
   return (

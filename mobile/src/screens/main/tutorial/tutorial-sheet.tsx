@@ -190,7 +190,7 @@ function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactEle
 }
 
 // A quest's window, for a quest without a guide (MainTutorialSheet, "완료 조건 없음 · [나중에][✓ 완료]"), a glass
-// panel over the map above the navigation (P06 ticket 55): "새내기 튜토리얼 · {category} · n/N" with the dots, the
+// panel over the map above the navigation (P06 ticket 60): "새내기 튜토리얼 · {category} · n/N" with the dots, the
 // quest's icon and title, the body's paragraphs, its places and links in one box, and its buttons; after ✓ 완료 or the
 // skip, the completionMessage in the Assistant's bubble with ✓ 퀘스트 완료 (MainTutorialOk, with the booking row after
 // the 관정 check found one). While the 관정 check runs, the window stays open.

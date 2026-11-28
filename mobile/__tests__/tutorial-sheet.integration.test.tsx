@@ -62,7 +62,7 @@ describe("a quest's sheet", () => {
     await openSheet('s-card');
 
     expect(within(screen.getByLabelText(SHEET)).getByText('새내기 튜토리얼 · 생활 · 1/12')).toBeVisible();
-    // Each link once, in the box: no 🌐 in the head (P06 ticket 55).
+    // Each link once, in the box: no 🌐 in the head (P06 ticket 60).
     expect(findButton('외부 사이트 링크')).toBeNull();
     expect(screen.getByRole('header', { name: '학생증(S-CARD) 발급받기' })).toBeVisible();
     expect(screen.getByText('학생증(S-CARD)은 도서관 출입처럼 학교생활 곳곳에서 써요.')).toBeVisible();

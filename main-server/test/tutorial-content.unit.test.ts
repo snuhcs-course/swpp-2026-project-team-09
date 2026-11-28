@@ -39,7 +39,7 @@ beforeAll(async () => {
 });
 
 describe("The tutorial's content", () => {
-  it("holds the P13 spec's quests in order, each in its category, less the three P06 ticket 55 removed", () => {
+  it("holds the P13 spec's quests in order, each in its category, less the three P06 ticket 60 removed", () => {
     expect(
       content.quests.map(({ order, category, key, title, completion }) => [
         order,

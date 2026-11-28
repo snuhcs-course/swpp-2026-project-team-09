@@ -85,7 +85,7 @@ function LinkRow({ link, first }: { link: TutorialLink; first: boolean }): React
   );
 }
 
-// The places and the links in one box (P06 ticket 55): the quest's one way to its sites. Nothing for a quest with
+// The places and the links in one box (P06 ticket 60): the quest's one way to its sites. Nothing for a quest with
 // neither.
 export function Places({
   quest,
