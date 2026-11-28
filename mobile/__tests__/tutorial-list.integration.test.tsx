@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -212,5 +213,24 @@ describe('completing a quest from its guide', () => {
     expect(list().getByRole('header', { name: '12 / 12' })).toBeVisible();
     await user.press(list().getAllByRole('button', { name: '닫기' }).at(-1) ?? button('닫기'));
     expect(findButton(START)).toBeNull();
+  });
+});
+
+// A04 ticket 09: the bottom bar's middle lowers the AI, but not what the tutorial shows.
+describe('the tutorial with the AI lowered', () => {
+  it('shows the AI input with its list open as it does with the AI raised', async () => {
+    const user = await openAsFreshman();
+    await user.press(button(START));
+    await pass(500);
+    const raised = screen.queryByLabelText(AI_INPUT) !== null;
+    await user.press(list().getAllByRole('button', { name: '닫기' }).at(-1) ?? button('닫기'));
+    await pass(500);
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    await user.press(button(START));
+    await pass(500);
+
+    expect(screen.queryByLabelText(AI_INPUT) !== null).toBe(raised);
   });
 });

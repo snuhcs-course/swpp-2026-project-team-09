@@ -35,3 +35,8 @@ The user on 2026-11-28, on the 행사 tab: "전체 탭의 첫 항목 높이랑 �
 - [ ] The 행사 tab's filters still filter (integration tests).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 8 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 21k; input 29.0M, of which 29.0M cache reads, 43k cache writes and 92 uncached. No subagents.

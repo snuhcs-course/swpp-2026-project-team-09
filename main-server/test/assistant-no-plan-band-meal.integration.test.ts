@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -140,8 +141,10 @@ describe('A lunch without a plan, recalculated with a Friend added, keeps its ti
   });
 });
 
+// Its range is the stretch lunch can be eaten in, so that the window can be dragged off the Class (P01 ticket 46); it was
+// the window alone, 12:00–13:00, which could not be dragged out of it.
 describe('A lunch without a plan, recalculated with its window narrowed, keeps its time card', () => {
-  it('a window narrowed to a Class: the lanes over the window said', async () => {
+  it('a window narrowed to a Class: the window said, over the whole lunch', async () => {
     const date = '2061-03-15';
     const at = timeOn(date);
     await stage.asking(date, '10:00');
@@ -153,7 +156,7 @@ describe('A lunch without a plan, recalculated with its window narrowed, keeps i
 
     expect(answer.plans).toEqual([]);
     expect(answer.noPlan?.band).toEqual({
-      range: { startAt: at('12:00'), endAt: at('13:00') },
+      range: { startAt: at('11:00'), endAt: at('14:30') },
       now: at('10:00'),
       lanes: [
         {

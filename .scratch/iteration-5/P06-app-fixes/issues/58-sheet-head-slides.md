@@ -19,3 +19,8 @@ Ticket 53 (PR 773) moved every sheet's title into `BottomSheet`'s head. `BottomS
 - [ ] `sheet-slide-down.integration.test.tsx` passes again (it fails on `5.0/Main`).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 2 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 10k; input 10.3M, of which 10.3M cache reads, 13k cache writes and 30 uncached. No subagents.

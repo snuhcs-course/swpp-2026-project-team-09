@@ -3,10 +3,20 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement, ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Children,
+  createContext,
+  Fragment,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+} from 'react';
+import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { cardStyles } from './card';
 import { Icon, type IconName } from './icon';
 import { color, font, radius, space } from './tokens';
 
@@ -40,7 +50,7 @@ interface ListRowProps {
   trailing?: ReactNode;
   // A row of 72 with its title in 16, as a Quest's on the whole screen; otherwise 64 with lines and 56 without.
   large?: boolean;
-  // A card's last row, whose edge ends it: no line under it.
+  // The last row of a list or a card, whose edge ends it: no line under it. In a `RowCard` the card draws the lines.
   last?: boolean;
   // Makes the whole row a button, read by this label.
   onPress?: () => void;
@@ -76,9 +86,31 @@ function Words({ title, aside, kicker, lines = [], large = false }: WordsProps):
   );
 }
 
+// Whether the row is in a `RowCard`.
+const InCard = createContext(false);
+
+// A card of rows (P06 ticket 64): the rows run to its edges, so that a press greys the whole row and its corners are
+// the card's, and the card draws a line between two rows and none under the last.
+export function RowCard({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }): ReactElement {
+  return (
+    <View style={[cardStyles.card, styles.rowCard, style]} testID="row-card">
+      <InCard.Provider value>
+        {Children.toArray(children).map((row, index) => (
+          <Fragment key={isValidElement(row) && row.key !== null ? row.key : index}>
+            {index === 0 ? null : <View style={styles.between} testID="row-card-line" />}
+            {row}
+          </Fragment>
+        ))}
+      </InCard.Provider>
+    </View>
+  );
+}
+
 // One row of a list: what it is at the start, its words, and what it offers at the end, over a line of 1.
 export function ListRow({ leading, trailing, last = false, onPress, label, ...words }: ListRowProps): ReactElement {
+  const inCard = useContext(InCard);
   const minHeight = words.large === true ? 72 : (words.lines ?? []).length > 0 ? 64 : 56;
+  const edge = inCard ? styles.inCard : !last && styles.divider;
   const content = (
     <>
       {leading}
@@ -87,14 +119,14 @@ export function ListRow({ leading, trailing, last = false, onPress, label, ...wo
     </>
   );
   if (onPress === undefined) {
-    return <View style={[styles.row, !last && styles.divider, { minHeight }]}>{content}</View>;
+    return <View style={[styles.row, edge, { minHeight }]}>{content}</View>;
   }
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.row, !last && styles.divider, { minHeight }, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, edge, { minHeight }, pressed && styles.pressed]}
     >
       {content}
     </Pressable>
@@ -116,6 +148,9 @@ const styles = StyleSheet.create({
   round: { alignItems: 'center', justifyContent: 'center', width: ROUND, height: ROUND, borderRadius: radius.full },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   divider: { borderBottomWidth: 1, borderBottomColor: color.border },
+  inCard: { paddingHorizontal: space[4] },
+  rowCard: { paddingHorizontal: 0, paddingVertical: 0, overflow: 'hidden' },
+  between: { height: 1, marginHorizontal: space[4], backgroundColor: color.border },
   pressed: { backgroundColor: color.surfaceSubtle },
   words: { flex: 1, gap: 1 },
   kicker: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.11 },

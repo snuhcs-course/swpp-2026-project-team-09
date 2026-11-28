@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -225,13 +226,14 @@ describe('만들기 checking the Proposal before it sends', () => {
     expect(make()).toBeEnabled();
   });
 
-  it('makes nothing without a Friend to invite, as the form does not', async () => {
+  // P06 ticket 67: under 비공개 nobody invited makes a Quest taken alone, in the form and from the chat alike.
+  it('makes a Quest taken alone without a Friend to invite, as the form does', async () => {
     const user = await proposed({ ...AT_301, invitees: [] });
 
     await user.press(make());
     await pass(500);
 
-    expect(toast()).toHaveTextContent('빠진 내용이 있어요. 채팅으로 알려 주세요');
-    expect(server.received('POST /quests/own')).toEqual([]);
+    expect(bodies('POST /quests/own')).toEqual([expect.objectContaining({ takenAlone: true, capacity: 1 })]);
+    expect(server.received(`POST /quests/${MY_HIKE.id}/invitations`)).toEqual([]);
   });
 });

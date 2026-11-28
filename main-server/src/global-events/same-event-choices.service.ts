@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -60,7 +61,6 @@ function sessionsOf(post: PostToAsk, judgedOnly: boolean): (ComparedSession & { 
 export class SameEventChoicesService {
   private readonly logger = new Logger(SameEventChoicesService.name);
   private readonly limits: JudgementLimits;
-  private readonly comparesTitles: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -72,15 +72,15 @@ export class SameEventChoicesService {
       timeoutMs: settings.get('JUDGEMENT_TIMEOUT_MS', { infer: true }),
       maxOutputTokens: settings.get('JUDGEMENT_MAX_OUTPUT_TOKENS', { infer: true }),
     };
-    this.comparesTitles = settings.get('SAME_EVENT_TITLE_RULE', { infer: true });
   }
 
   // Which of the posts would ask the model now, so that the step can take them after those that wait for no model.
-  async dueAmong(sourcePostIds: string[]): Promise<Set<string>> {
+  // `comparesTitles` is the step's title rule, as it holds for this run.
+  async dueAmong(sourcePostIds: string[], comparesTitles: boolean): Promise<Set<string>> {
     const due = new Set<string>();
     for (const sourcePostId of sourcePostIds) {
       // oxlint-disable-next-line no-await-in-loop -- the database's reads of one post at a time are few
-      if ((await this.toAsk(sourcePostId)).length > 0) {
+      if ((await this.toAsk(sourcePostId, comparesTitles)).length > 0) {
         due.add(sourcePostId);
       }
     }
@@ -90,8 +90,8 @@ export class SameEventChoicesService {
   // Asks about the sessions no one has asked about: one call for the post, whose rows are claimed first. Sessions with no
   // candidate left, or that the title rule decides, ask nothing. `judgedOnly` is for a run over a Draft, which leaves the
   // rules' sessions as they are and would not apply an answer about them.
-  async ask(sourcePostId: string, judgedOnly = false): Promise<void> {
-    const sessions = await this.toAsk(sourcePostId, judgedOnly);
+  async ask(sourcePostId: string, comparesTitles: boolean, judgedOnly = false): Promise<void> {
+    const sessions = await this.toAsk(sourcePostId, comparesTitles, judgedOnly);
     if (sessions.length === 0) {
       return;
     }
@@ -124,7 +124,7 @@ export class SameEventChoicesService {
     return (await tx.sameEventAnswer.count({ where: { sourcePostId, outcome: null } })) > 0;
   }
 
-  private async toAsk(sourcePostId: string, judgedOnly = false): Promise<SessionToCompare[]> {
+  private async toAsk(sourcePostId: string, comparesTitles: boolean, judgedOnly = false): Promise<SessionToCompare[]> {
     const post = await this.prisma.sourcePost.findUniqueOrThrow({
       where: { id: sourcePostId },
       include: { judgement: true, sameEventAnswers: { select: { startsAt: true } }, ...WITH_OWN_SESSIONS },
@@ -142,7 +142,7 @@ export class SameEventChoicesService {
         // oxlint-disable-next-line no-await-in-loop -- few sessions, and no transaction is held
         const events = await sameEventCandidates(this.prisma, session.startsAt, sourcePostId);
         const candidates = candidatesLeft(session, events);
-        const decided = this.comparesTitles && matchAmong(session, events).kind !== 'none';
+        const decided = comparesTitles && matchAmong(session, events).kind !== 'none';
         if (!decided && candidates.length > 0) {
           toAsk.set(at, { ...session, candidates });
         }

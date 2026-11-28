@@ -529,9 +529,10 @@ file's.
 | `NOTIFICATIONS_TICK_SECONDS`          | Optional: the seconds between two rounds of sending the Notifications that are due; 15 unless set.                                         |
 | `TOPICS_TICK_SECONDS`                 | Optional: the seconds between two rounds of reading the topics of new events and recruiting parties, for watched interests; 60 unless set. |
 | `AUTOMATIC_PUBLICATION`               | Optional: `off` keeps every collected session a Draft, to stop publication; `on` unless set.                                               |
-| `AUTOMATIC_JUDGEMENT`                 | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.                                              |
-| `SAME_EVENT_TITLE_RULE`               | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.                                              |
-| `SAME_EVENT_AI_CHOICE`                | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set.                                        |
+| `AUTOMATIC_JUDGEMENT`                 | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set. The default of `judgement.automatic`.        |
+| `SAME_EVENT_TITLE_RULE`               | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set. The default of `sameEvent.titleRule`.        |
+| `SAME_EVENT_AI_CHOICE`                | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set. The default of `sameEvent.aiChoice`.   |
+| `EXTRA_SNU_COLLECTION`                | Optional: `on` lets the worker's schedule start extra.snu's Collections; `off` unless set. The default of `collection.extraSnu`.           |
 | `JUDGEMENT_TIMEOUT_MS`                | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                                                                  |
 | `JUDGEMENT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in a Judgement; 4000 unless set.                                                                  |
 | `LIBRARY_BOOKING_ENABLED`             | Optional: `false` answers library requests with the official site and no card; `true` unless set.                                          |
@@ -553,13 +554,12 @@ file's.
 
 ### worker-server
 
-| Setting                | What it is                                                                                                                    |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                 | The port the HTTP server listens on.                                                                                          |
-| `MAIN_SERVER_URL`      | Where the main server is reached, to hand over what is collected.                                                             |
-| `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                                                                       |
-| `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections; `off` unless set.                                                       |
-| `LOG_FORMAT`           | Optional: `json` prints each log entry as one JSON line, as Production does (main-server README: Logging); `text` unless set. |
+| Setting           | What it is                                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`            | The port the HTTP server listens on.                                                                                          |
+| `MAIN_SERVER_URL` | Where the main server is reached, to hand over what is collected.                                                             |
+| `WORKER_TOKEN`    | The same line as in `main-server/.env`.                                                                                       |
+| `LOG_FORMAT`      | Optional: `json` prints each log entry as one JSON line, as Production does (main-server README: Logging); `text` unless set. |
 
 ### admin
 
@@ -961,7 +961,7 @@ tell how the work went, with the prompts in each iteration's Prompt Log.
 | Kakao                                                                                                                 | The map in the app and the admin site, and walking routes; nothing stored                                                           | Kakao's terms and operating policy              |
 | SNU Co-op (`snuco.snu.ac.kr`), 관악학생생활관 (`snudorm.snu.ac.kr`), College of Veterinary Medicine (`vet.snu.ac.kr`) | The menus                                                                                                                           | Collected from public pages                     |
 | SNU's events list, `www.snu.ac.kr/snunow/events`                                                                      | The Global Events                                                                                                                   | Collected from public pages                     |
-| SNU's extracurricular programmes, `extra.snu.ac.kr`                                                                   | Programmes, when `EXTRA_SNU_COLLECTION` is on; posts for evaluations A, B                                                           | Collected from public pages                     |
+| SNU's extracurricular programmes, `extra.snu.ac.kr`                                                                   | Programmes, when `collection.extraSnu` is on; posts for evaluations A, B                                                            | Collected from public pages                     |
 | The shuttle operator's route page and vehicle positions, `web.busin.co.kr` (route 41946)                              | The shuttle's stops, service hours and vehicles                                                                                     | Collected from public pages                     |
 | Pretendard                                                                                                            | The app's font                                                                                                                      | SIL Open Font License 1.1                       |
 | OpenRouter and the model it routes to                                                                                 | SNU Now AI's answers, the timetable reading and the topics of watched interests; conversations are not stored, positions never sent | OpenRouter's terms                              |

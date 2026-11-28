@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -21,6 +22,9 @@ import { connectToDatabase, getQuest, getQuests, questFor, storeEvent } from './
 import { refused } from './signals.js';
 import { startApp } from './start-app.js';
 import { aClass, addClass, aTime, deleteClass, replaceClass, twoPlaceIds } from './timetable.js';
+
+// Neither taken alone nor a seat's stay (P05 ticket 89).
+const NOT_ALONE = { takenAlone: false, seatStay: false };
 
 // A Quest with no room request and no room booked (P05 ticket 68).
 const NO_ROOMS = { roomRequest: null, bookedRoom: null };
@@ -110,7 +114,7 @@ describe('The Quest list on a day with a class', () => {
         },
       ],
       classQuest: true,
-      takenAlone: false,
+      ...NOT_ALONE,
       waitingJoinRequests: 0,
       members: [],
       ...NO_ROOMS,

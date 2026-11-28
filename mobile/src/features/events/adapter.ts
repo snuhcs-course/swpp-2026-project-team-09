@@ -131,11 +131,36 @@ function matches(event: GlobalEvent, search: string): boolean {
   return matchesWords(search, [event.title, event.place ?? '', event.description]);
 }
 
-export function toEventViews(sources: EventSources, filter: EventFilter, search: string): EventView[] {
+// Whether the User starred the event, as the list of `GET /global-events` says.
+export function isStarred(event: GlobalEvent): boolean {
+  return 'favorite' in event && event.favorite === true;
+}
+
+// What the list says when nothing is left with the ☆ on: the chip's words before it, as "이번 주에 별표한 행사가 없어요".
+export const NO_STARRED: Readonly<Record<EventFilter, string>> = {
+  all: '별표한 행사가 없어요',
+  today: '오늘 별표한 행사가 없어요',
+  week: '이번 주에 별표한 행사가 없어요',
+  recruiting: '파티 모집 중인 별표한 행사가 없어요',
+};
+export const NO_STARRED_LINE = '행사 옆 ☆를 눌러 모아 보세요';
+
+// The events that pass the filter and the search, and with `kept` those it holds alone (the ☆ on).
+export function toEventViews(
+  sources: EventSources,
+  filter: EventFilter,
+  search: string,
+  kept: ReadonlySet<string> | null = null,
+): EventView[] {
   const { events, announcers, recruiting, quests, now } = sources;
   const counts = recruitingCounts(recruiting);
   return events
-    .filter((event) => matches(event, search) && passes(event, counts.get(event.id) ?? 0, filter, now))
+    .filter(
+      (event) =>
+        (kept === null || kept.has(event.id)) &&
+        matches(event, search) &&
+        passes(event, counts.get(event.id) ?? 0, filter, now),
+    )
     .map((event) => ({
       id: event.id,
       title: event.title,

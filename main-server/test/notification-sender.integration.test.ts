@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -122,6 +123,30 @@ describe('A time to leave', () => {
     expo.answers(savedAnswer('expo-push-ok'));
     await sender.sendDue();
     expect(await pushedTo(user.token)).toEqual([]);
+  });
+});
+
+describe('A 파티’s own news', () => {
+  it('is pushed with the address of the 파티’s room, though it is kept on its card (P06 ticket 37)', async () => {
+    const user = await signInRegistered();
+    const arrived = {
+      kind: 'arrived',
+      questId: QUEST_ID,
+      userId: FRIEND_ID,
+      name: '민수',
+      placeLabel: '301동',
+    } as const;
+    await notifications.schedule(user.id, arrived, AT_1217);
+
+    clockAt(AT_1218);
+    await sender.sendDue();
+
+    expect(await pushedTo(user.token)).toEqual([
+      expect.objectContaining({ data: { url: `/main?card=room:${QUEST_ID}` } }),
+    ]);
+    expect(await prisma.notification.findMany({ where: { userId: user.id }, select: { cardKind: true } })).toEqual([
+      { cardKind: 'party' },
+    ]);
   });
 });
 

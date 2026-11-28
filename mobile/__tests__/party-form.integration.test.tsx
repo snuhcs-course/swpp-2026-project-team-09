@@ -10,6 +10,7 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Keyboard } from 'react-native';
@@ -219,13 +220,11 @@ describe('a refused 파티 올리기', () => {
 });
 
 describe('a private 파티', () => {
-  it('waits for a title and a Friend, and is made Closed for its 인원 without a board', async () => {
+  // P06 ticket 67: a Friend is no longer waited for; nobody invited makes a Quest taken alone instead.
+  it('is made Closed for its 인원 without a board once a Friend is chosen', async () => {
     const user = await openForm();
     await user.press(screen.getByRole('radio', { name: '비공개' }));
     await user.type(screen.getByLabelText('제목'), '저녁 같이');
-    await user.press(submit('파티 만들기'));
-    await pass(500);
-    expect(server.received('POST /quests/own')).toEqual([]);
     await invite(user, [MIN_JUN_HOLDER.name]);
     await user.press(screen.getByRole('button', { name: '인원 늘리기' }));
 

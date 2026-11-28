@@ -25,10 +25,10 @@ import type { EventView } from '@/features/events/adapter';
 import { type DescriptionLine, descriptionLines } from './description-lines';
 import { FavoriteToggle } from './favorite-toggle';
 
-// "파티 찾기/모집", or "모집 중인 파티 {n} · 찾기/모집" when a recruiting Quest the User can join is there for the event,
-// as the row counts them.
+// "파티 찾기/모집", or "모집 중인 파티 {n}" when recruiting Quests the User can join are there for the event, as the row
+// counts them: short enough to stand beside "원문 보기" (P06 ticket 59), the sheet it opens offering both.
 export function detailPartyWords(recruiting: number): string {
-  return recruiting === 0 ? '파티 찾기/모집' : `모집 중인 파티 ${recruiting} · 찾기/모집`;
+  return recruiting === 0 ? '파티 찾기/모집' : `모집 중인 파티 ${recruiting}`;
 }
 
 // The icon names the value on the screen, and `name` names it to a screen reader.

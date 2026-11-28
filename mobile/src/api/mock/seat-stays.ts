@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -29,6 +30,7 @@ function stayOf({ spaceId, date, start, minutes }: SeatStay): SeatStayMade {
       capacity: 1,
       joinPolicy: 'closed',
       takenAlone: true,
+      seatStay: true,
       holders: [ME],
       subQuests: [
         {

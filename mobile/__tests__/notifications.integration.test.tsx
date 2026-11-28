@@ -8,8 +8,11 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { router } from 'expo-router';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -81,10 +84,9 @@ function shownRows(): string[] {
     .filter((label) => label.includes(' · '));
 }
 
-async function openNotifications(bell = '알림 4개'): Promise<Awaited<ReturnType<typeof openMain>>> {
+async function openNotifications(bell = '알림, 새 소식 4개'): Promise<Awaited<ReturnType<typeof openMain>>> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-  await user.press(screen.getByRole('button', { name: bell }));
+  await user.press(screen.getByRole('tab', { name: bell }));
   await pass(500);
   return user;
 }
@@ -135,6 +137,18 @@ describe('a running Party in 알림', () => {
   });
 });
 
+// The user (2026-11-28): "각 셀 하단에 미세하게 가로줄이 있는데 이것도 별로야." Each row of 알림 drew a line at its card's foot.
+describe("알림's day cards", () => {
+  it('draw no line under a row, and give its press the whole card', async () => {
+    await openNotifications();
+
+    for (const name of ROWS) {
+      expect(screen.getByRole('button', { name })).not.toHaveStyle({ borderBottomWidth: 1 });
+      expect(screen.getByRole('button', { name })).toHaveStyle({ paddingHorizontal: 16 });
+    }
+  });
+});
+
 describe("a row of 알림's press", () => {
   // Since the switch went (P02-04) every known invitation is a card of the map, so one the map does not hold has ended
   // (P02-06): the main screen says so instead of opening 파티 at 초대.
@@ -155,6 +169,33 @@ describe("a row of 알림's press", () => {
     await pass(500);
 
     expect(shownAddress()).toBe('/me/friends/requests');
+  });
+});
+
+// A04 ticket 09: 알림 is a tab, and a screen it opens lies over it.
+describe('a screen a row of 알림 opened', () => {
+  it('comes back to 알림 with its rows from what it opened above the tabs', async () => {
+    const user = await openNotifications();
+    await user.press(screen.getByRole('button', { name: ROWS[1] }));
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe('/notifications');
+    expect(shownRows()).toEqual(ROWS);
+  });
+
+  it('shows the map in one move, with no screen slid over it, for a row of a card', async () => {
+    const user = await openNotifications();
+
+    await user.press(screen.getByRole('button', { name: ROWS[2] }));
+    await pass(500);
+
+    // The map's tab, which may hide the bar while it says the invitation ended: read by the address.
+    expect(shownAddress()).toMatch(/^\/main(?:\?card=undefined)?$/u);
+    expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
+    expect(router.canDismiss()).toBe(false);
   });
 
   it.each([
@@ -184,7 +225,7 @@ describe('알림 without rows', () => {
   it('leaves out a list that failed', async () => {
     server.on('GET /friend-requests', refusal(404));
 
-    await openNotifications('알림 3개');
+    await openNotifications('알림, 새 소식 3개');
 
     expect(shownRows()).toEqual([ROWS[0], ROWS[2], ROWS[3]]);
   });
@@ -214,7 +255,7 @@ describe("알림's count and signals", () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('button', { name: '알림 10개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '알림, 새 소식 10개' })).toBeVisible();
     expect(screen.getByText('9+')).toBeVisible();
   });
 

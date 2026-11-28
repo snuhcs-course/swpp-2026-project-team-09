@@ -58,7 +58,8 @@ export function questInvitationsAt(now: Date): QuestInvitation[] {
 // into the AI 커리어 설명회 party the User holds and one declined from the board's 알고리즘 코테 스터디; and a 파티 its
 // Leader 최유나 ended, whose row says it is gone when pressed; and the 파티 저녁 약속, whose Leader the User became. The
 // two answers are unread, so that the bell counts them. The 파티 gone is of the day before and the Leader's of days
-// before, so that 알림 shows 오늘, 어제 and 이전.
+// before, so that 알림 shows 오늘, 어제 and 이전. The answer accepted and the Leader's open the 파티's room, as the main
+// server's addresses do (P06 ticket 37).
 export const KEPT_NOTIFICATIONS: KeptNotification[] = [
   {
     id: 'join-accepted:party:q-ai',
@@ -67,7 +68,7 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
     ahead: null,
     line: 'AI 커리어 설명회 · 김민준님의 파티',
     at: frameTime('11:20'),
-    url: '/main?card=party:q-ai',
+    url: '/main?card=room:q-ai',
     read: false,
   },
   {
@@ -99,7 +100,7 @@ export const KEPT_NOTIFICATIONS: KeptNotification[] = [
     line: '저녁 약속 · 김민준님이 넘겼어요',
     // Days before the frame's.
     at: new Date('2026-09-27T09:10:00+09:00').toISOString(),
-    url: '/main?card=party:q-dinner',
+    url: '/main?card=room:q-dinner',
     read: true,
   },
 ];

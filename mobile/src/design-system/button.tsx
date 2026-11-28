@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -108,7 +109,7 @@ export function Button({
             <Icon color={labelColor} name={icon} size={alone ? ICON_ALONE : size === 'md' ? 18 : 20} />
           )}
           {alone ? null : (
-            <Text numberOfLines={1} style={[size === 'md' ? styles.label : styles.labelLg, { color: labelColor }]}>
+            <Text style={[size === 'md' ? styles.label : styles.labelLg, styles.words, { color: labelColor }]}>
               {children}
             </Text>
           )}
@@ -128,9 +129,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  md: { height: MD_HEIGHT, paddingHorizontal: space[4] },
-  lg: { height: sizes.button, paddingHorizontal: space[5] },
-  bar: { height: BAR_HEIGHT, paddingHorizontal: space[5], borderRadius: radius.full },
+  // Heights are the least: words that do not fit on a line wrap, and the button grows to hold them (P06 ticket 59).
+  md: { minHeight: MD_HEIGHT, paddingHorizontal: space[4], paddingVertical: space[1] },
+  lg: { minHeight: sizes.button, paddingHorizontal: space[5], paddingVertical: space[2] },
+  bar: { minHeight: BAR_HEIGHT, paddingHorizontal: space[5], paddingVertical: space[2], borderRadius: radius.full },
   full: { alignSelf: 'stretch' },
   hug: { alignSelf: 'flex-start' },
   alone: { width: MD_HEIGHT, paddingHorizontal: 0 },
@@ -144,6 +146,8 @@ const styles = StyleSheet.create({
   disabled: { backgroundColor: color.surfaceSunken, borderColor: 'transparent' },
   label: { ...text.label },
   labelLg: { ...text.bodyLg, fontFamily: font.semiBold },
+  // A button's words are never cut with "…": they wrap within the button, centred.
+  words: { flexShrink: 1, textAlign: 'center' },
 });
 
 // Pressed: a fill darkens, and a ground is tinted.

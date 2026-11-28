@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -9,7 +10,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { PushService } from '../push/push.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { cardAddress } from './card-address.js';
+import { openedAddress } from './card-address.js';
 
 const MOST_A_STEP = 100;
 const KEPT_DAYS = 30;
@@ -17,6 +18,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 interface Claimed {
   userId: string;
+  kind: string;
   title: string;
   body: string | null;
   cardKind: string;
@@ -67,12 +69,16 @@ export class NotificationSender {
         LIMIT ${MOST_A_STEP}
         FOR UPDATE SKIP LOCKED
       )
-      RETURNING user_id AS "userId", title, body, card_kind AS "cardKind", card_id AS "cardId"`;
+      RETURNING user_id AS "userId", kind, title, body, card_kind AS "cardKind", card_id AS "cardId"`;
   }
 
-  private ring({ userId, title, body, cardKind, cardId }: Claimed): void {
+  private ring({ userId, kind, title, body, cardKind, cardId }: Claimed): void {
     try {
-      void this.push.send([userId], { title, body: body ?? '', url: cardAddress({ kind: cardKind, id: cardId }) });
+      void this.push.send([userId], {
+        title,
+        body: body ?? '',
+        url: openedAddress(kind, { kind: cardKind, id: cardId }),
+      });
       this.signals.send([userId], 'notice');
     } catch (error) {
       this.logger.warn(`A Notification was not sent: ${error instanceof Error ? error.name : typeof error}`);

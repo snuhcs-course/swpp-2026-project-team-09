@@ -7,6 +7,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -53,14 +54,15 @@ describe('the main screen', () => {
 });
 
 describe("the main screen's bottom navigation", () => {
-  it('has the five slots, with 지도 as the current one', async () => {
+  it('has the five slots, with 지도 in the middle as the current one', async () => {
     givePhone({ permission: 'granted' });
     await openMain();
 
     expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
     expect(screen.getByRole('tab', { name: /^파티/u })).not.toBeSelected();
-    expect(screen.getByRole('button', { name: '올리기' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '올리기' })).toBeNull();
     expect(screen.getByRole('tab', { name: '행사' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: /^알림/u })).toBeVisible();
     expect(screen.getByRole('tab', { name: '내 정보' })).toBeVisible();
   });
 
@@ -92,17 +94,7 @@ describe("the main screen's bottom navigation", () => {
 });
 
 describe("a slot of the main screen's bottom navigation", () => {
-  it('opens 파티 만들기 with 올리기, and says nothing', async () => {
-    givePhone({ permission: 'granted' });
-    const user = await openMain();
-
-    await user.press(screen.getByRole('button', { name: '올리기' }));
-
-    expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
-    expect(screen.queryByText(NOT_READY)).toBeNull();
-  });
-
-  it('says nothing for 지도, where the User is', async () => {
+  it('says nothing for 지도, where the User is, and lowers the AI', async () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 

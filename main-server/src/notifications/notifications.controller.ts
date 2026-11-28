@@ -5,7 +5,7 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { type NotificationDto } from './dto/notification.dto.js';
 import { NotificationsService } from './notifications.service.js';
@@ -24,5 +24,19 @@ export class NotificationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   markRead(@CurrentUser() user: SignedInUser): Promise<void> {
     return this.notifications.markRead(user.id);
+  }
+
+  // 알림's 모두 지우기: those of the User's whose time has come.
+  @Delete('notifications')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteCome(@CurrentUser() user: SignedInUser): Promise<void> {
+    return this.notifications.deleteCome(user.id);
+  }
+
+  // `id` is the list's identity, URL-encoded. One that is not the User's, or is gone, deletes nothing.
+  @Delete('notifications/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  delete(@CurrentUser() user: SignedInUser, @Param('id') id: string): Promise<void> {
+    return this.notifications.delete(user.id, id);
   }
 }

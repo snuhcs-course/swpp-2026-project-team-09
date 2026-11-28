@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { axisHours, dayOf, minutesOf } from '../src/timetable-reading/labels.js';
@@ -237,5 +238,43 @@ describe('an answer past the bounds', () => {
     expect(axisHours(Array.from({ length: 30 }, (_, index) => String(index)))).toBeNull();
     expect(axisHours(['9', `${' '.repeat(5000)}10`])).toBeNull();
     expect(dayOf(`월${' '.repeat(5000)}`)).toBeNull();
+  });
+});
+
+// P05 ticket 90: a long name printed cut over seven lines (에브리타임, a block of 13:00–15:50) is a class, its name cut
+// to the 30 characters a class may have, as the phone's reader cuts it (`block-text.ts`), not left out.
+describe('a long name over many lines', () => {
+  const LINES = ['인공지능특강', '(멀티모달', '인공지능을', '위한', '파운데이션', '모델과', '피지컬 월…'];
+  const LONG: Block = {
+    day: '금',
+    start: '13:00',
+    end: '15:50',
+    nameLines: LINES,
+    name: '인공지능특강 (멀티모달 인공지능을 위한 파운데이션 모델과 피지컬 월…',
+    room: '302-106',
+    cut: false,
+  };
+  const CUT = '인공지능특강 (멀티모달 인공지능을 위한 파운데이션 모델';
+
+  it('is read, its name cut to 30 characters without the mark', () => {
+    const reading = checkedReading({
+      title: null,
+      axis: TO_21,
+      blocks: [block('수', '13:00', '14:50', '체력단련'), LONG],
+    });
+
+    expect(reading.kind === 'read' ? reading.leftOut : null).toEqual([]);
+    expect(reading.kind === 'read' ? reading.classes.at(-1) : null).toEqual({
+      name: CUT,
+      times: [{ weekday: 'friday', start: '13:00', end: '15:50', room: '302-106' }],
+    });
+  });
+
+  it('is one class on two days, both cut alike', () => {
+    const reading = checkedReading({ title: null, axis: TO_21, blocks: [LONG, { ...LONG, day: '화' }] });
+
+    expect(reading.kind === 'read' ? reading.classes.map(({ name, times }) => [name, times.length]) : []).toEqual([
+      [CUT, 2],
+    ]);
   });
 });

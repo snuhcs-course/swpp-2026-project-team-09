@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +14,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { WatchedInterest } from '@/api/interest-types';
 import { friendsQuery, interestsQuery, questsQuery } from '@/api/queries';
 import type { Friend, Quest } from '@/api/types';
-import { cardStyles, color, font, Icon, type IconName, ListRow, space, text } from '@/design-system';
+import { color, font, Icon, type IconName, ListRow, RowCard, space, text } from '@/design-system';
 import { heldAlone } from '@/features/quests/adapter';
 
 interface ActivityRowProps {
@@ -21,14 +22,12 @@ interface ActivityRowProps {
   label: string;
   value: string;
   onPress: () => void;
-  last?: boolean;
 }
 
-function ActivityRow({ icon, label, value, onPress, last }: ActivityRowProps): ReactElement {
+function ActivityRow({ icon, label, value, onPress }: ActivityRowProps): ReactElement {
   return (
     <ListRow
       label={value === '' ? label : `${label} ${value}`}
-      last={last}
       leading={<Icon color={color.inkMuted} name={icon} size={20} />}
       onPress={onPress}
       title={label}
@@ -62,7 +61,7 @@ export function ActivityCard(): ReactElement {
   const parties = useQuery({ ...questsQuery, select: partyCountOf }).data ?? '';
   const interests = useQuery({ ...interestsQuery, select: interestCountOf }).data ?? '';
   return (
-    <View style={[cardStyles.card, styles.activity]}>
+    <RowCard>
       <ActivityRow
         icon="user"
         label="친구 관리"
@@ -90,18 +89,16 @@ export function ActivityCard(): ReactElement {
       <ActivityRow
         icon="bell"
         label="관심사"
-        last
         onPress={() => {
           router.push('/me/interests');
         }}
         value={interests}
       />
-    </View>
+    </RowCard>
   );
 }
 
 const styles = StyleSheet.create({
-  activity: { paddingVertical: space[1] },
   value: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   valueWords: { ...text.caption, fontSize: 13, lineHeight: 18, fontFamily: font.semiBold, color: color.inkMuted },
 });

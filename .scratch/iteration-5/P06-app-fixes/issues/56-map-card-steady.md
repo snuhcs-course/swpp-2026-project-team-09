@@ -37,3 +37,8 @@ The user on 2026-11-28, on 파티 만들기 → 장소 검색 → 지도에서 �
 - [ ] On the phone: moving the map in the picker, the card never blanks.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 11 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 19k; input 26.5M, of which 26.5M cache reads, 38k cache writes and 70 uncached. No subagents.

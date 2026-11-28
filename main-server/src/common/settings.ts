@@ -23,6 +23,7 @@
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -139,6 +140,10 @@ export const settingsSchema = z
       .enum(['on', 'off'])
       .default('on')
       .transform((value) => value === 'on'),
+    // The next three and EXTRA_SNU_COLLECTION are the defaults of the Collections' switches, the global settings
+    // judgement.automatic, sameEvent.titleRule, sameEvent.aiChoice and collection.extraSnu, which an Administrator saves
+    // on the admin site's Settings page: a saved value wins over its env setting
+    // (src/global-settings/registered-settings.ts).
     // Whether that step asks the model about the Drafts the rules left. "off" calls no model and sends no post out
     // (infra/production/README.md says when to turn it on). Each Judgement's call has its own limits: the time in
     // milliseconds and the tokens the model may write.
@@ -155,6 +160,12 @@ export const settingsSchema = z
     // Whether that step asks the model about the candidates the rules leave. "off" calls no model and sends no post out,
     // until evaluation B has measured it and the posts may be sent (infra/production/README.md).
     SAME_EVENT_AI_CHOICE: z
+      .enum(['on', 'off'])
+      .default('off')
+      .transform((value) => value === 'on'),
+    // Whether the worker's schedule starts extra.snu's Collections, which it asks before each one. It stays off until
+    // the rules that keep the same event from showing twice are on (infra/production/README.md).
+    EXTRA_SNU_COLLECTION: z
       .enum(['on', 'off'])
       .default('off')
       .transform((value) => value === 'on'),

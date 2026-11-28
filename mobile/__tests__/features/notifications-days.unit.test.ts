@@ -21,6 +21,7 @@ function noticeAt(key: string, at: string | null): NoticeView {
     address: null,
     time: null,
     at,
+    keptId: at === null ? null : key,
   };
 }
 

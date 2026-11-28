@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -36,15 +37,16 @@ async function openMe(): Promise<void> {
 }
 
 describe("내 정보's cards", () => {
-  it('draw no line under 관심사, 탭 안내 다시 보기 and 관정도서관 로그인, and the lines between the activity rows stay', async () => {
+  // P06 ticket 64: a card of rows draws the lines between them, and none at its foot.
+  it("draw a line between the activity rows and none under any card's last row", async () => {
     await openMe();
 
-    for (const name of ['친구 관리 12', '참여 중인 파티 2', '내 퀘스트']) {
-      expect(screen.getByRole('button', { name })).toHaveStyle({ borderBottomWidth: 1 });
+    for (const name of ['친구 관리 12', '참여 중인 파티 2', '내 퀘스트', '탭 안내 다시 보기']) {
+      expect(screen.getByRole('button', { name })).not.toHaveStyle({ borderBottomWidth: 1 });
     }
     expect(screen.getByRole('button', { name: /^관심사/u })).not.toHaveStyle({ borderBottomWidth: 1 });
-    expect(screen.getByRole('button', { name: '탭 안내 다시 보기' })).not.toHaveStyle({ borderBottomWidth: 1 });
     expect(screen.getByRole('button', { name: '로그인' }).parent).not.toHaveStyle({ borderBottomWidth: 1 });
+    expect(screen.getAllByTestId('row-card-line')).toHaveLength(3);
   });
 
   it("stand 관정도서관 로그인's button in the row's middle, level with the book", async () => {

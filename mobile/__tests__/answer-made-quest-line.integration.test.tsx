@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -95,6 +96,19 @@ describe('the line of a made Quest above the input', () => {
 
     await user.press(within(screen.getByTestId('map-card')).getByRole('button', { name: '닫기' }));
     await pass(500);
+    expect(madeLine()).toHaveTextContent(FLAG);
+  });
+});
+
+// A04 ticket 09: the bottom bar's middle lowers the AI with its lines.
+describe('the line of a made Quest with the AI lowered', () => {
+  it('gives way while the AI is lowered, and comes back when it is raised', async () => {
+    const user = await openMain(KEPT_MADE);
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    expect(madeLine()).toBeNull();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
     expect(madeLine()).toHaveTextContent(FLAG);
   });
 });

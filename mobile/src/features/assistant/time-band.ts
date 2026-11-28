@@ -8,6 +8,8 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { BandRules, MealInput, TimeBand } from '@/api/assistant-types';
@@ -31,6 +33,40 @@ interface Band {
 
 const MINUTE_MS = 60_000;
 export const STEP_MS = BAND_STEP_MINUTES * MINUTE_MS;
+
+const KOREA_OFFSET_MS = 9 * 60 * MINUTE_MS;
+const DAY_MS = 24 * 60 * MINUTE_MS;
+
+// Korea's calendar day of a time: "2026-11-28".
+function koreaDayOf(ms: number): string {
+  return new Date(ms + KOREA_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+function dayStartMs(date: string): number {
+  return Date.parse(`${date}T00:00:00+09:00`);
+}
+
+// The start of the band's day: the Korea day its range starts on.
+function bandDayStartMs(band: { startAt: string; range?: Stretch }): number {
+  return dayStartMs(koreaDayOf(msOf((band.range ?? band).startAt)));
+}
+
+// A time as a window's clock counted from the start of a day: an hour past 23 the next day's, "24:30" for 00:30 of the
+// next day (P01 ticket 49), as the main server reads a window's clocks (P05 ticket 91).
+function clockFrom(dayStart: number, ms: number): string {
+  const minutes = Math.round((ms - dayStart) / MINUTE_MS);
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+// A time as a window's clock on `date`, the input's: what a time let go on the band is sent as.
+export function windowClockOn(date: string, time: string): string {
+  return clockFrom(dayStartMs(date), msOf(time));
+}
+
+// A time as a window's clock on the band's day, as its handles let it go.
+export function bandClockOf(time: string, band: { startAt: string; range?: Stretch }): string {
+  return clockFrom(bandDayStartMs(band), msOf(time));
+}
 
 // A meal's band: 5-minute steps, at least 15 minutes, anywhere in its range.
 export const MEAL_RULES: BandRules = {
@@ -93,11 +129,12 @@ function kept(ms: number, bound: BandBound, band: Band): number {
   return Math.min(Math.max(ms, lowest), highest);
 }
 
-// The handle moved from `own` toward `wanted`, where it may stand. For a band off the steps the nearest step it may
-// take can lie behind its own time: it then stays.
+// The handle moved from `own` toward `wanted`, where it may stand, as a clock on the band's day, past 23 after
+// midnight. For a band off the steps the nearest step it may take can lie behind its own time: it then stays. A handle
+// pressed where it is stays too.
 function moved(own: number, wanted: number, bound: BandBound, band: Band): string {
   const time = kept(wanted, bound, band);
-  return clockAt((wanted - own) * (time - own) < 0 ? own : time);
+  return clockFrom(bandDayStartMs(band), (wanted - own) * (time - own) <= 0 ? own : time);
 }
 
 function ownOf(bound: BandBound, band: Band): number {
@@ -133,15 +170,30 @@ export function stepped(bound: BandBound, direction: 1 | -1, band: Band): string
   return moved(time, direction === 1 ? stepDown(time, step) + step : stepUp(time, step) - step, bound, band);
 }
 
-// A clock time of the window on the band's day, with Korea's offset.
-export function onBandDay(clock: string, band: { startAt: string }): string {
-  return `${band.startAt.slice(0, 10)}T${clock}:00+09:00`;
+// A time as the band writes its times, in Korea time with the offset.
+export function bandTimeAt(ms: number): string {
+  return `${new Date(ms + KOREA_OFFSET_MS).toISOString().slice(0, 19)}+09:00`;
+}
+
+// A clock time of the window on the band's day, with Korea's offset. A range that runs past midnight (a study place
+// open to 01:00) puts a clock before its start and no later than its end on the next day (P01 ticket 48); the range is
+// the band's own without one.
+export function onBandDay(clock: string, band: { startAt: string; endAt?: string; range?: Stretch }): string {
+  const [hours = 0, minutes = 0] = clock.split(':').map(Number);
+  if (hours >= 24) {
+    return bandTimeAt(bandDayStartMs(band) + (hours * 60 + minutes) * MINUTE_MS);
+  }
+  const { startAt, endAt = startAt } = band.range ?? band;
+  const start = msOf(startAt);
+  const end = msOf(endAt);
+  const past = koreaDayOf(end) !== koreaDayOf(start) && clock < clockAt(start) && clock <= clockAt(end);
+  return `${koreaDayOf(past ? start + DAY_MS : start)}T${clock}:00+09:00`;
 }
 
 export function clashes(
   busy: readonly Stretch[],
   fixed: MealInput['window'],
-  band: { startAt: string; endAt: string },
+  band: { startAt: string; endAt: string; range?: Stretch },
 ): Stretch[] {
   if (fixed.from === null && fixed.until === null) {
     return [];
@@ -212,8 +264,8 @@ export function foldedRangeOf(band: TimeBand): Stretch {
   const startMs = before === null ? null : Math.max(msOf(band.range.startAt), before - FOLD_MARGIN_MS);
   const endMs = after === null ? null : Math.min(msOf(band.range.endAt), after + FOLD_MARGIN_MS);
   return {
-    startAt: startMs === null ? band.range.startAt : onBandDay(clockAt(startMs), band),
-    endAt: endMs === null ? band.range.endAt : onBandDay(clockAt(endMs), band),
+    startAt: startMs === null ? band.range.startAt : bandTimeAt(startMs),
+    endAt: endMs === null ? band.range.endAt : bandTimeAt(endMs),
   };
 }
 

@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { JoinPolicy, Prisma, Weekday } from '../generated/prisma/client.js';
 import { StoredClass } from '../timetable/dto/timetable.dto.js';
 import { TimetableService } from '../timetable/timetable.service.js';
-import { HOLDER_SELECT, HolderDto, QuestDto, SubQuestDto } from './dto/quest.dto.js';
+import { aloneOf, HOLDER_SELECT, HolderDto, QuestDto, SubQuestDto } from './dto/quest.dto.js';
 import { conflict } from './refusals.js';
 
 // Asia/Seoul keeps +09:00 all year.
@@ -72,7 +73,7 @@ function toClassQuestDto(
     holders: [holder],
     subQuests,
     classQuest: true,
-    takenAlone: false,
+    ...aloneOf({ takenAlone: false, seatStay: false }),
     waitingJoinRequests: 0,
     members: [],
     roomRequest: null,

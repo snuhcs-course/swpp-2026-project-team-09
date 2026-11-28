@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { checkedReading } from '../src/timetable-reading/reading-checks.js';
@@ -151,7 +152,14 @@ describe('the classes of the blocks the phone sends', () => {
         { name: '이산수학', times: [{ weekday: 'tuesday', start: '13:00', end: '14:15', room: '301-118' }] },
       ],
       leftOut: [
-        { weekday: 'wednesday', name: '', start: '15:00', end: '16:50', reason: 'no-name' },
+        {
+          weekday: 'wednesday',
+          name: '',
+          start: '15:00',
+          end: '16:50',
+          reason: 'no-name',
+          measure: 'name lines 0, name 0 characters',
+        },
         { weekday: 'thursday', name: '논리설계', start: '19:00', end: '20:20', reason: 'cut' },
       ],
     });

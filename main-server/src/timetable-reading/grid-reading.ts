@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type Model } from '../assistant/adapter.js';
+import { causeOf, type Model } from '../assistant/adapter.js';
 import { type GridFound, gridListed, type Placed, placedAnswer, placedBlocks, placedEnd } from './grid-mapping.js';
 import { axisHours, minutesOf } from './labels.js';
+import { readingLogger } from './reading-log.js';
 import {
   askForBlockText,
   askForEnd,
@@ -80,7 +82,12 @@ async function checkedIdText(
     // review).
     const second = await askForBlockText(read.model, read.image, again, read.limits).then(
       (call) => call.answer,
-      () => ({ title: null, blocks: [] }),
+      (error: unknown) => {
+        readingLogger.warn(
+          `A timetable reading's text call failed; blocks left out without text: ${again.length}. ${causeOf(error)}`,
+        );
+        return { title: null, blocks: [] };
+      },
     );
     for (const one of second.blocks) {
       const index = missing[one.number - 1];
@@ -104,12 +111,16 @@ async function reaskedEnds(
   grid: GridFound,
   placed: readonly Placed[],
 ): Promise<{ placed: Placed[]; reasked: Record<number, string | null> }> {
-  const asked = placed
-    .flatMap((place, index) => {
-      const block = grid.blocks[index];
-      return block?.fades === true && placedEnd(block, place) === null ? [index] : [];
-    })
-    .slice(0, MOST_END_REASKS);
+  const unsure = placed.flatMap((place, index) => {
+    const block = grid.blocks[index];
+    return block?.fades === true && placedEnd(block, place) === null ? [index] : [];
+  });
+  const asked = unsure.slice(0, MOST_END_REASKS);
+  if (unsure.length > asked.length) {
+    readingLogger.warn(
+      `A timetable reading asks again the end of ${MOST_END_REASKS} fading blocks at most; more left out as cut: ${unsure.length - asked.length}`,
+    );
+  }
   // Each asked at once and each observed; a failed one reads as no end, so the block is left out.
   const settled = await Promise.allSettled(
     asked.map(async (index) => {
@@ -119,7 +130,14 @@ async function reaskedEnds(
         : (await askForEnd(read.model, read.image, { day: place.day, start: place.start }, read.limits)).answer.end;
     }),
   );
-  const ends = settled.map((one) => (one.status === 'fulfilled' ? one.value : null));
+  const ends = settled.map((one) => {
+    if (one.status === 'rejected') {
+      readingLogger.warn(
+        `A timetable reading's end re-ask failed; a fading block is left out as cut. ${causeOf(one.reason)}`,
+      );
+    }
+    return one.status === 'fulfilled' ? one.value : null;
+  });
   return {
     placed: placed.map((place, index) => {
       const at = asked.indexOf(index);

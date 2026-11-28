@@ -14,6 +14,7 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -26,7 +27,7 @@ import { type Told } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { invitationMessage } from '../push/messages.js';
 import { PushService } from '../push/push.service.js';
-import { UsageService } from '../usage/usage.service.js';
+import { partyMade, UsageService } from '../usage/usage.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { QuestDto, subQuestsAheadWhere } from './dto/quest.dto.js';
 import {
@@ -43,6 +44,7 @@ import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
 import { alreadyHolder, conflict, notFound, questFull, takenAloneRefused } from './refusals.js';
+import { forgetLeaveBy, gatheringFrom, PARTY_CAPACITY } from './taken-alone.js';
 
 export type CreatedInvitation = Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_INCLUDE }>;
 
@@ -75,21 +77,30 @@ export class InvitationsService {
   // Refused into a Quest its Holders fill at that moment. Waiting invitations take no place, so a Quest with places
   // left may invite more Friends than it has places: whoever accepts after it fills hears QUEST_FULL. create() alone,
   // which a Plan and a room request invite through, checks no capacity.
+  // A Quest taken alone gathers here, its time and place as they are (P05 ticket 87): it is no longer taken alone,
+  // takes the usual capacity, and its time to leave goes, as attending gathers it. A seat's stay refuses: one person's
+  // booking, which no one shares.
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
-    const created = await this.prisma.$transaction(async (tx) => {
+    const { created, gathered } = await this.prisma.$transaction(async (tx) => {
       const quest = await this.leader.lockLed(questId, leaderId, tx);
-      if (quest.takenAlone) {
+      if (quest.takenAlone && quest.seatStay) {
         throw takenAloneRefused();
       }
       const holderIds = await this.quests.holderIds(questId, tx);
       if (holderIds.includes(userId)) {
         throw alreadyHolder();
       }
-      if (holderIds.length >= quest.capacity) {
+      const alone = quest.takenAlone && (await gatheringFrom(questId, tx));
+      if (holderIds.length >= (alone ? PARTY_CAPACITY : quest.capacity)) {
         throw questFull();
       }
-      return this.create(leaderId, questId, userId, tx);
+      return { created: await this.create(leaderId, questId, userId, tx), gathered: alone ? quest : null };
     });
+    if (gathered !== null) {
+      await forgetLeaveBy(this.notifications, this.logger, { userId: leaderId, questId });
+      this.signals.send([leaderId], 'quests-changed');
+      partyMade(this.usage, leaderId, gathered);
+    }
     this.announce(created);
   }
 

@@ -43,6 +43,7 @@ describe('toNotices of what a party’s members would have said', () => {
         address: '/main?card=party:q1',
         time: '13:58',
         at: '2026-11-19T13:58:00+09:00',
+        keptId: 'late:party:q1:u2',
       },
     ]);
   });

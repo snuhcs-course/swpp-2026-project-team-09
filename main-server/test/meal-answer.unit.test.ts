@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -156,28 +157,16 @@ describe('Lunch with 민수 and 지은: the map', () => {
 });
 
 describe('Lunch with 민수 and 지은: the time band and the other places', () => {
-  it("gives a time band from 11:30 to 13:30 with each person's busy time in it", () => {
+  // The band runs to the asker's 13:00 Class, where lunch can no longer be eaten (P01 ticket 46); it ran to 13:30 and
+  // drew that Class and 지은's at its end.
+  it("gives a time band from 11:30 to 13:00 with each person's busy time in it", () => {
     expect(firstPlan(withBoth()).band).toEqual({
-      range: { startAt: time('11:30'), endAt: time('13:30') },
+      range: { startAt: time('11:30'), endAt: time('13:00') },
       now: time('11:50'),
       lanes: [
-        {
-          userId: ME,
-          name: '나',
-          busy: [
-            { startAt: time('11:30'), endAt: time('11:50'), label: '301동 수업' },
-            { startAt: time('13:00'), endAt: time('13:30'), label: '24동 수업' },
-          ],
-        },
+        { userId: ME, name: '나', busy: [{ startAt: time('11:30'), endAt: time('11:50'), label: '301동 수업' }] },
         { userId: MINSU, name: '민수', busy: [{ startAt: time('11:30'), endAt: time('12:15'), label: '302동 수업' }] },
-        {
-          userId: JIEUN,
-          name: '지은',
-          busy: [
-            { startAt: time('11:30'), endAt: time('12:15'), label: '8동 수업' },
-            { startAt: time('13:00'), endAt: time('13:30'), label: '8동 수업' },
-          ],
-        },
+        { userId: JIEUN, name: '지은', busy: [{ startAt: time('11:30'), endAt: time('12:15'), label: '8동 수업' }] },
       ],
       startAt: time('12:33'),
       endAt: time('12:55'),
@@ -200,12 +189,15 @@ describe('Lunch with 민수 and 지은: the time band and the other places', () 
   });
 });
 
+// The asker's Classes are 11:00–11:50 and 13:00–13:50: the band runs from the end of the first, in its half hour, to the
+// start of the second, the stretch lunch can be eaten in (P01 ticket 46), not from an hour before the plan to half an
+// hour past it.
 describe("The time band's range", () => {
-  it('starts an hour before the plan when it is asked hours ahead, and still says the time now', () => {
+  it('runs between the asker’s Classes when it is asked hours ahead, and still says the time now', () => {
     const plan = firstPlan(answerOf([me(), minsu(), jieun()], { now: at('09:00') }));
 
     expect(plan.startAt).toBe(time('12:33'));
-    expect(plan.band.range).toEqual({ startAt: time('11:30'), endAt: time('13:30') });
+    expect(plan.band.range).toEqual({ startAt: time('11:30'), endAt: time('13:00') });
     expect(plan.band.now).toBe(time('09:00'));
   });
 
@@ -214,8 +206,14 @@ describe("The time band's range", () => {
 
     const { band } = firstPlan(answerOf([me(), minsu(), jieun()], { now }));
 
-    expect(band.range).toEqual({ startAt: time('11:30'), endAt: time('13:30') });
+    expect(band.range).toEqual({ startAt: time('11:30'), endAt: time('13:00') });
     expect(band.now).toBe('2026-11-16T20:00:00+09:00');
+  });
+
+  it('runs over the whole lunch for an asker free all day', () => {
+    const { band } = firstPlan(answerOf([{ ...me(), items: [] }], { now: at('09:00') }));
+
+    expect(band.range).toEqual({ startAt: time('11:00'), endAt: time('14:30') });
   });
 });
 

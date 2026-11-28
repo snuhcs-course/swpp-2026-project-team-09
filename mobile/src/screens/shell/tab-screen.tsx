@@ -3,13 +3,23 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
 import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppBar, color, IconButton, SearchField, space, TAB_BAR_ROW, useToastAbove } from '@/design-system';
+import {
+  AppBar,
+  color,
+  IconButton,
+  type IconName,
+  SearchField,
+  space,
+  TAB_BAR_ROW,
+  useToastAbove,
+} from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { takenUnderToastOverNav } from './layout';
 
@@ -28,11 +38,26 @@ export interface TabSearch {
   onWords: (words: string | null) => void;
 }
 
+// A tab's switch in its app bar, left of the magnifier, such as 행사's ☆ that shows the starred events alone: its icon
+// filled in navy while it is on.
+export interface TabToggle {
+  icon: IconName;
+  // What a screen reader says, such as "별표한 행사만 보기", with whether it is on.
+  label: string;
+  on: boolean;
+  onToggle: () => void;
+}
+
 interface TabScreenProps {
   title: string;
+  // A number after the title, such as the 4 of "알림 4".
+  count?: number;
+  // For a test that reads one tab's screen and never the tabs behind it.
+  testID?: string;
   // Beside the magnifier.
   actions?: ReactNode;
   search?: TabSearch;
+  toggle?: TabToggle;
   children: ReactNode;
 }
 
@@ -64,7 +89,7 @@ function SearchBar({ search, words }: { search: TabSearch; words: string }): Rea
 
 // A tab other than 지도, as the `Party`, `Events` and `Profile` frames draw it: the tab's app bar on the grey ground,
 // and a toast 16 above the navigation while the tab is in front.
-export function TabScreen({ title, actions, search, children }: TabScreenProps): ReactElement {
+export function TabScreen({ title, count, testID, actions, search, toggle, children }: TabScreenProps): ReactElement {
   const { bottom } = useSafeAreaInsets();
   useToastAbove(takenUnderToastOverNav(bottom), useIsFocused());
   const magnifier =
@@ -78,19 +103,19 @@ export function TabScreen({ title, actions, search, children }: TabScreenProps):
       />
     );
   return (
-    <View style={styles.screen}>
+    <View style={styles.screen} testID={testID}>
       {search === undefined || search.words === null ? (
         <AppBar
           actions={
-            magnifier === null ? (
-              actions
-            ) : (
-              <>
-                {magnifier}
-                {actions}
-              </>
-            )
+            <>
+              {toggle === undefined ? null : (
+                <IconButton icon={toggle.icon} label={toggle.label} on={toggle.on} onPress={toggle.onToggle} />
+              )}
+              {magnifier}
+              {actions}
+            </>
           }
+          count={count}
           title={title}
         />
       ) : (

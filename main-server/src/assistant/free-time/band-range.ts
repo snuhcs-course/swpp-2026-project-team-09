@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { koreaDate } from '../korea-time.js';
-import { endOfDay, onDay } from './free-time.js';
+import { type DayItem, endOfDay, onDay } from './free-time.js';
 import { type Interval } from './meal-fit.js';
 
 // The range a time card draws a band over (P01 ticket 43): the stretch of the day its span can be dragged to, the same
@@ -30,7 +30,7 @@ export function halfHoursAround(earliest: number, latest: number): { from: Date;
   };
 }
 
-// What bounds a range: the place's hours on the band's day, or for a meal the stretch around its span (`aroundSpan`).
+// What bounds a range: the place's hours on the band's day, or for a meal the stretch it can be eaten in (`mealBounds`).
 export interface RangeBounds {
   // When the place opens; null when that is not known, or it is open from before the day begins.
   opens: Date | null;
@@ -38,8 +38,23 @@ export interface RangeBounds {
   closes: Date | null;
 }
 
-// A meal's bounds (P01 ticket 43 leaves them as they were, for the user to decide): from an hour before its span to half
-// an hour past it. A fixed band is drawn around the same stretch (`fixedRange`).
+// A meal's bounds (P01 ticket 46), as a study's are its place's hours: the stretch of the day it can be eaten in, from
+// the end of the asker's item before the plan, no earlier than the meal is served, to the start of their next item, no
+// later than it is served. `served` is the meal's window, or wider where the plan's Restaurant serves longer.
+export function mealBounds(
+  span: Interval,
+  served: Interval,
+  items: readonly Pick<DayItem, 'start' | 'end'>[],
+): { opens: Date; closes: Date } {
+  const before = items.filter(({ end }) => end <= span.start).map(({ end }) => end.getTime());
+  const after = items.filter(({ start }) => start >= span.end).map(({ start }) => start.getTime());
+  return {
+    opens: new Date(Math.max(served.start.getTime(), ...before)),
+    closes: new Date(Math.min(served.end.getTime(), ...after)),
+  };
+}
+
+// A fixed band's stretch (`fixedRange`): from an hour before its span to half an hour past it.
 export function aroundSpan({ start, end }: Interval): { opens: Date; closes: Date } {
   return { opens: new Date(start.getTime() - HOUR_MS), closes: new Date(end.getTime() + HALF_HOUR_MS) };
 }

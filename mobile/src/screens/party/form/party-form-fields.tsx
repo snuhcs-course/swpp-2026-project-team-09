@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode, Ref } from 'react';
@@ -176,19 +177,16 @@ export function BoardRow({ board, marked, frameRef, onChange }: BoardProps): Rea
 interface FriendsProps {
   // The chosen Friends' names.
   names: readonly string[];
-  // Under 비공개, which invites at least one Friend.
-  required: boolean;
-  marked: boolean;
-  frameRef: Ref<View>;
   onOpen: () => void;
 }
 
-// `친구 초대`: the chosen names, or '고르기', and a press that opens its sheet.
-export function FriendsRow({ names, required, marked, frameRef, onOpen }: FriendsProps): ReactElement {
+// `친구 초대`: the chosen names, or '고르기', and a press that opens its sheet. Never required: under 비공개 nobody
+// invited makes a Quest taken alone (P06 ticket 67).
+export function FriendsRow({ names, onOpen }: FriendsProps): ReactElement {
   const words = names.length === 0 ? '고르기' : names.join(', ');
   return (
     <View style={styles.block}>
-      <View ref={frameRef} style={[markStyles.frame, marked && markStyles.marked]}>
+      <View>
         <Pressable
           accessibilityLabel={`친구 초대 ${words}`}
           accessibilityRole="button"
@@ -197,18 +195,13 @@ export function FriendsRow({ names, required, marked, frameRef, onOpen }: Friend
             onOpen();
           }}
         >
-          <Row icon="personPlus" label="친구 초대" required={required}>
+          <Row icon="personPlus" label="친구 초대">
             <Text numberOfLines={1} style={[styles.chosen, names.length === 0 && styles.unset]}>
               {words}
             </Text>
             <Icon color={color.inkSubtle} name="chevronRight" size={16} />
           </Row>
         </Pressable>
-        {marked ? (
-          <View style={styles.markUnder}>
-            <MarkLine missing="friends" />
-          </View>
-        ) : null}
       </View>
     </View>
   );

@@ -104,6 +104,7 @@ describe('toNotices of Parties and Friend Requests', () => {
         address: null,
         time: null,
         at: null,
+        keptId: null,
       },
     ]);
   });
@@ -129,6 +130,7 @@ describe('toNotices of Parties and Friend Requests', () => {
         address: null,
         time: null,
         at: null,
+        keptId: null,
       },
     ]);
   });
@@ -147,6 +149,7 @@ describe('toNotices of invitations and requests to join', () => {
         address: '/main?card=invitation:inv1',
         time: null,
         at: null,
+        keptId: null,
       },
     ]);
   });
@@ -167,6 +170,7 @@ describe('toNotices of invitations and requests to join', () => {
         address: null,
         time: null,
         at: null,
+        keptId: null,
       },
     ]);
   });
@@ -216,6 +220,7 @@ describe('toNotices of the kept Notifications', () => {
         address: '/main?card=party:q1',
         time: '11:58',
         at: '2026-11-17T11:58:00+09:00',
+        keptId: 'n1',
       },
     ]);
   });
@@ -232,7 +237,9 @@ describe('toNotices of the kept Notifications', () => {
       ['invitation-inv1', null],
     ]);
   });
+});
 
+describe('toNotices of a kept time around midnight', () => {
   it.each([
     ['midnight in Korea, given in UTC', '2026-11-16T15:00:00Z', '00:00'],
     ['a minute before midnight in Korea', '2026-11-16T23:59:00+09:00', '11월 16일'],

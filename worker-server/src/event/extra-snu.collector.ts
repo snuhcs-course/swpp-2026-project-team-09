@@ -2,20 +2,20 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { BrowserPages, type OpenedPage, type OpenPage } from '../common/browser-pages.js';
 import { Collector, Collects } from '../common/collector.js';
-import { Settings } from '../common/settings.js';
 import {
   type CollectedPost,
   type EventsCollectedMessage,
   EXTRA_SNU_SOURCES,
   type ExtraSnuSource,
 } from './dto/events-collected.dto.js';
+import { collectionScheduledAnswerSchema, type CollectionScheduledQuestion } from './dto/collection-scheduled.dto.js';
 import { type StoredEventPostsQuestion, storedEventPostsAnswerSchema } from './dto/stored-event-posts.dto.js';
 import { type ListedProgramme, parseExtraSnuListPage } from './extra-snu-list-page.parser.js';
 import { listPageAddress, programmeAddress } from './extra-snu-list.js';
@@ -88,20 +88,28 @@ function readProgramme(html: string, key: string): CollectedPost | Error {
 @Injectable()
 @Collects(EXTRA_SNU_SOURCES)
 export class ExtraSnuCollector extends Collector {
-  private readonly scheduled: boolean;
-
-  constructor(
-    private readonly browser: BrowserPages,
-    settings: ConfigService<Settings, true>,
-  ) {
+  constructor(private readonly browser: BrowserPages) {
     super();
-    this.scheduled = settings.get('EXTRA_SNU_COLLECTION', { infer: true });
   }
 
+  // Starts a Collection only while the main server's collection.extraSnu is on, which an Administrator switches on the
+  // admin site. A main server that does not answer starts none: the next time asks again.
   @Cron(COLLECTION_TIMES, { timeZone: 'Asia/Seoul' })
   async collect(): Promise<void> {
-    if (this.scheduled) {
+    if (await this.isScheduled()) {
       await this.collectOne('extra_snu');
+    }
+  }
+
+  private async isScheduled(): Promise<boolean> {
+    try {
+      const question: CollectionScheduledQuestion = { source: 'extra_snu' };
+      const { scheduled } = await this.ask('/collections/scheduled', question, collectionScheduledAnswerSchema);
+      return scheduled;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`extra.snu's scheduled Collection did not start: ${reason}`);
+      return false;
     }
   }
 
