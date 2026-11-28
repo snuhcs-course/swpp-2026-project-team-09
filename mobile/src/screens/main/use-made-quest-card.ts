@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useState } from 'react';
@@ -17,6 +18,8 @@ import type { Selection } from './use-selection';
 export interface MadeQuestCard {
   // The first of the Quests made from a Plan, whose line stands above the input; null without one.
   first: MadeQuestView | null;
+  // How many of them still wait for a Friend's answer, which the bar's middle counts (A04 ticket 12).
+  waiting: number;
   // The made Quest whose card after inviting is shown, while no answer frame is.
   shown: MadeQuestView | null;
   // The scene of its Places and the User, null while none is shown.
@@ -50,6 +53,11 @@ function useScene(shown: MadeQuestView | null, at: LatLng | null): MapScene | nu
   return scene;
 }
 
+// A made Quest some invited Friend has not answered yet: one who accepted, declined or dropped out has.
+function waitsForAnswer({ friends, standings }: MadeQuestView): boolean {
+  return friends.some(({ id }) => (standings.get(id)?.state ?? 'invited') === 'invited');
+}
+
 // The card after inviting of a Quest made from a Plan, opened again by its flag or its line: it is shown while its
 // flag is selected and the answer frame is not, and the map draws the Quest's Places and where the User was.
 export function useMadeQuestCard(
@@ -65,6 +73,7 @@ export function useMadeQuestCard(
   const scene = useScene(shown, at);
   return {
     first: made[0] ?? null,
+    waiting: made.filter((one) => waitsForAnswer(one)).length,
     shown,
     scene,
     openCard: (questId) => {

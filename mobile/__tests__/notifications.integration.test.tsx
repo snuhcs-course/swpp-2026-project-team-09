@@ -32,7 +32,7 @@ import {
   STUDY,
 } from './support/server';
 
-// 알림 and the badge on 파티, composed from the main server's lists of what waits for the User.
+// 알림 and the count on 오늘, composed from the main server's lists of what waits for the User.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -94,16 +94,17 @@ async function openFrom(user: User, bell: string): Promise<User> {
   return user;
 }
 
-async function openNotifications(bell = '오늘, 새 소식 4개'): Promise<User> {
+async function openNotifications(bell = '오늘, 답할 것 4개'): Promise<User> {
   return openFrom(await openMain(), bell);
 }
 
 describe('알림', () => {
-  it("lists what waits for the User in the frame's order, and counts it on the bell and on 파티", async () => {
+  it("lists what waits for the User in the frame's order, and counts it on 오늘, not on 파티", async () => {
     const user = await openMain();
 
-    expect(screen.getByRole('tab', { name: '파티, 새 소식 3개' })).toBeVisible();
-    await openFrom(user, '오늘, 새 소식 4개');
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 4개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '파티' })).toBeVisible();
+    await openFrom(user, '오늘, 답할 것 4개');
 
     expect(screen.getByRole('header', { name: '알림 4' })).toBeVisible();
     expect(shownRows()).toEqual(ROWS);
@@ -220,7 +221,7 @@ describe('알림 without rows', () => {
   it('leaves out a list that failed', async () => {
     server.on('GET /friend-requests', refusal(404));
 
-    await openNotifications('오늘, 새 소식 3개');
+    await openNotifications('오늘, 답할 것 3개');
 
     expect(shownRows()).toEqual([ROWS[0], ROWS[2], ROWS[3]]);
   });
@@ -250,7 +251,7 @@ describe("알림's count and signals", () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('tab', { name: '오늘, 새 소식 10개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 10개' })).toBeVisible();
     expect(screen.getByText('9+')).toBeVisible();
   });
 
@@ -267,6 +268,6 @@ describe("알림's count and signals", () => {
     await pass(100);
 
     expect(shownRows()).toEqual([ROWS[0], ROWS[1], ROWS[3]]);
-    expect(screen.getByRole('tab', { name: '파티, 새 소식 2개', includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 3개', includeHiddenElements: true })).toBeOnTheScreen();
   });
 });

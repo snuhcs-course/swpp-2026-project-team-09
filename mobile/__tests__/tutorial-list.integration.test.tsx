@@ -219,3 +219,17 @@ describe('the tutorial with the AI lowered', () => {
     expect(screen.queryByLabelText(AI_INPUT) !== null).toBe(raised);
   });
 });
+
+// A04 ticket 12 (asked by the user on 2026-11-29): the start button goes with the AI input while it is lowered.
+describe('the start button with the AI lowered', () => {
+  it('goes with the AI input and comes back with it', async () => {
+    const user = await openAsFreshman();
+    expect(button(START)).toBeVisible();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    expect(findButton(START)).toBeNull();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    expect(button(START)).toBeVisible();
+  });
+});

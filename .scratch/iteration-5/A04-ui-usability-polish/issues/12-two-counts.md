@@ -1,7 +1,7 @@
 # 12: Two counts: 오늘 counts what the User must do, the middle counts what the AI has ready
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: [10](10-today-tab.md), which makes 답할 것.
 
 Native files: none. Releases: an app OTA update only.
@@ -22,6 +22,10 @@ From the proposal <https://claude.ai/artifact/UgGcW4Jx5G5doZhPnT89iK> ("두 숫�
   - Zero shows nothing.
 - **They never count the same thing.** An invitation the User received counts only in 오늘. A Plan the User sent that waits counts only in the middle; when a Friend accepts, the Notification counts in 오늘 and the Plan leaves the middle's count.
 - Each count's screen reader words say what it counts ("답할 것 3개", "AI가 준비한 것 2개").
+- Decided while building (2026-11-29):
+  - 오늘's count is `useBellCount` (it moved onto the tab in ticket 09), said "오늘, 답할 것 N개".
+  - A made Quest counts in the middle while any Friend it invited has not answered yet; one Friend's acceptance counts in 오늘 at once.
+  - Asked by the user at the screen review: while the AI is lowered, "활성 파티" and the lines at the left (the tutorial's start, the line that asks for interests) go with its input, out of sight; the 편의기능 button, the zoom control and the first run's card stay.
 
 ## Must not break
 
@@ -37,3 +41,8 @@ From the proposal <https://claude.ai/artifact/UgGcW4Jx5G5doZhPnT89iK> ("두 숫�
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-29)
+
+- Agent time: about 35 minutes in one session (`iter5-a04-09~12`), an estimate. It leaves out the waits for the shared heavy-job lock and for the user's answers.
+- Tokens (Opus 5.5, the two review subagents included): input 368 and output 97,901; of the input, cache reads 107,542,420 and cache writes 299,870.

@@ -137,7 +137,7 @@ describe('the requests waiting for the Leader, in 알림', () => {
     server.on('GET /quests', { status: 200, body: [DINNER, STUDY] });
     server.on(`GET /quests/${STUDY.id}/join-requests`, { status: 200, body: JOIN_REQUESTS });
 
-    await openNotifications('오늘, 새 소식 1개');
+    await openNotifications('오늘, 답할 것 1개');
 
     expect(screen.getByRole('button', { name: '참여 신청 2명 · 알고리즘 스터디' })).toBeVisible();
     expect(screen.queryByText(ASKED.title)).toBeNull();

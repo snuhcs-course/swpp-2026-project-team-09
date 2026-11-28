@@ -15,6 +15,8 @@ export interface BottomNavItem {
   label: string;
   // A count on the icon. Zero shows nothing; above nine it reads "9+".
   badge?: number;
+  // What the count counts, for a screen reader: "답할 것" reads "오늘, 답할 것 3개". "새 소식" when left out.
+  badgeWords?: string;
   // The round tab in the middle of the bar (A04 ticket 09): its icon in a circle, inside the bar, and its name not
   // shown. Filled with the key colour while it is the current tab and `raised`, else white with a ring of the key
   // colour.
@@ -44,14 +46,19 @@ function hasCount(badge: number | undefined): badge is number {
   return badge !== undefined && badge > 0;
 }
 
-function nameOf({ label, badge }: BottomNavItem): string {
-  return hasCount(badge) ? `${label}, 새 소식 ${badge}개` : label;
+function nameOf({ label, badge, badgeWords = '새 소식' }: BottomNavItem): string {
+  return hasCount(badge) ? `${label}, ${badgeWords} ${badge}개` : label;
+}
+
+// A count as drawn: "9+" above nine.
+function countWords(badge: number): string {
+  return badge > 9 ? '9+' : String(badge);
 }
 
 function Count({ badge }: { badge: number }): ReactElement {
   return (
     <View style={styles.badge}>
-      <Text style={styles.badgeText}>{badge > 9 ? '9+' : String(badge)}</Text>
+      <Text style={styles.badgeText}>{countWords(badge)}</Text>
     </View>
   );
 }
@@ -82,8 +89,8 @@ function Tab({ item, current, onPress }: ItemProps): ReactElement {
 }
 
 // The round tab in the middle, as the proposal's 권장 boards draw it: filled navy with a white icon while current and
-// raised, else white with a navy ring and icon, and the selected tab's light ring around it while current. Its name is
-// hidden and stays what a screen reader says.
+// raised, else white with a navy ring and icon, and the selected tab's light ring around it while current. Its count is
+// a small navy one on its top right edge (A04 ticket 12). Its name is hidden and stays what a screen reader says.
 function RoundTab({ item, current, onPress }: ItemProps): ReactElement {
   const filled = current && item.raised === true;
   return (
@@ -105,6 +112,11 @@ function RoundTab({ item, current, onPress }: ItemProps): ReactElement {
           testID="bottom-nav-round"
         >
           <Icon color={filled ? color.onPrimary : color.snuBlue} name={item.icon} size={ROUND_ICON} />
+          {hasCount(item.badge) ? (
+            <View style={styles.roundCount} testID="bottom-nav-round-count">
+              <Text style={styles.roundCountText}>{countWords(item.badge)}</Text>
+            </View>
+          ) : null}
         </View>
       )}
     </Pressable>
@@ -135,6 +147,8 @@ const BADGE = 16;
 const ROUND = 56;
 const ROUND_ICON = 28;
 const ROUND_RING = 4;
+// The round tab's count: 20 with its ring of 2, a little smaller than the boards' 22, to sit inside the bar.
+const ROUND_COUNT = 20;
 
 const styles = StyleSheet.create({
   nav: {
@@ -180,6 +194,21 @@ const styles = StyleSheet.create({
   roundCurrentFilled: { boxShadow: `0 0 0 ${ROUND_RING}px ${color.blue100}, ${shadow.navAction}` },
   roundCurrent: { boxShadow: `0 0 0 ${ROUND_RING}px ${color.blue100}` },
   roundFilledPressed: { backgroundColor: color.snuBluePressed },
+  roundCount: {
+    position: 'absolute',
+    top: -ROUND_COUNT / 3,
+    right: -ROUND_COUNT / 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: ROUND_COUNT,
+    height: ROUND_COUNT,
+    paddingHorizontal: 4,
+    borderRadius: radius.full,
+    borderWidth: 2,
+    borderColor: color.snuBlue,
+    backgroundColor: color.surface,
+  },
+  roundCountText: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, color: color.snuBlue },
   roundOutlinedPressed: { backgroundColor: color.blue50 },
   label: { ...text.caption },
   currentLabel: { fontFamily: font.bold },

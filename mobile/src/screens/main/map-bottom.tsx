@@ -30,7 +30,7 @@ import { restoreOf } from '@/features/assistant/restore';
 import { nextMeal } from '@/features/dining/adapter';
 import type { FirstRun } from '@/features/first-run/use-first-run';
 import type { CardView } from '@/features/map/adapter';
-import { useAiRaised } from '../shell/ai-raised';
+import { useAiRaised, useTellReady } from '../shell/ai-raised';
 import { AiInput } from './ai-input';
 import { sendWithKeyboardDown, useKeyboardLift } from './input-keyboard';
 import { AnswerFrame } from './answer/answer-frame';
@@ -143,21 +143,22 @@ function MadeLine({
 // What the everyday map has at its bottom while no answer and no card nobody asked for is shown: the row of buttons,
 // the 편의기능 button, the tutorial's start, the first run's card and its line that asks for interests, and the line of a
 // made Quest. While the AI input has the keyboard, the tutorial's start, the first run's card and line, and the made
-// Quest's line give way to the examples above it.
+// Quest's line give way to the examples above it. While the AI is lowered, the row and the lines at the left go with
+// its input, out of sight, and the 편의기능 button stays (A04 ticket 12).
 function EverydayBottom(props: EverydayProps): ReactElement {
-  const { taken, onParty, onNoticeHeight, room, stack, tutorial, firstRun, keyboardUp } = props;
+  const { taken, onParty, onNoticeHeight, room, stack, tutorial, firstRun, keyboardUp, lowered } = props;
   const { bottomCard } = taken;
   return (
     <>
-      <BottomControls cardOpen={bottomCard} onActiveParty={onParty} />
+      <BottomControls cardOpen={bottomCard || lowered} onActiveParty={onParty} />
       {bottomCard ? null : <LayerControls stack={stack} />}
-      {room.tutorialStart && !keyboardUp ? (
+      {room.tutorialStart && !keyboardUp && !lowered ? (
         <TutorialStartButton bottom={tutorialStartBottom(room)} onPress={tutorial.openList} />
       ) : null}
       {firstRun.card === null || keyboardUp ? null : (
         <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
       )}
-      {room.interestsHint && !keyboardUp ? (
+      {room.interestsHint && !keyboardUp && !lowered ? (
         <InterestsHint bottom={interestsHintBottom(room)} onPress={firstRun.openInterests} />
       ) : null}
       <MadeLine {...props} />
@@ -228,6 +229,8 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   // While a quest's guide is open it takes the whole map. The AI input stays mounted, hidden, so that a draft is kept.
   const guided = tutorial.guide !== null;
   const lowered = useLowered(chat, tutorial);
+  // What the AI has ready, which the bar's middle counts while these lines are out of sight (A04 ticket 12).
+  useTellReady((mapChipOf(chat)?.kind === 'continue' ? 1 : 0) + unasked.made.waiting);
   const cardShown = invitation.shown || made.shown !== null;
   const { listOpen, inputGone, inputShown } = inputStateOf(chat);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;

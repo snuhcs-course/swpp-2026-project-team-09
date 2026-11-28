@@ -67,7 +67,7 @@ afterEach(() => {
 
 async function openNotifications(): Promise<Awaited<ReturnType<typeof openMain>>> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: '오늘, 새 소식 2개' }));
+  await user.press(screen.getByRole('tab', { name: '오늘, 답할 것 2개' }));
   await pass(500);
   await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
   await pass(500);
@@ -105,7 +105,7 @@ describe('the red action of a kept Notification', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(500);
-    expect(screen.getByRole('tab', { name: '오늘, 새 소식 1개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 1개' })).toBeVisible();
   });
 
   it('takes the row away before the main server answers', async () => {

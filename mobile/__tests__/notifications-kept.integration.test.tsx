@@ -102,11 +102,11 @@ describe('a kept Notification in 알림', () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
     server.on('GET /notifications', { status: 200, body: [{ ...ACCEPTED, read: true }] });
 
-    await openNotifications('오늘, 새 소식 1개');
+    await openNotifications('오늘, 답할 것 1개');
 
     expect(screen.getByRole('header', { name: '알림 1' })).toBeVisible();
     expect(screen.getByRole('button', { name: ROW })).toBeVisible();
-    expect(screen.getByRole('tab', { name: '파티, 새 소식 1개', includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByRole('tab', { name: '파티', includeHiddenElements: true })).toBeOnTheScreen();
   });
 });
 
@@ -134,16 +134,16 @@ describe('an unread kept Notification', () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
 
-    expect(screen.getByRole('tab', { name: '오늘, 새 소식 2개' })).toBeVisible();
-    expect(screen.getByRole('tab', { name: '파티, 새 소식 1개', includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 2개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '파티', includeHiddenElements: true })).toBeOnTheScreen();
 
-    await user.press(screen.getByRole('tab', { name: '오늘, 새 소식 2개' }));
+    await user.press(screen.getByRole('tab', { name: '오늘, 답할 것 2개' }));
     await pass(500);
     expect(screen.getByRole('button', { name: `새 알림 · ${ROW}` })).toBeVisible();
     expect(server.received('POST /notifications/read')).toHaveLength(1);
     await backToMe(user);
 
-    expect(screen.getByRole('tab', { name: '오늘, 새 소식 1개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 1개' })).toBeVisible();
   });
 
   it('is not counted while its time is still to come, nor when it is a kind 알림 leaves out', async () => {
@@ -174,7 +174,7 @@ describe('an unread kept Notification', () => {
     });
     await pass(100);
 
-    expect(screen.getByRole('tab', { name: '오늘, 새 소식 1개' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: '오늘, 답할 것 1개' })).toBeVisible();
   });
 });
 
