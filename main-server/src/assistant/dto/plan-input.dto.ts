@@ -5,12 +5,13 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
-import { clockTime } from '../free-time/tool-parts.js';
+import { clockTime, windowClock } from '../free-time/tool-parts.js';
 import { mealWindowSchema } from '../refusals/relax.dto.js';
 
 // The conditions of a plan, part of the contract of `answer.dto.ts`, which exports them again.
@@ -150,7 +151,7 @@ const planPeopleSchema = z
   .max(PEOPLE_MAX);
 
 const windowSchema = z
-  .strictObject({ from: clockTime.nullable(), until: clockTime.nullable() })
+  .strictObject({ from: windowClock.nullable(), until: windowClock.nullable() })
   .refine(({ from, until }) => from === null || until === null || from < until, 'Expected from before until');
 
 const mealInputSchema = z.strictObject({

@@ -19,7 +19,7 @@ import {
   type StudySpot,
   type TimeBand,
 } from '../dto/answer.dto.js';
-import { clockOf } from '../free-time/free-time.js';
+import { clockOf, shownClock } from '../free-time/free-time.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
@@ -127,10 +127,10 @@ export function chipsOf(
   const naming = new WayNaming(way);
   const { from, until } = input.window;
   const due = next === null ? null : `${dueWords({ at: next.start, isClass: next.isClass })}까지`;
-  const end = until === null ? due : `${until}까지`;
+  const end = until === null ? due : `${shownClock(until)}까지`;
   return [
     ...(start === null ? [] : [chip('origin', `${naming.from({ start })}에서`)]),
-    ...(from === null ? [] : [chip('from', `${from}부터`)]),
+    ...(from === null ? [] : [chip('from', `${shownClock(from)}부터`)]),
     ...(end === null ? [] : [chip('until', end)]),
     ...(input.area === null ? [] : [chip('area', '보는 범위')]),
     chip('what', STUDY_WHATS[input.what].words),
@@ -147,7 +147,7 @@ function linesOf({ spots: [best], open, stay, endsBy }: Ranked, { day, input }: 
     lines.push([plain(`${dueWords({ at: next.start, isClass: next.isClass })} 전 ${durationWords(stay.minutes)}`)]);
   }
   if (endsBy === 'until' && input.window.until !== null) {
-    lines.push([plain(`${input.window.until}까지 ${durationWords(stay.minutes)}`)]);
+    lines.push([plain(`${shownClock(input.window.until)}까지 ${durationWords(stay.minutes)}`)]);
   }
   if (!open) {
     lines.push([plain('여는 시간을 몰라요')]);
