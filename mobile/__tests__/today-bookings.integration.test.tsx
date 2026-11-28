@@ -14,6 +14,7 @@ import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { bookingRow, expectNoWrite, pressIn, startLibraryChat } from './support/library-chat';
+import { navigate } from './support/library-session';
 import { openMain } from './support/main';
 import { answerParty } from './support/party';
 import { DINNER } from './support/server';
@@ -35,6 +36,8 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
+// The site's main page, which it shows before and after the school's login.
+const LIBRARY_MAIN = 'https://k-rsv.snu.ac.kr/NEW_SNU_BOOKING/pc/main';
 const SEAT = bookingRow();
 const SEAT_TICKET = '예약됨 · 오늘 17:00–18:00, 7층 열람실, 좌석 7193번';
 // A group study room tomorrow, read after the seat though booked first.
@@ -149,6 +152,27 @@ describe('예약', () => {
     await user.press(screen.getByRole('tab', { name: /^오늘/u }));
     await pass(500);
     expect(library.requestsTo('getMyBookingList')).toHaveLength(read + 1);
+  });
+});
+
+describe('예약 after its 로그인', () => {
+  // Decided on 2026-11-29: a login that finds no booking says so, once, rather than the section going silently.
+  it('says there is no booking right after its 로그인 finds none, and is hidden the next time 오늘 comes to the front', async () => {
+    const user = await openToday({ loggedIn: false });
+
+    await user.press(bookings().getByRole('button', { name: '로그인' }));
+    await navigate(LIBRARY_MAIN);
+    await navigate('https://nsso.snu.ac.kr/sso/login');
+    await navigate(LIBRARY_MAIN);
+    await pass(500);
+
+    expect(bookings().getByText('예정된 관정도서관 예약이 없어요')).toBeVisible();
+    expect(bookings().queryByRole('button', { name: '로그인' })).toBeNull();
+
+    await user.press(screen.getByRole('tab', { name: '행사' }));
+    await user.press(screen.getByRole('tab', { name: /^오늘/u }));
+    await pass(500);
+    expect(screen.queryByTestId('today-bookings')).toBeNull();
   });
 });
 

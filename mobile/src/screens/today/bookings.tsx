@@ -136,25 +136,41 @@ function Line({ words, button, onPress }: { words: string; button: string; onPre
 }
 
 // 예약, between 오늘 일정 and 지난 알림: the tickets as 내 예약 draws them, each with its confirm time and "예약 취소 ›" or
-// "반납 ›". Hidden while it is read and when there is none. Logged out, or the session ended, one line with 로그인,
-// which reads again after; a read that failed, one line with 다시 시도.
+// "반납 ›". Hidden while it is read and when there is none, but right after its own 로그인, when it says so. Logged out,
+// or the session ended, one line with 로그인, which reads again after; a read that failed, one line with 다시 시도.
 export function Bookings({ bookings }: { bookings: TodayBookings }): ReactElement | null {
   const { loaded, reload } = bookings;
   const logIn = useLogInReload(reload);
+  // Its 로그인 was pressed on this visit: a login that finds no booking then says so, once, rather than the section
+  // going silently (decided 2026-11-29). The next visit hides it.
+  const [loggedInHere, setLoggedInHere] = useState(false);
   const open = useOpenBookings();
-  if (loaded.state === 'loading' || (loaded.state === 'ready' && loaded.value.length === 0)) {
+  const none = loaded.state === 'ready' && loaded.value.length === 0;
+  if (loaded.state === 'loading' || (none && !loggedInHere)) {
     return null;
   }
   return (
     <View style={styles.section} testID="today-bookings">
       <SectionHeader>예약</SectionHeader>
       {loaded.state === 'failed' && needsLogin(loaded.failure) ? (
-        <Line button="로그인" onPress={logIn} words="관정도서관에 로그인하면 예약이 보여요" />
+        <Line
+          button="로그인"
+          onPress={() => {
+            setLoggedInHere(true);
+            logIn();
+          }}
+          words="관정도서관에 로그인하면 예약이 보여요"
+        />
       ) : null}
       {loaded.state === 'failed' && !needsLogin(loaded.failure) ? (
         <Line button="다시 시도" onPress={reload} words="예약을 불러오지 못했어요" />
       ) : null}
-      {loaded.state === 'ready' ? (
+      {none ? (
+        <View style={cardStyles.card}>
+          <Text style={styles.lineWords}>예정된 관정도서관 예약이 없어요</Text>
+        </View>
+      ) : null}
+      {loaded.state === 'ready' && !none ? (
         <View style={styles.tickets}>
           {loaded.value.map((booking) => (
             <Booking booking={booking} key={booking.BSEQNO} open={open} />
