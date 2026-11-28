@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -53,13 +54,16 @@ function Hashtags(): ReactElement {
 
 interface WatchedRowProps {
   row: InterestRow;
+  // The card's last row, which ends it with no line under it.
+  last: boolean;
   removing: boolean;
   onRemove: () => void;
 }
 
-function WatchedRow({ row, removing, onRemove }: WatchedRowProps): ReactElement {
+function WatchedRow({ row, last, removing, onRemove }: WatchedRowProps): ReactElement {
   return (
     <ListRow
+      last={last}
       leading={<RoundIcon fill={color.blue50} icon="bell" ink={color.snuBlue} />}
       lines={row.topics === null ? [] : [row.topics]}
       title={row.title}
@@ -114,9 +118,10 @@ function Watched(): ReactElement {
         />
       ) : null}
       {rows?.length === 0 ? <EmptyState words="맡겨 둔 관심이 없어요" /> : null}
-      {rows?.map((row) => (
+      {rows?.map((row, index) => (
         <WatchedRow
           key={row.id}
+          last={index === rows.length - 1}
           onRemove={() => {
             remove(row.id);
           }}

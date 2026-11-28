@@ -854,20 +854,29 @@ Every session from then on stays a Draft for an Administrator, and what was publ
 brings the committed value back, so also set `AUTOMATIC_PUBLICATION=off` in that file and merge it. Sessions stored
 meanwhile are not published when it is turned on again.
 
+### The Collections' switches on the admin site
+
+Judgements, the same-event title rule, the same-event AI choice and extra.snu's Collections are switched on the admin
+site's Settings page, as the global settings `judgement.automatic`, `sameEvent.titleRule`, `sameEvent.aiChoice` and
+`collection.extraSnu` (main-server README: Global settings). A save applies on every main-server pod at the next minute,
+without a build or a Release, and from the step's next run or the worker's next scheduled Collection; a Release does not
+undo it. While none of them is saved, each reads the main server's env setting of the same idea in
+`k8s/parts/shared/kustomization.yaml`, `AUTOMATIC_JUDGEMENT`, `SAME_EVENT_TITLE_RULE`, `SAME_EVENT_AI_CHOICE` and
+`EXTRA_SNU_COLLECTION`, all `off`. Once one is saved, its env setting no longer turns it on or off: a ConfigMap patch of it changes nothing, so turn
+it off on the Settings page. The page's history says who changed each and when.
+
 ### Turning on Judgements
 
-`AUTOMATIC_JUDGEMENT` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called, no post leaves the server, and
-the rules go on publishing. Turn it on only when all of these hold (ticket 09):
+`judgement.automatic` is off: no model is called, no post leaves the server, and the rules go on publishing. Turn it on only when all of these hold (ticket 09):
 
 - masked posts may still be sent to the model provider, as Jaehyun0320 and TaeHyun79 agreed on 2026-11-01;
-- evaluation A's floors are met, on the commit being released, and recorded;
+- evaluation A's floors are met, on the commit Production runs, and recorded;
 - the chosen key's credit or spend limit allows for it, since Judgements spend the Assistant's key, and, on an
   OpenRouter key, its account allows only providers that do not train on prompts.
 
-Set the value to `on` in that file, merge it and release. The server refuses to start with `on` and no
-key, neither `OPENROUTER_API_KEY` nor one in `LLM_KEYS`, so a Release with that mistake does not replace the running pods. To turn it
-off again at once, use the ConfigMap patch above with `AUTOMATIC_JUDGEMENT`, and also change the file. Drafts stored while
-it was off are not judged when it is turned on.
+Then turn it on on the Settings page. The setting refuses on when the server holds no key, neither
+`OPENROUTER_API_KEY` nor one in `LLM_KEYS`. To turn it off again at once, turn it off there. Drafts stored while it was
+off are not judged when it is turned on.
 
 To stop what Judgements publish while they keep being stored, turn off `AUTOMATIC_PUBLICATION` instead. Check failures on
 `GET /admin/global-events/unsettled-posts`: during a model outage each new post uses its two tries over two Collections
@@ -875,21 +884,18 @@ and then waits for an Administrator.
 
 ### Turning on the same-event title rule
 
-`SAME_EVENT_TITLE_RULE` is `off` in `k8s/parts/shared/kustomization.yaml`: the link rule attaches, but two posts of an equal
-title and start are both published. The rule drops what is bracketed, so `[물리천문학부] 콜로키움` and `[화학부] 콜로키움` at
-one start would attach and the second would leave the app with no flag. Turn it on when evaluation B (ticket 09) has
-measured it on the commit being released, by setting the value to `on` in that file, merging it and releasing. It looks
-only at posts that go through the step afterwards. To turn it off at once, use the ConfigMap patch above with this name,
-and also change the file.
+`sameEvent.titleRule` is off: the link rule attaches, but two posts of an equal title and start are both published. The rule drops what is bracketed, so `[물리천문학부] 콜로키움` and `[화학부] 콜로키움` at
+one start would attach and the second would leave the app with no flag. Turn it on on the Settings page when evaluation B (ticket 09) has
+measured it on the commit Production runs. It looks only at posts that go through the step afterwards. To turn it off at
+once, turn it off there.
 
 ### Turning on the same-event AI choice
 
-`SAME_EVENT_AI_CHOICE` is `off` in `k8s/parts/shared/kustomization.yaml`: no model is called for the same-event step and no
-post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
-hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit being released, and the posts may be sent to the
-model provider. A person decides this, by setting the value to `on` in that file, merging it and releasing. With `on`, the
-server refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`. It looks only at posts that go through the
-step afterwards. To turn it off at once, use the ConfigMap patch above with this name, and also change the file.
+`sameEvent.aiChoice` is off: no model is called for the same-event step and no post leaves the server for it, and a session the rules do not attach is published as before. Turn it on only when both
+hold: evaluation B (ticket 09) has shown D1 at its floor of 0 on the commit Production runs, and the posts may be sent to
+the model provider. A person decides this, and turns it on on the Settings page, which refuses on without a key,
+`OPENROUTER_API_KEY` or one in `LLM_KEYS`. It looks only at posts that go through the step afterwards. To turn it off at
+once, turn it off there.
 
 The queue, attaching, publishing from it and detaching work with the setting off too: `/queue` on the admin site. With it
 on, a model outage sends the sessions that have candidates there, each once, publishing none of them.
@@ -897,16 +903,17 @@ on, a model outage sends the sessions that have candidates there, each once, pub
 ### Turning on extra.snu's Collections
 
 The worker's image carries a browser for extra.snu, and its pod may use up to 1 GiB for it, but the schedule starts
-nothing while `EXTRA_SNU_COLLECTION` is `off`, its value in `k8s/parts/shared/kustomization.yaml`. Keep it off until the
+nothing while `collection.extraSnu` is off: before each scheduled Collection the worker asks the main server
+(`POST /collections/scheduled`), and starts none when it answers off or does not answer. Keep it off until the
 same-event rules (`.scratch/iteration-3/P05-join-or-recruit/issues/08a-same-event-rules.md`) are deployed and
-`SAME_EVENT_TITLE_RULE` is on. Before that, an event posted on both SNU Now and extra.snu would show twice unless one post
+`sameEvent.titleRule` is on on the admin site's Settings page. Before that, an event posted on both SNU Now and extra.snu would show twice unless one post
 links the other, and Users could gather for it in two places. Do not run `node dist/collect extra_snu` by hand before then
 either: the command does not look at the setting.
 
 Deploy the main server before the worker in the Release that brings them: the worker's message then carries `links`, and
 a main server of an earlier Release refuses a message with a field it does not know.
 
-Once they are deployed and the title rule is on, `EXTRA_SNU_COLLECTION` may be turned on. A person decides when. Check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand, and watch
+Once they are deployed and the title rule is on, `collection.extraSnu` may be turned on. A person decides when. Check the Dockerfile's browser and the 1 GiB limit by running one Collection by hand, and watch
 its memory from a second terminal while it runs. The browser closes when the Collection ends, so a reading after it says
 nothing, and the numbers lag by the metrics interval:
 
@@ -916,18 +923,9 @@ kubectl --namespace snunow exec deployment/worker-server -- node dist/collect ex
 watch kubectl --namespace snunow top pod --selector app=worker-server
 ```
 
-Then set `EXTRA_SNU_COLLECTION=on` in `k8s/parts/shared/kustomization.yaml`, merge it and release the worker. To stop it
-again at once, without a build or a Release, change the value in the ConfigMap the worker reads and restart it:
-
-```bash
-settings=$(kubectl --namespace snunow get deployment worker-server --output json |
-  jq -r '.spec.template.spec.containers[0].env[] | select(.name == "EXTRA_SNU_COLLECTION") | .valueFrom.configMapKeyRef.name')
-kubectl --namespace snunow patch configmap "$settings" --type merge --patch '{"data":{"EXTRA_SNU_COLLECTION":"off"}}'
-kubectl --namespace snunow rollout restart deployment/worker-server
-kubectl --namespace snunow rollout status deployment/worker-server
-```
-
-The next Release brings the committed value back, so also set it in that file and merge it. What was collected stays.
+Then turn it on on the Settings page; the next scheduled Collection, at 03:00 or 15:00, starts. To stop it again at
+once, turn it off there: a Collection already running goes on to its end, and none starts after it. What was collected
+stays.
 
 ### Following a Release
 

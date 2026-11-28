@@ -18,7 +18,7 @@ import {
   type Plan,
   type TimeBand,
 } from '../dto/answer.dto.js';
-import { clockOf } from '../free-time/free-time.js';
+import { clockOf, shownClock } from '../free-time/free-time.js';
 import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, GatheringNaming } from './answer-words.js';
 import { endedByItem, type GatheringFit, minutesSaid } from './gathering.js';
@@ -46,7 +46,8 @@ function chipsOf(naming: MeetNaming): ConditionChip[] {
   const { input, gathering } = naming.args;
   const [mine] = gathering.sides;
   const { from, until } = input.window;
-  const fromChip: ConditionChip | null = from === null ? null : { kind: 'from', text: `${from}부터`, userId: null };
+  const fromChip: ConditionChip | null =
+    from === null ? null : { kind: 'from', text: `${shownClock(from)}부터`, userId: null };
   const shownEnd = from === null || until !== null ? untilChip(naming, mine, meetHours(input.date).end) : null;
   const chips = [originChip(naming, mine), fromChip, shownEnd].filter((chip) => chip !== null);
   return [...chips, ...personChips(naming)];

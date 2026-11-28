@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -39,6 +40,15 @@ describe('the mock of a meal taken alone', () => {
     expect(words(taken.alone?.lines)).toEqual(['301동식당에서 먹어요', '12:45에 나설 시각을 알려 드릴게요']);
     expect(taken.alone?.remindAt).toBe('2026-11-17T03:45:00.000Z');
     expect(quests.some(({ id }) => id === taken.quest.id)).toBe(true);
+  });
+
+  // P06 ticket 68: listed in 내 퀘스트, its room asked for it and found nothing, so the room closed at once.
+  it('opens the room of the Quest it made', async () => {
+    const taken = await answered(mockClient.makePlanQuest(making('301동식당'), 'key'));
+
+    const room = await answered(mockClient.getQuest(taken.quest.id));
+
+    expect(room).toMatchObject({ id: taken.quest.id, takenAlone: true });
   });
 
   it('says no leave-by is kept for the short walk on of s4', async () => {

@@ -14,7 +14,7 @@ import { koreaTime } from '../assistant/korea-time.js';
 import { SignalsService } from '../common/signals.service.js';
 import { type Notification } from '../generated/prisma/client.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { type Card, cardAddress } from './card-address.js';
+import { type Card, cardAddress, openedAddress } from './card-address.js';
 import { type NotificationDto } from './dto/notification.dto.js';
 import { identityOf, type NotificationKind, type Told } from './notification.js';
 import { type Kept, NotificationStore } from './notification-store.js';
@@ -43,6 +43,9 @@ const KINDS: ReadonlySet<string> = new Set<NotificationKind>([
   'late',
 ]);
 
+// The pushes' copies of what waits for the User, which 알림 shows from the lists that wait: 모두 지우기 keeps them.
+const WAITING_COPIES: readonly NotificationKind[] = ['join-asked', 'party-activated'];
+
 function kept(told: Told, at: Date): Kept {
   const words = wordsOf(told, at);
   // A card no address opens is refused before it is kept: every later reading of the User's list would fail on it.
@@ -50,9 +53,13 @@ function kept(told: Told, at: Date): Kept {
   return { kind: told.kind, at, ...words };
 }
 
+function isKind(kind: string): kind is NotificationKind {
+  return KINDS.has(kind);
+}
+
 // A row of a kind this version does not know, such as one a later version kept, is left out of the list.
 function isKnown(row: Notification): row is Notification & { kind: NotificationKind } {
-  return KINDS.has(row.kind);
+  return isKind(row.kind);
 }
 
 // The one place that keeps a Notification, writes its words and gives it its address. The caller gives the time.
@@ -97,6 +104,25 @@ export class NotificationsService {
     await this.store.markRead(userId, this.clock.now());
   }
 
+  // One of the User's by the list's identity, `<kind>:<card kind>:<card id>[:<about>]`, as a swipe in 알림 deletes it.
+  // An identity that names none of the User's deletes nothing.
+  async delete(userId: string, id: string): Promise<void> {
+    const [kind, cardKind, cardId, about, ...more] = id.split(':');
+    if (kind === undefined || !isKind(kind) || cardKind === undefined || cardId === undefined || more.length > 0) {
+      return;
+    }
+    await this.cancel(userId, kind, { kind: cardKind, id: cardId }, about ?? null);
+  }
+
+  // Those of the User's whose time has come, as 알림's 모두 지우기 deletes them. The Leader's `join-asked` and a running
+  // Party's `party-activated` stay: they are the pushes' copies of what waits, which 알림 shows from the lists that wait
+  // and does not delete. Tells the User only when one was deleted.
+  async deleteCome(userId: string): Promise<void> {
+    if (await this.store.forgetCome(userId, this.clock.now(), WAITING_COPIES)) {
+      this.signals.send([userId], 'notice');
+    }
+  }
+
   // Those whose time has come by `until`, now by default: one kept ahead, such as tomorrow's 지금 나서요, is listed when
   // it rings. A later `until` reads what is kept for later, as the tests that keep it do.
   async listFor(userId: string, until: Date = this.clock.now()): Promise<NotificationDto[]> {
@@ -111,7 +137,7 @@ export class NotificationsService {
           ahead: row.ahead,
           line: row.line,
           at: koreaTime(row.at),
-          url: cardAddress(card),
+          url: openedAddress(row.kind, card),
           read: row.readAt !== null,
         };
       });

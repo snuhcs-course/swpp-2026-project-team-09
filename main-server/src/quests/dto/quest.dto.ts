@@ -12,6 +12,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -87,6 +88,9 @@ export interface QuestDto {
   classQuest: boolean;
   // Taken alone, from a Plan for one person or a booked seat: never a 파티.
   takenAlone: boolean;
+  // A booked seat's stay at 관정관, one person's booking: the one Quest taken alone that never gathers, so its room offers
+  // no 수정 and no invitation (P05 ticket 89). False for every other Quest, a Class Quest's included.
+  seatStay: boolean;
   // The requests to join waiting for the Leader's answer, when the User who reads it leads it; 0 otherwise.
   waitingJoinRequests: number;
   // The Holders in the order they entered, then the Users whose invitation waits, by when it was sent, then the Users
@@ -261,6 +265,15 @@ export function subQuestsAheadWhere(now: Date): Prisma.QuestWhereInput {
   };
 }
 
+// Whether the Quest is taken alone, and a seat's stay, which never gathers (P05 ticket 89).
+export const aloneOf = ({
+  takenAlone,
+  seatStay,
+}: Pick<StoredQuest, 'takenAlone' | 'seatStay'>): Pick<QuestDto, 'takenAlone' | 'seatStay'> => ({
+  takenAlone,
+  seatStay,
+});
+
 export function toQuestDto(quest: StoredQuest, userId: string, now: Date, rooms: QuestRooms): QuestDto {
   const { globalEvent, _count } = quest;
   return {
@@ -276,7 +289,7 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date, rooms:
     holders: quest.holders.map(({ user }) => user),
     subQuests: quest.subQuests.map((subQuest) => toSubQuestDto(subQuest, globalEvent, userId, now)),
     classQuest: false,
-    takenAlone: quest.takenAlone,
+    ...aloneOf(quest),
     waitingJoinRequests: quest.leaderId === userId ? _count.joinRequests : 0,
     members: [
       ...quest.holders.map(({ user, lateMinutes }): QuestMemberDto => ({

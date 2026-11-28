@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -44,7 +45,7 @@ function questOf(summary: QuestSummary, next: RecruitingQuest['nextSubQuest'] | 
   };
 }
 
-function madeOf({ title, description, capacity, joinPolicy, board, subQuest }: QuestMaking): Quest {
+function madeOf({ title, description, capacity, joinPolicy, board, subQuest, takenAlone }: QuestMaking): Quest {
   return {
     id: `made-${title}`,
     title,
@@ -68,6 +69,8 @@ function madeOf({ title, description, capacity, joinPolicy, board, subQuest }: Q
       },
     ],
     classQuest: false,
+    takenAlone: takenAlone === true,
+    seatStay: false,
     waitingJoinRequests: 0,
     board: board ?? null,
     description,

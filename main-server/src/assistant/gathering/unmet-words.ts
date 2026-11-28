@@ -4,11 +4,12 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type AnswerLine, type AnswerReply, type ConditionChip } from '../dto/answer.dto.js';
-import { clockOf, type DayItem } from '../free-time/free-time.js';
+import { clockOf, type DayItem, shownClock } from '../free-time/free-time.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
 import { type AnswerPerson, mealWord, type Naming, withSubject, withTopic } from './answer-words.js';
 import { type GatheringFit, minutesBetween, minutesSaid } from './gathering.js';
@@ -38,7 +39,7 @@ const kindOf = ({ isClass }: DayItem): string => (isClass ? '수업' : '일정')
 const byStart = (a: DayItem, b: DayItem): number => a.start.getTime() - b.start.getTime();
 
 const eased = ({ input }: Naming['args']): string | null =>
-  input.window.now === true && input.window.from !== null ? input.window.from : null;
+  input.window.now === true && input.window.from !== null ? shownClock(input.window.from) : null;
 
 // The meal's first serving as a line ("저녁은 17:00부터예요").
 const servedLine = (naming: Naming, opensAt: Date): string =>

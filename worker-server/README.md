@@ -308,10 +308,13 @@ The university's programme site, the Source `extra_snu`, is collected twice a da
 events list's Collections, and posted as one message to `/global-events/collected`. The times (`COLLECTION_TIMES`) and
 the pages read (`LISTED_PAGES`) are constants at the top of `src/event/extra-snu.collector.ts`.
 
-The schedule starts them only with the setting `EXTRA_SNU_COLLECTION=on`. It is `off` by default and in Production, since
-until the same-event rules are deployed Users would see an event posted on both Sources twice
-([infra/production/README.md](../infra/production/README.md) says when and how to turn it on). `pnpm collect extra_snu`
-does not look at the setting: it runs one Collection whenever someone runs it, so do not run it in Production before then.
+The schedule starts them only while the main server's global setting `collection.extraSnu` is on, which an
+Administrator switches on the admin site's Settings page; its default is the main server's `EXTRA_SNU_COLLECTION`. Before
+each scheduled Collection the worker asks `POST /collections/scheduled` with `{ "source": "extra_snu" }`, and starts
+none when the answer's `scheduled` is false or the main server does not answer. It is off by default and in Production,
+since until the same-event rules are on Users would see an event posted on both Sources twice
+([infra/production/README.md](../infra/production/README.md) says when to turn it on). `pnpm collect extra_snu` does not
+ask: it runs one Collection whenever someone runs it, so do not run it in Production before then.
 
 Its pages sit behind a waiting-room script, so they are opened in a headless browser, one every two seconds. The
 worker's image carries the browser (Chromium's headless shell), which adds some 300 MB while a Collection runs. It is

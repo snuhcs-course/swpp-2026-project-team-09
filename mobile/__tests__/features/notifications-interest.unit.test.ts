@@ -43,6 +43,7 @@ describe('toNotices of a new match of a watched interest', () => {
         address: '/main?card=event:e1',
         time: '09:00',
         at: '2026-11-17T09:00:00+09:00',
+        keptId: 'interest-new:event:e1',
       },
     ]);
   });

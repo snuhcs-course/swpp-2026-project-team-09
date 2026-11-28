@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -20,6 +21,9 @@ import { signInUser } from './friends.js';
 import { attend, connectToDatabase, getQuest, getQuests, place132, questFor, storeEvent } from './quests.js';
 import { ANY_STRING, refused } from './signals.js';
 import { startApp } from './start-app.js';
+
+// Neither taken alone nor a seat's stay (P05 ticket 89).
+const NOT_ALONE = { takenAlone: false, seatStay: false };
 
 // A Quest with no room request and no room booked (P05 ticket 68).
 const NO_ROOMS = { roomRequest: null, bookedRoom: null };
@@ -73,7 +77,7 @@ describe('Attending a Global Event', () => {
         },
       ],
       classQuest: false,
-      takenAlone: false,
+      ...NOT_ALONE,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
       ...NO_ROOMS,
