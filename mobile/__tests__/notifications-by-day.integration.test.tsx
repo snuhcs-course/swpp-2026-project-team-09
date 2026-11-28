@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -68,8 +69,7 @@ afterEach(() => {
 
 async function openNotifications(bell: string): Promise<void> {
   const user = await openMain();
-  await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-  await user.press(screen.getByRole('button', { name: bell }));
+  await user.press(screen.getByRole('tab', { name: bell }));
   await pass(500);
 }
 
@@ -104,7 +104,7 @@ describe('the groups of 알림', () => {
     server.on('GET /quest-invitations', { status: 200, body: [INVITATION] });
     server.on('GET /notifications', { status: 200, body: [LAST_WEEK, YESTERDAY, TWO_DAYS_AGO, TODAY] });
 
-    await openNotifications('알림 1개');
+    await openNotifications('알림, 새 소식 1개');
 
     expect(shownOrder()).toEqual([
       '# 오늘',

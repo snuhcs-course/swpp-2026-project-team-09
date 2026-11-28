@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -60,6 +61,16 @@ describe('the line of a made Quest above the input', () => {
   it('says what the flag says', async () => {
     await openMain(KEPT_MADE);
 
+    expect(madeLine()).toHaveTextContent(FLAG);
+  });
+
+  it('gives way while the AI is lowered, and comes back when it is raised', async () => {
+    const user = await openMain(KEPT_MADE);
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    expect(madeLine()).toBeNull();
+
+    await user.press(screen.getByRole('tab', { name: '지도' }));
     expect(madeLine()).toHaveTextContent(FLAG);
   });
 

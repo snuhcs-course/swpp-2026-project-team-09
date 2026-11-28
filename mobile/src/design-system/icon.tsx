@@ -10,6 +10,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -26,6 +27,13 @@ type Stroke =
 // The design system's line icons: a 24-point grid, a 2-point round stroke, filled only where `Icon` is asked to.
 const ICONS = {
   map: [{ path: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z' }, { path: 'M9 4v14' }, { path: 'M15 6v14' }],
+  // Not the design system's: the bottom bar's middle, the map and the AI (A04 ticket 09), a folded map whose top
+  // right corner is a sparkle, as the proposal's 권장 boards draw it.
+  mapSpark: [
+    { path: 'M3 7.5l5-1.8 6 1.8 4-1.5v7M21 16.5v1.5l-6 2-6-2-6 2V7.5' },
+    { path: 'M8 5.7v12.3M14 7.5v6' },
+    { path: 'M18.5 9.5l.9 2.2 2.2.9-2.2.9-.9 2.2-.9-2.2-2.2-.9 2.2-.9z' },
+  ],
   chat: [{ path: 'M4 5h16v11H9l-5 4z' }],
   users: [
     { circle: [9, 8, 3] },

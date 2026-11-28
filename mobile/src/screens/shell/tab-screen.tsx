@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -49,6 +50,8 @@ export interface TabToggle {
 
 interface TabScreenProps {
   title: string;
+  // A number after the title, such as the 4 of "알림 4".
+  count?: number;
   // Beside the magnifier.
   actions?: ReactNode;
   search?: TabSearch;
@@ -84,7 +87,7 @@ function SearchBar({ search, words }: { search: TabSearch; words: string }): Rea
 
 // A tab other than 지도, as the `Party`, `Events` and `Profile` frames draw it: the tab's app bar on the grey ground,
 // and a toast 16 above the navigation while the tab is in front.
-export function TabScreen({ title, actions, search, toggle, children }: TabScreenProps): ReactElement {
+export function TabScreen({ title, count, actions, search, toggle, children }: TabScreenProps): ReactElement {
   const { bottom } = useSafeAreaInsets();
   useToastAbove(takenUnderToastOverNav(bottom), useIsFocused());
   const magnifier =
@@ -110,6 +113,7 @@ export function TabScreen({ title, actions, search, toggle, children }: TabScree
               {actions}
             </>
           }
+          count={count}
           title={title}
         />
       ) : (

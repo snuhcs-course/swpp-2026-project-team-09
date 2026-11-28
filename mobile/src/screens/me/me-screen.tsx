@@ -13,6 +13,7 @@
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -30,13 +31,10 @@ import {
   color,
   Dialog,
   font,
-  Icon,
   radius,
-  size,
   space,
   text,
 } from '@/design-system';
-import { useBellCount } from '@/features/notifications/use-notices';
 import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
 import { OffQuestion } from '../friends/off-question';
@@ -55,28 +53,6 @@ import { WeekCard } from './week-card';
 
 // How long the 위치 공유 card stays outlined after the friend panel's "공유 설정".
 const OUTLINE_MS = 1200;
-
-// The bell on the app bar, with the number of rows of 알림 that wait for the User and of those unread, in red.
-function Bell(): ReactElement {
-  const count = useBellCount();
-  return (
-    <Pressable
-      accessibilityLabel={count > 0 ? `알림 ${count}개` : '알림'}
-      accessibilityRole="button"
-      onPress={() => {
-        router.push('/notifications');
-      }}
-      style={({ pressed }): StyleProp<ViewStyle> => [styles.bell, pressed && styles.bellPressed]}
-    >
-      <Icon color={color.ink} name="bell" size={22} />
-      {count > 0 ? (
-        <View style={styles.count}>
-          <Text style={styles.countWords}>{count > 9 ? '9+' : String(count)}</Text>
-        </View>
-      ) : null}
-    </Pressable>
-  );
-}
 
 // "컴퓨터공학부 · 22학번", or the department alone without an admission year.
 function metaOf({ department, admissionYear }: Profile): string {
@@ -188,7 +164,7 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
   const sharing = useSharingSwitch();
   const { scroll, setTop } = useShowSharing(showSharing, onSharingShown);
   return (
-    <TabScreen actions={<Bell />} title="내 정보">
+    <TabScreen title="내 정보">
       <ScrollView contentContainerStyle={styles.body} ref={scroll}>
         {profile === undefined ? null : <ProfileCard profile={profile} />}
         {profile === undefined ? null : <TutorialRow />}
@@ -218,29 +194,8 @@ export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactE
   );
 }
 
-const COUNT = 18;
-
 const styles = StyleSheet.create({
   body: { gap: space[3], padding: space[4], paddingBottom: space[6] },
-  bell: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: size.touchMin,
-    height: size.touchMin,
-    borderRadius: size.touchMin / 2,
-  },
-  bellPressed: { backgroundColor: color.surfaceSunken },
-  count: {
-    position: 'absolute',
-    top: 6,
-    right: 4,
-    minWidth: COUNT,
-    height: COUNT,
-    paddingHorizontal: 5,
-    borderRadius: radius.full,
-    backgroundColor: color.danger,
-  },
-  countWords: { fontFamily: font.bold, fontSize: 11, lineHeight: COUNT, textAlign: 'center', color: color.onPrimary },
   profile: { gap: 14 },
   who: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   whoWords: { flex: 1, gap: 2 },

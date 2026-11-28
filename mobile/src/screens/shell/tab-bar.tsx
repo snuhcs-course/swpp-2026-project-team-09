@@ -4,39 +4,55 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNav, type BottomNavItem, color, shadow } from '@/design-system';
-import { usePartyBadge } from '@/features/notifications/use-notices';
+import { useBellCount, usePartyBadge } from '@/features/notifications/use-notices';
+import { useAiRaised } from './ai-raised';
 import { navPaddingBottom } from './layout';
 import { useTabBarHiddenOnMain } from './main-tab-bar';
 
-// The frames' five slots and the tab each opens. 올리기 is the action in the middle and opens 파티 만들기 above the tabs.
+// The bar's five slots and the tab each opens (A04 ticket 09): 파티, 행사, the map and the AI in the middle, 알림 and
+// 내 정보. The middle is the map's tab, round, and its name stays "지도".
 const SLOTS = [
-  { route: 'main', icon: 'map', label: '지도' },
   { route: 'party', icon: 'users', label: '파티' },
-  { route: null, icon: 'plus', label: '올리기' },
   { route: 'events', icon: 'calendar', label: '행사' },
+  { route: 'main', icon: 'mapSpark', label: '지도' },
+  { route: 'notifications', icon: 'bell', label: '알림' },
   { route: 'me', icon: 'user', label: '내 정보' },
 ] as const;
 
-function itemsWith(partyBadge: number): BottomNavItem[] {
-  return SLOTS.map(({ route, icon, label }) =>
-    route === null ? { icon, label, action: true } : { icon, label, badge: route === 'party' ? partyBadge : undefined },
-  );
+type Route = (typeof SLOTS)[number]['route'];
+
+interface Counts {
+  party: number;
+  bell: number;
+}
+
+// 파티 counts the rows of 알림 that wait and concern 파티; 알림 counts what 내 정보's bell counted, the rows that wait
+// and the kept Notifications unread.
+function itemsWith(counts: Counts, raised: boolean): BottomNavItem[] {
+  return SLOTS.map(({ route, icon, label }): BottomNavItem => {
+    if (route === 'main') {
+      return { icon, label, round: true, raised };
+    }
+    const badges: Partial<Record<Route, number>> = { party: counts.party, notifications: counts.bell };
+    return { icon, label, badge: badges[route] };
+  });
 }
 
 // The tabs' bottom navigation, as the frames draw it: no line on top but a soft shadow, and 16 under the items, or
-// the phone's own bar where that is higher. A slot shows its tab; 올리기 opens 파티 만들기, empty, and coming back shows
-// the tab it was pressed on. Each tab tells the toast where to sit while it is in front. It gives way to the answer frame
-// on 지도.
+// the phone's own bar where that is higher. A slot shows its tab. The middle on the map raises or lowers the AI, and on
+// another tab shows the map with the AI raised. Each tab tells the toast where to sit while it is in front. It gives
+// way to the answer frame on the map, so that the AI is neither raised nor lowered there.
 export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement | null {
-  const partyBadge = usePartyBadge();
+  const counts = { party: usePartyBadge(), bell: useBellCount() };
+  const { raised, setRaised } = useAiRaised();
   const { bottom } = useSafeAreaInsets();
   const hiddenOnMain = useTabBarHiddenOnMain();
   const current = state.routes[state.index]?.name;
@@ -47,13 +63,17 @@ export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement |
     <View style={[styles.bar, { paddingBottom: navPaddingBottom(bottom) }]}>
       <BottomNav
         active={SLOTS.findIndex(({ route }) => route === current)}
-        items={itemsWith(partyBadge)}
+        items={itemsWith(counts, raised)}
         line={false}
         onSelect={(index) => {
-          const route = SLOTS[index]?.route ?? null;
-          if (route === null) {
-            router.push('/party-form');
-          } else {
+          const route = SLOTS[index]?.route;
+          if (route === undefined) {
+            return;
+          }
+          if (route === 'main') {
+            setRaised(current === 'main' ? !raised : true);
+          }
+          if (route !== current) {
             navigation.navigate(route);
           }
         }}

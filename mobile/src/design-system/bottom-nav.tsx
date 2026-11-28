@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -12,11 +13,14 @@ import { color, font, radius, shadow, size, text } from './tokens';
 export interface BottomNavItem {
   icon: IconName;
   label: string;
-  // A count on the icon. Zero shows nothing.
+  // A count on the icon. Zero shows nothing; above nine it reads "9+".
   badge?: number;
-  // The one action in the middle of the bar: its icon is drawn in a round fill of the key colour, inside the bar,
-  // and its name is not shown. It is a button and never the current destination.
-  action?: boolean;
+  // The round tab in the middle of the bar (A04 ticket 09): its icon in a circle, inside the bar, and its name not
+  // shown. Filled with the key colour while it is the current tab and `raised`, else white with a ring of the key
+  // colour.
+  round?: boolean;
+  // For the round tab: whether what its own screen raises is up. Said as expanded or collapsed while it is current.
+  raised?: boolean;
 }
 
 interface BottomNavProps {
@@ -36,13 +40,29 @@ interface ItemProps {
   onPress: () => void;
 }
 
+function hasCount(badge: number | undefined): badge is number {
+  return badge !== undefined && badge > 0;
+}
+
+function nameOf({ label, badge }: BottomNavItem): string {
+  return hasCount(badge) ? `${label}, 새 소식 ${badge}개` : label;
+}
+
+function Count({ badge }: { badge: number }): ReactElement {
+  return (
+    <View style={styles.badge}>
+      <Text style={styles.badgeText}>{badge > 9 ? '9+' : String(badge)}</Text>
+    </View>
+  );
+}
+
 // One destination: its icon in a pill, a count on it, and its name.
-function Tab({ item: { icon, label, badge }, current, onPress }: ItemProps): ReactElement {
+function Tab({ item, current, onPress }: ItemProps): ReactElement {
+  const { icon, label, badge } = item;
   const tint = current ? color.snuBlue : color.inkMuted;
-  const hasBadge = badge !== undefined && badge > 0;
   return (
     <Pressable
-      accessibilityLabel={hasBadge ? `${label}, 새 소식 ${badge}개` : label}
+      accessibilityLabel={nameOf(item)}
       accessibilityRole="tab"
       accessibilityState={{ selected: current }}
       onPress={onPress}
@@ -52,11 +72,7 @@ function Tab({ item: { icon, label, badge }, current, onPress }: ItemProps): Rea
         <>
           <View style={[styles.icon, pressed && styles.pressedIcon, current && styles.currentIcon]}>
             <Icon color={tint} name={icon} size={22} />
-            {hasBadge ? (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{badge}</Text>
-              </View>
-            ) : null}
+            {hasCount(badge) ? <Count badge={badge} /> : null}
           </View>
           <Text style={[styles.label, { color: tint }, current && styles.currentLabel]}>{label}</Text>
         </>
@@ -65,15 +81,30 @@ function Tab({ item: { icon, label, badge }, current, onPress }: ItemProps): Rea
   );
 }
 
-// The action in the middle, as the main screen's frame draws it: the item's icon in a round fill of the key colour,
-// inside the bar. Its name is hidden and stays what a screen reader says. It does something and is never the
-// current destination.
-function Action({ item: { icon, label }, onPress }: Omit<ItemProps, 'current'>): ReactElement {
+// The round tab in the middle, as the proposal's 권장 boards draw it: filled navy with a white icon while current and
+// raised, else white with a navy ring and icon, and the selected tab's light ring around it while current. Its name is
+// hidden and stays what a screen reader says.
+function RoundTab({ item, current, onPress }: ItemProps): ReactElement {
+  const filled = current && item.raised === true;
   return (
-    <Pressable accessibilityLabel={label} accessibilityRole="button" onPress={onPress} style={styles.item}>
+    <Pressable
+      accessibilityLabel={nameOf(item)}
+      accessibilityRole="tab"
+      accessibilityState={current ? { selected: true, expanded: item.raised === true } : { selected: false }}
+      onPress={onPress}
+      style={styles.item}
+    >
       {({ pressed }) => (
-        <View style={[styles.action, pressed && styles.actionPressed]}>
-          <Icon color={color.onPrimary} name={icon} size={22} />
+        <View
+          style={[
+            styles.round,
+            filled ? styles.roundFilled : styles.roundOutlined,
+            current && (filled ? styles.roundCurrentFilled : styles.roundCurrent),
+            pressed && (filled ? styles.roundFilledPressed : styles.roundOutlinedPressed),
+          ]}
+          testID="bottom-nav-round"
+        >
+          <Icon color={filled ? color.onPrimary : color.snuBlue} name={item.icon} size={ROUND_ICON} />
         </View>
       )}
     </Pressable>
@@ -89,8 +120,8 @@ export function BottomNav({ items, active, onSelect, line = true }: BottomNavPro
         const press = (): void => {
           onSelect?.(index);
         };
-        return item.action === true ? (
-          <Action item={item} key={item.label} onPress={press} />
+        return item.round === true ? (
+          <RoundTab current={index === active} item={item} key={item.label} onPress={press} />
         ) : (
           <Tab current={index === active} item={item} key={item.label} onPress={press} />
         );
@@ -100,8 +131,10 @@ export function BottomNav({ items, active, onSelect, line = true }: BottomNavPro
 }
 
 const BADGE = 16;
-// The round fill around the action's icon, as the `Main` frame draws it.
-const ACTION = 44;
+// The round tab, inside the bar's 64 with its light ring of 4 around it; the boards draw 60 in a bar of 70.
+const ROUND = 56;
+const ROUND_ICON = 28;
+const ROUND_RING = 4;
 
 const styles = StyleSheet.create({
   nav: {
@@ -130,16 +163,24 @@ const styles = StyleSheet.create({
   },
   pressedIcon: { backgroundColor: color.blue50 },
   currentIcon: { backgroundColor: color.blue100 },
-  action: {
+  round: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: ACTION,
-    height: ACTION,
+    width: ROUND,
+    height: ROUND,
     borderRadius: radius.full,
-    backgroundColor: color.snuBlue,
-    boxShadow: shadow.navAction,
   },
-  actionPressed: { backgroundColor: color.snuBluePressed },
+  roundFilled: { backgroundColor: color.snuBlue, boxShadow: shadow.navAction },
+  roundOutlined: {
+    borderWidth: 3,
+    borderColor: color.snuBlue,
+    backgroundColor: color.surface,
+    boxShadow: shadow.navRound,
+  },
+  roundCurrentFilled: { boxShadow: `0 0 0 ${ROUND_RING}px ${color.blue100}, ${shadow.navAction}` },
+  roundCurrent: { boxShadow: `0 0 0 ${ROUND_RING}px ${color.blue100}` },
+  roundFilledPressed: { backgroundColor: color.snuBluePressed },
+  roundOutlinedPressed: { backgroundColor: color.blue50 },
   label: { ...text.caption },
   currentLabel: { fontFamily: font.bold },
   badge: {
