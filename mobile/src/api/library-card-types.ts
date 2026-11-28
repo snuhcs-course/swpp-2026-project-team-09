@@ -69,6 +69,8 @@ export interface LibraryCardData {
 export interface ArmedAct {
   bseqno: number;
   act: 'cancel' | 'return';
+  // Which ask it is, each its own: the card arms it once.
+  asked: number;
 }
 
 export interface LibraryCard {

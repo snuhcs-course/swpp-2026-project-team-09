@@ -16,17 +16,25 @@ import type { ChatSheetControl } from './chat-sheet';
 // `?myBookings=<BSEQNO>:cancel` or `:return` for its link.
 export const MY_BOOKINGS_ASKED = '내 예약';
 
-export function bookingsAddress(armed: ArmedAct | null): { pathname: '/main'; params: { myBookings: string } } {
+export function bookingsAddress(armed: Omit<ArmedAct, 'asked'> | null): {
+  pathname: '/main';
+  params: { myBookings: string };
+} {
   return {
     pathname: '/main',
     params: { myBookings: armed === null ? 'open' : `${String(armed.bseqno)}:${armed.act}` },
   };
 }
 
+// Counts the asks while the app runs, so that each is its own even within one millisecond or a restarted chat.
+let asks = 0;
+
 function armedOf(asked: string): ArmedAct | null {
   const [bseqno, act] = asked.split(':');
   const number = Number(bseqno);
-  return Number.isInteger(number) && (act === 'cancel' || act === 'return') ? { bseqno: number, act } : null;
+  return Number.isInteger(number) && (act === 'cancel' || act === 'return')
+    ? { bseqno: number, act, asked: (asks += 1) }
+    : null;
 }
 
 // Starts a new conversation with the app's own turn "내 예약", whose reply is the 내 예약 card made on the phone, with the

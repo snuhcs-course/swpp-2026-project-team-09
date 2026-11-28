@@ -1105,7 +1105,8 @@ by `/main?myBookings=open`, and a link by `/main?myBookings=<BSEQNO>:cancel` or 
 conversation with the app's own turn "내 예약" (`askOwn`, `features/assistant/own-turn.ts`), whose reply is the 내 예약
 card made on the phone (`myBookingsCardOf`) with that booking's act armed (`armed`), so that only the red button beside
 the input sends. Nothing goes to the model. The mock build keeps three bookings of its own
-(`api/mock/library-transport.ts`) and starts logged in; every other library call goes to the site.
+(`api/mock/library-transport.ts`) and starts logged in; every other library call goes to the site, so a seat or a
+booking read there meets the site's own session, and asks for the login only once the site says the session ended.
 
 알림 (`notifications-screen.tsx`), every row, above the tabs, is composed from the main server's lists (`useNotices()` of the notifications
 feature). First come the Notifications the main server keeps (`GET /notifications`), the latest first, each with its

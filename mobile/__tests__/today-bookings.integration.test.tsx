@@ -187,6 +187,25 @@ describe('예약 after its 로그인', () => {
   });
 });
 
+// #801's review: each ask arms its own act, also after one armed before in the same run.
+describe('a second ask from 예약', () => {
+  it('arms the cancel again after going back to 오늘', async () => {
+    library.addBooking(SEAT);
+    const user = await openToday();
+    await user.press(bookings().getByRole('button', { name: '예약 취소 ›' }));
+    await pass(500);
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('tab', { name: /^오늘/u }));
+    await pass(500);
+
+    await user.press(bookings().getByRole('button', { name: '예약 취소 ›' }));
+    await pass(500);
+
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약 취소' })).toBeEnabled();
+    expectNoWrite(library);
+  });
+});
+
 describe('a press in 예약', () => {
   it('on a ticket shows the map with the AI raised and 내 예약, with nothing asked of the model', async () => {
     library.addBooking(SEAT);

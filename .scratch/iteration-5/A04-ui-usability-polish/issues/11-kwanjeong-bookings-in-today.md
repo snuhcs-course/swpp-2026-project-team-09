@@ -49,7 +49,7 @@ On 2026-11-28 the user chose: bookings in their own section, the tickets as 내 
 ## Acceptance criteria
 
 - [ ] 오늘 lists a booked seat and a booked room as tickets, soonest first, and hides 예약 with none. (Integration test over the mock library, which fails before the change.)
-- [ ] A 파티 with a booked room reads "· 관정 {room}" in 오늘 일정, and the room's ticket is in 예약. (Integration test.)
+- [ ] ~~A 파티 with a booked room reads "· 관정 {room}" in 오늘 일정~~: not built, as decided on 2026-11-29 (the row keeps the main server's `bookedRoom`); the room's ticket is in 예약. (Integration test.)
 - [ ] Logged out, 예약 is one line with 로그인; the seat's stay Quest stays in 오늘 일정. Logged in, it leaves 오늘 일정. (Integration test.)
 - [ ] "예약 취소 ›" opens the map with 내 예약 and the cancel armed; the red button cancels, and back on 오늘 the ticket is gone. (Integration test.)
 - [ ] The section logged in, logged out and with a seat in use, on a phone with the mock build; the screens go to the user before the PR. (Emulator.)

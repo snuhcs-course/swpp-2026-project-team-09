@@ -88,7 +88,7 @@ const LINK_WORDS: Record<ArmedAct['act'], string> = { cancel: ACT_WORDS.cancel.c
 
 // To the map with the AI raised and the AI's 내 예약, its act armed for a link: the red button beside the input acts,
 // and nothing is sent from here.
-function useOpenBookings(): (armed: ArmedAct | null) => void {
+function useOpenBookings(): (armed: Omit<ArmedAct, 'asked'> | null) => void {
   const { setRaised } = useAiRaised();
   return (armed) => {
     setRaised(true);
@@ -96,7 +96,13 @@ function useOpenBookings(): (armed: ArmedAct | null) => void {
   };
 }
 
-function Booking({ booking, open }: { booking: LibraryBooking; open: (armed: ArmedAct | null) => void }): ReactElement {
+function Booking({
+  booking,
+  open,
+}: {
+  booking: LibraryBooking;
+  open: (armed: Omit<ArmedAct, 'asked'> | null) => void;
+}): ReactElement {
   const ticket = ticketOfBooking(booking, now());
   const act = actOf(booking);
   const deadline = bookingDeadline(booking);
