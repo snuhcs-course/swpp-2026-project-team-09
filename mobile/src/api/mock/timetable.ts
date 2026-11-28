@@ -3,10 +3,11 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
-import type { ClassSave, ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
+import type { ClassSave, ClassTime, TimetableClass, Weekday } from '@/api/types';
 import { PLACES } from './data/places';
 import { CLASSES } from './data/timetable';
 
@@ -80,11 +81,6 @@ function knownOrRefuse(classId: string): void {
   }
 }
 
-function matches(place: Place, words: string): boolean {
-  const number = words.replace(/동$/u, '');
-  return place.name.toLowerCase().includes(words.toLowerCase()) || place.number === number;
-}
-
 export const mockTimetable = {
   listClasses: (): TimetableClass[] => classes.map((lesson) => withOverlaps(lesson)),
   addClass: (save: ClassSave, key?: string): TimetableClass => {
@@ -112,5 +108,4 @@ export const mockTimetable = {
   resetTimetable: (): void => {
     classes = [];
   },
-  searchPlaces: (words: string): Place[] => PLACES.filter((place) => matches(place, words.trim())),
 };

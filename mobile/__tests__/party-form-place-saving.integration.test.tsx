@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -51,10 +52,6 @@ beforeEach(async () => {
   server = await askMainServer({ signedIn: true });
   answerForm(server);
   server.on('GET /places', { status: 200, body: BUILDINGS });
-  server.on('GET /places/search', ({ query }) => ({
-    status: 200,
-    body: BUILDINGS.filter(({ name }) => name.includes(query.q ?? '')),
-  }));
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 

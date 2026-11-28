@@ -72,9 +72,11 @@ function initials(words: string): string {
   }).join('');
 }
 
-const ONLY_CONSONANTS = /^[ㄱ-ㅎ]+$/u;
+// No syllable and no vowel, but a consonant: first consonants, with any digits or letters between ('ㅈ2ㄱㅎ').
+const ONLY_CONSONANTS = /^[^가-힣ㅏ-ㅣ]*[ㄱ-ㅎ][^가-힣ㅏ-ㅣ]*$/u;
 
-// Whether any of the texts holds the words. Words of consonants alone are read as initials, 'ㄱㅎ' finding 공학;
+// Whether any of the texts holds the words. Words of consonants alone are read as initials, 'ㄱㅎ' finding 공학 and
+// 'ㅈ2ㄱㅎ' 제2공학관;
 // other words match as the keys typed for them, so a syllable still being composed matches the ones it can become.
 // No words match everything.
 export function matchesWords(words: string, texts: readonly string[]): boolean {
