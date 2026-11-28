@@ -5,6 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -13,7 +14,8 @@ import { defineTool, type Tool } from '../feature.js';
 import { presentAnswer } from '../presented.js';
 import { onDay } from '../free-time/free-time.js';
 import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
-import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
+import { clockTime, dateInput, outOfReach } from '../free-time/tool-parts.js';
+import { outOfReachDay } from '../taken-off.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { busyAt } from './busy-at.js';
 import { relatedWords } from './meal-tool-words.js';
@@ -106,7 +108,7 @@ export function planMeet(plans: MeetPlanService): Tool {
     run: async (args, { userId, now, context, capabilities, found, presented }) => {
       const { date, friendIds, from, until, at, placeId, questId } = args;
       if (outOfReach(date, now)) {
-        return outOfReachDay(date, presented);
+        return outOfReachDay(date, { presented, context }, { kind: 'meet' });
       }
       const skip = await skipFor(plans.classesOn, { userId, date, context, presented }, args);
       if ('result' in skip) {

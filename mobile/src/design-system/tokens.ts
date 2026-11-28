@@ -16,8 +16,10 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { IconName } from './icon';
 import type { TextStyle } from 'react-native';
 
 // The tokens of the team's design system "SNU Now", under its names. Light theme only: the design system has no dark
@@ -180,6 +182,27 @@ export const questTone = {
   open: { round: color.snuBlue, kicker: color.ink },
   closed: { round: color.snuBlue, kicker: color.ink },
 } as const;
+
+// One colour means one thing, the same on every screen (the user's rule of 2026-11-28): each kind's ink, the soft
+// ground under it, and the icon that names the kind where one does, so that a kind is never told by colour alone.
+// The time colour is for times alone: a time card's words and span, and the time on a flag or a row. Late is for what
+// cannot be done in time, a warning alone. Event and party share the navy for now: whether they part is one line. A
+// meet answer keeps the navy its candidates have, undecided. `dropped` is what could not be done, as a step not done:
+// its number on `ink`, a small mark on the map in `soft`.
+export const kindTone = {
+  meal: { ink: color.meal, soft: color.mealSoft, icon: 'meal' },
+  study: { ink: color.svcStudy, soft: color.svcStudySoft, icon: 'bookOpen' },
+  event: { ink: color.snuBlue, soft: color.blue50, icon: 'calendar' },
+  party: { ink: color.snuBlue, soft: color.blue50, icon: 'users' },
+  meet: { ink: color.snuBlue, soft: color.blue50, icon: 'user' },
+  class: { ink: color.inkMuted, soft: color.surfaceSunken, icon: null },
+  shuttle: { ink: color.svcShuttle, soft: color.svcShuttleSoft, icon: 'bus' },
+  time: { ink: color.quest, soft: color.questSoft, icon: null },
+  late: { ink: color.danger, soft: color.dangerSoft, icon: 'alert' },
+  dropped: { ink: color.inkSubtle, soft: color.border, icon: null },
+} as const satisfies Record<string, { ink: string; soft: string; icon: IconName | null }>;
+
+export type ToneKind = keyof typeof kindTone;
 
 // The 새내기 튜토리얼's warm look, as the `Main` and `Profile` frames draw it: the Quest colour's ink on a cream ground.
 // `round` is the 내 정보 row's round, `dotNow` the sheet's dot of the quest shown.

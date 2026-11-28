@@ -8,6 +8,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -70,10 +71,11 @@ export interface CardLeaving {
   proposals: ProposalActions;
   // The seat card whose booking the map draws, by its place, and how it tells what it offers (P04 ticket 07).
   // `point` and `walk`: the booking's building and the minutes of the walk the map draws there (P01 ticket 06).
+  // `alone`: it stands as a booking alone, its band on the bar, with no steps or with its step chosen (P03 ticket 23).
   booking?: {
     place: string | null;
     tell: Tell;
-    steps: boolean;
+    alone: boolean;
     point: PlacePoint | null;
     walk: number | null;
   };
@@ -87,7 +89,7 @@ type LeavingBooking = CardLeaving['booking'];
 // the walk there (P04 ticket 07; P01 tickets 03 and 06), which a booking made as one of several requests has too, for
 // its ticket's 가는 길 (P10 ticket 29). It shows all it holds at every step of the sheet, laid out once (P04 ticket 61).
 function bookingActionsOf(booking: LeavingBooking): Pick<LibraryCardActions, 'onMap' | 'bandOnBar' | 'bookingWalk'> {
-  const alone = (card: string): boolean => booking !== undefined && booking.place === card && !booking.steps;
+  const alone = (card: string): boolean => booking !== undefined && booking.place === card && booking.alone;
   return {
     onMap: (card: string) => (booking !== undefined && booking.place === card ? booking.tell : null),
     bandOnBar: alone,

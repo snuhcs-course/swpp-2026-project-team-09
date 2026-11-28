@@ -4,9 +4,10 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { holdBackButton } from '../support/back';
 import { hideKeyboard, KEYBOARD, showKeyboard } from '../support/keyboard';
@@ -29,12 +30,6 @@ async function renderSheet(onClose: () => void): Promise<void> {
       <Text>인원</Text>
     </BottomSheet>,
   );
-}
-
-async function dragHandle(from: number, to: number): Promise<void> {
-  const handle = screen.getByTestId('sheet-handle');
-  await fireEvent(handle, 'touchStart', { nativeEvent: { pageY: from } });
-  await fireEvent(handle, 'touchEnd', { nativeEvent: { pageY: to } });
 }
 
 describe('BottomSheet', () => {
@@ -62,14 +57,12 @@ describe('BottomSheet', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('is closed by a drag down from its handle, and not by a short one', async () => {
+  it('is closed by a tap on its handle bar', async () => {
     const onClose = jest.fn<void, []>();
     await renderSheet(onClose);
 
-    await dragHandle(500, 520);
-    expect(onClose).not.toHaveBeenCalled();
+    await userEvent.press(screen.getByTestId('sheet-handle'));
 
-    await dragHandle(500, 560);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

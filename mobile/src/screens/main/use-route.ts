@@ -4,12 +4,13 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useFocusEffect } from 'expo-router';
 import { type RefObject, useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import type { LatLng } from '@/api/types';
-import { color, useToast } from '@/design-system';
+import { kindTone, useToast } from '@/design-system';
 import { useWalkingRoute } from '@/features/map/use-walking-route';
 import { useNextQuest } from '@/features/quests/use-next-quest';
 import type { LineStyle, MapLine } from '@/map';
@@ -17,8 +18,9 @@ import { ROUTE_PADDING } from './layout';
 import type { MainMap } from './use-main-map';
 import type { Me } from './use-me';
 
-// The route line as the `Main` frame draws it: dots of the Quest's colour, 3 wide, a dash of 2 after each gap of 6.
-export const ROUTE_STYLE: LineStyle = { color: color.quest, width: 3, dash: [2, 6] };
+// The route line as the `Main` frame draws it: dots of the Quest's colour, the party's navy (`kindTone`), 3 wide, a dash
+// of 2 after each gap of 6.
+export const ROUTE_STYLE: LineStyle = { color: kindTone.party.ink, width: 3, dash: [2, 6] };
 
 export const NO_WAY = '길을 찾지 못했어요';
 

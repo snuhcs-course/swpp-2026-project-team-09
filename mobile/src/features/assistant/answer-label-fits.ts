@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -18,10 +19,19 @@ import type { LabelView, MarkPoint, Words } from './answer-labels';
 // last digits.
 export const ONE_POINT = 1;
 
-// A tag with its number only.
-function numberOnly(words: Words): Words {
-  const { tone, number } = words;
-  return { tone, title: '', line: null, number };
+// A tag with its number only, in the colour its words had: its kind's, a study place's, faded (P01 ticket 42: a study
+// answer's candidate held at a point another mark holds turned the meal's coral once its minutes gave way).
+export function numberOnly({ tone, number, faded, meal, study, kind }: Words): Words {
+  return {
+    tone,
+    title: '',
+    line: null,
+    number,
+    ...(faded === undefined ? {} : { faded }),
+    ...(meal === undefined ? {} : { meal }),
+    ...(study === undefined ? {} : { study }),
+    ...(kind === undefined ? {} : { kind }),
+  };
 }
 
 // The side and the words of a kept tag that gives way (`shrinks`): its words at a side clear of the labels, the faces,

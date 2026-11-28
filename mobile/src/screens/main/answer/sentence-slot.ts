@@ -34,7 +34,8 @@ export function holdsSlot(bubble: ChatBubble, after: readonly ChatBubble[]): boo
 
 // Which bubbles of a turn draw their words: the one holding the slot, and a reply whose words are its card, which
 // keeps the card; under a later bubble its sentence and its explaining line give way (`SlotHeld`), as a seat booked
-// from the steps of a seat and a meal gives the slot to its ticket (P10 ticket 29).
-export function drawsWords(bubble: ChatBubble, after: readonly ChatBubble[]): boolean {
-  return holdsSlot(bubble, after) || wordsAreItsCard(bubble);
+// from the steps of a seat and a meal gives the slot to its ticket (P10 ticket 29). Its card is what the card shows of
+// it (`shown`): a seat's step of several requests shows the seat's ticket, not the meal's answer (P03 ticket 23).
+export function drawsWords(bubble: ChatBubble, after: readonly ChatBubble[], shown: ChatBubble = bubble): boolean {
+  return holdsSlot(bubble, after) || wordsAreItsCard(shown);
 }

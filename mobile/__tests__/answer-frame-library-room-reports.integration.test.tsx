@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { partyChangedWords } from '@/screens/main/library/book-room-card';
@@ -92,8 +93,10 @@ describe('the report of a room booked', () => {
 
     await pressIn(shown, '예약하기');
 
-    expect(inFrame().getByText('G412 예약되었어요!')).toBeVisible();
+    // The card's one sentence slot holds the turn's latest line (P01-20): the room booked and the party changed, in
+    // the place of the booking's own "예약되었어요".
     expect(inFrame().getByText(partyChangedWords('G412'))).toBeVisible();
+    expect(inFrame().queryByText('G412 예약되었어요!')).toBeNull();
     expect(inCard('library-cancel-cancel:4F-group-6:2026-11-02:1700').getByLabelText(/^예약됨 · /u)).toBeVisible();
     await pressIn(inDock(), '예약 취소');
 

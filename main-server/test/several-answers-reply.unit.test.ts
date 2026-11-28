@@ -113,7 +113,7 @@ describe('The reply of lunch and dinner', () => {
 
 describe('A reply that draws nothing beside a request withdrawn', () => {
   // Lunch and dinner on screen from an earlier reply; "저녁 다른 데" found nothing, so this reply draws no answer.
-  it('never clears for an app that says answers, so lunch kept from an earlier reply stays', () => {
+  it('does not clear for an app that says answers while something stays, so lunch kept from an earlier reply stays', () => {
     const nothing = reply({ answer: null, answers: [], withdrawn: ['dinner-key'], clears: true });
     const body = replyBody(nothing, undefined, ['answer', 'answers']);
     expect(body).not.toHaveProperty('clears');
@@ -122,6 +122,16 @@ describe('A reply that draws nothing beside a request withdrawn', () => {
       'clears',
     );
     expect(replyBody(nothing, undefined, ['answer'])).toMatchObject({ clears: true });
+  });
+
+  // P05 ticket 79: the request withdrawn stood for every answer on screen.
+  it('clears for an app that says answers once nothing stays, unless the reply draws its own', () => {
+    const emptied = reply({ answer: null, answers: [], withdrawn: ['lunch-key'], clears: true, empties: true });
+    expect(replyBody(emptied, undefined, ['answer', 'answers'])).toMatchObject({
+      withdrawn: ['lunch-key'],
+      clears: true,
+    });
+    expect(replyBody({ ...emptied, answer: LUNCH }, undefined, ['answer', 'answers'])).not.toHaveProperty('clears');
   });
 });
 

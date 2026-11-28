@@ -9,23 +9,28 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { apiClient } from '@/api/client';
 import { friendsQuery, globalEventAnnouncersQuery, globalEventsQuery } from '@/api/queries';
 import type { ShownQuest } from '@/api/quest-parts-types';
+import type { SubQuestPlace } from '@/api/room-types';
 import type { Friend, GlobalEvent } from '@/api/types';
 import type { PickedPlace } from '@/features/places/picked-place';
-import { usePlaceToSend } from '@/features/places/typed-place';
+import { sameSentPlace, usePlaceToSend } from '@/features/places/typed-place';
 import {
   emptyForm,
   type FormEvent,
   formOf,
   invitable,
-  isReady,
   leastCapacity,
+  type Missing,
+  missingOf,
   type PartyForm,
   planChangeOf,
   shownSubQuest,
@@ -51,13 +56,6 @@ export interface FormProps {
   proposal: ProposalStart | null;
 }
 
-export function friendsHint(form: PartyForm, chosen: number): string {
-  if (chosen > 0) {
-    return `${String(chosen)}명에게 요청`;
-  }
-  return form.visibility === 'private' ? '1명 이상' : '선택';
-}
-
 export interface FormState {
   form: PartyForm;
   change: (next: Partial<PartyForm>) => void;
@@ -65,17 +63,24 @@ export interface FormState {
   chosen: string[];
   setChosen: (ids: string[]) => void;
   most: number;
-  // The least `인원`.
+  // The least `인원`, and why it goes no lower.
   least: number;
+  floor: string | null;
   words: string;
   setWords: (words: string) => void;
   picked: PickedPlace | null;
   setPicked: (place: PickedPlace | null) => void;
-  ready: boolean;
-  submit: () => void;
+  // The required fields left empty that the last press of the button found, while they stay empty.
+  marked: readonly Missing[];
+  saving: boolean;
+  // Sends the form, or marks the required fields left empty and gives them back, in the page's order.
+  submit: () => readonly Missing[];
   pickEvent: (event: FormEvent | null) => void;
   // The edited Quest is made for an event, which the main server cannot change.
   eventLocked: boolean;
+  editing: boolean;
+  // Something differs from what the form opened with: an edit's 수정 완료 waits for it.
+  changed: boolean;
 }
 
 // The event of `/party-form?eventId=`, chosen once the Global Events are there.
@@ -93,9 +98,8 @@ function usePreselected(eventId: string | null, pick: (event: FormEvent) => void
   }, [events, announcers, eventId, pick]);
 }
 
-// Choosing an event gives the form its title, time and tags, and `어디서` its place; `행사 빼기` clears the time and
-// place and leaves the title and the tags. In an edit, the event fills the time, the place and the tags only, and
-// `행사 빼기` leaves them: the main server cannot change a Quest's event.
+// Choosing an event gives the form its time, and `어디서` its place; `행사 빼기` clears them. In an edit `행사 빼기`
+// leaves them: the main server cannot change a Quest's event.
 function useEventPick(
   setForm: (change: (held: PartyForm) => PartyForm) => void,
   setWords: (words: string) => void,
@@ -138,10 +142,28 @@ function useWhere(
   });
   const [words, setWords] = useState(start.words);
   const [picked, setPicked] = useState(start.picked);
-  return { words, setWords, picked, setPicked, changed: words !== start.words || picked !== start.picked };
+  return { words, setWords, picked, setPicked, changed: !sameSentPlace({ words, picked }, start) };
 }
 
 type Where = ReturnType<typeof useWhere>;
+
+// Whether a new 파티 for an event meets at a place of the User's own, which its `모이기` then names: not the event's own
+// place, nor the building that holds the event (the review of 2026-11-28), as a Place picked from the search or a
+// Proposal's Place is. Unknown, the building counts as the User's own.
+async function meetsElsewhere(
+  where: WhereStart,
+  event: FormEvent | null,
+  place: SubQuestPlace | undefined,
+): Promise<boolean> {
+  if (event === null || place === undefined || sameSentPlace(where, eventWhere(event))) {
+    return false;
+  }
+  if (!('placeId' in place) || event.place === null) {
+    return true;
+  }
+  const at = await apiClient.findPlaceAt({ latitude: event.latitude, longitude: event.longitude }).catch(() => null);
+  return !(at?.relation === 'inside' && at.place.id === place.placeId);
+}
 
 // Sends the form with its place named: back to the room or the post after an edit, to 내 파티 after making one. A
 // Quest made from a Proposal is told to the chat, after which its card makes nothing more.
@@ -155,9 +177,10 @@ function useSubmit(
   return (form, friends) => {
     setSaving(true);
     void placeToSend(where.words, where.picked)
-      .then((place) => {
+      .then(async (place) => {
         const sent = { ...form, place };
-        return send(sent, friends, quest === null ? null : planChangeOf(quest, sent, where.changed));
+        const elsewhere = quest === null && (await meetsElsewhere(where, form.event, place));
+        return send(sent, friends, quest === null ? null : planChangeOf(quest, sent, where.changed), elsewhere);
       })
       .then((sending) => {
         setSaving(false);
@@ -193,6 +216,18 @@ function startChosen({ quest, friendId, proposal }: FormProps): string[] {
   return friendId === null ? [] : [friendId];
 }
 
+// Why `인원` goes no lower: the Friends invited, the members an edited Quest has, or 공개's two.
+function floorOf(holders: number, invited: number, form: PartyForm, editing: boolean): string | null {
+  const least = leastCapacity(holders, 0, form.visibility);
+  if (invited > 0 && holders + invited >= least) {
+    return '나와 초대한 친구를 포함해요';
+  }
+  if (editing && holders > 1 && holders >= least) {
+    return '지금 멤버 수보다 줄일 수 없어요';
+  }
+  return form.visibility === 'public' ? '공개 파티는 2명부터예요' : null;
+}
+
 // What the form holds, and its sending.
 export function useFormState(props: FormProps): FormState {
   const { quest, eventId } = props;
@@ -200,9 +235,11 @@ export function useFormState(props: FormProps): FormState {
   const holders = quest?.holders ?? [];
   const friends = (useQuery(friendsQuery).data ?? []).filter(({ id }) => !holders.some((holder) => holder.id === id));
   const [form, setForm] = useState<PartyForm>(() => startForm(props));
+  const [opened] = useState(form);
   const [chosen, setChosen] = useState<string[]>(() => startChosen(props));
   const where = useWhere(quest, props.proposal);
   const [saving, setSaving] = useState(false);
+  const [pressed, setPressed] = useState<readonly Missing[]>([]);
   const submit = useSubmit(props, where, setSaving);
   const pickEvent = useEventPick(setForm, where.setWords, where.setPicked, {
     eventId: editing ? null : eventId,
@@ -211,6 +248,7 @@ export function useFormState(props: FormProps): FormState {
   const holderCount = Math.max(holders.length, 1);
   const most = invitable(form, holderCount);
   const shownChosen = chosen.slice(0, most);
+  const missing = missingOf(form, shownChosen.length, editing);
   return {
     form,
     change: (next) => {
@@ -221,17 +259,30 @@ export function useFormState(props: FormProps): FormState {
     setChosen,
     most,
     least: leastCapacity(holderCount, shownChosen.length, form.visibility),
+    floor: floorOf(holderCount, shownChosen.length, form, editing),
     words: where.words,
     setWords: where.setWords,
     picked: where.picked,
     setPicked: where.setPicked,
-    ready: isReady(form, shownChosen.length, editing) && !saving,
+    marked: pressed.filter((one) => missing.includes(one)),
+    saving,
     submit: () => {
-      submit(form, shownChosen);
+      setPressed(missing);
+      if (missing.length === 0 && !saving) {
+        submit(form, shownChosen);
+      }
+      return missing;
     },
     pickEvent,
     eventLocked: (quest?.globalEvent ?? null) !== null,
+    editing,
+    changed: shownChosen.length > 0 || where.changed || JSON.stringify(sentOf(form)) !== JSON.stringify(sentOf(opened)),
   };
+}
+
+// The form as sending reads it: the title and the text trimmed, so that spaces alone change nothing.
+function sentOf(form: PartyForm): PartyForm {
+  return { ...form, title: form.title.trim(), description: form.description.trim() };
 }
 
 // The edited Quest's event, from the Global Events where they hold it, else from what the Quest says of it: an event

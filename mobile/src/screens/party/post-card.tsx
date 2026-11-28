@@ -7,6 +7,8 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -14,7 +16,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge, Button, cardStyles, color, font, Icon, type IconName, space } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
-import { Faces, PhotoView } from './quest-photo';
+import { Faces } from './quest-photo';
 
 export function openPost(questId: string): void {
   router.push(`/post/${questId}`);
@@ -26,11 +28,20 @@ export function joinLabel(post: Pick<PostView, 'joinPolicy'>): string {
 }
 
 // A line with its icon: the clock with the time, the pin with the place.
-export function Line({ icon, children }: { icon: IconName; children: string }): ReactElement {
+// `link`: a line whose press opens something, in the 행사 line's blue (P06 ticket 27).
+export function Line({
+  icon,
+  children,
+  link = false,
+}: {
+  icon: IconName;
+  children: string;
+  link?: boolean;
+}): ReactElement {
   return (
     <View style={styles.line}>
-      <Icon color={color.inkMuted} name={icon} size={16} />
-      <Text numberOfLines={1} style={styles.lineWords}>
+      <Icon color={link ? color.blue600 : color.inkMuted} name={icon} size={16} />
+      <Text numberOfLines={1} style={[styles.lineWords, link && styles.linkWords]}>
         {children}
       </Text>
     </View>
@@ -97,8 +108,8 @@ function Card({ post, onOpen, children }: CardProps): ReactElement {
   );
 }
 
-// A card of 찾기's 모집 중인 파티: the Global Event's badge when there is one, the title over "when · where" beside the
-// photo, the members' faces with "3/8명" at the end, `관심 없음` and `참여하기`.
+// A card of 찾기's 모집 중인 파티: the Global Event's badge when there is one, the title over "when · where", the
+// members' faces with "3/8명" at the end, `관심 없음` and `참여하기`.
 export function PostCard({ post, onJoin, onHide, onWithdraw, onOpen, children }: PostCardProps): ReactElement {
   const open = (): void => {
     if (onOpen === undefined) {
@@ -126,7 +137,6 @@ export function PostCard({ post, onJoin, onHide, onWithdraw, onOpen, children }:
           </Text>
           <WhenWhere post={post} />
         </View>
-        {post.photo === null ? null : <PhotoView photo={post.photo} size="thumb" style={styles.photo} />}
       </View>
       {children}
       <View style={styles.people}>
@@ -188,10 +198,9 @@ function CardButtons({ post, onJoin, onHide, onWithdraw }: Omit<PostCardProps, '
   );
 }
 
-// The frame's measures: the card's padding, 12 over and 14 under, and the photo, 52.
+// The frame's measures: the card's padding, 12 over and 14 under.
 const PAD_TOP = 12;
 const PAD_BOTTOM = 14;
-const PHOTO = 52;
 
 const styles = StyleSheet.create({
   card: { gap: 10, paddingTop: PAD_TOP, paddingBottom: PAD_BOTTOM },
@@ -199,13 +208,13 @@ const styles = StyleSheet.create({
   fill: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16, color: color.party },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   headWords: { flex: 1, minWidth: 0, gap: space[1] },
-  photo: { width: PHOTO, height: PHOTO },
   buttons: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   join: { flex: 1 },
   title: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, letterSpacing: -0.18, color: color.ink },
   line: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   whenWhere: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   lineWords: { flexShrink: 1, fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.inkMuted },
+  linkWords: { color: color.blue600 },
   when: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
   dot: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkSubtle },
   where: { flexShrink: 1, fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },

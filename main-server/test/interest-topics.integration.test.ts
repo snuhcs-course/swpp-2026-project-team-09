@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
 import { onTestFinished } from 'vitest';
-import { JoinPolicy, type Quest, QuestBoard } from '../src/generated/prisma/client.js';
+import { type GlobalEvent, JoinPolicy, type Prisma, type Quest, QuestBoard } from '../src/generated/prisma/client.js';
 import { BADMINTON, InterestsStage, JOB_FAIR, TENNIS_CLUB, TENNIS_LESSON } from './interests.js';
 import { ownQuest, storeEvent } from './quests.js';
 
@@ -17,6 +18,16 @@ const stage = new InterestsStage();
 // Events that started this long ago and have not ended come first in a step.
 const LONG_AGO = new Date('2000-01-01T09:00:00+09:00');
 const FAR_AHEAD = new Date('2099-01-01T09:00:00+09:00');
+
+// An event over every day from LONG_AGO to FAR_AHEAD, removed when the test ends: left stored, it would be among the
+// events of the day another file plans, and the longest stay of all.
+async function storeLongEvent(changes: Partial<Prisma.GlobalEventCreateInput>): Promise<GlobalEvent> {
+  const event = await storeEvent(stage.prisma, { startsAt: LONG_AGO, endsAt: FAR_AHEAD, ...changes });
+  onTestFinished(async () => {
+    await stage.prisma.globalEvent.deleteMany({ where: { id: event.id } });
+  });
+  return event;
+}
 
 // Past the topics call's time limit in the tests (ASSISTANT_TIMEOUT_MS, 30 s) and the minute after it.
 const PAST_THE_CALL_MS = 2 * 60 * 1000;
@@ -106,10 +117,8 @@ describe('The topics step', () => {
 describe('A second topics step', () => {
   it('does not ask about an event whose first call may still be running', async () => {
     // As a step on another server leaves it while its call runs.
-    const event = await storeEvent(stage.prisma, {
+    const event = await storeLongEvent({
       title: '아직 읽는 설명회',
-      startsAt: LONG_AGO,
-      endsAt: FAR_AHEAD,
       topicsTries: 1,
       topicsReadAt: new Date(),
     });
@@ -123,12 +132,8 @@ describe('A second topics step', () => {
 
 describe('One topics step', () => {
   it('reads the topics in use once, and gives two events that read alike one word', async () => {
-    const lesson = await storeEvent(stage.prisma, { title: TENNIS_LESSON, startsAt: LONG_AGO, endsAt: FAR_AHEAD });
-    const club = await storeEvent(stage.prisma, {
-      title: TENNIS_CLUB,
-      startsAt: new Date(LONG_AGO.getTime() + 60_000),
-      endsAt: FAR_AHEAD,
-    });
+    const lesson = await storeLongEvent({ title: TENNIS_LESSON });
+    const club = await storeLongEvent({ title: TENNIS_CLUB, startsAt: new Date(LONG_AGO.getTime() + 60_000) });
     const inUse = vi.spyOn(stage.reader, 'inUse');
 
     await stage.runStep();

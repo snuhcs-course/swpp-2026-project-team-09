@@ -8,6 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -16,7 +17,8 @@ import { closureNotices } from '../../menus/open-rule.js';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
 import { presentAnswer, presentLookup } from '../presented.js';
 import { mealByClock, mealWindow } from '../free-time/meal-fit.js';
-import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
+import { dateInput, outOfReach } from '../free-time/tool-parts.js';
+import { outOfReachDay } from '../taken-off.js';
 import { dayWordsFrom, koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { resolved } from '../tools/resolved.js';
@@ -105,7 +107,7 @@ export function findMenu(menus: Pick<MenuLookupService, 'named' | 'at' | 'find'>
     input,
     run: async ({ date, meal: named, restaurant }, { userId, now, context, presented, capabilities }) => {
       if (outOfReach(date, now)) {
-        return outOfReachDay(date, presented);
+        return outOfReachDay(date, { presented, context }, { kind: 'meal', meal: named ?? mealByClock(date, now) });
       }
       // A menu asked with no meal ("내일 예술계 메뉴") opens the meal nearest in time (P05 ticket 52).
       const meal = named ?? mealByClock(date, now);

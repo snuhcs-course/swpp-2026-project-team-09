@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, type userEvent, within } from '@testing-library/react-native';
@@ -16,7 +17,7 @@ import { AI_INPUT } from './lists';
 import { givePhone, ON_CAMPUS, openMain } from './main';
 import { startFresh } from './mocks';
 import { answerParty, MY_HIKE } from './party';
-import { fillPublic } from './party-form';
+import { fillPublic, invite } from './party-form';
 import { MIN_JUN_HOLDER } from './room';
 import { askMainServer, PHONE_NOW } from './server';
 
@@ -51,9 +52,8 @@ export async function sendParty(user: User, friends: readonly string[]): Promise
   await user.press(screen.getByRole('button', { name: '만들기' }));
   await pass(500);
   await fillPublic(user);
-  for (const friend of friends) {
-    // oxlint-disable-next-line no-await-in-loop -- each press after the one before
-    await user.press(screen.getByRole('checkbox', { name: friend }));
+  if (friends.length > 0) {
+    await invite(user, friends);
   }
   await user.press(screen.getByRole('button', { name: '파티 올리기' }));
   await pass(500);

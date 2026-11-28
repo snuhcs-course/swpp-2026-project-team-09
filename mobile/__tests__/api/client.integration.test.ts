@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -177,6 +178,12 @@ describe('the mock of Parties', () => {
         holdsQuest: true,
         friends: [{ id: 'f1', name: '김민준', department: '컴퓨터공학부' }],
         leader: { id: 'f5', name: '정하은' },
+        // The User holds its Quest, so the members are named, in the order they entered.
+        members: [
+          { id: 'f5', name: '정하은' },
+          { id: 'f1', name: '김민준' },
+          { id: 'pm1', name: '오현우' },
+        ],
       },
     ]);
     expect(mine).toMatchObject({ id: 'm1', sharing: true, quest: { id: 'q-ai' } });
