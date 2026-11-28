@@ -14,13 +14,14 @@ import { stepsReplyOn } from '@/api/mock/data/steps-answer';
 import { STUDY_PLAN_ANSWER } from '@/api/mock/data/study-plan-answer';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { answerTone } from '@/features/assistant/answer-tone';
-import { bookingStepHolds, stepDrafts, stepMarkRole } from '@/features/assistant/steps-scene';
+import { stepDrafts, stepMarkRole } from '@/features/assistant/steps-scene';
 import { seen } from '../support/answer-marks';
 
 // A step of several requests is drawn in the colour its answer is drawn in alone (P03 ticket 24, the user's rule of
 // 2026-11-28, one colour for one thing): the map's marks of the steps and of the answer read the same table
-// (`kindTone`), never a second one. The user's three choices for the steps' marks, awaiting his decision from use,
-// each one function: a seat's step holds its number, a room's step is study, every step done is solid.
+// (`kindTone`), never a second one. Each step's round holds its kind's icon from that table, never a number, which
+// means an answer's candidates alone (P03 ticket 26, "가안이 좋아보여"); a room's step is study; every step done is
+// solid.
 
 // The answer's first Plan, as a step of several requests shows it.
 function stepOf(answer: AnswerReply): ReplyStep {
@@ -96,26 +97,60 @@ describe("A step's mark on the map", () => {
   });
 });
 
-// The user's three choices, awaiting his decision. Partitions: a seat's round; a room's colour; a step done, chosen or
-// not, and one not done.
-describe("The steps' marks, by the user's choices", () => {
-  it("1: a seat's or a room's round holds its number, not the booking pick's book", () => {
+// Partitions: a seat's, a meal's, and each other kind's round; a step not done; the flag's words. Expected values: the
+// kinds' icons in `kindTone`.
+describe("The steps' marks, by kind", () => {
+  it("hold their kind's icon and no number: the book for a seat, the fork and spoon for a meal", () => {
+    const [seat, meal] = stepsReplyOn('2026-11-02').steps ?? [];
+    if (seat === undefined || meal === undefined) {
+      throw new Error('No seat or meal step');
+    }
+
+    expect(markOf(seat).symbol).toMatchObject({ number: null, icon: 'bookOpen' });
+    expect(markOf(meal).symbol).toMatchObject({ number: null, icon: 'meal' });
+    expect(markOf(seat).number).toBeNull();
+  });
+
+  it.each<[string, AnswerReply, string]>([
+    ['an events answer', EVENTS_ANSWER, 'calendar'],
+    ['a Quests answer', QUESTS_ANSWER, 'users'],
+    ['a new Quest', NEW_QUEST_ANSWER, 'users'],
+    ['a meet', MEET_ANSWER, 'user'],
+    ['a study', STUDY_PLAN_ANSWER, 'bookOpen'],
+  ])("hold %s's icon by the same table", (_, answer, icon) => {
+    expect(markOf(stepOf(answer)).symbol).toMatchObject({ number: null, icon });
+  });
+
+  it('hold no icon and no number for a step not done, grey', () => {
+    const { symbol } = markOf({ ...stepOf(MEAL_ANSWER_MENUS), status: 'not-done' });
+
+    expect(symbol).toMatchObject({ role: 'dropped', number: null });
+    expect(symbol).not.toHaveProperty('icon');
+  });
+
+  it("take the study colour for a room's step, as a seat's, and are solid for every step done", () => {
+    expect(answerTone('room')).toBe('study');
+    expect(stepMarkRole({ status: 'shown' })).toBe('pick');
+    expect(stepMarkRole({ status: 'not-done' })).toBe('dropped');
+  });
+});
+
+// Partitions: a flag's name; the step shown, drawn as alone, and the others.
+describe("The steps' flags", () => {
+  it('are named by their title and line, with no number before it', () => {
     const [seat] = stepsReplyOn('2026-11-02').steps ?? [];
     if (seat === undefined) {
       throw new Error('No seat step');
     }
+    const [draft] = stepDrafts([seat], ['17:30–19:00'], ['관정 7층 열람실']);
 
-    expect(bookingStepHolds()).toBe('number');
-    expect(markOf(seat).symbol).toMatchObject({ number: 1 });
-    expect(markOf(seat).symbol).not.toHaveProperty('study');
+    expect(draft?.name).toBe('관정 7층 열람실 › · 17:30–19:00');
   });
 
-  it("2: a room's step takes the study colour, as a seat's", () => {
-    expect(answerTone('room')).toBe('study');
-  });
+  it('leave out the step drawn as its answer or booking alone', () => {
+    const steps = stepsReplyOn('2026-11-02').steps ?? [];
 
-  it('3: every step done is solid, as a pick; one not done grey', () => {
-    expect(stepMarkRole({ status: 'shown' })).toBe('pick');
-    expect(stepMarkRole({ status: 'not-done' })).toBe('dropped');
+    expect(stepDrafts(steps, ['', ''], ['', ''], [], 1).map(({ id }) => id)).toEqual(['answer:step:1']);
+    expect(stepDrafts(steps, ['', ''], ['', ''], [], 0).map(({ id }) => id)).toEqual(['answer:step:2']);
   });
 });

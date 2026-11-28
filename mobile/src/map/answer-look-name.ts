@@ -26,6 +26,7 @@ export function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | nul
           symbol.number,
           ...(symbol.faded === true ? ['faded'] : []),
           ...[symbol.meal === true ? ['meal'] : [], symbol.study === true ? ['study'] : []].flat(),
+          ...(symbol.icon === undefined ? [] : [{ icon: symbol.icon }]),
           // A kind draws its own colour (`kindTone`).
           ...(symbol.kind === undefined ? [] : [{ kind: symbol.kind }]),
         ]

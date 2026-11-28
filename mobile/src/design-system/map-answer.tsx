@@ -14,7 +14,7 @@
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
-import { Icon } from './icon';
+import { Icon, type IconName } from './icon';
 import { MapPin } from './map-pin';
 import {
   ANSWER_SYMBOL_BOX,
@@ -52,6 +52,9 @@ export type AnswerSymbol =
       // A 관정 booking's pick (P01 ticket 10): the round in the study colour with the study layer's book inside. With
       // `meal`, a study answer's place: the meal's round in the study colour, its number in place of the book.
       study?: boolean;
+      // The icon a pick's round holds in place of a number: a step of several requests by its kind's (`kindTone`), as
+      // a 관정 booking's round holds its book (P03 ticket 26). Left out, none.
+      icon?: IconName;
     };
 
 export type FaceBadge = 'waiting' | 'accepted';
@@ -143,30 +146,29 @@ const DOT_SIZES: Partial<Record<DotSymbol['role'], number>> = { pick: PICK_DOT, 
 const MEAL_RIM = 1.5;
 const MEAL_INSIDE = CANDIDATE_ROUND - 2 * MEAL_RIM;
 
-// The study layer's book inside a 관정 booking's round, as the layer's own marks draw it.
+// The icon inside a pick's round: the study layer's book of a 관정 booking, as the layer's own marks draw it, or a
+// step's kind's icon.
 const STUDY_BOOK = 16;
 
-// The book's test id beside its round's ("m:dot" → "m:book").
-function bookOf(testID: string | undefined): string | undefined {
-  return testID?.replace(/:dot$/u, ':book');
-}
-
 function Dot(symbol: DotSymbol & { testID?: string }): ReactElement {
-  const { role, number, meal = false, study = false, testID } = symbol;
+  const { role, number, meal = false, study = false, icon, testID } = symbol;
   const kind = markTone(symbol);
   if (meal && role === 'candidate') {
     return <MealCandidate kind={kind} number={number} testID={testID} />;
   }
   const inside = (DOT_SIZES[role] ?? CANDIDATE_ROUND) - 2 * RING;
   const studyPick = study && role === 'pick';
+  // A 관정 booking's pick holds the study layer's book, as a step's round holds its kind's icon.
+  const glyph = icon ?? (studyPick && !meal ? 'bookOpen' : undefined);
   const ground = role === 'pick' || role === 'candidate' ? { backgroundColor: kindTone[kind].ink } : null;
   return (
     <View style={[styles.dot, styles[role], ground]} testID={testID}>
-      {studyPick && !meal ? (
-        <View testID={bookOf(testID)}>
-          <Icon color={color.onPrimary} name="bookOpen" size={STUDY_BOOK} />
+      {glyph === undefined ? null : (
+        // Its test id beside its round's: "m:dot" → "m:book" for the study layer's book, "m:icon" for another.
+        <View testID={testID?.replace(/:dot$/u, glyph === 'bookOpen' ? ':book' : ':icon')}>
+          <Icon color={color.onPrimary} name={glyph} size={STUDY_BOOK} />
         </View>
-      ) : null}
+      )}
       {number === null ? null : (
         <RoundNumber inside={inside} number={number} style={role === 'pick' ? styles.pickNumber : styles.number} />
       )}

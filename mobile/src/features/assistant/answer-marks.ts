@@ -17,8 +17,6 @@
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { koreaClock, koreaDayWord } from '@/korea-time';
-import type { MarkerLook } from '@/map';
-import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, metresBetween, offset } from './answer-drawing';
 import {
   candidatesAt,
@@ -312,6 +310,8 @@ export function drawingOf(
   standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
   view: LabelView | null = null,
   ways?: Ways,
+  // Marks drawn beside the answer's own, as the other steps of several requests (P03 ticket 26); left out, none.
+  beside: readonly Draft[] = [],
 ): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
@@ -341,18 +341,6 @@ export function drawingOf(
     toneKind: answerTone(answer.input.kind),
     over: overPriceIds(answer),
     ...(ways === undefined ? {} : { ways }),
+    ...(beside.length === 0 ? {} : { drafts: beside }),
   });
-}
-
-// The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides
-// chosen in metres, or with those sides.
-export function looksOf(
-  answer: AnswerReply,
-  viewOf: (drawing: AnswerDrawing) => LabelView | null = (): null => null,
-): MarkerLook[] {
-  const looks = answer.plans.flatMap((_, index) => {
-    const view = viewOf(drawingOf(answer, index));
-    return drawingOf(answer, index, NO_STANDINGS, view).things.map(({ look }) => look);
-  });
-  return looks.filter((look, index) => looks.findIndex((other) => lookName(other) === lookName(look)) === index);
 }

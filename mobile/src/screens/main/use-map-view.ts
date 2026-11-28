@@ -131,7 +131,8 @@ function pressTarget(
 }
 
 // The answer the map draws: a scene the app made over the Plan, and the Plan over the Lookup. Only the one drawn is
-// framed (`Frame`, P10 ticket 30).
+// framed (`Frame`, P10 ticket 30). The step of several requests shown as its answer is that answer's Plan, drawn as
+// alone, with the other steps' marks beside it (P03 ticket 26).
 function useDrawnAnswer(
   chat: ChatSheetControl,
   map: MainMap,
@@ -142,9 +143,9 @@ function useDrawnAnswer(
   const drawn = onMap(chat);
   const seats = useAwaySeats(awayPlaceOf(drawn.lookup.lookup));
   const openMark = useMarkOpening(chat.openMark, map.camera, room.stage);
-  const scene = useMadeSceneMap(chat, map, room, people, me, openMark);
+  const { map: scene, beside } = useMadeSceneMap(chat, map, room, people, me, openMark);
   const menu = withMealMenu(chat, openMark);
-  const plan = useAnswerMap(drawn.answer, map, room, people, chat.invitation, menu, scene === null);
+  const plan = useAnswerMap(drawn.answer, map, room, people, chat.invitation, menu, scene === null, beside);
   const shownLookup = scene === null && plan === null;
   const lookup = useLookupMap(drawn.lookup, map, room, people, me.avatars, seats, chat.card.raise, shownLookup);
   return scene ?? plan ?? lookup;

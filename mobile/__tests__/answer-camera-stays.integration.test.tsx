@@ -274,7 +274,7 @@ describe("Several requests' steps on the map, once framed", () => {
   it('are framed again for another step chosen', async () => {
     const { user, moves, framed } = await framedSteps();
 
-    await user.press(screen.getByRole('button', { name: /^2번 /u }));
+    await user.press(screen.getByTestId('step-word-2'));
     await pass(1000);
 
     expect(moves()).toBeGreaterThan(framed);
@@ -283,10 +283,14 @@ describe("Several requests' steps on the map, once framed", () => {
   it("are framed again for another plan of the chosen step's answer", async () => {
     const { user, moves, framed } = await framedSteps();
 
-    await user.press(within(screen.getByTestId('plan-stepper')).getByLabelText('다음 후보'));
+    // Another plan is chosen in the step's list, as a meal alone's (P03 ticket 25: a step lists its plans and has no
+    // pager); the menu the press opens is closed again.
+    await user.press(screen.getByTestId('meal-row-2'));
+    await pass(300);
+    await user.press(screen.getByTestId('meal-menu-back'));
     await pass(1000);
 
-    expect(screen.getByTestId('plan-count')).toHaveTextContent('2/3');
+    expect(screen.getByTestId('meal-row-2')).toBeSelected();
     expect(moves()).toBeGreaterThan(framed);
   });
 });

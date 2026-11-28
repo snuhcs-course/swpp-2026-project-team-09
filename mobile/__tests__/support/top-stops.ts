@@ -107,7 +107,7 @@ export async function atStep(
   await layStage(390, 760);
   await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
   await hideKeyboard();
-  await user.press(screen.getByRole('button', { name: new RegExp(`^${String(number)}번`, 'u') }));
+  await user.press(screen.getByTestId(`step-word-${String(number)}`));
   await pass(50);
   await layStepsCard();
   if (screen.queryByTestId('time-card-head') !== null) {
