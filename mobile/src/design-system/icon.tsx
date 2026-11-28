@@ -10,6 +10,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -170,6 +171,8 @@ const ICONS = {
   phone: [{ rect: [5, 2, 14, 20, 2] }, { path: 'M11 18h2' }],
   monitor: [{ path: 'M3 4h18v12H3z' }, { path: 'M8 20h8' }, { path: 'M12 16v4' }],
   arrowRight: [{ path: 'M5 12h14' }, { path: 'M13 6l6 6-6 6' }],
+  // Two overlapping sheets, the back one up and to the right: 친구 추가's copy of the User's Friend ID.
+  copy: [{ path: 'M9 9V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4' }, { rect: [3, 9, 12, 12, 2] }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;
