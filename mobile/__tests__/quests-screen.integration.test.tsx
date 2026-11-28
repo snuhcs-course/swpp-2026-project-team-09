@@ -18,6 +18,12 @@ import { startFresh } from './support/mocks';
 // The Quest list on the whole screen, the `MainQuests` frame, against the mocks.
 
 jest.mock('expo-location');
+// As on Android, where nothing blurs the map: the list on glass is the `screen` level's white.
+jest.mock('expo-glass-effect', () => ({
+  isLiquidGlassAvailable: (): boolean => false,
+  isGlassEffectAPIAvailable: (): boolean => false,
+  GlassView: (): null => null,
+}));
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
   useMotionAllowed: (): boolean => false,

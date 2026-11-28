@@ -13,6 +13,13 @@ import { hideKeyboard, KEYBOARD, showKeyboard } from '../support/keyboard';
 import { Button } from '@/design-system/button';
 import { FullScreenPanel } from '@/design-system/full-screen-panel';
 
+// As on Android, where nothing blurs the map: a screen on glass is the `screen` level's white.
+jest.mock('expo-glass-effect', () => ({
+  isLiquidGlassAvailable: (): boolean => false,
+  isGlassEffectAPIAvailable: (): boolean => false,
+  GlassView: (): null => null,
+}));
+
 async function renderForm(footerHidesForKeyboard = false): Promise<void> {
   await render(
     <FullScreenPanel
