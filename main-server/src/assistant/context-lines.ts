@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlanInput, type RequestContext, type StudyInput } from './dto/answer.dto.js';
@@ -39,8 +40,16 @@ function studyFacts(input: StudyInput, planId: string | null, planIds?: string[]
   return { ...plan, ...more };
 }
 
-// A plan on screen as the model reads it: its conditions, and the plan open and the plans numbered, if any.
+// A plan on screen as the model reads it: its conditions, and the plan open and the plans numbered, if any. A condition
+// not set is left out, not written null (P05 ticket 83): the model gives a planning tool the conditions on screen as
+// they are, and the tools take an unset condition as left out.
 function planFacts(conditions: PlanInput, planId: string | null, planIds?: string[]): object {
+  return Object.fromEntries(
+    Object.entries(allFacts(conditions, planId, planIds)).filter(([, value]) => value !== null),
+  );
+}
+
+function allFacts(conditions: PlanInput, planId: string | null, planIds?: string[]): object {
   if (conditions.kind === 'events') {
     const { date, eventIds } = conditions;
     return { plan: planId, kind: 'events', date, eventIds };
