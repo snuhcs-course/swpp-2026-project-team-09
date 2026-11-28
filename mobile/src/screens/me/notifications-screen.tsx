@@ -12,10 +12,12 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
+  Button,
   cardStyles,
+  Dialog,
   color,
   EmptyState,
   ErrorState,
@@ -34,8 +36,14 @@ import {
 import { openAddress } from '@/features/notifications/address';
 import { now } from '@/clock';
 import { type NoticeKind, type NoticeView, noticeDays, waitingNotices } from '@/features/notifications/adapter';
-import { useMarkShownRead, useNotices } from '@/features/notifications/use-notices';
+import {
+  useDeleteAllNotices,
+  useDeleteNotice,
+  useMarkShownRead,
+  useNotices,
+} from '@/features/notifications/use-notices';
 import { PartyOnButton } from './party-on-button';
+import { SwipedNotice } from './swiped-notice';
 
 const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   party: 'navy',
@@ -115,9 +123,36 @@ function Notice({ notice, fresh, onPress }: NoticeProps): ReactElement {
   );
 }
 
+// A row of 알림. A kept Notification's swipes to the left to be deleted; a row of what waits does not.
+function Row({ notice, fresh }: { notice: NoticeView; fresh: boolean }): ReactElement {
+  const press = usePress();
+  const deleteNotice = useDeleteNotice();
+  const row = (
+    <Notice
+      fresh={fresh}
+      notice={notice}
+      onPress={() => {
+        press(notice);
+      }}
+    />
+  );
+  const { keptId } = notice;
+  if (keptId === null) {
+    return row;
+  }
+  return (
+    <SwipedNotice
+      onDelete={() => {
+        deleteNotice(keptId);
+      }}
+    >
+      {row}
+    </SwipedNotice>
+  );
+}
+
 // The rows under 오늘, 어제 and 이전, each group in its own card. `fresh` holds the keys of the rows marked new.
 function Notices({ notices, fresh }: { notices: readonly NoticeView[]; fresh: ReadonlySet<string> }): ReactElement {
-  const press = usePress();
   if (notices.length === 0) {
     return (
       <View style={[cardStyles.card, styles.card]}>
@@ -132,19 +167,49 @@ function Notices({ notices, fresh }: { notices: readonly NoticeView[]; fresh: Re
           <SectionHeader>{day.title}</SectionHeader>
           <RowCard>
             {day.notices.map((notice) => (
-              <Notice
-                fresh={fresh.has(notice.key)}
-                key={notice.key}
-                notice={notice}
-                onPress={() => {
-                  press(notice);
-                }}
-              />
+              <Row fresh={fresh.has(notice.key)} key={notice.key} notice={notice} />
             ))}
           </RowCard>
         </View>
       ))}
     </View>
+  );
+}
+
+// The app bar's 모두 지우기, while 알림 shows `count` kept Notifications. It asks once, since nothing brings them back,
+// and leaves what waits.
+function DeleteAll({ count }: { count: number }): ReactElement | null {
+  const deleteAll = useDeleteAllNotices();
+  const [asking, setAsking] = useState(false);
+  if (count === 0) {
+    return null;
+  }
+  return (
+    <>
+      <Button
+        centred
+        onPress={() => {
+          setAsking(true);
+        }}
+        variant="ghost"
+      >
+        모두 지우기
+      </Button>
+      <Dialog
+        cancelLabel="취소"
+        confirmLabel="지우기"
+        onCancel={() => {
+          setAsking(false);
+        }}
+        onConfirm={() => {
+          setAsking(false);
+          deleteAll();
+        }}
+        title={`알림 ${count}개를 지울까요?`}
+        tone="danger"
+        visible={asking}
+      />
+    </>
   );
 }
 
@@ -155,8 +220,10 @@ export function NotificationsScreen(): ReactElement {
   const { data, isPending, refetch } = useNotices();
   const fresh = useMarkShownRead(data !== undefined);
   const count = waitingNotices(data ?? []).length;
+  const kept = (data ?? []).filter(({ keptId }) => keptId !== null).length;
   return (
     <FullScreenPanel
+      actions={<DeleteAll count={kept} />}
       count={count === 0 ? undefined : count}
       leave={{ kind: 'back', onPress: router.back }}
       subtle
