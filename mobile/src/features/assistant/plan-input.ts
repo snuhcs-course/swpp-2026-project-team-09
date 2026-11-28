@@ -7,9 +7,11 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, Plan, PlanInput, PlanPerson } from '@/api/assistant-types';
+import { windowClockOn } from './time-band';
 
 const NO_WINDOW: MealInput['window'] = { from: null, until: null };
 
@@ -79,6 +81,17 @@ export function withBound(input: PlanInput, bound: 'from' | 'until', time: strin
 // The band moved whole: its start fixed, and its end left to the server, which plans the longest time from then.
 export function withStart(input: PlanInput, time: string): PlanInput {
   return isWindowed(input) ? { ...input, window: { from: time, until: null } } : input;
+}
+
+// An end of the band let go at the time `at`, written as a clock on the input's date: past midnight, hours past 24,
+// which the main server reads on the next day (P01 ticket 49, P05 ticket 91).
+export function withDropped(input: PlanInput, bound: 'from' | 'until', at: string): PlanInput {
+  return isWindowed(input) ? withBound(input, bound, windowClockOn(input.date, at)) : input;
+}
+
+// The band moved whole to start at the time `at`, written as `withDropped` writes it.
+export function withMovedStart(input: PlanInput, at: string): PlanInput {
+  return isWindowed(input) ? withStart(input, windowClockOn(input.date, at)) : input;
 }
 
 // A study answer's conditions with the kind of group study room the User chose on the room ticket (P10 ticket 10);

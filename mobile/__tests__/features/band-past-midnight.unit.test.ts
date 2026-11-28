@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimeBand } from '@/api/assistant-types';
@@ -110,22 +111,21 @@ describe('Every place that writes a clock on the band’s day, past midnight', (
   });
 });
 
-// The main server reads a dropped clock on the band's day (`study-plan.ts`, `onDay`), so 00:30 after midnight would be
-// that morning's and the recalculation would find no time (#769's review). No handle or whole move lets a time go past
-// the last step before midnight until it reads them otherwise. Partitions: an end dragged past midnight from before it
-// and from after it; an end pressed where it is past midnight; a seat's range to 24:00; the band moved whole; an end
-// that the last drop would leave too short.
+// A time let go past midnight is a clock on the band's day past 23 (P01 ticket 49): the main server reads it on the
+// next day (P05 ticket 91), so no handle or whole move stops at 23:55 any more, as #769 made it. Partitions: an end
+// dragged past midnight from before it and from after it; an end pressed where it is past midnight; a seat's range to
+// 24:00; the band moved whole.
 describe('Letting a band go past midnight', () => {
-  it('stops an end dragged past midnight at the last step before it', () => {
-    expect(droppedAt('until', share('00:30', '2026-11-29'), { ...LATE, endAt: at('23:00') })).toBe('23:55');
-    expect(droppedAt('until', share('00:30', '2026-11-29'), LATE)).toBe('23:55');
+  it('lets an end dragged past midnight go where it is dragged', () => {
+    expect(droppedAt('until', share('00:30', '2026-11-29'), { ...LATE, endAt: at('23:00') })).toBe('24:30');
+    expect(droppedAt('until', share('00:30', '2026-11-29'), LATE)).toBe('24:30');
   });
 
   it('keeps an end past midnight that is pressed where it is', () => {
-    expect(droppedAt('until', 1, LATE)).toBe('01:00');
+    expect(droppedAt('until', 1, LATE)).toBe('25:00');
   });
 
-  it('stops a seat’s end at the last step before a 24:00 close', () => {
+  it('lets a seat’s end go at a 24:00 close', () => {
     const seat = {
       ...LATE,
       startAt: at('22:00'),
@@ -133,19 +133,13 @@ describe('Letting a band go past midnight', () => {
       range: { startAt: at('20:00'), endAt: at('24:00') },
     };
 
-    expect(droppedAt('until', 1, seat)).toBe('23:55');
+    expect(droppedAt('until', 1, seat)).toBe('24:00');
   });
 
-  it('starts a band moved whole no later than the last step before midnight', () => {
+  it('moves a band whole past midnight', () => {
     const band = { ...LATE, startAt: at('23:00'), endAt: next('00:00') };
 
-    expect(ms(bandMoved(band, 1 / 6).startAt)).toBe(ms(at('23:55')));
-  });
-
-  it('keeps an end that the last drop would leave shorter than 15 minutes', () => {
-    const band = { ...LATE, startAt: at('23:50'), endAt: next('00:30') };
-
-    expect(droppedAt('until', share('00:10', '2026-11-29'), band)).toBe('00:30');
+    expect(ms(bandMoved(band, 1 / 6).startAt)).toBe(ms(next('00:00')));
   });
 });
 

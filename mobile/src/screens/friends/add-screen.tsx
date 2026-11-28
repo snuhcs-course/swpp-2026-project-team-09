@@ -5,12 +5,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, type ReactNode, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ApiError } from '@/api/errors';
 import type { UserSummary } from '@/api/types';
 import {
@@ -19,11 +20,14 @@ import {
   color,
   font,
   FullScreenPanel,
+  Icon,
   ListRow,
+  radius,
   SectionHeader,
+  size,
   space,
   text,
-  TextField,
+  TextEntry,
   type ToastAction,
   useToast,
 } from '@/design-system';
@@ -66,18 +70,31 @@ function refusalWords(error: unknown, owner: UserSummary | null): string {
   return words === undefined ? NO_ANSWER : words(owner?.name ?? '');
 }
 
+// A section: its grey head, and what it holds in a soft box, as the 파티 form's plan box.
+function Part({ title, children }: { title: string; children: ReactNode }): ReactElement {
+  return (
+    <View style={styles.part}>
+      <SectionHeader>{title}</SectionHeader>
+      <View style={styles.box}>{children}</View>
+    </View>
+  );
+}
+
 function MyFriendId(): ReactElement {
   const friendId = useMyFriendId();
   const showToast = useToast();
   return (
-    <View style={styles.part}>
-      <SectionHeader>내 친구 ID</SectionHeader>
+    <Part title="내 친구 ID">
       <View style={styles.mine}>
         <Text selectable style={styles.friendId}>
           {friendId ?? ''}
         </Text>
-        <Button
+        <Pressable
+          accessibilityLabel="친구 ID 복사"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: friendId === undefined }}
           disabled={friendId === undefined}
+          hitSlop={COPY_HIT_SLOP}
           onPress={() => {
             if (friendId !== undefined) {
               void Clipboard.setStringAsync(friendId).then(() => {
@@ -85,13 +102,12 @@ function MyFriendId(): ReactElement {
               });
             }
           }}
-          variant="secondary"
+          style={({ pressed }) => pressed && styles.pressed}
         >
-          복사
-        </Button>
+          <Icon color={color.snuBlue} name="copy" size={COPY_ICON} />
+        </Pressable>
       </View>
-      <Text style={styles.hint}>친구 ID를 알려 주면 친구 요청을 받을 수 있어요</Text>
-    </View>
+    </Part>
   );
 }
 
@@ -151,22 +167,58 @@ function useLookup(): [Lookup, (typed: string) => void, () => void, () => void] 
   return [lookup, type, find, add];
 }
 
+// The field without a label of its own, since the section's head says what it takes, drawn as `TextField`'s input at
+// the height of an `lg` button, so that 찾기 stands level beside it.
+function FriendIdField({
+  typed,
+  error,
+  type,
+}: {
+  typed: string;
+  error: string | undefined;
+  type: (typed: string) => void;
+}): ReactElement {
+  const [focused, setFocused] = useState(false);
+  return (
+    <TextEntry
+      accessibilityHint={error}
+      accessibilityLabel="친구 ID"
+      onBlur={() => {
+        setFocused(false);
+      }}
+      onChangeText={type}
+      onFocus={() => {
+        setFocused(true);
+      }}
+      placeholder="친구 ID 8자리"
+      placeholderTextColor={color.inkMuted}
+      // What would leave the Friend ID as it is, a ninth letter or a dash, is refused, so the field keeps showing it.
+      takes={(words) => asFriendId(words) !== typed}
+      style={[styles.input, error !== undefined && styles.invalid, focused && styles.focused]}
+      value={typed}
+    />
+  );
+}
+
 function ByFriendId(): ReactElement {
   const [lookup, type, find, add] = useLookup();
   const { typed, owner, sent, error } = lookup;
   return (
-    <View style={styles.part}>
-      <SectionHeader>친구 ID로 추가</SectionHeader>
+    <Part title="친구 ID로 추가">
       <View style={styles.field}>
-        <View style={styles.input}>
-          <TextField error={error} label="친구 ID" onChangeText={type} placeholder="친구 ID 8자리" value={typed} />
+        <View style={styles.grow}>
+          <FriendIdField error={error} type={type} typed={typed} />
         </View>
-        <View style={styles.find}>
-          <Button disabled={typed.length < FRIEND_ID_LENGTH} onPress={find}>
-            찾기
-          </Button>
-        </View>
+        <Button disabled={typed.length < FRIEND_ID_LENGTH} onPress={find} size="lg">
+          찾기
+        </Button>
       </View>
+      {error === undefined ? null : (
+        <View style={styles.error}>
+          <Icon color={color.danger} name="alert" size={ERROR_ICON} />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
       {owner === null || error !== undefined ? null : (
         <ListRow
           leading={<Avatar name={owner.name} />}
@@ -179,7 +231,7 @@ function ByFriendId(): ReactElement {
           }
         />
       )}
-    </View>
+    </Part>
   );
 }
 
@@ -189,13 +241,12 @@ function ByInviteLink(): ReactElement {
     void sendInviteLink();
   };
   return (
-    <View style={styles.part}>
-      <SectionHeader>초대 링크로 추가</SectionHeader>
+    <Part title="초대 링크로 추가">
       <Button full icon="send" onPress={send} size="lg" variant="secondary">
         초대 링크 보내기
       </Button>
       <Text style={styles.hint}>링크는 한 사람만, 만든 뒤 24시간 동안 쓸 수 있어요</Text>
-    </View>
+    </Part>
   );
 }
 
@@ -214,15 +265,34 @@ export function AddScreen(): ReactElement {
 }
 
 const FRIEND_ID_SPACING = 4;
+const COPY_ICON = 20;
+// The copy icon's touch area reaches 44 without moving the Friend ID.
+const COPY_HIT_SLOP = (44 - COPY_ICON) / 2;
+const ERROR_ICON = 14;
+const FOCUS_RING = `0 0 0 1px ${color.focusRing}`;
 
 const styles = StyleSheet.create({
   parts: { gap: space[6], paddingHorizontal: space[4], paddingBottom: space[8] },
   part: { gap: space[2] },
-  mine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] },
+  box: { gap: space[3], padding: space[4], borderRadius: radius.md, backgroundColor: color.surfaceSubtle },
+  mine: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   friendId: { ...text.display, fontFamily: font.bold, letterSpacing: FRIEND_ID_SPACING, color: color.ink },
+  pressed: { opacity: 0.5 },
   hint: { ...text.caption, color: color.inkMuted },
-  field: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
-  input: { flex: 1 },
-  // Level with the input under its label.
-  find: { paddingTop: 24 },
+  field: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  grow: { flex: 1 },
+  input: {
+    ...text.bodyLg,
+    height: size.button,
+    paddingHorizontal: space[4],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: color.borderStrong,
+    color: color.ink,
+    backgroundColor: color.surface,
+  },
+  focused: { borderColor: color.focusRing, boxShadow: FOCUS_RING },
+  invalid: { borderColor: color.danger },
+  error: { flexDirection: 'row', alignItems: 'center', gap: space[1], marginTop: -space[2] },
+  errorText: { ...text.caption, flexShrink: 1, color: color.danger },
 });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -16,8 +17,8 @@ import { holdGesture } from './support/hold-gesture';
 
 // The end handle of a study place's band that runs past midnight (P01 ticket 48), as the user pressed it on his phone:
 // "19:15–01:00 · 5시간 45분" in a range of 19:00 to 01:00, a track 240 wide, so 1.5 minutes a point. Partitions: the end
-// pressed where it is; dragged back before midnight; dragged back only past midnight, where it stops at the last step
-// before it (#769's review); the drag cancelled, as when the card's scroll takes the touch.
+// pressed where it is; dragged back before midnight; dragged back only past midnight, let go there as "24:30", the
+// clock on the band's day past 23 (P01 ticket 49); the drag cancelled, as when the card's scroll takes the touch.
 
 const at = (clock: string, date = '2026-11-28'): string => `${date}T${clock}:00+09:00`;
 const LATE: TimeBandData = {
@@ -83,18 +84,18 @@ describe('The end handle of a band past midnight', () => {
     expect(screen.getByText('23:30')).toHaveStyle({ fontFamily: font.bold });
   });
 
-  it('stops before midnight when dragged back to 00:30, and is let go there', async () => {
+  it('is let go at 00:30 past midnight when dragged back to it, saying 00:30', async () => {
     const drops = await show();
 
-    // 30 minutes before 01:00, past the last step before midnight.
+    // 30 minutes before 01:00.
     const move = await holdGesture('time-band-until', 0, -20);
 
-    expect(screen.getByTestId('time-band-words')).toHaveTextContent('19:15–23:55 · 4시간 40분');
+    expect(screen.getByTestId('time-band-words')).toHaveTextContent('19:15–00:30 · 5시간 15분');
 
     await move(-20);
     await endPan('time-band-until', -20, State.END);
 
-    expect(drops).toEqual(['until 23:55']);
+    expect(drops).toEqual(['until 24:30']);
   });
 
   it('goes back and asks for nothing when the drag is cancelled', async () => {

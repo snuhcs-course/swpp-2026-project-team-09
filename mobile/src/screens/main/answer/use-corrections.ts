@@ -8,6 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -18,9 +19,16 @@ import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
 import { onlyFriendOf } from '@/features/assistant/meet-input';
-import { peopleOf, withBound, withOrigin, withoutPerson, withStart } from '@/features/assistant/plan-input';
+import {
+  peopleOf,
+  withBound,
+  withDropped,
+  withMovedStart,
+  withOrigin,
+  withoutPerson,
+} from '@/features/assistant/plan-input';
 import { relaxed, timeChipChange } from '@/features/assistant/relaxed-plan';
-import { type BandBound, clockOf, msOf, type Stretch } from '@/features/assistant/time-band';
+import { type BandBound, msOf, onBandDay, type Stretch } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
 
@@ -109,12 +117,24 @@ function removerOf(change: ShownAnswer['change'], only: string | null, close: ()
   };
 }
 
+// The band's handles let go a clock on the band's day; it is sent as the time it is, on the input's date.
+function dropOf({ frame, change }: ShownAnswer): Corrections['drop'] {
+  return (bound, time) => {
+    const band = frame?.band;
+    change(
+      (conditions) =>
+        band === undefined ? withBound(conditions, bound, time) : withDropped(conditions, bound, onBandDay(time, band)),
+      'drag',
+    );
+  };
+}
+
 function moveOf({ frame, setMoving, change }: ShownAnswer): Corrections['move'] {
   return (at, letGo) => {
     const still = frame === null || msOf(at.startAt) === msOf(frame.band.startAt);
     setMoving(letGo && still ? null : at);
     if (letGo && !still) {
-      change((input) => withStart(input, clockOf(at.startAt)), 'move');
+      change((input) => withMovedStart(input, at.startAt), 'move');
     }
   };
 }
@@ -159,9 +179,7 @@ export function useCorrections(
       setAdding(false);
       focusUntil();
     },
-    drop: (bound, time) => {
-      change((conditions) => withBound(conditions, bound, time), 'drag');
-    },
+    drop: dropOf(shown),
     relax: (offer) => {
       change((conditions) => relaxed(conditions, offer));
     },
