@@ -28,7 +28,7 @@ Received by the user on 2026-11-28 as a review comment: pressing a row of 알림
 
 ## Acceptance criteria
 
-- [ ] Pressing 지금 나서요 opens its 파티's card on the map with nothing left above the tabs. (App integration test, which fails before the change: a second tab navigator stays above 알림.)
+- [ ] Pressing 지금 나서요 opens its 파티's card on the map with nothing left above the tabs. (App integration test, written to fail before the change, where a second tab navigator stays above 알림; not run against the old code.)
 - [ ] Checked on a phone after the app OTA update: 알림 slides away to the right and the map under it opens the card.
 - [x] No native file changes; lint (type-aware) and format pass on the changed files. jest and tsc run in CI.
 
