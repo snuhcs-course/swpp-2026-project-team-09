@@ -47,6 +47,7 @@ export interface Asked {
   area?: StudyArea | null;
   items?: DayItem[];
   location?: WayArgs['location'];
+  window?: StudyInput['window'];
 }
 
 const at301 = (): WayArgs['location'] => ({ at: position('제1공학관'), placeId: id('제1공학관'), onCampus: true });
@@ -58,6 +59,7 @@ export function asked({
   area = null,
   items = [],
   date = TUESDAY,
+  window = { from: null, until: null },
   ...given
 }: Asked): AnswerReply {
   const now = onDay(date, clock);
@@ -67,7 +69,7 @@ export function asked({
     what,
     people: [{ userId: ME, constraints: [] }],
     together: false,
-    window: { from: null, until: null },
+    window,
     area,
     minutes: null,
     chosen: { seatSpaceId: null, roomSpaceId: null },

@@ -3,12 +3,13 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Column } from './grid';
 import { blockMask, closeMask, components } from './mask';
 import { columnCoverages, cutAtColumns, narrowRuns, type Part, sideBySide } from './parts';
-import { BLOCK, type Colour, colourDistance, FAINT, INK, PLAIN, type PixelImage, rowColour } from './pixels';
+import { BLOCK, type Colour, colourDistance, FAINT, INK, PLAIN, type PixelImage, rowColour, rowMedian } from './pixels';
 
 // ② The coloured blocks, in the small copy's pixels: x1 and y1 are exclusive.
 
@@ -27,14 +28,18 @@ export interface Block {
   narrow?: boolean;
 }
 
-// The colours of a part's rows: the mean of each row's block pixels, null for a row without any.
+// The colours of a part's rows, null for a row without block pixels: by default the median of each row's block pixels,
+// which keeps a row crossed by letters at the block's own colour. The mean leans towards the letters' (P05 ticket 90),
+// so a block whose long name covers most of its rows read as fading at its clean top and bottom, and was left out. The
+// colour a block is sent with stays the median of its rows' means (`blockOf`), as the saved grids hold it.
 function rowColours(
   image: PixelImage,
   part: { x0: number; x1: number; y0: number; y1: number },
+  of: typeof rowColour = rowMedian,
 ): ([number, number, number] | null)[] {
   const colours: ([number, number, number] | null)[] = [];
   for (let y = part.y0; y < part.y1; y += 1) {
-    colours.push(rowColour(image, y, part.x0, part.x1, (index) => image.kind[index] === BLOCK));
+    colours.push(of(image, y, part.x0, part.x1, (index) => image.kind[index] === BLOCK));
   }
   return colours;
 }
@@ -156,7 +161,7 @@ function blockOf(image: PixelImage, part: Part, extra: Partial<Block> = {}): Blo
     x1: part.x1,
     y0: part.y0,
     y1: part.y1,
-    colour: medianColour(rowColours(image, part)),
+    colour: medianColour(rowColours(image, part, rowColour)),
     ...extra,
   };
 }
@@ -222,12 +227,13 @@ function meetsAnother(block: Block, blocks: readonly Block[], y: number, side: '
   );
 }
 
-// Whether the rows of a block next to one edge drift from the block's colour: it fades out there (the blur behind a
-// floating bar). The edge row itself, blended with what is next to it, is not looked at.
+// Whether the rows of a block next to one edge drift from the block's fill, the median of its rows' medians: it fades
+// out there (the blur behind a floating bar). The edge row itself, blended with what is next to it, is not looked at.
 function fades(image: PixelImage, block: Block, side: 'top' | 'bottom'): boolean {
   const colours = rowColours(image, block);
+  const fill = medianColour(colours);
   const edge = (side === 'bottom' ? colours.slice(-3, -1) : colours.slice(1, 3)).filter((colour) => colour !== null);
-  return edge.every((colour) => colourDistance(colour, block.colour) > FADE_DISTANCE);
+  return edge.every((colour) => colourDistance(colour, fill) > FADE_DISTANCE);
 }
 
 // The day header's band and the row of the first hour's line, right under it.
