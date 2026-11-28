@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -73,6 +74,11 @@ describe('the Friends the words match', () => {
 
   it('keep two Friends of one name both, for their departments to tell apart', () => {
     expect(friendsMatching(FRIENDS, '민수')).toEqual([MIN_SU_CS, MIN_SU_BIZ]);
+  });
+
+  it('are found while a Hangul syllable is being composed, and by first consonants', () => {
+    expect(friendsMatching(FRIENDS, '미')).toEqual([MIN_SU_CS, MIN_SU_BIZ]);
+    expect(friendsMatching(FRIENDS, 'ㅅㅈ')).toEqual([JI_WOO]);
   });
 
   it('are none when a space follows a name no Friend has', () => {

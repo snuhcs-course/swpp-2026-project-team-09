@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Friend } from '@/api/types';
-import { BottomSheet, Button, color, font, radius, SearchField, space } from '@/design-system';
-import { FriendRow, matchesFriend } from './friend-picker';
+import { BottomSheet, Button, color, EmptyState, font, NO_RESULTS, radius, SearchField, space } from '@/design-system';
+import { matchesFriend } from '@/features/friends/matches-friend';
+import { FriendRow } from './friend-picker';
 
 interface FriendSheetProps {
   open: boolean;
@@ -31,25 +33,25 @@ interface ListProps {
 // The Friends the search finds, each with its check; none more once the free places are taken.
 function FriendList({ friends, search, checked, most, onChecked }: ListProps): ReactElement {
   const full = checked.length >= most;
+  const found = friends.filter((friend) => matchesFriend(friend, search));
   return (
     <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll}>
       <View style={styles.list}>
-        {friends
-          .filter((friend) => matchesFriend(friend, search))
-          .map((friend) => {
-            const on = checked.includes(friend.id);
-            return (
-              <FriendRow
-                disabled={!on && full}
-                friend={friend}
-                key={friend.id}
-                on={on}
-                onPress={() => {
-                  onChecked(on ? checked.filter((one) => one !== friend.id) : [...checked, friend.id]);
-                }}
-              />
-            );
-          })}
+        {found.length === 0 && friends.length > 0 ? <EmptyState words={NO_RESULTS} /> : null}
+        {found.map((friend) => {
+          const on = checked.includes(friend.id);
+          return (
+            <FriendRow
+              disabled={!on && full}
+              friend={friend}
+              key={friend.id}
+              on={on}
+              onPress={() => {
+                onChecked(on ? checked.filter((one) => one !== friend.id) : [...checked, friend.id]);
+              }}
+            />
+          );
+        })}
       </View>
     </ScrollView>
   );

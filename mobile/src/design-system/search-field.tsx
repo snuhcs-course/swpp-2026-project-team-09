@@ -4,12 +4,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { NOT_AUTOFILLED } from './autofill';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from './icon';
+import { TextEntry } from './text-entry';
 import { color, font, radius, space } from './tokens';
 
 interface SearchFieldProps {
@@ -22,7 +23,11 @@ interface SearchFieldProps {
   clearLabel?: string;
 }
 
-// A field that narrows a list: a search icon, the words, and ✕ "지우기" while it holds any.
+// What a list narrowed by a search says when nothing is left.
+export const NO_RESULTS = '결과 없음';
+
+// A field that narrows a list: a search icon, the words, and ✕ "지우기" while it holds any. Every search box of the app
+// is one, and a list it narrows on the phone matches its words with `matchesWords`.
 export function SearchField({
   value,
   onChangeText,
@@ -33,10 +38,7 @@ export function SearchField({
   return (
     <View style={styles.field}>
       <Icon color={color.inkMuted} name="search" size={18} />
-      {/* No autoCorrect={false}: on Android it sets NO_SUGGESTIONS, and Samsung Keyboard then types Hangul as loose
-          letters, 'ㄱㅗㅇㅎㅏㄱ' for 공학. */}
-      <TextInput
-        {...NOT_AUTOFILLED}
+      <TextEntry
         accessibilityLabel={label}
         onChangeText={onChangeText}
         placeholder={placeholder}

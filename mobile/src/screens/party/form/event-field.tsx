@@ -6,6 +6,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -19,6 +20,7 @@ import {
   FullScreenPanel,
   Icon,
   LoadingState,
+  NO_RESULTS,
   radius,
   SearchField,
   space,
@@ -57,7 +59,7 @@ function Events({ search, chosen, onOpen }: EventsProps): ReactElement {
     return <EmptyState words="예정된 행사가 없어요" />;
   }
   if (views.length === 0) {
-    return <EmptyState words="검색 결과가 없어요" />;
+    return <EmptyState words={NO_RESULTS} />;
   }
   return (
     <View>

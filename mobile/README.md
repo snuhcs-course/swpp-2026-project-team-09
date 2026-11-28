@@ -913,7 +913,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
 screen, on the glass layer's `inner` level over the map; while it is open, what floats over the map and the tab bar
-give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
+give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department as `matchesWords` matches, with
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
 and the department, the detail (or the line where the app has no detail), and the round glass calendar button
@@ -926,7 +926,7 @@ own status says.
 **The friend screens** (`src/screens/friends/`, the `Friends` and `FriendsAdd` frames) are screens above the tabs that
 slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to where it was opened from:
 
-- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
+- **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department as `matchesWords` matches, with "결과 없음"; the row
   "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
   order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and no level or 위치 공유 line:
   each Friend's level is chosen on 위치 공유. A press on a Friend opens a bottom sheet with
@@ -1221,7 +1221,7 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 - The filters "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest
   the User can join; the User's own 파티 is not one) filter the list; the chosen one is bold navy on light blue. Under them, on the white ground,
   "다가오는 행사" heads the list. Empty: "여기서는 학교 행사를 모아 볼 수 있어요" with "파티 찾기" without any event,
-  "해당하는 행사가 없어요" after a filter, and "검색 결과가 없어요" after a search.
+  "해당하는 행사가 없어요" after a filter, and "결과 없음" after a search.
 - A row (`event-row.tsx`, P15 ticket 54) has the date column (the day of the month, and "{M}월 · 오늘", "내일" or the
   weekday; today for an event that has begun and not ended, such as an exhibition until 11월 30일), then the source from the app's own list of announcers, the title, and the hours and the place on one line
   ("18:00–20:00 · 301동 대강당"; "M월 D일까지" for an event whose end is more than 24 hours after its start), the
@@ -1570,7 +1570,16 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
     They slide over 0.28 s, or appear at once where the phone asks for less motion (`use-slide.ts`), and are drawn
     in the `OverlayHost` (`Overlay`).
   - `SegmentedTabs` (48 high, the selected one underlined in navy, a count pill in grey or red), `ChipRow` (chips
-    that scroll sideways, with counts or without; `hideEmpty` hides those of 0), `SearchField` (with ✕ "지우기").
+    that scroll sideways, with counts or without; `hideEmpty` hides those of 0), `SearchField` (with ✕ "지우기"),
+    every search box of the app, and `NO_RESULTS`, "결과 없음", what a list it narrowed says when nothing is left.
+    Each list matches the words with `matchesWords` (`src/features/search/matches-words.ts`), which ignores spaces,
+    '#' and case and reads Hangul as it is typed: words of consonants alone are first consonants ("ㅋㅍㅌ" finds
+    컴퓨터), other words match as the keys typed for them, so a syllable still being composed already narrows the
+    list ("커" finds 컴퓨터, "가바" finds 가방). The building search of the 파티 form and the timetable asks the main
+    server instead.
+  - `TextEntry` is the one text input every typed field is drawn with: it is never autofilled (`NOT_AUTOFILLED`) and
+    cannot be given `autoCorrect`, since on Android `autoCorrect={false}` makes Samsung Keyboard type Hangul as loose
+    letters ("ㅋㅓㅁ" for 컴).
   - `ListRow` (an Avatar or a `RoundIcon` of 40, the name in 15/600 or 16/600 for `large`, an aside, a kicker, one
     or two lines, a trailing slot, 56 to 72 high over a line of 1, one button when it has a press) and
     `SectionHeader` ("공강 · 4").
