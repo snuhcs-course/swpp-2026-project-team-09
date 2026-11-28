@@ -14,11 +14,12 @@ export interface AiRaised {
   setRaised: (raised: boolean) => void;
 }
 
-// Raised, for a screen drawn without the tabs, as in a test of the map alone.
-const AiRaisedContext = createContext<AiRaised>({
-  raised: true,
-  setRaised: () => undefined,
-});
+// Raised, and never lowered, for a screen drawn without the tabs, as in a test of the map alone.
+function keepRaised(): void {
+  // Nothing holds the state outside the tabs.
+}
+
+const AiRaisedContext = createContext<AiRaised>({ raised: true, setRaised: keepRaised });
 
 export function AiRaisedProvider({ children }: { children: ReactNode }): ReactElement {
   const [raised, setRaised] = useState(true);

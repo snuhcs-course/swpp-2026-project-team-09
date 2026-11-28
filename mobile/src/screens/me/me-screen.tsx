@@ -23,18 +23,7 @@ import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type Vie
 import { lobbyQuery } from '@/api/queries';
 import type { Profile } from '@/api/types';
 import { signOut } from '@/auth/sign-in';
-import {
-  Avatar,
-  Badge,
-  Button,
-  cardStyles,
-  color,
-  Dialog,
-  font,
-  radius,
-  space,
-  text,
-} from '@/design-system';
+import { Avatar, Badge, Button, cardStyles, color, Dialog, font, radius, space, text } from '@/design-system';
 import { stopBackground, useSending } from '@/position';
 import { useSession } from '@/session/session';
 import { OffQuestion } from '../friends/off-question';

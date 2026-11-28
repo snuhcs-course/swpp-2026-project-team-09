@@ -21,30 +21,30 @@ export default function TabsLayout(): ReactElement {
   return (
     <AiRaisedProvider>
       <Tabs
-      backBehavior="firstRoute"
-      screenLayout={({ route, navigation, children }) =>
-        route.name === 'main' ? (
-          children
-        ) : (
-          <TabEdgeBack
-            name={route.name}
-            onBack={() => {
-              navigation.navigate('main');
-            }}
-          >
-            {children}
-          </TabEdgeBack>
-        )
-      }
-      screenOptions={{ headerShown: false }}
-      tabBar={(props) => <TabBar {...props} />}
-    >
-      <Tabs.Screen name="main" />
-      <Tabs.Screen name="party" />
-      <Tabs.Screen name="events" />
-      <Tabs.Screen name="notifications" />
-      <Tabs.Screen name="me" />
-    </Tabs>
+        backBehavior="firstRoute"
+        screenLayout={({ route, navigation, children }) =>
+          route.name === 'main' ? (
+            children
+          ) : (
+            <TabEdgeBack
+              name={route.name}
+              onBack={() => {
+                navigation.navigate('main');
+              }}
+            >
+              {children}
+            </TabEdgeBack>
+          )
+        }
+        screenOptions={{ headerShown: false }}
+        tabBar={(props) => <TabBar {...props} />}
+      >
+        <Tabs.Screen name="main" />
+        <Tabs.Screen name="party" />
+        <Tabs.Screen name="events" />
+        <Tabs.Screen name="notifications" />
+        <Tabs.Screen name="me" />
+      </Tabs>
     </AiRaisedProvider>
   );
 }

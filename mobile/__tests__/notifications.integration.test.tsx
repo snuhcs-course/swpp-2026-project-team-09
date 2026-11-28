@@ -170,8 +170,10 @@ describe("a row of 알림's press", () => {
 
     expect(shownAddress()).toBe('/me/friends/requests');
   });
+});
 
-  // A04 ticket 09: 알림 is a tab, and a screen it opens lies over it.
+// A04 ticket 09: 알림 is a tab, and a screen it opens lies over it.
+describe('a screen a row of 알림 opened', () => {
   it('comes back to 알림 with its rows from what it opened above the tabs', async () => {
     const user = await openNotifications();
     await user.press(screen.getByRole('button', { name: ROWS[1] }));
