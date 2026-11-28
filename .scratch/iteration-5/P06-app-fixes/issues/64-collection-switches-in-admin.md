@@ -36,12 +36,12 @@ Asked by the user on 2026-11-28: "지금 ai 분류랑 중복제거 스위치가 
 
 ## Acceptance criteria
 
-- [x] An Administrator's save of `sameEvent.titleRule` and `judgement.automatic` on `/admin/settings` turns the title rule and Judgements on and off while the server runs, with the env settings off (main server `step-switches.integration.test.ts`; CI).
-- [x] `POST /collections/scheduled` answers `collection.extraSnu` for extra.snu and true for another Source, and refuses an unknown Source (same file; CI).
+- [x] An Administrator's save of `sameEvent.titleRule` and `judgement.automatic` on `/admin/settings` turns the title rule and Judgements on and off while the server runs, with the env settings off (main server `step-switches.integration.test.ts`; run by fyoon46 on a local merge with `5.0/Main`, 4/4).
+- [x] `POST /collections/scheduled` answers `collection.extraSnu` for extra.snu and true for another Source, and refuses an unknown Source (same file).
 - [x] The four settings are registered after `llm.key` with their env defaults and on/off labels, and the AI ones refuse on without a key (`step-switch-settings.unit.test.ts`, run locally: 6 passed).
 - [x] The worker's schedule asks first, starts nothing when off or when the main server is down, and starts a Collection when on (`extra-snu-collector.integration.test.ts`, run locally: 31 passed with `settings.unit`).
 - [x] `EXTRA_SNU_COLLECTION` is a main server setting (`settings-extra-snu.unit.test.ts`, run locally: 6 passed), read in Production from the same ConfigMap key by the main server's pod.
-- [x] No native file changes; lint (type-aware), tsc and format pass on the changed files. The main server's integration tests run in CI.
+- [x] No native file changes; lint (type-aware), tsc and format pass on the changed files. The PR's CI runs no main server integration tests; fyoon46 ran the affected files in review (all passed), and Main's push run runs them.
 - [ ] After the Release: the Settings page lists the four switches, all off, and a save of one shows "applies at HH:MM:00".
 
 ## Comments
