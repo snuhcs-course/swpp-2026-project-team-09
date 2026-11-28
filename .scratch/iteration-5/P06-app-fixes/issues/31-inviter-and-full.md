@@ -30,3 +30,10 @@ Positions are as of `origin/5.0/Main` 331adc64. Found by a read-only audit of th
 - [ ] The migration runs on the Dev Server; no native file changes; lint, format and types pass.
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 20 minutes, an estimate. It is the time in which the agent worked on this ticket in one session (worktree `snu-now-p06-s2`), split from the session's other tickets by when each ticket's PR was opened. Waiting for the shared lock, for Docker and for reviews is left out.
+- Tokens, the two review subagents included:
+  - input: 272 uncached, with 29,270,901 read from the cache and 388,090 written to it;
+  - output: 67,416.

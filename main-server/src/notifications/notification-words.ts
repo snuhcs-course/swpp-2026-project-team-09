@@ -8,10 +8,11 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf } from '../assistant/free-time/free-time.js';
-import { withCopula, withSubject } from '../assistant/gathering/answer-words.js';
+import { withCopula, withObject, withSubject, withToward } from '../assistant/gathering/answer-words.js';
 import { dateAndClock, koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
@@ -27,7 +28,9 @@ function timesWords({ date, start, minutes }: { date: string; start: string; min
 }
 
 // A room request's Notifications ring, with the line as the push's body.
-function roomWords(told: Of<'room-declined'> | Of<'room-agreed'> | Of<'room-ending'>): NotificationWords {
+type RoomTold = Of<'room-declined'> | Of<'room-agreed'> | Of<'room-ending'>;
+
+function roomWords(told: RoomTold): NotificationWords {
   const card = { kind: 'party', id: told.questId };
   if (told.kind === 'room-declined') {
     const plan = told.moreNeeded > 0 ? `${String(told.moreNeeded)}명 더 필요해요` : '계획은 그대로예요';
@@ -106,19 +109,21 @@ function interestWords({
   };
 }
 
-// "11/18(수) 14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소".
+// "11/18(수) 14:10 정문 앞에서 만나기로 바뀌었어요", or "'정문 앞에서 만나기' 취소".
 function stepLine({ stepTitle, startsAt, cancelled }: Of<'step-changed'>): string {
   if (cancelled) {
     return `'${stepTitle}' 취소`;
   }
-  return startsAt === null ? stepTitle : `${dateAndClock(startsAt)} ${stepTitle}`;
+  const became = `${withToward(stepTitle)} 바뀌었어요`;
+  return startsAt === null ? became : `${dateAndClock(startsAt)} ${became}`;
 }
 
 // What a party's members would have said in words. Each rings, is about the member, and opens the party's room.
 function memberWords(told: Of<'step-changed'> | Of<'arrived'> | Of<'late'>): NotificationWords {
   const card = { kind: 'party', id: told.questId };
   if (told.kind === 'step-changed') {
-    const line = stepLine(told);
+    // The title says what happened, and the line starts with the 파티, as every 파티 Notification's does.
+    const line = `${told.questTitle} · ${stepLine(told)}`;
     return {
       title: `${withSubject(told.byName)} 일정을 바꿨어요`,
       ahead: null,
@@ -223,6 +228,28 @@ function newLeaderWords({ questId, questTitle, formerName, how }: Of<'became-lea
   };
 }
 
+// A 파티's activation rings each other Holder, in the words of its card in the room, and opens the 파티.
+function activationWords({ questId, questTitle, byName }: Of<'party-activated'>): NotificationWords {
+  const line = '나도 참여하면 서로 위치를 볼 수 있어요';
+  return {
+    title: `${byName}님이 ${withObject(questTitle)} 활성화했어요`,
+    ahead: null,
+    line,
+    card: { kind: 'party', id: questId },
+    about: null,
+    rings: true,
+    body: `${line}.`,
+  };
+}
+
+// The kinds about who leads and who is in a 파티, else a room request's.
+function partyOrRoomWords(told: Of<'became-leader'> | Of<'party-activated'> | RoomTold): NotificationWords {
+  if (told.kind === 'became-leader') {
+    return newLeaderWords(told);
+  }
+  return told.kind === 'party-activated' ? activationWords(told) : roomWords(told);
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
@@ -270,5 +297,5 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       body: null,
     };
   }
-  return told.kind === 'became-leader' ? newLeaderWords(told) : roomWords(told);
+  return partyOrRoomWords(told);
 }

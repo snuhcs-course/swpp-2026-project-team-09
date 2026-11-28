@@ -6,7 +6,9 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -32,8 +34,6 @@ import {
 } from './support/room';
 import { askMainServer, JOIN_REQUESTS, ME_ID, PHONE_NOW } from './support/server';
 import { apiClient } from '@/api/client';
-import { TAG_SET } from '@/api/mock/data/quest-parts';
-import { pickFor } from '@/api/quest-parts/stable-pick';
 
 // The room as `PartyDetail` and `PartyLeave` draw it, against the fake main server, with P06 ticket 19's head: the
 // 모집글 under the title of a public and a private Quest, the event in its box, a request's row, the Leader's ending
@@ -86,7 +86,7 @@ afterEach(() => {
 });
 
 describe("the room's head", () => {
-  it('draws the 모집글 under the title: the Leader without 모집자, the text, the tags and the time and place', async () => {
+  it('draws the 모집글 under the title: the Leader without 모집자, the text, no tags, and the time and place', async () => {
     answerRoom(server, PUBLIC);
 
     await openRoom(PUBLIC);
@@ -99,9 +99,7 @@ describe("the room's head", () => {
     expect(screen.queryByText(`${ME_HOLDER.name} · 모집자`)).toBeNull();
     expect(screen.getByText('컴퓨터공학부 · 18시간 전')).toBeVisible();
     expect(screen.getByText('자하연에서 피크닉 해요')).toBeVisible();
-    for (const tag of pickFor(PUBLIC.id, TAG_SET)) {
-      expect(within(screen.getByLabelText('태그')).getByText(`#${tag}`)).toBeVisible();
-    }
+    expect(screen.queryByLabelText('태그')).toBeNull();
     // The box's time and place, and the step's.
     expect(screen.getAllByText('오늘 17:40')).toHaveLength(2);
     expect(screen.getAllByText('301동 앞')).toHaveLength(2);
@@ -117,16 +115,18 @@ describe("the room's head", () => {
     expect(screen.queryByText('파티 · 3명')).toBeNull();
   });
 
-  it('puts the event as the box’s last line, before the activation, with no card of its own', async () => {
+  it('puts the event as the box’s last line, before the activation, with no card of its own, and shows no tags', async () => {
     answerRoom(server, FOR_EVENT);
 
     await openRoom(FOR_EVENT);
 
+    expect(screen.queryByLabelText('태그')).toBeNull();
+    expect(screen.queryByText(/^#/u)).toBeNull();
     // The queries give what they find in the order the screen draws it.
     const order = screen
-      .getAllByLabelText(/^(?:태그|파티 활성화|행사 · AI 커리어 설명회|일정)$/u)
+      .getAllByLabelText(/^(?:파티 활성화|행사 · AI 커리어 설명회|일정)$/u)
       .map((node) => String(node.props.accessibilityLabel));
-    expect(order).toEqual(['태그', '행사 · AI 커리어 설명회', '파티 활성화', '일정']);
+    expect(order).toEqual(['행사 · AI 커리어 설명회', '파티 활성화', '일정']);
     expect(screen.getByTestId('event-line')).toHaveTextContent('AI 커리어 설명회');
     expect(screen.queryByText('공식 행사')).toBeNull();
   });
@@ -209,7 +209,7 @@ describe('switching from another Party', () => {
 
     expect(
       screen.getByText(
-        '다른 멤버의 알림 목록에 떠요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 내가 켠 ‘저녁 먹으러 가요’ 활성화는 꺼져요.',
+        '멤버 2명에게 알림이 가요. 수락한 멤버끼리만 서로 위치를 볼 수 있어요.\n한 번에 한 파티에만 참여할 수 있어요. 내가 켠 ‘저녁 먹으러 가요’ 활성화는 꺼져요.',
       ),
     ).toBeVisible();
     await answer(user, '활성화');

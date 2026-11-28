@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -60,6 +61,6 @@ describe('활성 파티', () => {
       ],
     } as const;
 
-    expect(toActiveParty({ ...party, members: [...party.members] }, 'me')?.line).toBe('응답 대기');
+    expect(toActiveParty({ ...party, members: [...party.members] }, 'me', true)?.line).toBe('응답 대기');
   });
 });

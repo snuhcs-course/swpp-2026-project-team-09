@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -32,10 +33,11 @@ export function SearchField({
   return (
     <View style={styles.field}>
       <Icon color={color.inkMuted} name="search" size={18} />
+      {/* No autoCorrect={false}: on Android it sets NO_SUGGESTIONS, and Samsung Keyboard then types Hangul as loose
+          letters, 'ㄱㅗㅇㅎㅏㄱ' for 공학. */}
       <TextInput
         {...NOT_AUTOFILLED}
         accessibilityLabel={label}
-        autoCorrect={false}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={color.inkSubtle}

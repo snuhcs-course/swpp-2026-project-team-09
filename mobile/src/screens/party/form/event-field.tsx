@@ -11,33 +11,23 @@
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { GlobalEvent } from '@/api/types';
-import { now } from '@/clock';
 import {
   color,
   EmptyState,
   ErrorState,
   eventText,
-  font,
   FullScreenPanel,
   Icon,
-  IconButton,
   LoadingState,
   radius,
   SearchField,
   space,
 } from '@/design-system';
-import { EVENT_SEARCH_HINT, eventTime, type EventView, toEventViews } from '@/features/events/adapter';
+import { EVENT_SEARCH_HINT, type EventView, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
 import type { FormEvent } from '@/features/party/making';
 import { EventDetailSheet } from '../../events/event-detail-sheet';
 import { EventFact, PLACE_LINES, TITLE_LINES } from '../../events/event-row';
-import { FieldHead } from './field-head';
-
-// "오늘 18:00–20:00 · 301동 대강당"
-function lineOf(event: FormEvent): string {
-  const time = eventTime(event, now());
-  return event.place === null ? time : `${time} · ${event.place}`;
-}
 
 function eventOf(events: readonly GlobalEvent[], id: string): GlobalEvent | undefined {
   return events.find((event) => event.id === id);
@@ -123,14 +113,14 @@ function PickerRow({ view, chosen, onOpen }: { view: EventView; chosen: boolean;
 }
 
 interface PickerProps {
-  // The event chosen before: its row is marked, and its sheet says "선택됨".
+  // The event chosen before: its row is marked, and its sheet offers "행사 빼기".
   chosen: FormEvent | null;
-  onPick: (event: FormEvent) => void;
+  onPick: (event: FormEvent | null) => void;
   onBack: () => void;
 }
 
 // 관련 행사 고르기, the event picker of 파티 만들기: the search and every event in one list. A row opens the 행사 tab's
-// sheet over it, whose "이 행사 추가" picks the event.
+// sheet over it, whose "이 행사 추가" picks the event, and whose "행사 빼기" takes the chosen one out.
 export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactElement {
   const [search, setSearch] = useState('');
   const [opened, setOpened] = useState<Opened | null>(null);
@@ -149,6 +139,9 @@ export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactEleme
               onPick(opened.event);
             }
           },
+          onRemove: () => {
+            onPick(null);
+          },
         }}
         event={opened?.view ?? null}
         onClose={() => {
@@ -156,55 +149,6 @@ export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactEleme
         }}
       />
     </FullScreenPanel>
-  );
-}
-
-interface FieldProps {
-  event: FormEvent | null;
-  // The edited Quest's own event, which stays.
-  locked: boolean;
-  onChoose: () => void;
-  onClear: () => void;
-}
-
-// `관련 행사`: `행사 선택`, or the chosen event in a navy box, which opens the picker again, with ✕ `행사 빼기`. An
-// edited Quest's own event is shown alone: the main server cannot change it.
-export function EventField({ event, locked, onChoose, onClear }: FieldProps): ReactElement {
-  return (
-    <View style={styles.field}>
-      <FieldHead icon="ticket" label="관련 행사" />
-      {event === null ? (
-        <Pressable
-          accessibilityLabel="관련 행사 선택"
-          accessibilityRole="button"
-          onPress={onChoose}
-          style={styles.choose}
-        >
-          <Text style={styles.chooseWords}>행사 선택</Text>
-          <Icon color={color.inkMuted} name="chevronRight" size={18} />
-        </Pressable>
-      ) : (
-        <View style={[styles.chosen, locked && styles.locked]} testID="chosen-event">
-          <Pressable
-            accessibilityLabel={locked ? `관련 행사 ${event.title}` : `관련 행사 ${event.title}, 다른 행사 선택`}
-            accessibilityRole={locked ? 'text' : 'button'}
-            disabled={locked}
-            onPress={onChoose}
-            style={styles.chosenWords}
-          >
-            <Text style={styles.title}>{event.title}</Text>
-            <Text style={styles.line}>{lineOf(event)}</Text>
-          </Pressable>
-          {locked ? (
-            <View style={styles.lock}>
-              <Icon color={color.inkMuted} label="바꿀 수 없어요" name="lock" size={18} />
-            </View>
-          ) : (
-            <IconButton icon="x" label="행사 빼기" onPress={onClear} />
-          )}
-        </View>
-      )}
-    </View>
   );
 }
 
@@ -249,33 +193,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: color.snuBlue,
   },
-  field: { gap: space[2] },
-  choose: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 50,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: color.border,
-    borderRadius: radius.md,
-    backgroundColor: color.surface,
-  },
-  chooseWords: { fontFamily: font.regular, fontSize: 16, lineHeight: 24, color: color.inkSubtle },
-  chosen: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    paddingLeft: 14,
-    paddingVertical: space[2],
-    borderWidth: 2,
-    borderColor: color.snuBlue,
-    borderRadius: radius.md,
-    backgroundColor: color.surface,
-  },
-  locked: { borderWidth: 1, borderColor: color.border, backgroundColor: color.surfaceSubtle },
-  lock: { alignItems: 'center', justifyContent: 'center', width: 48, height: 48 },
-  chosenWords: { flex: 1, gap: 2 },
-  title: { fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.ink },
-  line: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
 });

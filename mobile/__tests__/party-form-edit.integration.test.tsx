@@ -18,19 +18,11 @@ import { MY_HIKE, openAt } from './support/party';
 import { answerForm, fillPublic, pressTimes, submit } from './support/party-form';
 import { answer, MIN_JUN_HOLDER, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
-import { readQuestEntries } from '@/storage/quest-entries';
 
 // 파티 만들기's 인원 for 공개 and 비공개, editing 언제, 어디서 and 관련 행사, and the toasts after posting, against the
 // fake main server.
 
 jest.mock('expo-location');
-jest.mock('expo-image-picker', () => ({
-  PermissionStatus: { GRANTED: 'granted', DENIED: 'denied', UNDETERMINED: 'undetermined' },
-  requestCameraPermissionsAsync: jest.fn(),
-  requestMediaLibraryPermissionsAsync: jest.fn(),
-  launchCameraAsync: jest.fn(),
-  launchImageLibraryAsync: jest.fn(),
-}));
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => true,
   useMotionAllowed: (): boolean => false,
@@ -126,7 +118,7 @@ describe('the least 인원', () => {
 });
 
 describe('editing', () => {
-  it('shows 언제, 어디서 and 관련 행사, and an event picked fills the plan’s time and place, not its title, and adds no tags', async () => {
+  it('shows 언제, 어디서 and 관련 행사, and an event picked fills the plan’s time and place, not its title', async () => {
     const hike = { ...MY_HIKE, holders: [...MY_HIKE.holders] };
     const [step] = hike.subQuests;
     server.on(`GET /quests/${hike.id}`, { status: 200, body: hike });
@@ -135,8 +127,8 @@ describe('editing', () => {
     const user = await openAt(`/party-form?questId=${hike.id}`);
 
     expect(screen.getByRole('button', { name: '언제 오늘 20:10' })).toBeVisible();
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('학생회관 (63동)');
-    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    expect(screen.getByRole('button', { name: '어디서 학생회관 (63동)' })).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '관련 행사 고르기' }));
     await pickEvent(user, CAREER);
     expect(screen.getByLabelText('제목')).toHaveDisplayValue(MY_HIKE.title);
     await answer(user, '수정 완료');
@@ -149,7 +141,6 @@ describe('editing', () => {
       },
     ]);
     expect(server.received(`PATCH /quests/${hike.id}`)).toEqual([]);
-    expect((await readQuestEntries())[hike.id]?.tags ?? []).toEqual([]);
     expect(toast()).toHaveTextContent('모집글을 수정했어요');
   });
 });
@@ -159,11 +150,10 @@ describe('editing a Quest for an event', () => {
     server.on(`GET /quests/${MY_CAREER.id}`, { status: 200, body: MY_CAREER });
     await openAt(`/party-form?questId=${MY_CAREER.id}`);
 
-    expect(screen.getByTestId('chosen-event')).toHaveTextContent(CAREER.title, { exact: false });
-    expect(screen.queryByRole('button', { name: '행사 빼기' })).toBeNull();
+    expect(screen.getByTestId('plan-box')).toHaveTextContent(CAREER.title, { exact: false });
     expect(screen.queryByRole('button', { name: /^관련 행사/u })).toBeNull();
     expect(screen.getByRole('button', { name: '언제 오늘 18:00' })).toBeVisible();
-    expect(screen.getByLabelText('어디서')).toHaveDisplayValue('301동 대강당');
+    expect(screen.getByRole('button', { name: '어디서 301동 대강당' })).toBeVisible();
   });
 
   it('meets before the event with 모이기 when the time of a Quest for an event changes, and leaves the event as it is', async () => {
@@ -194,7 +184,9 @@ describe('the toast after posting', () => {
   it('counts the Friends invited to a public 파티', async () => {
     const user = await openAt('/party-form');
     await fillPublic(user);
+    await user.press(screen.getByRole('button', { name: '친구 초대 고르기' }));
     await user.press(screen.getByRole('checkbox', { name: MIN_JUN_HOLDER.name }));
+    await user.press(screen.getByRole('button', { name: '1명 초대' }));
 
     await user.press(submit('파티 올리기'));
     await pass(500);

@@ -17,7 +17,10 @@ import { isTogether } from './lookup/study-group.js';
 // "점심이랑 저녁 짜줘" keeps both: an answer replaces one of the same request and is added after the others otherwise,
 // and a Lookup leaves them.
 
-type Drawn = Pick<Presented, 'answer' | 'answers' | 'withdrawn' | 'lookup' | 'mapButtons' | 'clears'>;
+export type Drawn = Pick<
+  Presented,
+  'answer' | 'answers' | 'withdrawn' | 'lookup' | 'mapButtons' | 'clears' | 'empties'
+>;
 
 // Which request of the message an answer answers: its kind and day, and for a meal the meal, for a study plan whether
 // it is together. Quests have no day of their own: those of one Global Event are one request.
@@ -34,7 +37,7 @@ export function requestKey(input: PlanInput): string {
   return `${input.kind} ${input.date}`;
 }
 
-const sameRequest = (a: PlanInput, b: PlanInput): boolean => requestKey(a) === requestKey(b);
+export const sameRequest = (a: PlanInput, b: PlanInput): boolean => requestKey(a) === requestKey(b);
 
 // The answers with this one in the place of the one of its request, or after them.
 function withAnswer(answers: readonly AnswerReply[], answer: AnswerReply): AnswerReply[] {
@@ -65,19 +68,6 @@ export function presentLookup(presented: Drawn, lookup: Lookup, { keepsButtons =
   }
   presented.lookup = lookup;
   presented.answer = null;
-}
-
-// A request for a plan ended with none drawn: its answer leaves the reply, and the plan on screen leaves the map too
-// (P05 ticket 55). The answers of the message's other requests stay; an app that says `answers` is told its key.
-export function withdrawAnswer(presented: Drawn, input: PlanInput): void {
-  takeMap(presented);
-  presented.answer = null;
-  presented.clears = true;
-  if (presented.answers !== undefined) {
-    presented.answers = presented.answers.filter((answer) => !sameRequest(answer.input, input));
-  }
-  const key = requestKey(input);
-  presented.withdrawn = [...(presented.withdrawn ?? []).filter((each) => each !== key), key];
 }
 
 // Nothing drawn, so that a button under the text stands alone.

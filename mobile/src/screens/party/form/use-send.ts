@@ -9,7 +9,9 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -24,7 +26,6 @@ import { type IconName, useToast } from '@/design-system';
 import {
   attendingTitleOf,
   changeOf,
-  entriesChangeOf,
   makingOf,
   meetingOf,
   type PartyForm,
@@ -67,9 +68,9 @@ function toastOf(form: PartyForm, editing: boolean, invited: number, refused: In
   return `${main} · ${refused.full ? FULL_TO_INVITE : `${String(refused.count)}명은 초대하지 못했어요`}`;
 }
 
-// An edit: the Quest's fields, what the phone keeps, then the time and place of its plan.
+// An edit: the Quest's fields, then the time and place of its plan.
 async function change(quest: ShownQuest, form: PartyForm, plan: PlanChange | null): Promise<void> {
-  const fields = { ...changeOf(quest, form), ...entriesChangeOf(quest, form) };
+  const fields = changeOf(quest, form);
   if (Object.keys(fields).length > 0) {
     await apiClient.changeQuest(quest.id, fields);
   }
@@ -83,9 +84,9 @@ async function change(quest: ShownQuest, form: PartyForm, plan: PlanChange | nul
 
 // With an event, the Quest is the one attending it gives, which the form then changes: the recruiting, and `모이기`
 // when the User meets before the event.
-async function recruitFor(attended: Quest, form: PartyForm): Promise<void> {
+async function recruitFor(attended: Quest, form: PartyForm, elsewhere: boolean): Promise<void> {
   await apiClient.changeQuest(attended.id, recruitingOf(attended, form));
-  const meeting = meetingOf(form);
+  const meeting = meetingOf(form, elsewhere);
   if (meeting !== null) {
     await apiClient.addSubQuest(attended.id, meeting, newIdempotencyKey());
   }
@@ -113,11 +114,11 @@ export function sendingIcon(sending: Sending): IconName {
   return sending.sent === 'taken' && sending.invitesRefused !== true ? 'check' : 'alert';
 }
 
-// Sends the form: makes the Quest, for an event by attending it, or changes it, then invites the chosen Friends. The
-// photo and the tags go with it, and the phone keeps them. It shows nothing and goes nowhere.
+// Sends the form: makes the Quest, for an event by attending it, or changes it, then invites the chosen Friends. It
+// shows nothing and goes nowhere.
 export function useSendParty(
   quest: ShownQuest | null,
-): (form: PartyForm, friends: readonly string[], plan: PlanChange | null) => Promise<Sending> {
+): (form: PartyForm, friends: readonly string[], plan: PlanChange | null, elsewhere?: boolean) => Promise<Sending> {
   const queryClient = useQueryClient();
   const askForPush = useAskForPush();
   const refetch = (): void => {
@@ -125,21 +126,18 @@ export function useSendParty(
       void queryClient.invalidateQueries({ queryKey });
     }
   };
-  return async (form, friends, plan) => {
+  return async (form, friends, plan, elsewhere = false) => {
     let questId: string;
     let attended: Quest | null = null;
-    const entries = { photo: form.photo, tags: form.tags };
     try {
       if (quest !== null) {
         await change(quest, form, plan);
         questId = quest.id;
       } else if (form.event === null) {
-        questId = (
-          await making(form, () => apiClient.makeQuest({ ...makingOf(form), ...entries }, newIdempotencyKey()))
-        ).id;
+        questId = (await making(form, () => apiClient.makeQuest(makingOf(form), newIdempotencyKey()))).id;
       } else {
         const eventId = form.event.id;
-        attended = await making(form, () => apiClient.attendGlobalEvent(eventId, attendingTitleOf(form), entries));
+        attended = await making(form, () => apiClient.attendGlobalEvent(eventId, attendingTitleOf(form)));
         questId = attended.id;
       }
     } catch (error) {
@@ -147,7 +145,7 @@ export function useSendParty(
     }
     if (attended !== null) {
       try {
-        await recruitFor(attended, form);
+        await recruitFor(attended, form, elsewhere);
       } catch (error) {
         refetch();
         return { sent: 'room', questId, toast: refusalWords(error, {}, NOT_SAVED) };
@@ -167,11 +165,11 @@ export function useSendParty(
 // The form's sending: its toast, and the room when the Quest stays after a failed step.
 export function useSend(
   quest: ShownQuest | null,
-): (form: PartyForm, friends: string[], plan: PlanChange | null) => Promise<Sending> {
+): (form: PartyForm, friends: string[], plan: PlanChange | null, elsewhere: boolean) => Promise<Sending> {
   const sendParty = useSendParty(quest);
   const showToast = useToast();
-  return async (form, friends, plan) => {
-    const sending = await sendParty(form, friends, plan);
+  return async (form, friends, plan, elsewhere) => {
+    const sending = await sendParty(form, friends, plan, elsewhere);
     showToast(sending.toast, undefined, sendingIcon(sending));
     if (sending.sent === 'room') {
       router.replace(`/room/${sending.questId}`);

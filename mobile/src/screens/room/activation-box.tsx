@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,7 +18,8 @@ import { opensParty } from '@/features/quests/rules';
 import { myUserId } from '@/auth/sign-in';
 import { LiveDot } from '../party/live-dot';
 import type { Ask } from './confirm-sheet';
-import { ACTIVATION_HELP, HelpButton } from './help-bubble';
+import { HelpButton } from '../help-bubble';
+import { ACTIVATION_HELP } from './room-help';
 import { leaveAsk } from './party-asks';
 import { type PartyEntry, usePartyEntry } from './use-party-entry';
 import type { RoomActions } from './use-room-actions';

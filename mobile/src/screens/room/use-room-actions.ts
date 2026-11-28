@@ -12,6 +12,7 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -152,7 +153,9 @@ function showSharing(queryClient: QueryClient, on: boolean): void {
 }
 
 // Opens the Quest's Party, or enters the one another Holder opened at the same moment. It sends no push: the other
-// Holders see it in their 알림 list.
+// Holders see it in their 알림 list. It opens for 8, the most a Quest holds, so that no Holder is ever refused: the
+// main server does not change a Party's capacity when the Leader changes the Quest's, and the app reads the 파티's size
+// from the Quest (P06 ticket 30).
 function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: Tools): RoomActions['openParty'] {
   return async (quest, leaveFirst) => {
     let ended: string | null = null;
