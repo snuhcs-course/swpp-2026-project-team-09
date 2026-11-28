@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -10,7 +11,7 @@ import { apiClient } from '@/api/client';
 import { AppProviders } from '@/app-providers';
 import { firstForm } from '@/screens/onboarding/form';
 import { addInterests } from '@/screens/onboarding/interests';
-import { cut, lengthOf } from '@/screens/onboarding/length';
+import { cut, lengthOf } from '@/design-system/length';
 import { scrollToShow } from '@/screens/onboarding/reveal';
 import { useOnboarding } from '@/screens/onboarding/use-onboarding';
 

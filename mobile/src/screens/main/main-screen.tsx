@@ -37,7 +37,6 @@ import { showsStartButton } from '@/features/tutorial/rules';
 import { type PickedEvent, useEventSheetsOver } from '@/screens/events/event-sheets';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
-import { useFriendPanelShown } from './friend-panel';
 import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
 import { listsTop, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
@@ -54,6 +53,7 @@ import { askAssistant, type MainLayers, useMainLayers } from './use-main-layers'
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
+import { useMapCovered } from './map-cover';
 import { useAskedByAddress } from './use-asked-card';
 import type { MainRoute } from './use-route';
 import { type Everyday, type MapView, useMapView } from './use-map-view';
@@ -97,10 +97,10 @@ interface SelectedCardProps {
 // What floats over the map, between the phone's status bar and the navigation: each child places itself there, by
 // the offsets of `layout.ts`. A press beside the children reaches the map. It tells its size, the stage's, by which
 // the lists and the row of buttons fit themselves to a low or narrow screen. It gives way while the friend panel is
-// open.
+// open, and while the Quest list lies on glass over the map.
 function OverMap({ children, onStage }: OverMapProps): ReactElement {
   const { top } = useSafeAreaInsets();
-  const panelShown = useFriendPanelShown();
+  const panelShown = useMapCovered();
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {

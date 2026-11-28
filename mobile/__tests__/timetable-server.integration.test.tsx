@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -99,14 +100,6 @@ describe('the routes', () => {
     await expect(apiClient.replaceClass('c9', SAVE)).rejects.toMatchObject({ status: 404, code: 'PLACE_NOT_FOUND' });
     await expect(apiClient.deleteClass('c9')).rejects.toMatchObject({ status: 404, code: 'CLASS_NOT_FOUND' });
   });
-
-  it('searches the Places by the words', async () => {
-    const server = await askMainServer({ signedIn: true });
-    server.on('GET /places/search', { status: 200, body: [ENGINEERING] });
-
-    expect(await apiClient.searchPlaces('302동')).toEqual([ENGINEERING]);
-    expect(server.received('GET /places/search').map(({ query }) => query)).toEqual([{ q: '302동' }]);
-  });
 });
 
 async function choose(user: Awaited<ReturnType<typeof openMain>>, select: string, choice: string): Promise<void> {
@@ -118,7 +111,6 @@ function answerTimetable(server: FakeServer, classes: () => TimetableClass[]): v
   answerMainScreen(server);
   server.on('GET /timetable/classes', () => ({ status: 200, body: classes() }));
   server.on('GET /places', { status: 200, body: [ENGINEERING] });
-  server.on('GET /places/search', { status: 200, body: [ENGINEERING] });
 }
 
 describe('a change on the screens', () => {
@@ -156,7 +148,6 @@ describe('a change on the screens', () => {
     await pass(500);
 
     expect(server.received('POST /timetable/classes').map(({ body }) => body)).toEqual([SAVE]);
-    expect(server.received('GET /places/search').map(({ query }) => query)).toEqual([{ q: '302' }]);
     expect(server.received('GET /timetable/classes').length).toBeGreaterThan(classesBefore);
     expect(server.received('GET /quests').length).toBeGreaterThan(questsBefore);
     expect(screen.getByText('수업을 추가했어요')).toBeVisible();

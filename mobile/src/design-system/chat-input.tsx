@@ -3,12 +3,13 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { NOT_AUTOFILLED } from './autofill';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './icon';
+import { TextEntry } from './text-entry';
 import { color, font, radius, space, text } from './tokens';
 
 interface ChatInputProps {
@@ -43,8 +44,7 @@ export function ChatInput({
     <View style={styles.wrap}>
       <Suggestions disabled={disabled} onSend={onSend} suggestions={suggestions} />
       <View style={[styles.bar, focused && styles.focused]}>
-        <TextInput
-          {...NOT_AUTOFILLED}
+        <TextEntry
           accessibilityLabel="메시지"
           onBlur={() => {
             setFocused(false);

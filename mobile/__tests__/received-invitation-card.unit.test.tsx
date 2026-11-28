@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent, within } from '@testing-library/react-native';
@@ -226,5 +227,27 @@ describe("the card's buttons", () => {
 
     expect(screen.getByRole('button', { name: '수락' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '거절' })).toBeDisabled();
+  });
+});
+
+// The user's phone on 2026-11-28: a step row that says the title again stood under it. Partitions: the destination step
+// alone (changed from the stored card, which has two); two steps.
+describe('the steps of a received invitation', () => {
+  it('stand under the title when there are two, the way there first', async () => {
+    await show();
+
+    expect(within(screen.getByTestId('quest-steps')).getByText('유상, 민수: 301동 앞에서 만나기')).toBeVisible();
+  });
+
+  it('are left out when the one step only says the title again', async () => {
+    const [, destination] = INVITATION_CARD.steps;
+    if (destination === undefined) {
+      throw new Error('The stored card has no destination step');
+    }
+
+    await show({ card: { ...INVITATION_CARD, steps: [destination] } });
+
+    expect(screen.getByTestId('invitation-title')).toHaveTextContent('12:33 학생회관식당에서 식사');
+    expect(screen.queryByTestId('quest-steps')).toBeNull();
   });
 });

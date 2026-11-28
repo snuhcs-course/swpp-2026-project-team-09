@@ -6,6 +6,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -102,7 +103,7 @@ describe('the banner where nobody sees it', () => {
   it('stops turning while another screen stands above 찾기', async () => {
     const user = await openAt('/party');
 
-    await user.press(screen.getByRole('button', { name: '만들기' }));
+    await user.press(screen.getByRole('button', { name: '파티 만들기' }));
     await pass(4500);
     await act(() => {
       router.back();

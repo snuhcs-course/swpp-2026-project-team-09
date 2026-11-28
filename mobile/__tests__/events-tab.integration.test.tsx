@@ -253,7 +253,7 @@ describe('the filters and the search', () => {
     await user.type(field, '선발');
     expect(shownEvents()).toEqual([MAJOR.title]);
     await user.type(field, '없는 말');
-    expect(screen.getByText('검색 결과가 없어요')).toBeVisible();
+    expect(screen.getByText('결과 없음')).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: '검색 닫기' }));
     expect(screen.getByRole('header', { name: '행사' })).toBeVisible();

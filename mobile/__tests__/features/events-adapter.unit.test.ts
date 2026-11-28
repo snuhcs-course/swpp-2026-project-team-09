@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, the row's hours,
@@ -215,6 +216,8 @@ describe('toEventViews search', () => {
     ['a description', 'jazz', ['c']],
     ['nothing typed', '  ', ['a', 'b', 'c']],
     ['words no Event holds', '수학', []],
+    ['a Hangul syllable still being composed', '커', ['a']],
+    ['first consonants', 'ㄷㄱㄷ', ['b']],
   ])('%s → its Events', (_, search, expected) => {
     expect(idsOf('all', events, {}, search)).toEqual(expected);
   });

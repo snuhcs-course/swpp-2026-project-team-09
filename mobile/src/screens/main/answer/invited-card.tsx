@@ -6,10 +6,11 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { AnswerLine, ConditionChip } from '@/api/assistant-types';
 import type { SubQuest } from '@/api/types';
 import { space } from '@/design-system';
@@ -24,7 +25,7 @@ import {
 import { koreaClock } from '@/korea-time';
 import { AnswerLines } from './answer-lines';
 import { ReadOnlyChip } from './condition-chips';
-import { QuestSteps } from './quest-steps';
+import { onlyRepeats, QuestSteps } from './quest-steps';
 
 interface InvitedCardProps {
   chips: readonly ConditionChip[];
@@ -59,10 +60,11 @@ function linesOf({ chips, title, now, startAt, steps, standings }: InvitedCardPr
   ];
 }
 
-// The conditions as they were sent: no chip takes a press, and a person's chip says how the Friend stands.
+// The conditions as they were sent: no chip takes a press, and a person's chip says how the Friend stands. They wrap
+// onto more lines, as the meal answer's do, rather than run off the card's edge (the user's phone, 2026-11-28).
 function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'standings'>): ReactElement {
   return (
-    <ScrollView contentContainerStyle={styles.chips} horizontal showsHorizontalScrollIndicator={false}>
+    <View style={styles.chips} testID="sent-chips">
       {chips.map((chip) => {
         const standing = chip.userId === null ? undefined : standings.get(chip.userId);
         const words = standing === undefined ? chip.text : `${chip.text} · ${standingWords(standing)}`;
@@ -74,25 +76,27 @@ function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'stand
           />
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
 
 // The card of the answer on screen once its Plan was made into a Quest: the conditions with how each Friend stands,
-// two lines that say whom the invitations went to and when and where, and the Quest's steps in order. It closes by the
-// card's ✕ (P04 ticket 52). A Quest made from a Plan opened again from the everyday map has the same card.
+// two lines that say whom the invitations went to and when and where, and the Quest's steps in order, unless its one
+// step only says the second line again. It closes by the card's ✕ (P04 ticket 52). A Quest made from a Plan opened
+// again from the everyday map has the same card.
 export function InvitedCard(props: InvitedCardProps): ReactElement {
-  const { chips, steps, standings, over = [] } = props;
+  const { chips, title, startAt, steps, standings, over = [] } = props;
+  const repeats = standings.size > 0 && onlyRepeats(steps, startAt, invitedPlaceOf(title, steps, startAt));
   return (
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
       <AnswerLines lines={[...over, ...linesOf(props).slice(over.length)]} refusal={over.length} />
-      <QuestSteps steps={steps} />
+      {repeats ? null : <QuestSteps steps={steps} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: { gap: space[3] },
-  chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
 });

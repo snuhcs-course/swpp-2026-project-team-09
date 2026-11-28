@@ -14,6 +14,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -63,6 +64,11 @@ const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['party-form', 'right'],
 ];
 
+// The screens above the tabs that may be drawn on glass, which the stack shows over the screen under them, so that the
+// map shows through (A04 ticket 08): the Quest list on the whole screen, on glass only when opened from the map, and
+// white, covering what is under it, when opened from 내 정보.
+const OVER_THE_MAP: ReadonlySet<string> = new Set(['quests']);
+
 // A screen above the tabs slides in from its edge, and appears without sliding where the phone asks for less motion.
 function slideFrom(edge: Edge, reduceMotion: boolean): NativeStackNavigationOptions {
   if (reduceMotion) {
@@ -83,6 +89,14 @@ function cardFrom(edge: Edge, reduceMotion: boolean, covered: boolean): StackNav
   return { animation, gestureEnabled: !covered, gestureDirection: 'horizontal', gestureResponseDistance: EDGE_WIDTH };
 }
 
+// What keeps the screen under such a screen drawn: a transparent modal, with no card colour or dimming of its own.
+const JS_OVER_THE_MAP: StackNavigationOptions = {
+  presentation: 'transparentModal',
+  cardStyle: { backgroundColor: 'transparent' },
+  cardOverlayEnabled: false,
+};
+const NATIVE_OVER_THE_MAP: NativeStackNavigationOptions = { presentation: 'transparentModal' };
+
 // The tabs and the screens that cover them, which the stack's back closes. On iOS the native stack, whose own swipe
 // from the left edge goes back. On Android a native stack has no swipe back that follows the finger, so the stack
 // there is the JS one that expo-router carries.
@@ -93,7 +107,11 @@ function AboveTabs({ reduceMotion }: { reduceMotion: boolean }): ReactElement {
       <JsStack screenOptions={{ headerShown: false }}>
         <JsStack.Screen name="(tabs)" />
         {ABOVE_TABS.map(([name, edge]) => (
-          <JsStack.Screen key={name} name={name} options={cardFrom(edge, reduceMotion, covered)} />
+          <JsStack.Screen
+            key={name}
+            name={name}
+            options={{ ...cardFrom(edge, reduceMotion, covered), ...(OVER_THE_MAP.has(name) ? JS_OVER_THE_MAP : {}) }}
+          />
         ))}
       </JsStack>
     );
@@ -102,7 +120,11 @@ function AboveTabs({ reduceMotion }: { reduceMotion: boolean }): ReactElement {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       {ABOVE_TABS.map(([name, edge]) => (
-        <Stack.Screen key={name} name={name} options={slideFrom(edge, reduceMotion)} />
+        <Stack.Screen
+          key={name}
+          name={name}
+          options={{ ...slideFrom(edge, reduceMotion), ...(OVER_THE_MAP.has(name) ? NATIVE_OVER_THE_MAP : {}) }}
+        />
       ))}
     </Stack>
   );

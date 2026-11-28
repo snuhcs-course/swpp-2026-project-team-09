@@ -3,11 +3,12 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { color, font, NOT_AUTOFILLED, radius, space, text } from '@/design-system';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { color, font, radius, space, TextEntry, text } from '@/design-system';
 import { NAME_LENGTH } from '@/features/timetable/versions';
 
 const HEIGHT = 32;
@@ -18,8 +19,7 @@ export function Rename({ name, onDone }: { name: string; onDone: (name: string |
   const [draft, setDraft] = useState(name);
   return (
     <View style={styles.row}>
-      <TextInput
-        {...NOT_AUTOFILLED}
+      <TextEntry
         accessibilityLabel="시간표 이름"
         autoFocus
         maxLength={NAME_LENGTH}

@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { lengthOf } from './length';
+import { lengthOf } from '@/design-system/length';
 
 // The main server's limits for a User's hashtags.
 export const MOST_INTERESTS = 20;
