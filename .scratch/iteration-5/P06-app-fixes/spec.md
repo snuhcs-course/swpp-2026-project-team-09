@@ -48,6 +48,7 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 40. **Deleting a row of 알림.** Added by the user on 2026-11-28: "오른쪽에서 왼쪽으로 스와이프하면 … 빨간색 배경에 흰 테두리의 쓰레기통 모양 나오게 해서 알림 지울 수 있게".
 41. **Two ways to set a place.** From fyoon46's review of PR 712 on 2026-11-28: the room's 일정 form still sets a place with the old typed field and map button, without the kind tag. The user asked for a ticket the same day.
 42. **A 파티 without a time is on no list.** Added by the user on 2026-11-28: "'시간 미정'인 파티 … 메인 화면의 '퀘스트'에는 안 뜨잖아 … 퀘스트 창 맨 하단에 '시간 미정'으로 해서 퀘스트로 뜰 수 있게". The map shows it by its place; the Quest lists and their count leave it out.
+64. **The Collections' switches on the admin site.** Asked by the user on 2026-11-28: "어드민에서 켜고 끌 수 있게 만들어줘", for AI 분류 and 중복제거, and then "비교과 수집 스위치도 같이". The four were env settings, `AUTOMATIC_JUDGEMENT`, `SAME_EVENT_TITLE_RULE`, `SAME_EVENT_AI_CHOICE` and the worker's `EXTRA_SNU_COLLECTION`, changed only by a Release or a ConfigMap patch. Checked against `origin/5.0/Main` de01933b on 2026-11-28: not fixed then.
 
 Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 20 to 33 against 331adc64 on 2026-11-27, and items 37 to 40 against ec8337d6 and item 42 against b4b1379c on 2026-11-28: none was fixed then.
 
@@ -97,6 +98,7 @@ One ticket per item, numbered as the items:
 40. [40: A kept Notification is deleted by a swipe to the left](issues/40-swipe-to-delete-notice.md)
 41. [41: The room's 일정 form sets its place with the 파티 form's place sheet and shows the same kind tag](issues/41-room-step-place-sheet.md)
 42. [42: A Quest whose time is not set is on the Quest list, last, under 시간 미정](issues/42-untimed-quests-last.md)
+64. [64: Judgements, the same-event rules and extra.snu's Collections are switched on the admin site](issues/64-collection-switches-in-admin.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -200,6 +202,7 @@ When the held tickets are taken up, tickets touching the same files never run at
 56. As a User, I want 알림 grouped into 오늘, 어제 and 이전.
 57. As a User, I want to delete a row of 알림 by swiping it away.
 58. As a User who made a 파티 without setting its time, I want it on my Quest list, last, saying 시간 미정.
+59. As an Administrator, I want to switch AI 분류, 중복제거 and extra.snu's Collections on and off on the admin site, without a Release.
 
 ## Implementation Decisions
 
@@ -252,6 +255,7 @@ Decided on 2026-11-28 (37 to 40):
 - 40: a swipe to the left on a kept Notification shows a red action with a white outlined trash icon; a press on it or a full swipe deletes it by `DELETE /notifications/:id`, `:id` being the list's identity. What waits does not swipe, nor anything not yet listed. No confirm and no undo.
 - 41 (2026-11-28): the room's 일정 form sets 어디서 with the 파티 form's place sheet: a row with the place's words, its grey kind tag and a chevron opens the same sheet, and what is sent is unchanged. `WhereField` goes.
 - 42 (2026-11-28): a Quest whose time is not set is on the Quest list over the map, in its count, and on the whole screen under a last group 시간 미정, after every Quest with a time, the first made first. Its row says 시간 미정 where a time stands. One whose every step ended stays off.
+- 64 (2026-11-28): the four switches become global settings (`judgement.automatic`, `sameEvent.titleRule`, `sameEvent.aiChoice`, `collection.extraSnu`), each defaulting to its env setting, which now all live on the main server; a saved value wins. The worker asks `POST /collections/scheduled` before each scheduled extra.snu Collection. No app change and no migration: it ships as a Release of the main server and the worker, unlike the other tickets.
 
 For all tickets:
 
@@ -312,6 +316,7 @@ Every item received and where it went:
 | 알림 누르면 파티방, 안 읽은 알림 숫자, 오늘/어제/이전, 스와이프로 지우기 (added 2026-11-28) | Tickets 37 to 40 |
 | 파티 상세 일정의 장소도 같은 장소 시트로 (PR 712 review, 2026-11-28) | Ticket 41 |
 | 시간 미정 파티도 퀘스트 목록 맨 아래 '시간 미정'으로 (added 2026-11-28) | Ticket 42 |
+| AI 분류·중복제거·비교과 수집을 어드민에서 켜고 끄기 (added 2026-11-28) | Ticket 64 |
 
 Notes for the tickets:
 

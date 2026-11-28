@@ -608,8 +608,14 @@ They are separate from the env settings in `src/common/settings.ts`, which stay 
 
 - Each one is registered in code, in `registeredSettings()` in `src/global-settings/registered-settings.ts`, with a
   name, a type (`STRING`, `INTEGER` or `BOOLEAN`), a default and, when it has them, its allowed values and a check of
-  its own, and a `label` that names a value on the Settings page. One is registered: `llm.key`, the name of the AI's
-  key ([Assistant](#assistant)).
+  its own, and a `label` that names a value on the Settings page. Five are registered: `llm.key`, the name of the AI's
+  key ([Assistant](#assistant)); the switches of the step after a Collection ([Global Events](#global-events)),
+  `judgement.automatic`, `sameEvent.titleRule` and `sameEvent.aiChoice`; and `collection.extraSnu`, whether the worker's
+  schedule collects extra.snu, which the worker asks ([Requests from the worker server](#requests-from-the-worker-server)).
+  The four switches are `BOOLEAN` with the labels on and off. A switch's default is its env setting,
+  `AUTOMATIC_JUDGEMENT`, `SAME_EVENT_TITLE_RULE`, `SAME_EVENT_AI_CHOICE` and `EXTRA_SNU_COLLECTION`, so a server with nothing saved behaves as before, and a saved value wins over it until it is
+  saved again. The two that call the model refuse `true` when the server holds no key, `OPENROUTER_API_KEY` or one in
+  `LLM_KEYS`.
 - The table `settings` holds a row only for a setting that was saved. A setting with no row has its default. The table
   `setting_changes` keeps every save: the old and the new value, the Administrator and the time. The one row of
   `settings_revision` counts the saves.
@@ -920,7 +926,8 @@ posts of one event on two pods the second sees the first.
 - **The refusing rules** read the titles as written (only with their width folded), never the body, which often speaks of the other kind. They refuse two
   times of day on one day, and titles that say different rounds (`1차`, `2회차`), modes (대면 against 비대면) or roles (헬퍼, 디자이너, 멘토, 멘티, 튜터, 튜티, 스태프: what a participant does, not who it is for). A
   title saying nothing of it is not refused. Candidates on the day before or after are kept.
-- **The attaching rule** runs only with `SAME_EVENT_TITLE_RULE=on` (default `off`, also in Production): a wrong attachment
+- **The attaching rule** runs only while the global setting `sameEvent.titleRule` is on (its default `SAME_EVENT_TITLE_RULE`,
+  `off` unless set, also in Production): a wrong attachment
   hides an event from Users, flagged by nothing, so it stays off until evaluation B has measured it. With it off the
   candidates are not looked at and both posts are published. Equal normalised titles (NFKC, lower case, without what is in `[]`, `()`, `【】` or `<>`, spaces or
   punctuation) and equal starts attach, with the reason `equal_title_and_start`. Several such events leave the session a
@@ -930,8 +937,9 @@ posts of one event on two pods the second sees the first.
   event's `sourceUrl`, its version and its route stay, since those read its own session. Attaching tells no app to refetch.
   A session's `globalEventId` in a Judgement is the event it was published as or attached to, or its Draft while held.
 
-- **The AI's choice** runs only with `SAME_EVENT_AI_CHOICE=on` (default `off`, also in Production; with `on` the server
-  refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`). `off` calls no model, sends nothing out and asks
+- **The AI's choice** runs only while the global setting `sameEvent.aiChoice` is on (its default `SAME_EVENT_AI_CHOICE`,
+  `off` unless set, also in Production; with `on` the server refuses to start without a key, `OPENROUTER_API_KEY` or one
+  in `LLM_KEYS`, and the setting refuses `true` without one). `off` calls no model, sends nothing out and asks
   nothing of the candidates, so a session the rules do not attach is published as before. For the sessions of a post
   with candidates the refusing rules left, whether the rules read them or a Judgement's session is compared, it makes one call,
   outside any transaction and lock, with no retry. No model is called for a session with no candidate, one the rules
@@ -960,7 +968,8 @@ queue/:sessionId/publish` publishes the Draft by an Administrator's route, or an
   judges or attaches the post again. `POST :id/acknowledge` takes an event's flag off, also without a new version.
 
 **A Judgement** ([ADR 0008](../docs/adr/0008-judgements-publish-only-what-the-server-checks.md)) reads what the rules
-left. With `AUTOMATIC_JUDGEMENT=on` (default `off`, also in Production) the step calls the model once for each post with a
+left. While the global setting `judgement.automatic` is on (its default `AUTOMATIC_JUDGEMENT`, `off` unless set, also in
+Production) the step calls the model once for each post with a
 session the rules did not read, one post at a time, after the posts that need no model. `off` calls no model, sends no post
 out and leaves the rules' publication alone; Drafts stored meanwhile are not judged when it is turned on. With `on`, the
 server refuses to start without a key, `OPENROUTER_API_KEY` or one in `LLM_KEYS`. Each Judgement reads `llm.key` once, at
@@ -4473,7 +4482,10 @@ so a message is stored once. Every route for the worker follows these rules.
   Its path names what it asks for, its body carries only what it asks about, and it answers 200 with what it asks for
   and stores nothing: a post is identified by its Source and key, so `/global-events/stored-posts` carries no time.
   `/global-events/stored-posts` with `{ "source": "snu_events", "keys": ["176558", "176525"] }` asks which of these posts
-  are stored, and `{ "keys": ["176558"] }` answers that 176558 is, whatever became of its event. The worker asks with `MainServer.ask()`.
+  are stored, and `{ "keys": ["176558"] }` answers that 176558 is, whatever became of its event.
+  `/collections/scheduled` with `{ "source": "extra_snu" }` asks before a scheduled Collection whether the schedule
+  collects the Source now, and answers `{ "scheduled": true }` while `collection.extraSnu` is on; any other Source is
+  always scheduled. The worker asks with `MainServer.ask()`.
 - **Who may call it**: the worker alone. The request carries `Authorization: Bearer <WORKER_TOKEN>`, the secret that
   the two servers' settings share, and `WorkerGuard` in `src/auth/worker.guard.ts` answers 401 to any other request,
   a User's and an Administrator's access token included. The token is no signed token: the worker is no User.

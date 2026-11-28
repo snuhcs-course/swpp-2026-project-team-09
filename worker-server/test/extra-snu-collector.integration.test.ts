@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -19,6 +20,7 @@ import {
   programmePage,
   seminar,
 } from './extra-snu.js';
+import { type MainServerStub } from './main-server.js';
 import { savedPage } from './pages.js';
 import { startApp } from './start-app.js';
 
@@ -133,30 +135,43 @@ describe('A programme that redirects to the sign-in', () => {
   });
 });
 
-async function scheduledCollection(setting: string): Promise<BrowserStub> {
+// The scheduled run, against a main server whose collection.extraSnu answers `scheduled`, or that is down.
+async function scheduledCollection(
+  scheduled: boolean | 'down',
+): Promise<{ browser: BrowserStub; mainServer: MainServerStub }> {
   const browser = browserServing(listPages);
-  const app = await startApp(
-    { ...inject('settings'), EXTRA_SNU_COLLECTION: setting },
-    { mainServer: mainServerNotStoring(), launchBrowser: browser.launch },
-  );
+  const mainServer = mainServerNotStoring();
+  if (scheduled === 'down') {
+    mainServer.down = true;
+  } else {
+    mainServer.answers.set('/collections/scheduled', { scheduled });
+  }
+  const app = await startApp(inject('settings'), { mainServer, launchBrowser: browser.launch });
   const { ExtraSnuCollector } = await import('../src/event/extra-snu.collector.js');
   await onAFakeClock(() => app.get(ExtraSnuCollector).collect());
   await app.close();
-  return browser;
+  return { browser, mainServer };
 }
 
 describe('The schedule of extra.snu', () => {
-  it('off starts nothing: no browser, no page', async () => {
-    const browser = await scheduledCollection('off');
+  it('asks the main server first, and off starts nothing: no browser, no page', async () => {
+    const { browser, mainServer } = await scheduledCollection(false);
 
+    expect(mainServer.messages).toEqual([{ path: '/collections/scheduled', data: { source: 'extra_snu' } }]);
     expect(browser.launches).toBe(0);
     expect(browser.opened).toEqual([]);
   });
 
   it('on starts a Collection', async () => {
-    const browser = await scheduledCollection('on');
+    const { browser } = await scheduledCollection(true);
 
     expect(browser.opened).toHaveLength(4);
+  });
+
+  it('starts nothing when the main server does not answer', async () => {
+    const { browser } = await scheduledCollection('down');
+
+    expect(browser.launches).toBe(0);
   });
 
   it('runs at 03:00 and 15:00, apart from the events list', async () => {
