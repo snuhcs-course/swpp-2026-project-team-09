@@ -49,6 +49,7 @@ function SearchBar({ search, words }: { search: TabSearch; words: string }): Rea
         <View style={styles.field}>
           <SearchField
             autoFocus
+            variant="bare"
             label={search.field}
             onChangeText={search.onWords}
             placeholder={search.placeholder}
@@ -109,7 +110,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[1],
     paddingRight: space[2],
-    paddingLeft: space[4],
+    // Where the title starts in the app bar.
+    paddingLeft: space[5],
   },
   field: { flex: 1 },
 });

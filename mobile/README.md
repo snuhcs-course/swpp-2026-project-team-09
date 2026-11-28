@@ -452,7 +452,9 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   lists load, and when every one failed, there is no badge.
 - 파티, 행사 and 내 정보 are a `TabScreen` (`src/screens/shell/tab-screen.tsx`): the tab's app bar on the grey ground.
   A tab with a search gives `TabScreen` its `search`: the magnifier at the bar's top right, which turns the title's
-  row into the field, focused at once so the keyboard rises, and ✕ "검색 닫기"; Android's back closes an open search
+  row into the field, focused at once so the keyboard rises, and ✕ "검색 닫기". The field is `SearchField`'s `bare`
+  variant: no box, the magnifier and the words (18 SemiBold, `text.title`) in the title's place on the bar's white,
+  and no clear ✕ of its own, since the one ✕ closes the search and drops the words; Android's back closes an open search
   before it leaves the tab. The words narrow the list together with the tab's filters. 파티 has the search and the
   tabs 찾기, 내 파티 and 초대, and 파티 만들기 floats over all three (`FloatingActionArea`: a navy rounded square of 56
   with a white pencil, 16 from the right and 12 above the navigation, which gives way while the keyboard is up; every

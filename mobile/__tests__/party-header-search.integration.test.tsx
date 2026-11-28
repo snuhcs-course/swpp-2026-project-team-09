@@ -4,8 +4,10 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { act } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import { FLOATING_ACTION_ROOM } from '@/design-system';
-import { color } from '@/design-system/tokens';
+import { color, font } from '@/design-system/tokens';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { sockets } from './support/fake-socket';
@@ -143,6 +145,33 @@ describe('the search', () => {
 
     await user.press(screen.getByRole('tab', { name: /^초대/u }));
     expect(screen.queryByLabelText('파티 검색어')).toBeNull();
+  });
+
+  // The user's choice of the header search's look, 나 (2026-11-28): no box, the words in the title's place on the
+  // header's white, the magnifier before them, and one ✕, the app's, that closes the search.
+  it('is words in the title’s place with no box, and one ✕ that closes it, on 파티 and on 행사 alike', async () => {
+    const user = await openAt('/party');
+    await user.press(screen.getByRole('button', { name: '파티 검색' }));
+    await user.type(screen.getByLabelText('파티 검색어'), '점심');
+
+    const field = screen.getByTestId('header-search');
+    expect(field).not.toHaveStyle({ backgroundColor: color.surfaceSubtle });
+    expect(screen.getByLabelText('파티 검색어')).toHaveStyle({ fontSize: 18, fontFamily: font.semiBold });
+    expect(screen.queryByRole('button', { name: '지우기' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: '검색 닫기' })).toHaveLength(1);
+
+    await user.press(screen.getByRole('button', { name: '검색 닫기' }));
+    expect(screen.queryByTestId('header-search')).toBeNull();
+    await user.press(screen.getByRole('button', { name: '파티 검색' }));
+    expect(screen.getByLabelText('파티 검색어')).toHaveDisplayValue('');
+
+    await act(() => {
+      router.navigate('/events');
+    });
+    await pass(500);
+    await user.press(screen.getByRole('button', { name: '행사 검색' }));
+    expect(screen.getByTestId('header-search')).toBeVisible();
+    expect(screen.getByLabelText('행사 검색어')).toHaveStyle({ fontSize: 18 });
   });
 
   it("closes with Android's back before the back leaves the tab", async () => {
