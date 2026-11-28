@@ -21,13 +21,13 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 
 ## What to build
 
-- The main server gives these seven kinds a new card, `room:<questId>`. Each row of 알림 and each push of them opens the 파티's room.
+- The stored card stays `party:<questId>`: a kept Notification's key holds its card (`@@unique` on `Notification`, `keyOf` in `notification-store.ts`), and a new card would no longer replace a row kept before. Where the main server reads and sends a Notification, it gives these seven kinds the room's address, `room:<questId>`, in place of the stored card: in `listFor` (the row's `url`) and in the sender's `ring` (the push's). Each row of 알림 and each push of them then opens the 파티's room, those kept before this change included (decided 2026-11-28, review of PR 747).
 - The app opens `room:<id>` as `/room/<id>`, from a row of 알림 and from a tapped push. A room whose 파티 is gone closes itself as now (`useCloseWhenGone`). It also says "이미 없는 파티예요", as `party-gone` does.
 - The other kinds keep their addresses:
   - `party-gone`, `find-parties`, `invitation` and `event` as now;
   - 지금 나서요 (`leave-by`), its card on the map;
   - the 스터디룸 kinds, their card and the chat's room card.
-- Notifications already kept keep their old address. Only new ones open the room.
+- Releases: the app OTA update goes out first, or with the main server Release. An app without it reads `room:<id>` as nothing it knows and opens only `/main` (`fallbackFor`).
 
 ## Must not break
 
@@ -36,7 +36,7 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 
 ## Acceptance criteria
 
-- [ ] The seven kinds are kept with `room:<questId>`. (Main server unit test, which fails before the change.)
+- [ ] The seven kinds are kept under `party:<questId>` as now, and listed and pushed with `room:<questId>`; a second one of the same key replaces the first. (Main server test, which fails before the change.)
 - [ ] Pressing such a row or push opens the 파티's room, and a gone 파티's says so. (App integration test, which fails before the change.)
 - [ ] No native file changes; lint, format and types pass.
 

@@ -15,7 +15,8 @@ Positions are as of `origin/5.0/Main` ec8337d6. Received from the user on 2026-1
 ## What to build
 
 - A swipe from right to left on a kept Notification's row slides it and shows, in the space on its right, a red ground (`color.danger`) with the trash icon (`trash`) in white outline. A press on it, or a full swipe, deletes the row.
-- A new `DELETE /notifications/:id` deletes one of the User's own Notifications. Another User's, or one gone, is refused or ignored.
+- A new `DELETE /notifications/:id` deletes one of the User's own Notifications. `:id` is the list's `id` (`identityOf(kind, card, about)`, such as `step-changed:party:<questId>:<userId>`), URL-encoded, so it goes through the store's existing `forget`. One that is not the User's, or is gone, deletes nothing.
+- Only listed rows swipe, and a row is listed only once its time has come (ticket 39), so no push still to come is deleted.
 - The rows of what waits (activation, friend requests, invitations, requests to join) do not swipe. They leave when they are answered.
 - A deleted unread row no longer counts on the bell (ticket 38).
 

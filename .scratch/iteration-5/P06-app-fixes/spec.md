@@ -124,7 +124,8 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-27 and built at once: 35. After the phone checks of 2026-11-28 it changes only `BottomSheet` (`design-system/bottom-sheet.tsx`, `sheet-pull.ts`) and where the time wheel is mounted, so sheets added on `BottomSheet` later need nothing from it.
 - Added on 2026-11-28 and set `ready-for-agent`: 37 to 40, 알림's presses, unread count, days and deletion. Order and shared files:
   - 38 before 40: both add routes to `main-server/src/notifications/` (the controller and the store).
-  - 39 before 40: both change 알림's rows (`screens/me/notifications-screen.tsx`).
+  - 39 before 40: both change 알림's rows (`screens/me/notifications-screen.tsx`), and 40's rows are only those 39 lists.
+  - 38 and 39 both change `notifications.service.ts` (`listFor`), and 37 too: one after another, or the second merges `5.0/Main` first.
   - 37 changes the Notifications' words and the app's address handling (`notification-words.ts`, `use-asked-card.ts`, `push/card-address.ts`) and can run beside 38 and 39; whichever lands second merges `5.0/Main` first.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
@@ -238,10 +239,10 @@ Decided on 2026-11-27 (20 to 33):
 
 Decided on 2026-11-28 (37 to 40):
 
-- 37: the seven kinds (`became-leader`, `join-accepted`, `step-changed`, `arrived`, `late`, `accepted`, `declined`) get the card `room:<questId>`. A row and a tapped push open the 파티's room; the other kinds keep their addresses. Notifications already kept keep theirs.
-- 38: read state lives on the main server: `Notification.readAt`, nullable, set for all the User's Notifications whose time has come when 알림 opens. The bell counts what waits plus the unread whose time has come, without the two kinds a derived row stands for. 38 adds one database migration, a second exception to the rule below.
-- 39: 오늘 / 어제 / 이전 by the Korea day of a Notification's time; what waits, which has no time, at the top of 오늘; an empty group is not shown.
-- 40: a swipe to the left on a kept Notification shows a red action with a white outlined trash icon; a press on it or a full swipe deletes it by `DELETE /notifications/:id`. What waits does not swipe. No confirm and no undo.
+- 37: the seven kinds (`became-leader`, `join-accepted`, `step-changed`, `arrived`, `late`, `accepted`, `declined`) are still kept under `party:<questId>`, so that a new one replaces an old one, and are listed and pushed with `room:<questId>`. A row and a tapped push open the 파티's room, those kept before included; the other kinds keep their addresses. The app OTA update goes out first or with the Release.
+- 38: read state lives on the main server: `Notification.readAt`, nullable, set for all the User's Notifications whose time has come when 알림 opens; the migration sets it on the rows that exist. A write that rings a row again (`keep`, `replace` moving the time) makes it unread again; `renew` keeps it. The bell counts what waits plus the unread, without the two kinds a derived row stands for. 38 adds one database migration, a second exception to the rule below.
+- 39: a Notification whose time has not come is not listed (`GET /notifications` leaves it out). 오늘 / 어제 / 이전 by the Korea day of a Notification's time; what waits, which has no time, at the top of 오늘; an empty group is not shown.
+- 40: a swipe to the left on a kept Notification shows a red action with a white outlined trash icon; a press on it or a full swipe deletes it by `DELETE /notifications/:id`, `:id` being the list's identity. What waits does not swipe, nor anything not yet listed. No confirm and no undo.
 
 For all tickets:
 
