@@ -4,7 +4,7 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { aroundSpan, bandRange, fixedRange } from '../src/assistant/free-time/band-range.js';
+import { bandRange, fixedRange, mealBounds } from '../src/assistant/free-time/band-range.js';
 
 // The range a time card's band can be dragged over (P01 ticket 43): today from now, or the place's opening when later,
 // another day from the opening, to the place's closing, at most 16 hours and never past 23:30 of its day, holding the
@@ -94,20 +94,72 @@ describe("A time card's range at the day's end and outside the hours", () => {
   });
 });
 
-describe("A time card's range on another day, a meal's, and a fixed band's", () => {
-  // A meal's bounds are as they were before ticket 43: the stored lunch of meal-answer.unit, 12:33–13:00 asked at 11:50,
-  // and the same asked at 09:00.
-  it("between a meal's own bounds, runs from an hour before its span, unless now is later, to half an hour past it", () => {
-    const lunch = span('12:33', '13:00');
+// A meal's bounds (P01 ticket 46): the stretch it can be eaten in, from the end of the asker's item before it, no earlier
+// than the meal is served, to the start of their next item, no later than it is served. On the phone on 2026-11-28 a
+// lunch's bar ran 10:30–13:00, an hour before its span to half an hour past it, and lunch could not be dragged past
+// 13:00. Partitions: a Class before and after, none, now later than the item before, dinner late today, and a
+// Restaurant's own window that reaches past the meal's.
+const LUNCH = span('11:00', '14:30');
+const DINNER = span('17:00', '19:30');
+const classAt = (start: string, end: string, date = DAY): { start: Date; end: Date } => span(start, end, date);
 
-    expect(bandRange({ now: at('11:50'), date: DAY, span: lunch, bounds: aroundSpan(lunch) })).toEqual(
-      range('11:30', '13:30'),
+describe("A meal's bounds and its range", () => {
+  const lunch = span('11:30', '12:30', NEXT);
+  const served = span('11:00', '14:30', NEXT);
+
+  it('run from the end of a Class before to the start of a Class after, asked the day before', () => {
+    const between = span('12:00', '13:00', NEXT);
+    const bounds = mealBounds(between, served, [classAt('09:00', '11:40', NEXT), classAt('13:30', '15:00', NEXT)]);
+
+    expect(bounds).toEqual({ opens: at('11:40', NEXT), closes: at('13:30', NEXT) });
+    expect(bandRange({ now: at('16:01'), date: NEXT, span: between, bounds })).toEqual(range('11:30', '13:30', NEXT));
+  });
+
+  it('start when the meal is served, not at the end of a Class before it', () => {
+    expect(mealBounds(lunch, served, [classAt('09:00', '10:45', NEXT)]).opens).toEqual(at('11:00', NEXT));
+  });
+
+  it('run over the whole meal with nothing before or after, so a lunch can be dragged anywhere it is served', () => {
+    const bounds = mealBounds(lunch, served, []);
+
+    expect(bandRange({ now: at('16:01'), date: NEXT, span: lunch, bounds })).toEqual(range('11:00', '14:30', NEXT));
+  });
+
+  it('hold the window the User fixed without ending at it: a lunch until 13:00 can still be dragged later', () => {
+    const bounds = mealBounds(lunch, served, [classAt('09:00', '10:45', NEXT)]);
+    const holds = [at('13:00', NEXT)];
+
+    expect(bandRange({ now: at('16:01'), date: NEXT, span: lunch, bounds, holds })).toEqual(
+      range('11:00', '14:30', NEXT),
     );
-    expect(bandRange({ now: at('09:00'), date: DAY, span: lunch, bounds: aroundSpan(lunch) })).toEqual(
-      range('11:30', '13:30'),
+  });
+});
+
+describe("A meal's range today, and a Restaurant's own hours", () => {
+  it('start at now today, when it is later than the item before', () => {
+    const today = span('12:00', '13:00');
+    const bounds = mealBounds(today, LUNCH, [classAt('09:00', '10:45')]);
+
+    expect(bandRange({ now: at('11:50'), date: DAY, span: today, bounds })).toEqual(range('11:30', '14:30'));
+  });
+
+  it('give a late dinner what is left of it today', () => {
+    const late = span('19:10', '19:30');
+
+    expect(bandRange({ now: at('19:10'), date: DAY, span: late, bounds: mealBounds(late, DINNER, []) })).toEqual(
+      range('19:00', '19:30'),
     );
   });
 
+  it('end at the Restaurant’s own closing when it serves later than the meal’s window', () => {
+    const lunch = span('11:30', '12:30', NEXT);
+    const bounds = mealBounds(lunch, { start: at('11:00', NEXT), end: at('15:00', NEXT) }, []);
+
+    expect(bounds.closes).toEqual(at('15:00', NEXT));
+  });
+});
+
+describe("A time card's range on another day, and a fixed band's", () => {
   it('on another day, starts at the opening, not at now', () => {
     expect(
       bandRange({

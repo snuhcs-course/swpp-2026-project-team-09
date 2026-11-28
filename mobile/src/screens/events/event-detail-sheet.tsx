@@ -8,16 +8,27 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, eventText, eventTone, Icon, type IconName, radius, space } from '@/design-system';
+import { Linking, StyleSheet, Text, View } from 'react-native';
+import {
+  BottomSheet,
+  Button,
+  color,
+  eventText,
+  eventTone,
+  Icon,
+  type IconName,
+  radius,
+  SheetScroll,
+  space,
+} from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
 import { type DescriptionLine, descriptionLines } from './description-lines';
 import { FavoriteToggle } from './favorite-toggle';
 
-// "파티 찾기/모집", or "모집 중인 파티 {n} · 찾기/모집" when a recruiting Quest the User can join is there for the event,
-// as the row counts them.
+// "파티 찾기/모집", or "모집 중인 파티 {n}" when recruiting Quests the User can join are there for the event, as the row
+// counts them: short enough to stand beside "원문 보기" (P06 ticket 59), the sheet it opens offering both.
 export function detailPartyWords(recruiting: number): string {
-  return recruiting === 0 ? '파티 찾기/모집' : `모집 중인 파티 ${recruiting} · 찾기/모집`;
+  return recruiting === 0 ? '파티 찾기/모집' : `모집 중인 파티 ${recruiting}`;
 }
 
 // The icon names the value on the screen, and `name` names it to a screen reader.
@@ -51,22 +62,28 @@ function Description({ lines }: { lines: DescriptionLine[] }): ReactElement {
   );
 }
 
+// The sheet's head: the title and ☆, which stay on top while the rest scrolls.
+function Head({ event }: { event: EventView }): ReactElement {
+  return (
+    <View style={styles.head}>
+      <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
+        {event.title}
+      </Text>
+      <FavoriteToggle besideLine={eventText.sheetTitle.lineHeight} eventId={event.id} style={styles.favorite} />
+    </View>
+  );
+}
+
 function Details({ event }: { event: EventView }): ReactElement {
   const lines = descriptionLines(event.description);
   return (
-    <ScrollView contentContainerStyle={styles.details} style={styles.scroll} testID="event-detail">
-      <View style={styles.head}>
-        <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
-          {event.title}
-        </Text>
-        <FavoriteToggle besideLine={eventText.sheetTitle.lineHeight} eventId={event.id} style={styles.favorite} />
-      </View>
+    <SheetScroll contentContainerStyle={styles.details} style={styles.scroll}>
       <View style={styles.facts}>
         <Fact icon="clock" name="언제" words={event.time} />
         {event.place === null ? null : <Fact icon="pin" name="어디" words={event.place} />}
       </View>
       {lines.length === 0 ? null : <Description lines={lines} />}
-    </ScrollView>
+    </SheetScroll>
   );
 }
 
@@ -145,10 +162,17 @@ interface EventDetailSheetProps {
 }
 
 // The `EventsDetail` frame: an event in a sheet, with its time and place, its description, "원문 보기" and the button
-// of the screen that opened it. The top part scrolls when the description is long, the buttons staying under it.
+// of the screen that opened it. The title stays on top; the time, the place and the description scroll when the
+// description is long, the buttons staying under them.
 export function EventDetailSheet({ event, onClose, action }: EventDetailSheetProps): ReactElement {
   return (
-    <BottomSheet label={event?.title ?? '행사'} onClose={onClose} open={event !== null}>
+    <BottomSheet
+      head={event === null ? undefined : <Head event={event} />}
+      label={event?.title ?? '행사'}
+      onClose={onClose}
+      open={event !== null}
+      testID="event-detail"
+    >
       {event === null ? null : (
         <View style={styles.body}>
           <Details event={event} />

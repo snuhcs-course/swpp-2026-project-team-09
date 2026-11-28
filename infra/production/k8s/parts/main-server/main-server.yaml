@@ -9,6 +9,7 @@
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-28  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 apiVersion: apps/v1
@@ -98,6 +99,9 @@ spec:
               valueFrom: { configMapKeyRef: { name: settings, key: SAME_EVENT_TITLE_RULE } }
             - name: SAME_EVENT_AI_CHOICE
               valueFrom: { configMapKeyRef: { name: settings, key: SAME_EVENT_AI_CHOICE } }
+            # The default of collection.extraSnu, which the worker asks before each of extra.snu's Collections.
+            - name: EXTRA_SNU_COLLECTION
+              valueFrom: { configMapKeyRef: { name: settings, key: EXTRA_SNU_COLLECTION } }
           resources:
             requests:
               memory: 256Mi

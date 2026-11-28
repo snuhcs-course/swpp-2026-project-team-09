@@ -3,12 +3,25 @@
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
-import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { Place } from '@/api/types';
-import { BottomSheet, Button, color, font, Icon, type IconName, radius, SearchField, space } from '@/design-system';
+import {
+  BottomSheet,
+  Button,
+  color,
+  font,
+  Icon,
+  type IconName,
+  radius,
+  SearchField,
+  SheetScroll,
+  SheetTitle,
+  space,
+} from '@/design-system';
 import { usePlaceSearch } from '@/features/places/use-place-search';
 import { type Help, HelpButton } from '../help-bubble';
 import { KindTag, PLACE_KIND_WORDS, usePlaceKind } from './place-kind';
@@ -188,27 +201,33 @@ export function PlaceSheet({ sheet }: { sheet: PlaceSheetState }): ReactElement 
   const typed = sheet.search.trim();
   const found = useFound(sheet.search);
   return (
-    <BottomSheet label="장소" onClose={sheet.onClose} open={sheet.open}>
-      <View style={styles.body}>
-        <View style={styles.head}>
-          <Text accessibilityRole="header" style={styles.title}>
-            장소
-          </Text>
-          <HelpButton help={PLACE_HELP} size={18} />
+    <BottomSheet
+      head={
+        <View style={styles.headBlock}>
+          <View style={styles.head}>
+            <SheetTitle>장소</SheetTitle>
+            <HelpButton help={PLACE_HELP} size={18} />
+          </View>
+          <SearchField
+            clearLabel="검색어 지우기"
+            label="장소 검색"
+            onChangeText={sheet.onSearch}
+            placeholder="건물 이름, 동 번호"
+            value={sheet.search}
+          />
         </View>
-        <SearchField
-          clearLabel="검색어 지우기"
-          label="장소 검색"
-          onChangeText={sheet.onSearch}
-          placeholder="건물 이름, 동 번호"
-          value={sheet.search}
-        />
-        <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll}>
+      }
+      label="장소"
+      onClose={sheet.onClose}
+      open={sheet.open}
+    >
+      <View style={styles.body}>
+        <SheetScroll keyboardShouldPersistTaps="handled" style={styles.scroll}>
           <View style={styles.lists}>
             {found.length === 0 ? null : <BuildingRows found={found} sheet={sheet} typed={typed} />}
             <OtherRows sheet={sheet} typed={typed} />
           </View>
-        </ScrollView>
+        </SheetScroll>
         {sheet.choice === null ? null : <ChoiceLine choice={sheet.choice} />}
         <Button disabled={sheet.choice === null} full onPress={sheet.onConfirm} size="lg">
           이 장소로 정하기
@@ -221,9 +240,9 @@ export function PlaceSheet({ sheet }: { sheet: PlaceSheetState }): ReactElement 
 const LEAD = 34;
 
 const styles = StyleSheet.create({
-  body: { flexShrink: 1, gap: space[3], paddingHorizontal: space[4] },
+  body: { flexShrink: 1, gap: space[3], paddingHorizontal: space[5] },
+  headBlock: { gap: space[3] },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  title: { fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
   scroll: { flexShrink: 1 },
   lists: { gap: space[3] },
   list: { overflow: 'hidden', borderWidth: 1, borderColor: color.border, borderRadius: radius.md },

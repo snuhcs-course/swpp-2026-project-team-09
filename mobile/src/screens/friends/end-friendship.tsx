@@ -2,25 +2,30 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Avatar, BottomSheet, Button, color, Dialog, space, text } from '@/design-system';
+import { Avatar, BottomSheet, Button, color, Dialog, SheetTitle, space, text } from '@/design-system';
 import type { FriendView } from '@/features/friends/adapter';
 
-function Sheet({ friend, onEnd }: { friend: FriendView; onEnd: () => void }): ReactElement {
+// The sheet's head: the Friend, as its title.
+function FriendHead({ friend }: { friend: FriendView }): ReactElement {
+  return (
+    <View style={styles.head}>
+      <Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />
+      <View style={styles.words}>
+        <SheetTitle>{friend.name}</SheetTitle>
+        <Text style={styles.department}>{friend.department}</Text>
+      </View>
+    </View>
+  );
+}
+
+function Sheet({ onEnd }: { onEnd: () => void }): ReactElement {
   return (
     <View style={styles.sheet}>
-      <View style={styles.head}>
-        <Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />
-        <View style={styles.words}>
-          <Text accessibilityRole="header" style={styles.name}>
-            {friend.name}
-          </Text>
-          <Text style={styles.department}>{friend.department}</Text>
-        </View>
-      </View>
       <Button full onPress={onEnd} size="lg" variant="danger">
         친구 끊기
       </Button>
@@ -45,10 +50,14 @@ export function EndFriendship({ friend, onClose, onEnd }: EndFriendshipProps): R
   }
   return (
     <>
-      <BottomSheet label={shown?.name ?? '친구'} onClose={onClose} open={friend !== null}>
+      <BottomSheet
+        head={shown === null ? undefined : <FriendHead friend={shown} />}
+        label={shown?.name ?? '친구'}
+        onClose={onClose}
+        open={friend !== null}
+      >
         {shown === null ? null : (
           <Sheet
-            friend={shown}
             onEnd={() => {
               setAsking(shown);
               onClose();
@@ -78,9 +87,8 @@ export function EndFriendship({ friend, onClose, onEnd }: EndFriendshipProps): R
 }
 
 const styles = StyleSheet.create({
-  sheet: { gap: space[4], paddingHorizontal: space[5], paddingTop: space[2] },
+  sheet: { gap: space[4], paddingHorizontal: space[5] },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   words: { flex: 1, gap: 2 },
-  name: { ...text.title, color: color.ink },
   department: { ...text.body, color: color.inkMuted },
 });

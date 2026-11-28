@@ -22,6 +22,7 @@
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -80,6 +81,7 @@ const FIXED_SETTINGS = {
   AUTOMATIC_JUDGEMENT: 'off',
   SAME_EVENT_TITLE_RULE: 'off',
   SAME_EVENT_AI_CHOICE: 'off',
+  EXTRA_SNU_COLLECTION: 'off',
   JUDGEMENT_TIMEOUT_MS: '60000',
   JUDGEMENT_MAX_OUTPUT_TOKENS: '4000',
   LIBRARY_BOOKING_ENABLED: 'true',

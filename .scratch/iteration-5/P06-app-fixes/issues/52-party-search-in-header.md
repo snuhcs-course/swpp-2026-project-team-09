@@ -44,3 +44,8 @@ The options were drawn on a page (sections 가, 가-1 and 다). The user chose �
 - [ ] 행사's search behaves as before on the shared part (integration test).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 36 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 55k; input 46.3M, of which 46.1M cache reads, 108k cache writes and 208 uncached. No subagents.

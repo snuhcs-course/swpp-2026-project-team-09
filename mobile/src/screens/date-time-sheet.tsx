@@ -3,11 +3,12 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-07  Fable 5.1  prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, font, radius, space } from '@/design-system';
+import { BottomSheet, Button, color, font, radius, SheetTitle, space } from '@/design-system';
 import { now } from '@/clock';
 import {
   koreaClock,
@@ -192,12 +193,19 @@ export function DateTimeSheet({ open, title = '언제', value, onClose, onPick }
   const [choice, change] = useChoice(open, value, today);
   const picked = koreaInstant(today, choice.day, choice.hour, choice.minute).toISOString();
   return (
-    <BottomSheet label="날짜·시간" onClose={onClose} open={open}>
-      <View style={styles.body}>
+    <BottomSheet
+      head={
         <View style={styles.head}>
-          <Text style={styles.title}>{title}</Text>
+          <SheetTitle>{title}</SheetTitle>
           <Text style={styles.preview}>{whenWords(picked)}</Text>
         </View>
+      }
+      label="날짜·시간"
+      onClose={onClose}
+      open={open}
+      pullBody={false}
+    >
+      <View style={styles.body}>
         <Days choice={choice} onChange={change} today={today} />
         <Times choice={choice} onChange={change} />
         <Button
@@ -221,9 +229,12 @@ const LIST_HEIGHT = 200;
 const CELL_HEIGHT = 44;
 
 const styles = StyleSheet.create({
-  body: { gap: 14, paddingHorizontal: space[4] },
-  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  title: { fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
+  body: { gap: 14, paddingHorizontal: space[5] },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
   preview: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.snuBlue },
   days: { gap: space[2] },
   day: {

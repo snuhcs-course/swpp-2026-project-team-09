@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -17,18 +18,22 @@ interface IconButtonProps {
   // What a screen reader says, such as "닫기".
   label: string;
   onPress: () => void;
+  // For a button that turns something on and off: on, its icon is filled in navy, as a Favorite Event's ★ is, and a
+  // screen reader hears it selected.
+  on?: boolean;
 }
 
 // An icon alone in a touch area of 48, as on an app bar.
-export function IconButton({ icon, label, onPress }: IconButtonProps): ReactElement {
+export function IconButton({ icon, label, onPress, on }: IconButtonProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityState={on === undefined ? undefined : { selected: on }}
       onPress={onPress}
       style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
     >
-      <Icon color={color.ink} name={icon} size={22} />
+      <Icon color={on === true ? color.snuBlue : color.ink} filled={on === true} name={icon} size={22} />
     </Pressable>
   );
 }
@@ -57,8 +62,8 @@ interface AppBarProps {
   clear?: boolean;
 }
 
-// The bar at the top of a screen, under the phone's status bar, in the frames' two forms. A tab's has its title in
-// 25/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
+// The bar at the top of a screen, under the phone's status bar, in the frames' two forms, both in the tab's row. A tab's
+// has its title in 25/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
 export function AppBar({ title, count, leave, actions, line = true, clear = false }: AppBarProps): ReactElement {
   const { top } = useInsets();
   return (
@@ -86,7 +91,8 @@ const styles = StyleSheet.create({
   lined: { borderBottomWidth: 1, borderBottomColor: color.border },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
   tab: { ...TAB_BAR_ROW, paddingRight: space[2], paddingLeft: space[5] },
-  sub: { height: size.appBar, paddingRight: space[3], paddingLeft: space[1] },
+  // As high as a tab's, so that a screen pushed over the tabs keeps their bar's height (P06 ticket 64).
+  sub: { ...TAB_BAR_ROW, paddingRight: space[3], paddingLeft: space[1] },
   // Larger than `text.titleLg`, which other screens share (P06 ticket 17).
   tabTitle: { flex: 1, fontFamily: font.bold, fontSize: 25, lineHeight: 32, letterSpacing: -0.4, color: color.ink },
   // The frames' sub-screen title: between the two titles of the design system.

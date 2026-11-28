@@ -127,7 +127,7 @@ export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactEleme
   const [search, setSearch] = useState('');
   const [opened, setOpened] = useState<Opened | null>(null);
   return (
-    <FullScreenPanel leave={{ kind: 'back', onPress: onBack }} title="관련 행사 고르기">
+    <FullScreenPanel inner leave={{ kind: 'back', onPress: onBack }} title="관련 행사 고르기">
       <View style={styles.picker}>
         <SearchField label="행사 검색" onChangeText={setSearch} placeholder={EVENT_SEARCH_HINT} value={search} />
         <Events chosen={chosen} onOpen={setOpened} search={search} />

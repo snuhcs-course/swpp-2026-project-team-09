@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -62,5 +63,16 @@ describe('ChipRow', () => {
 
     await screen.rerender(<ChipRow chips={CHIPS} hideEmpty onSelect={jest.fn<void, [string]>()} selected="moving" />);
     expect(screen.getByRole('button', { name: '이동 중 0' })).toBeSelected();
+  });
+});
+
+describe("ChipRow's height", () => {
+  // The user (2026-11-28): "전체 탭의 첫 항목 높이랑 파티 모집중 탭의 첫 항목 높이가 미세하게 달라 보이네." Under a long list
+  // the column overflowed and Yoga shrank the row (a scroll view shrinks by default), so the chips and the list rose a
+  // few points with 전체 and not with a filter that leaves one row. The row never shrinks.
+  it('keeps its height whatever the list under it holds', async () => {
+    await render(<ChipRow chips={CHIPS} onSelect={jest.fn<void, [string]>()} selected="all" />);
+
+    expect(screen.getByTestId('chip-row')).toHaveStyle({ flexGrow: 0, flexShrink: 0, paddingVertical: 10 });
   });
 });

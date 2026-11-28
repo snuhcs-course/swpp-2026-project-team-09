@@ -22,3 +22,8 @@ After ticket 50 every list the app filters itself matches with `matchesWords`: "
 - [ ] The timetable's class form still finds 302동 (integration tests).
 
 ## Comments
+
+### Agent usage (2026-11-28)
+
+- Agent time: about 10 minutes in the app-fixes session, measured from its transcript (an estimate). That session worked on several tickets at once, so its time and tokens are split by which ticket each step named. Pauses longer than five minutes are not counted.
+- Tokens: output 20k; input 14.8M, of which 14.8M cache reads, 51k cache writes and 74 uncached. No subagents.
