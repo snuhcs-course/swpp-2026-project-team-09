@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { contextLines } from '../src/assistant/context-lines.js';
@@ -151,7 +152,7 @@ describe('The capability and the line on screen', () => {
     const planIds = STUDY_ANSWER.plans.map(({ id }) => id);
 
     expect(contextLines({ ...NO_CONTEXT, conditions: input, planId: '법학도서관', planIds })).toEqual([
-      `[Plan on screen: {"plan":"법학도서관","kind":"study","date":"2026-11-04","what":"any","friendIds":[],"from":null,"until":null,"minutes":null,"near":false,"numbered":${JSON.stringify(planIds)}}]`,
+      `[Plan on screen: {"plan":"법학도서관","kind":"study","date":"2026-11-04","what":"any","friendIds":[],"near":false,"numbered":${JSON.stringify(planIds)}}]`,
     ]);
   });
 });
