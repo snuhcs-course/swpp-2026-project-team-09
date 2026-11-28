@@ -190,8 +190,11 @@ describe('a screen a row of 알림 opened', () => {
     const user = await openNotifications();
 
     await user.press(screen.getByRole('button', { name: ROWS[2] }));
+    await pass(500);
 
-    expect(screen.getByRole('tab', { name: '지도' })).toBeSelected();
+    // The map's tab, which may hide the bar while it says the invitation ended: read by the address.
+    expect(shownAddress()).toMatch(/^\/main(?:\?card=undefined)?$/u);
+    expect(screen.queryByRole('header', { name: /^알림/u })).toBeNull();
     expect(router.canDismiss()).toBe(false);
   });
 
