@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -30,8 +31,9 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 // main server, which answers the meet with 민수 with the stored real answer of board a5 (`meet-answer.json`): its first
 // Plan runs from 12:15 to 12:43; 민수 is busy until 12:15 and 나 from 13:00 ("24동 수업"). The time card's track runs
 // over the free time around the span, 12:00 to 13:15, open or not (P04 ticket 61), and is laid 300 wide, four points a
-// minute, so that a drag of 120 is the band at 12:45, over 나's class. Expected values: the ticket and board a12's
-// layout, on a stretch inside the track.
+// minute, so that a drag of 100 is the band at 12:40, over 나's class: a whole move stands on the clock's ten minutes
+// (P01 ticket 44), where board a12 had 12:45. Expected values: the ticket and board a12's layout, on a stretch inside
+// the track.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -87,11 +89,11 @@ function barTop(): ViewStyle['top'] {
 
 // Partitions: the band dragged over 나's class, with its lane, its words, the card's lines, the outline, and the input
 // (board a12's layout). The band is 112 points here, and its two handles, 16 wide each, stand at its ends.
-describe("the band dragged over 나's class to 12:45", () => {
-  it("draws 나's class red on the lane where the band covers it, from 13:00 to 13:13, over the band and its handles", async () => {
+describe("the band dragged over 나's class to 12:40", () => {
+  it("draws 나's class red on the lane where the band covers it, from 13:00 to 13:08, over the band and its handles", async () => {
     await meetMinSu();
 
-    await holdBody(120);
+    await holdBody(100);
 
     const track = screen.getByTestId('time-band-track');
     const red = screen.getByTestId('time-band-red');
@@ -100,15 +102,15 @@ describe("the band dragged over 나's class to 12:45", () => {
     const clash = within(within(red).getByTestId(`time-band-red-${ME_LANE}`)).getByTestId('time-band-clash');
     expect(clash).toHaveStyle({ backgroundColor: color.warning, left: left(60) });
     expect(screen.getAllByTestId('time-band-clash')).toHaveLength(1);
-    expect(body()).toHaveAccessibilityValue({ text: '12:45–13:13' });
+    expect(body()).toHaveAccessibilityValue({ text: '12:40–13:08' });
   });
 
   it('says who cannot come under the band, and why in the lines', async () => {
     await meetMinSu();
 
-    await holdBody(120);
+    await holdBody(100);
 
-    expect(timeBar().getByText('12:45–13:13 · 내가 안 돼요')).toBeVisible();
+    expect(timeBar().getByText('12:40–13:08 · 내가 안 돼요')).toBeVisible();
     const lines = within(card().getByTestId('answer-lines'));
     expect(lines.getByText('는 13:00부터 24동 수업이라')).toBeVisible();
     expect(lines.getByText('이때는 만날 수 없어요')).toBeVisible();
@@ -118,24 +120,24 @@ describe("the band dragged over 나's class to 12:45", () => {
   it('keeps the place before as a dashed outline at 12:15, shows no chips, and gives the input way', async () => {
     await meetMinSu();
 
-    await holdBody(120);
+    await holdBody(100);
 
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed', left: left(15) });
-    expect(card().queryByRole('button', { name: '12:45' })).toBeNull();
+    expect(card().queryByRole('button', { name: '12:40' })).toBeNull();
     expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
     expect(recalculations(server)).toHaveLength(1);
   });
 });
 
-// Partitions: the time bar before the band moves and while it is held at 12:45. The lanes are the bar's,
+// Partitions: the time bar before the band moves and while it is held at 12:40. The lanes are the bar's,
 // under the pill, so the card below may change while the input gives way.
 describe('the bar while the band moves', () => {
   it('stays where it is while the input gives way, so that the lanes stay under the finger', async () => {
     await meetMinSu();
     const top = barTop();
 
-    await holdBody(120);
+    await holdBody(100);
 
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
     expect(top).toEqual(expect.any(Number));
@@ -145,14 +147,15 @@ describe('the bar while the band moves', () => {
 
 // Partitions: the band over nobody's stretch; past the track's end; less than half a step.
 describe('the band dragged elsewhere and held', () => {
-  it("shows the band's own words and no lines over nobody's stretch at 12:25, the Plan's place on the map", async () => {
+  // Ten minutes on from 12:15 is halfway between two ten minutes: the one nearer its own place (P01 ticket 44).
+  it("shows the times it is held at and no lines over nobody's stretch at 12:20, the Plan's place on the map", async () => {
     await meetMinSu();
 
     await holdBody(40);
 
-    expect(body()).toHaveAccessibilityValue({ text: '12:25–12:53' });
+    expect(body()).toHaveAccessibilityValue({ text: '12:20–12:48' });
     expect(screen.queryByTestId('time-band-clash')).toBeNull();
-    expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
+    expect(timeBar().getByText('12:20–12:48 · 함께 28분')).toBeVisible();
     expect(card().queryByTestId('answer-lines')).toBeNull();
     expect(mapThings()).toContain('302동 앞 · 12:15 만남');
   });
@@ -180,12 +183,12 @@ describe('the band dragged elsewhere and held', () => {
 // Partitions: a drag that starts on the lanes beside the band, outside the handles' touch areas, which stand 44 points
 // wide around 60 and 172.
 describe('the band dragged from its lanes beside it', () => {
-  it("moves whole by the finger's distance from 13:02's place, to 12:45, not to the finger", async () => {
+  it("moves whole by the finger's distance from 13:02's place, to 12:40, not to the finger", async () => {
     await meetMinSu();
 
-    await holdLanes(250, 120);
+    await holdLanes(250, 100);
 
-    expect(body()).toHaveAccessibilityValue({ text: '12:45–13:13' });
-    expect(timeBar().getByText('12:45–13:13 · 내가 안 돼요')).toBeVisible();
+    expect(body()).toHaveAccessibilityValue({ text: '12:40–13:08' });
+    expect(timeBar().getByText('12:40–13:08 · 내가 안 돼요')).toBeVisible();
   });
 });

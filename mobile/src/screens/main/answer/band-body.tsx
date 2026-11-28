@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useMemo } from 'react';
@@ -50,16 +51,18 @@ export interface HeldBand {
   bound: BandBound | null;
 }
 
-// The words over the band: while it is moved whole, who cannot come over someone's busy stretch, else its own (P02
-// ticket 25); else its words where a handle has it (P04 ticket 30).
+// The words over the band: while it is moved whole, who cannot come over someone's busy stretch (P02 ticket 25), else
+// its words where it is (P01 ticket 44), so that the time reached shows while it is dragged; else its words where a
+// handle has it (P04 ticket 30).
 export function wordsOf(band: TimeBand, moving: Stretch | null, held: HeldBand): BandWordsPart[] {
   if (moving === null) {
     return shownWordsOf(band, held.shown, held.bound);
   }
-  return [{ text: movingWords(band.lanes, moving)?.text ?? band.text, strong: false }];
+  const clash = movingWords(band.lanes, moving);
+  return clash === null ? shownWordsOf(band, moving, null) : [{ text: clash.text, strong: false }];
 }
 
-// The track's drag, which moves the band whole by the finger's distance in steps of five minutes and says where the
+// The track's drag, which moves the band whole by the finger's distance onto the clock's ten minutes and says where the
 // band is while it is dragged, and where it is let go. It starts anywhere on the lanes, the body included, outside the
 // handles' touch areas, which block it: a band narrower than the two touch areas is moved from beside it. Without
 // `onMove` it takes nothing, as for a Lookup's band.
