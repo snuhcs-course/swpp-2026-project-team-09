@@ -2237,7 +2237,9 @@ on that line (`grid-mapping.ts`). A block whose text was read at a start more th
 read again on its placed day and time. When the fit or the days do not hold, or no grid was sent, the model reads the whole
 picture instead, hour axis included. Code checks the answer (`reading-checks.ts`): a name must be its printed lines
 joined, a room must match the room pattern, a 12-hour axis becomes 24-hour, times snap to five minutes, and blocks
-whose names are equal after NFC and space normalisation are one class, each time with its own room. Blocks whose names
+whose names are equal after NFC and space normalisation are one class, each time with its own room. A block may have
+up to 12 name lines, and a name past 30 characters is cut to 30 without its `…`, as the phone's reader cuts it (P05
+ticket 90). Blocks whose names
 are one or two characters apart (and of one colour) are read once more on their own before they are grouped
 (`second-look.ts`). A fading block keeps the end where its colour is last seen only when the end the model read agrees
 with it within 5 minutes, with the layout or when asked once more about that block alone; otherwise it is left out. What fails a check is left out and counted:
@@ -2267,8 +2269,12 @@ blocks itself.
 or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a body of another shape, 413 above the
 limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked
 `TIMETABLE_READING_DAILY` times that day in Korea (a setting, 10 unless set), and 503 when the model fails or the server has no key by the
-name `llm.key` gives; the app then reads the picture on the phone. The picture is neither stored nor logged, nor is
-what was read; the log says only how many classes and blocks left out. A reading makes at most 7 model calls
+name `llm.key` gives; the app then reads the picture on the phone. The picture and the words read (names and rooms)
+are neither stored nor logged, and the route's bodies are left off its request line (`BODILESS_ROUTES`). What is
+logged is the left-out blocks' day, time and reason (P05 ticket 90): one WARN line for each, with its day, its start
+and end, the reason and the numbers behind it ("name lines 14, at most 12"); a WARN for each call whose failure left
+blocks out, with its cause and no message; and the count of classes and blocks left out, a WARN when any was. A
+reading makes at most 7 model calls
 (`MOST_MODEL_CALLS`: the layout and the text, at most 3 fading ends asked again, one re-read, one second look at
 near-miss names) and the grid at most 48 blocks; `TIMETABLE_READING_TIMEOUT_MS` (24 000) is one deadline over all of
 a reading's calls, under the phone's 25 s, and `TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bounds each call. A
@@ -2770,6 +2776,13 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
   answers `200` with the recalculated answer, in the shape of the reply's `answer`. It is planned by the service
   `planMeal` calls (`src/assistant/gathering/meal-plan.service.ts`), so the `input` of an answer posted back unchanged at
   the same time gives the same answer. The model is not called, and the User's daily messages are not counted.
+
+  A window's `from` and `until` may run past midnight (P05 ticket 91): an hour past 23 is the next day's, counted from
+  the input's `date`, up to `47:59` (`windowClock`), so a band dragged to 00:30 after midnight sends `"24:30"`. Every
+  reading of a window clock goes through `onDay`, which adds the day. Every place a window clock is said shows it on
+  its own day (`shownClock`): the chips, the answer's lines, and the model's `[Plan on screen]`, so the model never
+  reads or writes an hour past 23. Its tools keep `clockTime` (up to `24:00`). An app before this sends no hour past
+  23, so it keeps working; deploy the main server before the app that sends one.
 
   - **What the User fixed.** `window.from` and `window.until` narrow the meal's window; a plan that starts later than
     `from` or ends earlier than `until` says what holds it: who arrives last or leaves first, and when, or the meal's
@@ -4395,6 +4408,14 @@ only what has come. `read` is whether the User has read it.
 `CLOCK`, answering 204, and 401 without a sign-in. 알림 calls it once it shows its rows, and the bell counts those
 still unread. One whose time is still to come stays unread, to be counted when it rings. The migration that added
 `read_at` marked read the rows kept before it whose time had come.
+
+`DELETE /notifications/{id}` deletes one of the signed-in User's Notifications by its `id` in the list, URL-encoded,
+and sends `notice` when it deleted one. It answers 204 whether or not one was deleted: an `id` of another User's, of
+one gone or of no Notification deletes nothing. 401 without a sign-in. 알림 calls it on a swipe of a row.
+
+`DELETE /notifications` deletes the signed-in User's Notifications whose time has come, and sends `notice` when it
+deleted any. Those ahead of their time stay, and so do `join-asked` and `party-activated`, the pushes' copies of what
+waits, which 알림 shows from the lists that wait. It answers 204, and 401 without a sign-in. 알림's 모두 지우기 calls it.
 
 **A new kind** adds its facts to `Told` in `src/notifications/notification.ts`, its words, its title ahead, its card,
 whom it is about, whether it rings and its push's body to `wordsOf()` in `src/notifications/notification-words.ts`,

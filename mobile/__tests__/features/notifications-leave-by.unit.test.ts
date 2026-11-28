@@ -45,6 +45,7 @@ describe('toNotices of the time to leave', () => {
         address: '/main?card=party:q1',
         time: '12:18',
         at: '2026-11-17T12:18:00+09:00',
+        keptId: 'leave-by:party:q1',
       },
     ]);
   });
