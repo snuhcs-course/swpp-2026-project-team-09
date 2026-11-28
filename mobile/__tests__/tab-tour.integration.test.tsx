@@ -92,7 +92,7 @@ function finishOnboardingWithAll(): Promise<User> {
 }
 
 describe('the tour after Onboarding', () => {
-  it('waits for the first run, then points at the four tabs one at a time', async () => {
+  it('waits for the first run, then points at the five slots one at a time', async () => {
     const user = await finishOnboarding();
     expect(cardsShown()).toEqual([TIMETABLE]);
     expect(stepShown()).toBeNull();
@@ -127,15 +127,21 @@ describe('the tour after Onboarding', () => {
     expect(cardsShown()).toEqual([]);
     expect(stepShown()).toBe('파티');
   });
+});
 
+describe("the tour's slots", () => {
   it('lights only the tab of its step, in the tab bar’s five slots of one width', async () => {
     const user = await finishOnboardingWithAll();
     // The test's window is 750 wide: a slot is 150, each of the five lit in turn.
     expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 0, width: 150 });
-    for (const left of [150, 300, 450, 600]) {
-      await press(user, '다음');
-      expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left });
-    }
+    await press(user, '다음');
+    expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 150 });
+    await press(user, '다음');
+    expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 300 });
+    await press(user, '다음');
+    expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 450 });
+    await press(user, '다음');
+    expect(screen.getByTestId('tab-tour-hole')).toHaveStyle({ left: 600 });
   });
 
   it("shows on the middle's step what its filled and its outlined look mean", async () => {

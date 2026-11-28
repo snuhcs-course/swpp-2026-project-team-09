@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -18,6 +19,7 @@ import { shownSubQuest } from '@/features/quests/adapter';
 import { outRequestOf, requestFlagOf, requestWords } from '@/features/quests/room-request-flag';
 import { useToast } from '@/design-system';
 import type { CardView } from '@/features/map/adapter';
+import { PARTY_GONE } from '@/features/notifications/address';
 import { fallbackFor, readCard } from '@/push/card-address';
 import { requestAnswer } from './answer/study-group-reopen';
 import { useAskedBookings } from './use-asked-bookings';
@@ -28,9 +30,6 @@ import { NOT_ANSWERED } from './use-plan-ask';
 import type { MainMap } from './use-main-map';
 import { INVITATION_GONE } from './use-received-invitation';
 import type { Selection } from './use-selection';
-
-// What a row or a push of a 파티 gone says when pressed: its card, `party-gone:<questId>`, is on no map.
-export const PARTY_GONE = '이미 없는 파티예요';
 
 // What a party's address opens in the chat: the answer of studying together its request was sent from, while that is
 // out (P10 ticket 13), in place of the party's card, so true; else its waiting room card, if this phone has one.
@@ -62,7 +61,8 @@ function usePartyAddress(chat: ChatSheetControl): (questId: string) => boolean {
 // after the push (the list may be older than it) hold no card of it either; when the list cannot be read, 파티 opens at
 // 초대. A party's card whose room request waited for the booking window also opens its room card in the chat. A booking
 // party whose request of studying together is out opens that answer again in place of its card (P10 ticket 13). A 파티
-// gone, one the Leader ended or removed the User from, says so.
+// gone, one the Leader ended or removed the User from, says so: its card, `party-gone:<questId>`, is on no map. A
+// 파티's own news, `room:<questId>`, opens the 파티's room, which says so itself when the 파티 is gone.
 export function useAskedCard(
   cards: readonly CardView[] | null,
   map: MainMap,

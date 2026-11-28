@@ -7,6 +7,7 @@
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
@@ -104,7 +105,9 @@ describe('what waits for the User', () => {
   it('shows in 알림 no invitation but the Quest invitation', async () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-    await user.press(screen.getByRole('button', { name: /^알림/u }));
+    await user.press(screen.getByRole('tab', { name: /^오늘/u }));
+    await pass(500);
+    await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
     await pass(500);
 
     const invitations = screen.getAllByRole('button', { name: /파티 초대/u });

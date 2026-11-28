@@ -9,7 +9,7 @@
 
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import type { ReactElement } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomNav, type BottomNavItem, color, shadow } from '@/design-system';
 import { useBellCount, usePartyBadge } from '@/features/notifications/use-notices';
@@ -31,7 +31,7 @@ type Route = (typeof SLOTS)[number]['route'];
 
 interface Counts {
   party: number;
-  bell: number;
+  waiting: number;
 }
 
 // 파티 counts the rows of 알림 that wait and concern 파티; 오늘 counts what 내 정보's bell counted, the rows that wait
@@ -41,7 +41,7 @@ function itemsWith(counts: Counts, raised: boolean): BottomNavItem[] {
     if (route === 'main') {
       return { icon, label, round: true, raised };
     }
-    const badges: Partial<Record<Route, number>> = { party: counts.party, today: counts.bell };
+    const badges: Partial<Record<Route, number>> = { party: counts.party, today: counts.waiting };
     return { icon, label, badge: badges[route] };
   });
 }
@@ -51,7 +51,7 @@ function itemsWith(counts: Counts, raised: boolean): BottomNavItem[] {
 // another tab shows the map with the AI raised. Each tab tells the toast where to sit while it is in front. It gives
 // way to the answer frame on the map, so that the AI is neither raised nor lowered there.
 export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement | null {
-  const counts = { party: usePartyBadge(), bell: useBellCount() };
+  const counts = { party: usePartyBadge(), waiting: useBellCount() };
   const { raised, setRaised } = useAiRaised();
   const { bottom } = useSafeAreaInsets();
   const hiddenOnMain = useTabBarHiddenOnMain();
@@ -71,6 +71,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): ReactElement |
             return;
           }
           if (route === 'main') {
+            // The keyboard goes down with the input it was up for.
+            Keyboard.dismiss();
             setRaised(current === 'main' ? !raised : true);
           }
           if (route !== current) {

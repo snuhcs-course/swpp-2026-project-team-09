@@ -17,6 +17,7 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -261,6 +262,9 @@ export interface Quest {
   classQuest: boolean;
   // True for a Quest taken alone ("여기로", a booked seat), which is never a 파티; absent from a server before it.
   takenAlone?: boolean;
+  // True only for a booked 관정관 seat's stay, the one Quest taken alone that takes nobody later; absent from a server
+  // before it (P05 ticket 89).
+  seatStay?: boolean;
   // The requests to join waiting for the Leader's answer, when the User leads the Quest; 0 otherwise.
   waitingJoinRequests: number;
   // Null for a Closed Quest and a Class Quest.

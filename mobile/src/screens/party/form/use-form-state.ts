@@ -11,6 +11,8 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -29,6 +31,7 @@ import {
   formOf,
   invitable,
   leastCapacity,
+  staysAlone,
   type Missing,
   missingOf,
   type PartyForm,
@@ -37,7 +40,7 @@ import {
   withEvent,
 } from '@/features/party/making';
 import { pickedOf } from '../../room/plan-form';
-import { showMine } from '../use-party-actions';
+import { showMade } from '../use-party-actions';
 import { eventWhere, type ProposalStart, type WhereStart } from './proposal-start';
 import { useSend } from './use-send';
 
@@ -79,6 +82,8 @@ export interface FormState {
   // The edited Quest is made for an event, which the main server cannot change.
   eventLocked: boolean;
   editing: boolean;
+  // The form makes, or keeps, a Quest taken alone: no 인원, and 퀘스트 in the words (`staysAlone`).
+  alone: boolean;
   // Something differs from what the form opened with: an edit's 수정 완료 waits for it.
   changed: boolean;
 }
@@ -188,7 +193,11 @@ function useSubmit(
           proposal?.made(sending.questId);
         }
         if (sending.sent === 'taken') {
-          (quest === null ? showMine : router.back)();
+          if (quest === null) {
+            showMade(sending.alone === true);
+          } else {
+            router.back();
+          }
         }
       });
   };
@@ -241,14 +250,12 @@ export function useFormState(props: FormProps): FormState {
   const [saving, setSaving] = useState(false);
   const [pressed, setPressed] = useState<readonly Missing[]>([]);
   const submit = useSubmit(props, where, setSaving);
-  const pickEvent = useEventPick(setForm, where.setWords, where.setPicked, {
-    eventId: editing ? null : eventId,
-    editing,
-  });
+  const picking = { eventId: editing ? null : eventId, editing };
+  const pickEvent = useEventPick(setForm, where.setWords, where.setPicked, picking);
   const holderCount = Math.max(holders.length, 1);
   const most = invitable(form, holderCount);
   const shownChosen = chosen.slice(0, most);
-  const missing = missingOf(form, shownChosen.length, editing);
+  const missing = missingOf(form);
   return {
     form,
     change: (next) => {
@@ -276,6 +283,7 @@ export function useFormState(props: FormProps): FormState {
     pickEvent,
     eventLocked: (quest?.globalEvent ?? null) !== null,
     editing,
+    alone: staysAlone(form, shownChosen.length, quest),
     changed: shownChosen.length > 0 || where.changed || JSON.stringify(sentOf(form)) !== JSON.stringify(sentOf(opened)),
   };
 }

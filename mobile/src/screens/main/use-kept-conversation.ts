@@ -12,6 +12,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { turnsOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
+import { useAiRaised } from '../shell/ai-raised';
 
 export interface KeptConversation {
   // The conversation, whose new turns show the frame again. Its `bubbles` end with the turn on screen, which a
@@ -159,9 +160,12 @@ export function useKeptConversation(chat: Chat): KeptConversation {
     },
     [bubbles, earlier, resume, show],
   );
+  // Asking for the input, as ＋ 새 대화 does, raises the AI the bar's middle lowered (A04 ticket 09): it is for typing.
+  const { setRaised } = useAiRaised();
   const focusInput = useCallback((): void => {
+    setRaised(true);
     setStarted((count) => count + 1);
-  }, []);
+  }, [setRaised]);
   const held = bubbles.length > 0 || chat.waiting;
   const onScreen = view === null ? chat : { ...chat, bubbles: view, waiting: false };
   return {

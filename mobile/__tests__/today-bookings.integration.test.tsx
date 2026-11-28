@@ -54,7 +54,10 @@ const STAY: Quest = {
   id: 'stay-7193',
   title: '관정 7층 열람실 7193번',
   takenAlone: true,
-  subQuests: DINNER_STEP === undefined ? [] : [{ ...DINNER_STEP, id: 'stay-step', startsAt: '2026-11-02T08:00:00.000Z', endsAt: '2026-11-02T09:00:00.000Z' }],
+  subQuests:
+    DINNER_STEP === undefined
+      ? []
+      : [{ ...DINNER_STEP, id: 'stay-step', startsAt: '2026-11-02T08:00:00.000Z', endsAt: '2026-11-02T09:00:00.000Z' }],
 };
 
 let server: FakeServer;
@@ -173,7 +176,9 @@ describe('a press in 예약', () => {
     await pressIn(within(screen.getByTestId('ai-input-beside')), '예약 취소');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: String(SEAT.BSEQNO) } }]);
-    expect(inCard(screen.getByTestId(/^library-myBookings-/u).props.testID as string).getByText('예약을 취소했어요.')).toBeVisible();
+    expect(
+      inCard(screen.getByTestId(/^library-myBookings-/u).props.testID as string).getByText('예약을 취소했어요.'),
+    ).toBeVisible();
     expect(server.received('POST /assistant/messages')).toHaveLength(0);
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));

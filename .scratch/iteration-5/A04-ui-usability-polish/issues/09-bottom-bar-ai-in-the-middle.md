@@ -1,7 +1,7 @@
 # 09: The bottom bar reads 파티, 행사, the map and AI in the middle, 알림, 내 정보, and the middle raises and lowers the AI
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None. P06 ticket 01 (the map's lists go) also changes `main-screen.tsx` and the main screen's tests; whichever goes second merges `5.0/Main` first.
 
 Native files: none. Releases: an app OTA update only.
@@ -39,6 +39,8 @@ On 2026-11-28 the user chose the proposal's 권장: the middle is the app's home
 - **알림 moves into the tabs.** The fifth slot (bell icon, "알림") is today's 알림 screen as a tab: a new `(tabs)` route, with no back button, its bottom clear of the tab bar. The `/notifications` route above the tabs goes, so only one exists; whatever opened it (the bell, the tests' router, push links if any) opens the tab. 내 정보's bell goes. The 파티 tab keeps its count until ticket 12.
 - **The map stays the first route**: Android's back and the edge swipe on another tab go to the map, as now.
 - **The tab tour** has five steps, one per slot in the bar's order. The middle's step shows that a press raises and lowers the AI and what the filled and the outlined button mean. The new steps' words are decided while building and shown at the screen review; 파티, 행사 and 내 정보 keep theirs.
+  - Approved at the screen review on 2026-11-29: the middle's step is "지도와 AI", "캠퍼스 지도에서 친구와 행사를 보고, AI에게 물어봐요. 지도에서 누르면 AI를 내리고, 다시 누르면 올려요.", with a small filled and a small outlined button beside "채움: AI가 올라와 있어요" and "테두리: AI가 내려가 있어요". 알림's step is "답할 초대와 신청, 지난 알림을 한곳에서 봐요."
+- **알림's count** (decided by the user on 2026-11-29): 내 정보's bell count, `useBellCount`, moves onto the 알림 tab as its red badge, so that no count is gone between tickets 09 and 12.
 - The catalogue's bar and `mobile/README.md`'s lines on the bar, the bell and 알림 follow.
 
 ## Must not break
@@ -61,3 +63,8 @@ On 2026-11-28 the user chose the proposal's 권장: the middle is the app's home
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-29)
+
+- Agent time: about 1 hour in one session, the fixes for #798's first review included (`iter5-a04-09~12`), an estimate. It leaves out the time the session spent waiting for the shared heavy-job lock and for the user's screen review, and the stretch in which the same session wrote tickets 10 to 12 ahead.
+- Tokens (Opus 5.5, the two review subagents and the fixes for #798's first review included): input 476 and output 137,381; of the input, cache reads 62,733,389 and cache writes 481,199.

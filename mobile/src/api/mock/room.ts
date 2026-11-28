@@ -7,6 +7,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -18,6 +19,7 @@ import { answer } from './answer';
 import { frameTime, ME } from './data/frame';
 import { MY_PARTY, QUESTS } from './data/quests';
 import { PLACES } from './data/places';
+import { mockMadeQuests } from './plan-quest';
 import { forgetMadeQuest } from './plan-quest';
 
 // The room's operations as the main server answers them. The mock keeps no change: the next read is the frame's again.
@@ -102,7 +104,8 @@ type MockRoom = Pick<
 export const mockRoom: MockRoom = {
   getQuest: (questId) =>
     answer('getQuest', () => {
-      const quest = QUESTS.find(({ id }) => id === questId);
+      // The mock's Quests, and those its Plans made, which 내 퀘스트 lists too (P06 ticket 68).
+      const quest = [...QUESTS, ...mockMadeQuests()].find(({ id }) => id === questId);
       if (quest === undefined) {
         throw new ApiError(404, 'QUEST_NOT_FOUND');
       }

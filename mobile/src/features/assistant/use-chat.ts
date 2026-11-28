@@ -46,6 +46,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAppTurn } from './app-turn';
 import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
+import { useAskOwn } from './own-turn';
 import { useLeftOut } from './left-out-hook';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
@@ -279,7 +280,12 @@ function useBubbles(): Bubbles {
 }
 
 // The app's own bubbles, added after what was said, and the turns of a card's button.
-function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOwn' | 'addRecalculated'> {
+function useAddOwn(
+  add: Bubbles['add'],
+  takeBack: () => void,
+  startNew: () => void,
+): Pick<Chat, 'addOwn' | 'addRecalculated' | 'askOwn'> {
+  const askOwn = useAskOwn(add, startNew);
   const addOwn = useCallback(
     ({ text, cards = [], done }: OwnBubble, after?: number): void => {
       add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done }, after);
@@ -295,7 +301,7 @@ function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOw
     },
     [add, takeBack],
   );
-  return { addOwn, addRecalculated };
+  return { addOwn, addRecalculated, askOwn };
 }
 
 // How the library cards ended, kept with the conversation by each card's place.
@@ -392,30 +398,9 @@ export function useChat(readContext: () => RequestContext): Chat {
     ask();
   }, [ask, said, show]);
 
-  const own = { ...useAddOwn(add, takeBack), ...useLeftOut(said, show) };
-  const { startNew } = conversations;
-  const askOwn = useCallback(
-    (asked: string, bubble: OwnBubble): void => {
-      startNew();
-      add({ role: 'user', text: asked, cards: [], mapButtons: [], proposal: null, failure: null, own: true });
-      own.addOwn(bubble);
-    },
-    [add, startNew, own.addOwn],
-  );
+  const own = { ...useAddOwn(add, takeBack, conversations.startNew), ...useLeftOut(said, show) };
   const appTurn = useAppTurn({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  return {
-    bubbles,
-    waiting,
-    send,
-    retry,
-    ...conversations,
-    stop,
-    ...own,
-    askOwn,
-    ...appTurn,
-    ...cardsKept,
-    proposalMade,
-  };
+  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, ...appTurn, ...cardsKept, proposalMade };
 }

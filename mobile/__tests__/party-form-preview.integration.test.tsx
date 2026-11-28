@@ -3,6 +3,7 @@
  *
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  * 2026-11-28  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-29  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -155,16 +156,16 @@ describe('the required fields', () => {
     expect(screen.getByText('본문을 입력해 주세요')).toBeVisible();
   });
 
-  it('marks the Friends to invite under 비공개, and neither the text nor the board', async () => {
+  // P06 ticket 67: under 비공개 a Friend is not asked for; nobody invited makes a Quest taken alone.
+  it('marks the title alone under 비공개: neither a Friend, the text nor the board', async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('radio', { name: '비공개' }));
-    await user.type(screen.getByLabelText('제목'), '저녁 같이');
 
-    await user.press(submit('파티 만들기'));
+    await user.press(submit('퀘스트 만들기'));
     await pass(500);
 
     expect(server.received('POST /quests/own')).toEqual([]);
-    expect(screen.getByText('초대할 친구를 골라 주세요')).toBeVisible();
+    expect(screen.getByText('제목을 입력해 주세요')).toBeVisible();
     expect(screen.queryByText('본문을 입력해 주세요')).toBeNull();
     expect(screen.queryByText('게시판을 골라 주세요')).toBeNull();
   });

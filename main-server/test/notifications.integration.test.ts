@@ -86,7 +86,7 @@ describe('GET /notifications', () => {
         ahead: null,
         line: '점심',
         at: '2026-11-14T12:10:00+09:00',
-        url: '/main?card=party:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
+        url: '/main?card=room:7b2f3a4d-5c6e-4f70-9b8c-0d1e2f3a4b5c',
         read: false,
       },
       {
@@ -96,7 +96,7 @@ describe('GET /notifications', () => {
         ahead: null,
         line: '저녁 같이',
         at: '2026-11-14T11:58:00+09:00',
-        url: '/main?card=party:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b',
+        url: '/main?card=room:6a1e2f3c-4b5d-4e6f-8a7b-9c0d1e2f3a4b',
         read: false,
       },
     ]);

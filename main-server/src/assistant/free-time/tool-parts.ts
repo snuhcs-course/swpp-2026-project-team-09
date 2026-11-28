@@ -22,6 +22,12 @@ export const CLOCK_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$|^24:00$/u;
 
 export const clockTime = z.string().regex(CLOCK_TIME, 'Expected HH:MM');
 
+// A window's clock as the app sends it (P05 ticket 91): up to 47:59, an hour past 23 the next day's, for a band dragged
+// over midnight. The model's tools keep `clockTime`: the model never writes an hour past 23.
+const WINDOW_CLOCK = /^(?:[0-3]\d|4[0-7]):[0-5]\d$/u;
+
+export const windowClock = z.string().regex(WINDOW_CLOCK, 'Expected HH:MM, up to 47:59');
+
 export const dateInput = z.iso.date().describe('The day, a calendar day in Korea as YYYY-MM-DD.');
 
 export const departurePlaceInput = z

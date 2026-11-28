@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-29  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -280,7 +281,9 @@ describe('a row of 알림 of a 파티 gone', () => {
     });
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: /^내 정보/u }));
-    await user.press(screen.getByRole('button', { name: /^알림/u }));
+    await user.press(screen.getByRole('tab', { name: /^오늘/u }));
+    await pass(500);
+    await user.press(screen.getByRole('button', { name: '알림 모두 보기' }));
     await pass(500);
 
     await user.press(

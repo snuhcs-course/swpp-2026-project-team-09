@@ -49,6 +49,10 @@ const ROUND_ITEMS = (raised: boolean) =>
     { icon: 'user', label: '내 정보' },
   ] as const;
 
+function round(): ReturnType<typeof screen.getByTestId> {
+  return screen.getByTestId('bottom-nav-round');
+}
+
 describe("BottomNav's round tab", () => {
   it('is a tab, selected while current, and says whether what it raises is up', async () => {
     await render(<BottomNav active={1} items={ROUND_ITEMS(true)} />);
@@ -67,12 +71,13 @@ describe("BottomNav's round tab", () => {
     await rerender(<BottomNav active={0} items={ROUND_ITEMS(true)} />);
 
     expect(screen.getByRole('tab', { name: '지도' })).not.toBeSelected();
-    expect(screen.getByRole('tab', { name: '지도' }).props.accessibilityState).not.toHaveProperty('expanded');
+    // Neither raised nor lowered: React Native's `Pressable` keeps the key, with no value.
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeExpanded();
+    expect(screen.getByRole('tab', { name: '지도' })).not.toBeCollapsed();
   });
 
   it('is filled navy while raised on its tab, and white with a navy ring otherwise', async () => {
     const { rerender } = await render(<BottomNav active={1} items={ROUND_ITEMS(true)} line={false} />);
-    const round = (): ReturnType<typeof screen.getByTestId> => screen.getByTestId('bottom-nav-round');
 
     expect(round()).toHaveStyle({ width: 56, height: 56, backgroundColor: '#001A72' });
 

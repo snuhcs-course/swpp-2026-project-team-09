@@ -6,7 +6,8 @@
 
 import { within } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import type { KeptNotification, Quest } from '@/api/types';
+import type { Quest } from '@/api/types';
+import type { KeptNotification } from '@/api/waiting-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -15,7 +16,7 @@ import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerParty } from './support/party';
-import { ACCEPTED, askMainServer, DINNER, INVITATION, ME_ID, PHONE_NOW } from './support/server';
+import { ACCEPTED, askMainServer, DINNER, FRIEND_REQUESTS, INVITATION, ME_ID, PHONE_NOW } from './support/server';
 
 // 오늘 (A04 ticket 10), the bar's fourth slot, against the fake main server on Tuesday 6 October 2026 at 13:00 in
 // Korea: 답할 것, 오늘 일정 and 지난 알림 on one page.
@@ -165,6 +166,55 @@ describe('답할 것', () => {
 
     expect(server.received(`POST /quest-invitations/${INVITATION.id}/decline`)).toHaveLength(1);
     expect(screen.getByText('받은 초대가 없어요')).toBeVisible();
+  });
+});
+
+// Capped so that the page stays about one screen and a half (decided 2026-11-29).
+describe('답할 것 with more than three rows', () => {
+  it('shows the invitation and two more, and every row from 답할 것 N개 모두 보기', async () => {
+    const [request] = FRIEND_REQUESTS.received;
+    if (request === undefined) {
+      throw new Error('FRIEND_REQUESTS has a request');
+    }
+    server.on('GET /friend-requests', {
+      status: 200,
+      body: { received: ['a', 'b', 'c'].map((id) => Object.assign({}, request, { id })), sent: [] },
+    });
+    const user = await openToday();
+
+    expect(sections()[0]).toBe('답할 것 4');
+    expect(section('waiting').getAllByRole('button', { name: /님의 (파티 초대|친구 요청)/u })).toHaveLength(3);
+    expect(section('waiting').getByRole('button', { name: '수락' })).toBeVisible();
+
+    await user.press(section('waiting').getByRole('button', { name: '답할 것 4개 모두 보기' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe('/notifications');
+  });
+});
+
+describe('the read marks of 지난 알림', () => {
+  it('are sent when every unread kept Notification is among the five shown', async () => {
+    server.on('GET /notifications', {
+      status: 200,
+      body: KEPT.map((kept, index) => Object.assign({}, kept, { read: index < 2 })),
+    });
+    await openToday();
+
+    expect(server.received('POST /notifications/read')).toHaveLength(1);
+  });
+
+  it('wait for 알림 모두 보기 while an unread one is past the five', async () => {
+    server.on('GET /notifications', {
+      status: 200,
+      body: KEPT.map((kept) => Object.assign({}, kept, { read: false })),
+    });
+    const user = await openToday();
+
+    expect(server.received('POST /notifications/read')).toHaveLength(0);
+    await user.press(section('kept').getByRole('button', { name: '알림 모두 보기' }));
+    await pass(500);
+    expect(server.received('POST /notifications/read')).toHaveLength(1);
   });
 });
 

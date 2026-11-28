@@ -303,10 +303,6 @@ function kindOf(quest: Quest): QuestRowView['kind'] {
   return heldAlone(quest) ? 'quest' : 'party';
 }
 
-function endedBy(end: string | null, now: Date): boolean {
-  return end !== null && Date.parse(end) <= now.getTime();
-}
-
 // The rows of the Quest list, the earliest first, and the Quests whose time is not set last, as they were made.
 export function toQuestRows(sources: QuestSources): QuestRowView[] {
   const { quests, myParty, parties, meId, now } = sources;
@@ -337,7 +333,7 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
       time: untimed ? UNTIMED : start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),
       ended: subQuest === null && quest.subQuests.length > 0,
-      over: subQuest === null ? quest.subQuests.length > 0 : endedBy(subQuest.endsAt, now),
+      over: subQuest === null ? quest.subQuests.length > 0 : Date.parse(subQuest.endsAt ?? '') <= now.getTime(),
       position: positionOf(subQuest),
     };
     if (request !== null) {

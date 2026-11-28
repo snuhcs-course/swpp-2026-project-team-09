@@ -1,7 +1,7 @@
 # 10: 알림 grows into 오늘: 답할 것, 오늘 일정 and 지난 알림 on one page
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: [09](09-bottom-bar-ai-in-the-middle.md), which makes 알림 a tab.
 
 Native files: none. Releases: an app OTA update only.
@@ -28,6 +28,7 @@ The tab is named 오늘, with the date under the title ("12월 1일 화요일").
   - "오늘 일정 없음" when there is none.
 - **지난 알림**: the newest five kept Notifications, with "알림 모두 보기 ›" to the whole list in 오늘 / 어제 / 이전, as a page above the tabs. The read marks follow what is shown, as 알림 marks them now.
 - Ticket 11 adds 예약 between 오늘 일정 and 지난 알림.
+- Decided while building (2026-11-29): the tab is `/today`, and "알림 모두 보기 ›" opens 알림's whole list above the tabs at `/notifications`, with 뒤로. 답할 것 shows the invitations first and three rows at most, with "답할 것 N개 모두 보기 ›" to the same list. The main server marks every kept Notification read at once, so 오늘 marks them read only while every unread one is among the five it shows; otherwise "알림 모두 보기" does. The screen review approved the page.
 - No inner tabs: the sections are capped so that the page stays about one screen and a half on a usual day (decided 2026-11-28).
 - The tour's words for this slot and the README follow the new name.
 
@@ -48,3 +49,8 @@ The tab is named 오늘, with the date under the title ("12월 1일 화요일").
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-29)
+
+- Agent time: about 30 minutes in one session (`iter5-a04-09~12`), an estimate. It leaves out the waits for the shared heavy-job lock and for the user's answers.
+- Tokens (Opus 5.5, the two review subagents included): input 242 and output 81,112; of the input, cache reads 42,891,289 and cache writes 739,619.
