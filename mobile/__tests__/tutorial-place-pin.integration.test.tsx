@@ -4,6 +4,8 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -13,7 +15,8 @@ import { button, findButton, LAYERS } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { lookOf, press, wordsUnder, zoomIn } from './support/markers';
 import { startFresh } from './support/mocks';
-import { openListAt, openSheet, pressAndWait, rowName, started, type User } from './support/tutorial';
+import { MOCK_TUTORIAL_SWITCHES } from '@/api/mock/tutorial';
+import { openAsFreshman, openListAt, openSheet, pressAndWait, rowName, started, type User } from './support/tutorial';
 
 // 지도에서 보기 of a 새내기 튜토리얼 quest drops the tutorial place pin on the main map (P13 "지도에서 보기 drops a
 // pin"), against the mocks: one pin with the place's words, replaced by the next 지도에서 보기, and a tap on it opens
@@ -71,6 +74,18 @@ async function turnDiningOn(user: User): Promise<void> {
   await user.press(screen.getByRole('togglebutton', { name: /^식당/u }));
   await press(user, '편의기능 레이어 닫기');
   await pass(500);
+}
+
+// The 야간 셔틀 quest's window with the 식당 layer on: turned on before, since the map's floating parts give way while
+// the window lies over the map (P06 ticket 60).
+async function openSheetWithDining(): Promise<User> {
+  MOCK_TUTORIAL_SWITCHES.guides = false;
+  await started('night-shuttle');
+  const user = await openAsFreshman();
+  await turnDiningOn(user);
+  await openListAt(user, 'night-shuttle');
+  await pressAndWait(user, rowName('night-shuttle', ' · 진행 중'));
+  return user;
 }
 
 describe('the tutorial place pin', () => {
@@ -144,8 +159,7 @@ describe('a touch on the map', () => {
 
 describe('a tap on the pin', () => {
   it('opens the card of the 식당 at its Place, as a tap on its marker does, and the pin stays', async () => {
-    const user = await openSheet('night-shuttle');
-    await turnDiningOn(user);
+    const user = await openSheetWithDining();
     await showOnMap(user, ENGINEERING);
 
     await press(user, ENGINEERING);
@@ -168,8 +182,7 @@ describe('a tap on the pin', () => {
   });
 
   it('goes once another thing on the map is selected', async () => {
-    const user = await openSheet('night-shuttle');
-    await turnDiningOn(user);
+    const user = await openSheetWithDining();
     await showOnMap(user, SHUTTLE_STOP);
 
     await press(user, '식당 · 302동식당');

@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -78,6 +79,19 @@ describe('the start button', () => {
     expect(list().queryByText('퀘스트 시작')).toBeNull();
     // The rows scroll inside the card on a low screen or with a large font.
     expect(list().getByTestId('tutorial-list-scroll')).toBeVisible();
+  });
+});
+
+// Glass over the map shows the map alone (A04): while the list is open, what floats over the map gives way.
+describe('the list over the map', () => {
+  it("hides the map's floating parts while it is open, and brings them back as it closes", async () => {
+    const user = await openAsFreshman();
+
+    await pressAndWait(user, START);
+    expect(screen.getByTestId('over-map', { includeHiddenElements: true })).toHaveStyle({ opacity: 0 });
+
+    await user.press(list().getByRole('button', { name: '닫기' }));
+    expect(screen.getByTestId('over-map')).not.toHaveStyle({ opacity: 0 });
   });
 });
 

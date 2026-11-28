@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-29  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -9,7 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, Glass, Overlay, radius, space } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
-import { useNavCoverOnMain } from '../../shell/main-tab-bar';
+import { useCoverMap } from '../map-cover';
 
 interface TutorialPanelProps {
   open: boolean;
@@ -23,8 +24,9 @@ interface TutorialPanelProps {
 }
 
 // The 새내기 튜토리얼's list and a quest's window (P06 ticket 60): a glass panel that floats over the map, 12 from the
-// sides and 12 above the navigation, over a light dim that leaves the map in sight. Its content scrolls when it is
-// higher than the room above the navigation.
+// sides and 12 above the phone's own bar, over a light dim that leaves the map in sight. While it is open, the map's
+// floating parts and the tab bar give way (`useCoverMap`, as the friend panel and the Quest list do), so that only the
+// map shows through its glass. Its content scrolls when it is higher than the room it has.
 export function TutorialPanel({
   open,
   label,
@@ -33,8 +35,8 @@ export function TutorialPanel({
   children,
 }: TutorialPanelProps): ReactElement | null {
   const insets = useSafeAreaInsets();
-  const nav = useNavCoverOnMain();
   useBackToClose(open, onClose);
+  useCoverMap(open);
   if (!open) {
     return null;
   }
@@ -51,7 +53,7 @@ export function TutorialPanel({
             style={styles.scrim}
           />
         )}
-        <View style={[styles.room, { top: insets.top + space[3], bottom: Math.max(nav, insets.bottom) + space[3] }]}>
+        <View style={[styles.room, { top: insets.top + space[3], bottom: insets.bottom + space[3] }]}>
           <Glass accessibilityLabel={label} accessibilityViewIsModal level="panel" style={styles.panel}>
             {children}
           </Glass>
