@@ -33,6 +33,20 @@ interface Band {
 const MINUTE_MS = 60_000;
 export const STEP_MS = BAND_STEP_MINUTES * MINUTE_MS;
 
+const KOREA_OFFSET_MS = 9 * 60 * MINUTE_MS;
+const DAY_MS = 24 * 60 * MINUTE_MS;
+
+// Korea's calendar day of a time: "2026-11-28".
+function koreaDayOf(ms: number): string {
+  return new Date(ms + KOREA_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+// The last step a band's start or end may be let go at: before its day ends. A time dropped is sent as a clock, which
+// the main server reads on the band's day, so 00:30 after midnight would read as that morning's (P01 ticket 48).
+export function lastDropMsOf(band: { range: Stretch }, step: number): number {
+  return Date.parse(`${koreaDayOf(msOf(band.range.startAt))}T00:00:00+09:00`) + DAY_MS - step;
+}
+
 // A meal's band: 5-minute steps, at least 15 minutes, anywhere in its range.
 export const MEAL_RULES: BandRules = {
   stepMinutes: BAND_STEP_MINUTES,
@@ -91,14 +105,16 @@ function kept(ms: number, bound: BandBound, band: Band): number {
           stepUp(msOf(band.startAt) + least, step),
           Math.min(stepDown(msOf(band.range.endAt), step), stepDown(msOf(band.startAt) + most, step)),
         ];
-  return Math.min(Math.max(ms, lowest), highest);
+  return Math.min(Math.max(ms, lowest), highest, lastDropMsOf(band, step));
 }
 
 // The handle moved from `own` toward `wanted`, where it may stand. For a band off the steps the nearest step it may
-// take can lie behind its own time: it then stays.
+// take can lie behind its own time: it then stays. A handle pressed where it is stays too, as an end past the last
+// drop does, and an end that the last drop would leave shorter than the shortest length.
 function moved(own: number, wanted: number, bound: BandBound, band: Band): string {
   const time = kept(wanted, bound, band);
-  return clockAt((wanted - own) * (time - own) < 0 ? own : time);
+  const short = bound === 'until' && time < msOf(band.startAt) + rulesOf(band).leastMinutes * MINUTE_MS;
+  return clockAt(short || (wanted - own) * (time - own) <= 0 ? own : time);
 }
 
 function ownOf(bound: BandBound, band: Band): number {
@@ -132,14 +148,6 @@ export function stepped(bound: BandBound, direction: 1 | -1, band: Band): string
   const time = ownOf(bound, band);
   const step = stepMsOf(band);
   return moved(time, direction === 1 ? stepDown(time, step) + step : stepUp(time, step) - step, bound, band);
-}
-
-const KOREA_OFFSET_MS = 9 * 60 * MINUTE_MS;
-const DAY_MS = 24 * 60 * MINUTE_MS;
-
-// Korea's calendar day of a time: "2026-11-28".
-function koreaDayOf(ms: number): string {
-  return new Date(ms + KOREA_OFFSET_MS).toISOString().slice(0, 10);
 }
 
 // A time as the band writes its times, in Korea time with the offset.

@@ -17,6 +17,7 @@ Native files: none. Releases: an OTA update.
 
 - A clock before the range's start and no later than its end goes on the next day, when the range runs past midnight. The band's own start and end stand in for a range where a caller has none.
 - Places that know the time in milliseconds write it as it is (`bandTimeAt`), with no clock in between: the band moved whole, the folded track, the picking preview.
+- No handle and no whole move lets a time go past the last step before the band's day ends (23:55 on a 5-minute band). A dropped time is sent as a clock, and the main server reads it on the band's day, so 00:30 after midnight would read as that morning's and the recalculation would find no time (#769's review). An end already past midnight, pressed where it is, stays. Reading a clock after midnight on the server is left for a ticket of its own: each kind reads the window's clocks in its own places.
 - A handle's drag that ends any other way than let go puts the end back and asks for nothing (`onFinalize`).
 - While an end is held, the head says the length the bar draws, in the words the Plan said it in ("4시간 15분", "식사 19분"). When shortened, it drops a study place's length first, as it does a meal's.
 
@@ -25,6 +26,7 @@ Native files: none. Releases: an OTA update.
 - [x] A clock of a range past midnight before its start is on the next day; from its start on, and in a band within one day, on the band's day. (`band-past-midnight`, new; fails on Main.)
 - [x] The red part under an end fixed after midnight, the band moved over midnight, the folded track's end after midnight, the picking preview ending after midnight, and the band redrawn for an end asked after midnight. (New; each fails on Main.)
 - [x] The end handle pressed where it is stays at the bar's right end with the band's words. Dragged back before midnight, the head says "19:15–23:30 · 4시간 15분". A cancelled drag goes back and asks for nothing. (`time-band-past-midnight`, new; fails on Main.)
+- [x] An end dragged past midnight stops at 23:55 and is let go there; a seat's end stops at 23:55 before a 24:00 close; the band moved whole starts no later than 23:55; an end the last drop would leave under 15 minutes stays. (New; each fails at the PR's first head.) An end past midnight pressed where it is stays. (New; passes on both.)
 - [x] A meal's held words and a let-go drag are unchanged. (`time-band-words`, unchanged.)
 - [ ] On the phone, in the preview build.
 - [x] No native file changes; lint, format and types pass for all of `mobile`.

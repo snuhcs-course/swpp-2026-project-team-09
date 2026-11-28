@@ -10,7 +10,7 @@ import { bandFor } from '@/features/assistant/answer-frame';
 import { bandMoved } from '@/features/assistant/band-move';
 import { shortenedOf, shownWordsOf } from '@/features/assistant/band-words';
 import { previewOf } from '@/features/assistant/people-picking';
-import { clashes, droppedAt, foldedRangeOf, onBandDay } from '@/features/assistant/time-band';
+import { clashes, droppedAt, foldedRangeOf, onBandDay, shareOf } from '@/features/assistant/time-band';
 
 // A band whose range runs past midnight (the user's phone, 2026-11-28 19:04, #740's preview build): a study place open
 // to 01:00, "19:15–01:00 · 5시간 45분", range 19:00–01:00. A press on the end handle read its clock, "01:00", and put it
@@ -31,6 +31,7 @@ const LATE: TimeBand = {
   text: '19:15–01:00 · 5시간 45분',
 };
 const ms = (time: string | undefined): number => Date.parse(time ?? '');
+const share = (clock: string, date = '2026-11-28'): number => shareOf(at(clock, date), RANGE);
 
 describe('A clock on a band past midnight', () => {
   it('is on the next day when it is earlier than the range’s start', () => {
@@ -51,7 +52,7 @@ describe('A clock on a band past midnight', () => {
   it('is on the next day at a seat’s or a room’s range that ends at 24:00', () => {
     const seat = { startAt: at('22:00'), endAt: at('23:00'), range: { startAt: at('20:00'), endAt: at('24:00') } };
 
-    expect(ms(onBandDay(droppedAt('until', 1, { ...LATE, ...seat }), seat))).toBe(ms(next('00:00')));
+    expect(ms(onBandDay('00:00', seat))).toBe(ms(next('00:00')));
   });
 
   it('keeps the end handle pressed at the range’s end after the start', () => {
@@ -106,6 +107,45 @@ describe('Every place that writes a clock on the band’s day, past midnight', (
 
     expect(ms(band.endAt)).toBe(ms(next('00:30')));
     expect(ms(band.endAt) - ms(band.startAt)).toBe(ms(LATE.endAt) - ms(LATE.startAt));
+  });
+});
+
+// The main server reads a dropped clock on the band's day (`study-plan.ts`, `onDay`), so 00:30 after midnight would be
+// that morning's and the recalculation would find no time (#769's review). No handle or whole move lets a time go past
+// the last step before midnight until it reads them otherwise. Partitions: an end dragged past midnight from before it
+// and from after it; an end pressed where it is past midnight; a seat's range to 24:00; the band moved whole; an end
+// that the last drop would leave too short.
+describe('Letting a band go past midnight', () => {
+  it('stops an end dragged past midnight at the last step before it', () => {
+    expect(droppedAt('until', share('00:30', '2026-11-29'), { ...LATE, endAt: at('23:00') })).toBe('23:55');
+    expect(droppedAt('until', share('00:30', '2026-11-29'), LATE)).toBe('23:55');
+  });
+
+  it('keeps an end past midnight that is pressed where it is', () => {
+    expect(droppedAt('until', 1, LATE)).toBe('01:00');
+  });
+
+  it('stops a seat’s end at the last step before a 24:00 close', () => {
+    const seat = {
+      ...LATE,
+      startAt: at('22:00'),
+      endAt: at('23:00'),
+      range: { startAt: at('20:00'), endAt: at('24:00') },
+    };
+
+    expect(droppedAt('until', 1, seat)).toBe('23:55');
+  });
+
+  it('starts a band moved whole no later than the last step before midnight', () => {
+    const band = { ...LATE, startAt: at('23:00'), endAt: next('00:00') };
+
+    expect(ms(bandMoved(band, 1 / 6).startAt)).toBe(ms(at('23:55')));
+  });
+
+  it('keeps an end that the last drop would leave shorter than 15 minutes', () => {
+    const band = { ...LATE, startAt: at('23:50'), endAt: next('00:30') };
+
+    expect(droppedAt('until', share('00:10', '2026-11-29'), band)).toBe('00:30');
   });
 });
 

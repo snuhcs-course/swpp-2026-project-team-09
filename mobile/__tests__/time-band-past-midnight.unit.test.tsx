@@ -16,7 +16,8 @@ import { holdGesture } from './support/hold-gesture';
 
 // The end handle of a study place's band that runs past midnight (P01 ticket 48), as the user pressed it on his phone:
 // "19:15–01:00 · 5시간 45분" in a range of 19:00 to 01:00, a track 240 wide, so 1.5 minutes a point. Partitions: the end
-// pressed where it is; dragged back before midnight; the drag cancelled, as when the card's scroll takes the touch.
+// pressed where it is; dragged back before midnight; dragged back only past midnight, where it stops at the last step
+// before it (#769's review); the drag cancelled, as when the card's scroll takes the touch.
 
 const at = (clock: string, date = '2026-11-28'): string => `${date}T${clock}:00+09:00`;
 const LATE: TimeBandData = {
@@ -43,7 +44,8 @@ async function show(): Promise<string[]> {
   return drops;
 }
 
-async function cancel(testId: string, dx: number): Promise<void> {
+// The pan on `testId`, held, ends: let go (END) or taken by another gesture (CANCELLED).
+async function endPan(testId: string, dx: number, state: State): Promise<void> {
   const { handlerTag } = getByGestureTestId(testId);
   await act(() => {
     DeviceEventEmitter.emit('onGestureHandlerStateChange', {
@@ -55,7 +57,7 @@ async function cancel(testId: string, dx: number): Promise<void> {
       absoluteY: 0,
       translationX: dx,
       translationY: 0,
-      state: State.CANCELLED,
+      state,
       oldState: State.ACTIVE,
     });
   });
@@ -81,11 +83,25 @@ describe('The end handle of a band past midnight', () => {
     expect(screen.getByText('23:30')).toHaveStyle({ fontFamily: font.bold });
   });
 
+  it('stops before midnight when dragged back to 00:30, and is let go there', async () => {
+    const drops = await show();
+
+    // 30 minutes before 01:00, past the last step before midnight.
+    const move = await holdGesture('time-band-until', 0, -20);
+
+    expect(screen.getByTestId('time-band-words')).toHaveTextContent('19:15–23:55 · 4시간 40분');
+
+    await move(-20);
+    await endPan('time-band-until', -20, State.END);
+
+    expect(drops).toEqual(['until 23:55']);
+  });
+
   it('goes back and asks for nothing when the drag is cancelled', async () => {
     const drops = await show();
     await holdGesture('time-band-until', 0, -60);
 
-    await cancel('time-band-until', -60);
+    await endPan('time-band-until', -60, State.CANCELLED);
 
     expect(drops).toEqual([]);
     expect(screen.getByTestId('time-band-handle-until')).toHaveStyle({ left: '100%' });
