@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -28,7 +29,7 @@ describe('getTutorial', () => {
     expect(await stage.result(user, { tool: 'getTutorial', input: {} })).toEqual({
       result: 'found',
       state: 'off',
-      total: 15,
+      total: 12,
       quests: QUEST_KEYS.map((key) => expect.objectContaining({ key, status: 'notStarted' }) as unknown),
     });
     expect(
@@ -45,11 +46,11 @@ describe('getTutorial', () => {
     expect(await stage.result(user, { tool: 'getTutorial', input: { questKey: 'health-clinic' } })).toEqual({
       result: 'found',
       state: 'active',
-      total: 15,
+      total: 12,
       quests: [
         {
           key: 'health-clinic',
-          order: 11,
+          order: 8,
           title: '서울대 보건진료소 이용',
           brief: expect.any(String) as unknown,
           body: [expect.stringContaining('학생회관(63동) 3–4층') as unknown],
