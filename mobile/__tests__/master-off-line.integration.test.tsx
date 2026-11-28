@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -16,12 +17,11 @@ import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { activationBox, answerMyParty, answerRoom, myPicnicParty, openRoom } from './support/room';
 import { answerMainScreen, askMainServer, JI_WOO, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
-// P06 ticket 6 against the fake main server: while the Master Switch is off, each Friend's level on 위치 공유 and the
-// room's "내 위치 공유" show off and disabled under one line, and its 켜기 brings back what was stored. 친구 관리 shows
-// neither since P15 ticket 2.
+// P06 ticket 6 against the fake main server: while the Master Switch is off, each Friend's level on 위치 공유 shows off
+// and disabled under one line, and its 켜기 brings back what was stored. 친구 관리 shows neither since P15 ticket 2. The
+// room's "내 위치 공유" went in P06 ticket 19: `room-activation-master` has the room with the Master Switch off.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -44,7 +44,6 @@ const JI_EUN: Friend = { ...JI_WOO, level: 'building', seen: 'timetable' };
 const OFF_LINE = '전체 위치 공유가 꺼져 있어요 ·';
 const SWITCH_ROUTE = 'PUT /users/me/master-switch';
 const LEVEL_ROUTE = `PUT /friends/${MIN_SU.id}/level`;
-const PARTY_ROUTE = 'PUT /parties/mine/sharing';
 
 let server: FakeServer;
 
@@ -64,7 +63,7 @@ afterEach(() => {
 function answerOff(): void {
   server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: false } });
   server.on('GET /friends', { status: 200, body: [MIN_SU, JI_EUN] });
-  for (const route of [SWITCH_ROUTE, LEVEL_ROUTE, PARTY_ROUTE]) {
+  for (const route of [SWITCH_ROUTE, LEVEL_ROUTE]) {
     server.on(route, { status: 204 });
   }
   server.on('POST /positions', { status: 200, body: { offCampus: false } });
@@ -124,30 +123,5 @@ describe('친구 관리 while the Master Switch is off', () => {
     expect(screen.queryByRole('button', { name: '전체 위치 공유 켜기' })).toBeNull();
     expect(screen.queryAllByLabelText(/님에게 보일 위치$/u)).toHaveLength(0);
     expect(screen.queryByText('둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요')).toBeNull();
-  });
-});
-
-function sharing(): ReturnType<typeof screen.getByRole> {
-  return activationBox().getByRole('switch', { name: '내 위치 공유' });
-}
-
-describe("The room's 내 위치 공유 while the Master Switch is off", () => {
-  it('shows off and disabled, and comes back on as stored once 켜기 turns the Master Switch on', async () => {
-    answerRoom(server);
-    answerOff();
-    answerMyParty(server, myPicnicParty());
-    const user = await openRoom();
-
-    expect(activationBox().getByText(OFF_LINE)).toBeVisible();
-    expect(sharing()).not.toBeChecked();
-    expect(sharing()).toBeDisabled();
-
-    await user.press(activationBox().getByRole('button', { name: '전체 위치 공유 켜기' }));
-    await pass(500);
-
-    expect(activationBox().queryByText(OFF_LINE)).toBeNull();
-    expect(sharing()).toBeChecked();
-    expect(sharing()).toBeEnabled();
-    expect(server.received(PARTY_ROUTE)).toHaveLength(0);
   });
 });

@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Board, TimetableClass, Weekday } from '@/api/types';
@@ -17,29 +18,19 @@ function squeezed(words: string): string {
   return words.replaceAll(/\s/gu, '');
 }
 
-// Whether the post's title, text, place or tags hold the words, spaces and every '#' left out.
+// Whether the post's title, text or place hold the words, spaces and every '#' left out.
 export function matchesSearch(post: PostView, search: string): boolean {
   const words = squeezed(search).replaceAll('#', '');
-  const where = squeezed(`${post.title}${post.description}${post.place}${post.tags.join('')}`);
+  const where = squeezed(`${post.title}${post.description}${post.place}`);
   return words === '' || where.includes(words);
 }
 
-// The post's tags that the User has too.
-export function sharedTags(post: PostView, myTags: readonly string[]): string[] {
-  return post.tags.filter((tag) => myTags.includes(tag));
-}
-
-// 모집 중인 파티: the posts the User did not hide that match the search, those sharing more tags with the User first,
-// and otherwise in the order given.
+// 모집 중인 파티: the posts the User did not hide that match the search, in the order given.
 export function findPosts(
   posts: readonly PostView[],
-  { search, myTags, hidden }: { search: string; myTags: readonly string[]; hidden: readonly string[] },
+  { search, hidden }: { search: string; hidden: readonly string[] },
 ): PostView[] {
-  return posts
-    .filter((post) => !hidden.includes(post.questId) && matchesSearch(post, search))
-    .map((post, index) => ({ post, index, shared: sharedTags(post, myTags).length }))
-    .toSorted((one, other) => other.shared - one.shared || one.index - other.index)
-    .map(({ post }) => post);
+  return posts.filter((post) => !hidden.includes(post.questId) && matchesSearch(post, search));
 }
 
 // 찾기's filter: one board, or 전체.
@@ -57,8 +48,6 @@ export function noPostsWords(board: BoardFilter): string {
 }
 
 export interface Reasons {
-  // The shared tags, without '#'; none says `겹치는 관심사 없음`.
-  tags: string[];
   time: string;
   // Null when no Friend is among the members.
   friend: string | null;
@@ -124,13 +113,12 @@ function friendReason({ leader, friends }: PostView): string | null {
     : `친구 ${friends.join(', ')}님이 참여하고 있어요.`;
 }
 
-// 추천 이유: the shared tags, whether the User's timetable leaves the time free, and the Friends among the members.
+// 추천 이유: whether the User's timetable leaves the time free, and the Friends among the members.
 export function reasonsFor(
   post: PostView,
-  { myTags, classes, today }: { myTags: readonly string[]; classes: readonly TimetableClass[] | null; today: Date },
+  { classes, today }: { classes: readonly TimetableClass[] | null; today: Date },
 ): Reasons {
   return {
-    tags: sharedTags(post, myTags),
     time: timeReason(post.startsAt, classes, today),
     friend: friendReason(post),
   };

@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type PlaceLookup } from '../../places/place-lookup.js';
 import { type Lookup } from '../dto/lookup.dto.js';
 import { type ToolContext } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { closedTodayRefusal } from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 
@@ -60,8 +62,7 @@ export function closedToday(
   const words = closedWords(space);
   const place = places.numbered(KWANJEONG_PLACE_NUMBER);
   if (place !== null) {
-    presented.lookup = closedLookup(place, words);
-    presented.answer = null;
+    presentLookup(presented, closedLookup(place, words), { keepsButtons: true });
   }
   return { result: 'refused', refusals: [refusal], closedToday: words };
 }

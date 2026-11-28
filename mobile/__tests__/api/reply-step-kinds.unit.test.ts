@@ -23,7 +23,18 @@ const STEP: ReplyStep = {
   shows: { kind: 'answer' },
 };
 
-const KINDS: readonly ReplyStep['kind'][] = ['seat', 'room', 'meal', 'meet', 'events', 'quests', 'new-quest', 'study'];
+// Every kind of the type, so that a kind added to `ReplyStep` fails to compile here until it is listed.
+const EVERY_KIND: Record<ReplyStep['kind'], true> = {
+  seat: true,
+  room: true,
+  meal: true,
+  meet: true,
+  events: true,
+  quests: true,
+  'new-quest': true,
+  study: true,
+};
+const KINDS = Object.keys(EVERY_KIND);
 
 // Partitions: each kind of the type, and one outside it. Expected values: `ReplyStep['kind']`.
 describe('A step of several requests', () => {

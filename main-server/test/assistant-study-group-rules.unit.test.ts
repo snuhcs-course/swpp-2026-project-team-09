@@ -97,7 +97,9 @@ describe('The prompt and tools with study-group', () => {
       expect(rules).toContain("it is planStudyGroup's");
     }
     expect(LIBRARY_GROUP_RULES).toContain('Words that name no space, such as "공부할 자리"');
-    expect(LIBRARY_STUDY_GROUP_RULES).toContain('"공부할 자리 있어?" asked without a booking is planStudy\'s');
+    expect(LIBRARY_STUDY_GROUP_RULES).toContain(
+      '"공부할 자리 있어?" asked with no 관정 named and no booking is planStudy\'s',
+    );
     expect(LIBRARY_STUDY_RULES).toContain('proposeStudyRoom');
   });
 });

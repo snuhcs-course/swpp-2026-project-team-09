@@ -20,7 +20,7 @@ import {
   STUDIO_NOTES,
   STUDIO_PLEDGE,
 } from './data/library';
-import { STUDY_PLAN_ASKED, STUDY_PLAN_REPLY } from './data/study-plan-answer';
+import { STUDY_PLAN_REPLY } from './data/study-plan-answer';
 
 // The mock Assistant's answers about 관정도서관, until the main server's library tools land (P06 ticket 07): the
 // cards it would show, in the spec's `library` shape. A time in the words ("17시", "17:00") is the start, else the
@@ -86,8 +86,17 @@ function cardFor(words: string): LibraryCardData {
   return libraryCard(key, 'book', { space: READING_ROOM, date, start, minutes: 60, notes: SEAT_NOTES });
 }
 
+// Where to study, asked without a booking and without a library space named: the main server's `LIBRARY_STUDY_RULES`
+// leave it to planStudy for an app that says `study-plan` (P10 ticket 23).
+const STUDY_WORDS = ['공부할 자리', '공부할 곳'];
+const BOOKING_WORDS = ['예약', '관정', '열람실', '스터디룸', '스튜디오', '반납', '취소'];
+
+function asksWhereToStudy(words: string): boolean {
+  return STUDY_WORDS.some((word) => words.includes(word)) && !BOOKING_WORDS.some((word) => words.includes(word));
+}
+
 export function isLibraryAsk(words: string): boolean {
-  return LIBRARY_WORDS.some((word) => words.includes(word)) || words.includes(STUDY_PLAN_ASKED);
+  return LIBRARY_WORDS.some((word) => words.includes(word)) || asksWhereToStudy(words);
 }
 
 // As the main server's rules have it (`library-rules.ts`, P05 ticket 34): a reading-room seat is booked for today only,
@@ -103,10 +112,10 @@ function tomorrowsSeat(words: string): AssistantReply | null {
   return { text: TODAY_ONLY, mapButtons: [], cards: [], proposal: null };
 }
 
-// Where to study alone, as a main server answers an app that says `study-plan` (P10 ticket 17): the places to study as
-// candidates. Until the app says it (ticket 23), its own words ask it; "공부할 자리 있어?" stays the seat card.
+// Where to study alone, as the main server answers the app, which says `study-plan` (P10 tickets 17 and 23): the places
+// to study as candidates. A seat named or asked to be booked stays the seat card.
 export function libraryReply(words: string): AssistantReply {
-  if (words.includes(STUDY_PLAN_ASKED)) {
+  if (asksWhereToStudy(words)) {
     return STUDY_PLAN_REPLY;
   }
   const tomorrow = tomorrowsSeat(words);

@@ -9,6 +9,7 @@
 import { z } from 'zod';
 import { type Plan, QUEST_IDS_MAX, type QuestsInput } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { leftOutNow } from '../free-time/left-out-classes.js';
 import { othersText } from '../others-text.js';
 import { type QuestsPlanService } from './quests-plan.service.js';
@@ -71,9 +72,7 @@ export function planQuests(plans: QuestsPlanService): Tool {
       };
       const skipped = leftOutNow({ context, presented });
       const answer = await plans.plan(userId, planInput, { now, location: context.location, skipped });
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       if (answer.noPlan !== null) {
         return noneFound('No recruiting 파티 of these can be reached before it starts.');
       }

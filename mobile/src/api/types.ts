@@ -16,6 +16,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -346,6 +347,9 @@ export interface Party {
   friends: Person[];
   // The Party's Leader now; the main server always sends it, and `isParties` refuses a Party without one.
   leader?: { id: string; name: string };
+  // Its members in the order they entered, only for a Party whose Quest the User holds, and only from a main server
+  // that names them.
+  members?: { id: string; name: string }[];
 }
 
 // GET /parties/mine, the Party the User is in now; 404 NOT_IN_PARTY for a User in no Party. The frame's "활성 파티".

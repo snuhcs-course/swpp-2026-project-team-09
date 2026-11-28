@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
@@ -67,7 +68,7 @@ function useEndedOnList(selectedId: string | null, cards: readonly CardView[], a
       return;
     }
     if (!answering.current.has(invitationIdOf(was) ?? '')) {
-      showToast(INVITATION_GONE);
+      showToast(INVITATION_GONE, undefined, 'alert');
     }
   }, [selectedId, cards, showToast, answering]);
 }
@@ -121,7 +122,7 @@ function useGoneOnRead(gone: boolean, closeCard: () => void): void {
   const showToast = useToast();
   useEffect(() => {
     if (gone) {
-      showToast(INVITATION_GONE);
+      showToast(INVITATION_GONE, undefined, 'alert');
       closeCard();
       void queryClient.invalidateQueries({ queryKey: QUEST_INVITATIONS_KEY, exact: true });
     }

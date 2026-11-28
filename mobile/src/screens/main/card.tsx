@@ -11,12 +11,25 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Avatar, Button, color, font, Icon, type IconName, radius, shadow, space, text } from '@/design-system';
+import {
+  Avatar,
+  Button,
+  color,
+  font,
+  Icon,
+  type IconName,
+  kindTone,
+  radius,
+  shadow,
+  space,
+  text,
+} from '@/design-system';
 import { useFriendFacts } from '@/features/assistant/use-tap-answer';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { type CardMark, type CardView, friendIdOf } from '@/features/map/adapter';
@@ -52,13 +65,14 @@ export interface CardProps {
 
 // A place's kind in the design system: its colour and its icon. A campus service's round is a rounded square, as the
 // frame draws it.
+// Each kind's colour and icon (`kindTone`): a party and a Quest are the party's, a 식당 the meal's.
 const PLACE: Record<Extract<CardMark, { type: 'place' }>['place'], { tint: string; icon: IconName }> = {
-  official: { tint: color.snuBlue, icon: 'calendar' },
-  party: { tint: color.party, icon: 'users' },
-  quest: { tint: color.quest, icon: 'flag' },
-  dining: { tint: color.svcDining, icon: 'meal' },
-  shuttle: { tint: color.svcShuttle, icon: 'bus' },
-  library: { tint: color.svcStudy, icon: 'bookOpen' },
+  official: { tint: kindTone.event.ink, icon: kindTone.event.icon },
+  party: { tint: kindTone.party.ink, icon: kindTone.party.icon },
+  quest: { tint: kindTone.party.ink, icon: 'flag' },
+  dining: { tint: kindTone.meal.ink, icon: kindTone.meal.icon },
+  shuttle: { tint: kindTone.shuttle.ink, icon: kindTone.shuttle.icon },
+  library: { tint: kindTone.study.ink, icon: kindTone.study.icon },
 };
 
 // What stands at the card's head: a person's Avatar, with the status for a Friend, the place's icon on a round of its

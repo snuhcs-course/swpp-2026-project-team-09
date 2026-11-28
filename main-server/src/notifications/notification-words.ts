@@ -6,14 +6,16 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { clockOf } from '../assistant/free-time/free-time.js';
 import { withCopula, withSubject } from '../assistant/gathering/answer-words.js';
-import { koreaDate } from '../assistant/korea-time.js';
+import { dateAndClock, koreaDate } from '../assistant/korea-time.js';
 import { clockOfMinutes, minutesOfClock } from '../assistant/library/booking-rules.js';
 import { monthDayWords, weekdayWord } from '../assistant/library/study-room.js';
-import { type NotificationWords, type Told } from './notification.js';
+import { type GoneKind, type NotificationWords, type PartyGone, type Told } from './notification.js';
 
 const ANSWERS = { accepted: '수락했어요', declined: '못 온대요' } as const;
 
@@ -82,7 +84,8 @@ function interestBody(time: string | null, placeLabel: string | null): string {
   return time === null ? '맡겨 둔 관심에 맞아요.' : `${time}에 시작해요.`;
 }
 
-// A new match of a watched interest: the start in Korea and the Place, leaving out what is unknown. It rings once.
+// A new match of a watched interest: the start in Korea with its date and the Place, leaving out what is unknown. It
+// rings once.
 function interestWords({
   subject,
   id,
@@ -91,7 +94,7 @@ function interestWords({
   placeLabel,
 }: Told & { kind: 'interest-new' }): NotificationWords {
   const event = subject === 'event';
-  const time = startsAt === null ? null : clockOf(startsAt);
+  const time = startsAt === null ? null : dateAndClock(startsAt);
   return {
     title: event ? `${withSubject(title)} 떴어요` : `${title} 모집이 떴어요`,
     ahead: null,
@@ -103,12 +106,12 @@ function interestWords({
   };
 }
 
-// "14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소".
+// "11/18(수) 14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소".
 function stepLine({ stepTitle, startsAt, cancelled }: Of<'step-changed'>): string {
   if (cancelled) {
     return `'${stepTitle}' 취소`;
   }
-  return startsAt === null ? stepTitle : `${clockOf(startsAt)} ${stepTitle}`;
+  return startsAt === null ? stepTitle : `${dateAndClock(startsAt)} ${stepTitle}`;
 }
 
 // What a party's members would have said in words. Each rings, is about the member, and opens the party's room.
@@ -150,6 +153,76 @@ function memberWords(told: Of<'step-changed'> | Of<'arrived'> | Of<'late'>): Not
   };
 }
 
+// A request to join and its answer ring. The title leads with the answer and the line names the 파티, so that a long
+// title of the 파티 is what one line cuts. An answer of accepting opens the party; one of declining opens 찾기, for
+// another 파티. The requests waiting open the party, whose room answers them.
+function joinWords(told: Of<'join-accepted'> | Of<'join-declined'> | Of<'join-asked'>): NotificationWords {
+  if (told.kind === 'join-asked') {
+    const who = told.waiting > 1 ? `${told.name}님 외 ${String(told.waiting - 1)}명` : `${told.name}님`;
+    return {
+      title: `새 참여 신청 ${String(told.waiting)}명`,
+      ahead: null,
+      line: `${told.questTitle} · ${who}`,
+      card: { kind: 'party', id: told.questId },
+      about: null,
+      rings: true,
+      body: `${who}이 ${told.questTitle}에 참여를 신청했어요.`,
+    };
+  }
+  const accepted = told.kind === 'join-accepted';
+  return {
+    title: accepted ? '참여 신청이 수락됐어요' : '참여 신청이 거절됐어요',
+    ahead: null,
+    line: `${told.questTitle} · ${told.leaderName}님의 파티`,
+    card: { kind: accepted ? 'party' : 'find-parties', id: told.questId },
+    about: null,
+    rings: true,
+    body: accepted
+      ? `${told.questTitle}, 이제 내 파티에서 볼 수 있어요.`
+      : `${told.questTitle}, ${told.leaderName}님이 신청을 받지 않았어요.`,
+  };
+}
+
+// A 파티 gone opens the card `party-gone`, which no map holds: the app says the 파티 is gone. Each kind's title says
+// what happened and its line names the 파티, as a request to join's do. A member's ring, with the push's body; a request
+// or an invitation that waited is only in 알림.
+const GONE: Record<GoneKind, { title: string; line: string; body: string | null }> = {
+  'party-ended': { title: '파티가 없어졌어요', line: '님이 없앴어요', body: '님이 파티를 없앴어요.' },
+  'party-removed': { title: '파티에서 내보내졌어요', line: '님의 파티', body: '님이 파티에서 내보냈어요.' },
+  'join-cancelled': { title: '파티가 없어져 신청이 취소됐어요', line: '님의 파티', body: null },
+  'invitation-cancelled': { title: '파티가 없어져 초대가 취소됐어요', line: '님의 파티', body: null },
+};
+
+function isGone(told: Told): told is PartyGone {
+  return Object.hasOwn(GONE, told.kind);
+}
+
+function goneWords({ kind, questId, questTitle, leaderName }: PartyGone): NotificationWords {
+  const { title, line, body } = GONE[kind];
+  return {
+    title,
+    ahead: null,
+    line: `${questTitle} · ${leaderName}${line}`,
+    card: { kind: 'party-gone', id: questId },
+    about: null,
+    rings: body !== null,
+    body: body === null ? null : `${questTitle}, ${leaderName}${body}`,
+  };
+}
+
+// In 알림 only. The title says what happened and the line names the 파티 and the one who led it.
+function newLeaderWords({ questId, questTitle, formerName, how }: Of<'became-leader'>): NotificationWords {
+  return {
+    title: '파티장이 됐어요',
+    ahead: null,
+    line: `${questTitle} · ${formerName}님이 ${how === 'left' ? '나갔어요' : '넘겼어요'}`,
+    card: { kind: 'party', id: questId },
+    about: null,
+    rings: false,
+    body: null,
+  };
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
@@ -157,6 +230,12 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
   }
   if (told.kind === 'step-changed' || told.kind === 'arrived' || told.kind === 'late') {
     return memberWords(told);
+  }
+  if (told.kind === 'join-accepted' || told.kind === 'join-declined' || told.kind === 'join-asked') {
+    return joinWords(told);
+  }
+  if (isGone(told)) {
+    return goneWords(told);
   }
   if (told.kind === 'leave-by') {
     return {
@@ -191,5 +270,5 @@ export function wordsOf(told: Told, at: Date): NotificationWords {
       body: null,
     };
   }
-  return roomWords(told);
+  return told.kind === 'became-leader' ? newLeaderWords(told) : roomWords(told);
 }

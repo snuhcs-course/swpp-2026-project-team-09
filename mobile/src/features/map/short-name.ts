@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The short names under the markers of the map, from the "names" level of detail on.
@@ -97,4 +98,9 @@ export function withParticle(words: string): string {
 // The object particle after a word, by the same rule: "약속" takes 을, "파티" 를.
 export function objectParticle(words: string): string {
   return endsOpen(words) ? '를' : '을';
+}
+
+// The topic particle, by the same rule: "설명회" takes 는, "러닝" 은.
+export function topicParticle(words: string): string {
+  return endsOpen(words) ? '는' : '은';
 }

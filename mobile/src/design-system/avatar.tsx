@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -21,10 +22,10 @@ const PRESENCE_LABEL: Record<PresenceStatus, string> = {
   off: '위치 꺼짐',
 };
 
-const DIAMETER = { sm: 28, md: sizes.avatar, lg: 56 } as const;
+const DIAMETER = { xs: 26, sm: 28, md: sizes.avatar, lg: 56 } as const;
 // 12 of colour inside a 2 border.
 const STATUS_DOT = 16;
-const INITIALS_SIZE = { sm: 11, md: 14, lg: 18 } as const;
+const INITIALS_SIZE = { xs: 10, sm: 11, md: 14, lg: 18 } as const;
 
 // The last two syllables of a Korean name, or the first letters of the first two words of another: the letters of
 // every face, also of an answer's.
@@ -49,7 +50,7 @@ interface AvatarProps {
   name: string;
   // A photo. Without one the initials are shown.
   source?: ImageSourcePropType;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   // A dot at the corner. Where the status matters, show its word next to the Avatar too: the dot alone is a hint.
   status?: PresenceStatus;
   // The ring that marks a Friend.

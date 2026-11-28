@@ -1,7 +1,7 @@
 # 31: An invitation names who invited, and a full 파티 cannot invite
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Database: one migration (the exception to the spec's rule). Releases: a main server Release and an app OTA update.

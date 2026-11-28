@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -181,16 +182,17 @@ describe('a step changed since the change came', () => {
     expect(card().getByRole('button', { name: '바꾸기' })).toBeDisabled();
   });
 
-  // From the screens: the row the change moves stands out, the others plain.
+  // From the screens: the row the change moves stands out, in the party's navy (the user's rule of 2026-11-28), the
+  // others plain.
   it('marks the time it moves, and not the place it keeps', async () => {
     server.on(`GET /quests/${QUEST_ID}`, { status: 200, body: questAt('2026-10-07T12:00:00+09:00') });
     await askOnMap(server, REPLY);
     await pass(500);
 
     const when = within(card().getByLabelText(/^언제 /u)).getByText(/19:00/u);
-    expect(StyleSheet.flatten(when.props.style)).toMatchObject({ color: color.party });
+    expect(StyleSheet.flatten(when.props.style)).toMatchObject({ color: color.snuBlue });
     const where = within(card().getByLabelText('어디서 없음')).getByText('없음');
-    expect(StyleSheet.flatten(where.props.style)).not.toMatchObject({ color: color.party });
+    expect(StyleSheet.flatten(where.props.style)).not.toMatchObject({ color: color.snuBlue });
   });
 
   it('sends the change when the step still stands as it did', async () => {

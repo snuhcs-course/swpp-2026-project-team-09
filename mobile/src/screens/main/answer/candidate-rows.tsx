@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, font, MEAL_NUMBER, radius, RoundNumber, space, text } from '@/design-system';
+import { color, font, kindTone, MEAL_NUMBER, radius, RoundNumber, space, text, type ToneKind } from '@/design-system';
 import type { CandidateRow } from './meal-list';
 
 // The rows of a meal answer's list (moved out of `meal-list.tsx` for its length, P10 ticket 18): a candidate's row, a
@@ -15,21 +16,16 @@ import type { CandidateRow } from './meal-list';
 const BADGE = 22;
 const BADGE_RIM = 1.5;
 
-// A row's number, as the map numbers it: soft coral with a coral rim, the chosen one solid coral (P04 ticket 85); a study
-// answer's in the study colours (P10 ticket 18).
-function RowNumber({ number, chosen, study }: { number: number; chosen: boolean; study: boolean }): ReactElement {
+// A row's number, as the map numbers it, in its answer's kind's colour (`kindTone`): soft in a rim, the chosen one
+// solid (P04 ticket 85, P10 ticket 18).
+function RowNumber({ number, chosen, tone }: { number: number; chosen: boolean; tone: ToneKind }): ReactElement {
+  const { ink, soft } = kindTone[tone];
   return (
-    <View
-      style={[
-        styles.badge,
-        study && styles.studyBadge,
-        chosen && (study ? styles.studyChosenBadge : styles.chosenBadge),
-      ]}
-    >
+    <View style={[styles.badge, { borderColor: ink, backgroundColor: chosen ? ink : soft }]}>
       <RoundNumber
         inside={BADGE - 2 * BADGE_RIM}
         number={number}
-        style={[styles.number, study && styles.studyNumber, chosen && styles.chosenNumber]}
+        style={[styles.number, { color: chosen ? color.onPrimary : ink }]}
       />
     </View>
   );
@@ -51,13 +47,14 @@ function WayLine({ row, when }: { row: CandidateRow; when: string }): ReactEleme
 export function Row({
   row,
   chosen,
-  study,
+  tone,
   disabled,
   onPress,
 }: {
   row: CandidateRow;
   chosen: boolean;
-  study: boolean;
+  // The answer's kind, whose colour the chosen row and the numbers take, as on the map.
+  tone: ToneKind;
   disabled: boolean;
   onPress: () => void;
 }): ReactElement {
@@ -74,13 +71,13 @@ export function Row({
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
-        chosen && (study ? styles.studyChosen : styles.chosen),
+        chosen && { borderColor: kindTone[tone].ink, backgroundColor: kindTone[tone].soft },
         row.faded && !chosen && styles.faded,
         pressed && styles.pressed,
       ]}
       testID={`meal-row-${String(number)}`}
     >
-      <RowNumber chosen={chosen} number={number} study={study} />
+      <RowNumber chosen={chosen} number={number} tone={tone} />
       <View style={styles.middle}>
         <Text numberOfLines={1} style={styles.name}>
           {name}
@@ -142,10 +139,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
-  // The chosen Restaurant and the numbers in a meal answer's coral (P04 ticket 85), as on the map; times keep gold.
-  chosen: { borderColor: color.meal, backgroundColor: color.mealSoft },
-  // A study answer's place, in the study colours as on the map (P10 ticket 18).
-  studyChosen: { borderColor: color.svcStudy, backgroundColor: color.svcStudySoft },
   pressed: { opacity: 0.6 },
   faded: { opacity: 0.45 },
   badge: {
@@ -156,18 +149,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
     borderRadius: radius.full,
     borderWidth: BADGE_RIM,
-    borderColor: color.meal,
-    backgroundColor: color.mealSoft,
   },
-  chosenBadge: { backgroundColor: color.meal },
-  studyBadge: { borderColor: color.svcStudy, backgroundColor: color.svcStudySoft },
-  studyChosenBadge: { backgroundColor: color.svcStudy },
-  chosenNumber: { color: color.onPrimary },
   closedBadge: { borderColor: color.inkSubtle, backgroundColor: color.inkSubtle },
   heading: { ...text.caption, marginTop: space[2], color: color.inkMuted },
   // The map's round's number, so that the two read as the same mark (P04 ticket 91).
-  number: { fontFamily: font.bold, fontSize: MEAL_NUMBER, color: color.meal },
-  studyNumber: { color: color.svcStudy },
+  number: { fontFamily: font.bold, fontSize: MEAL_NUMBER },
   middle: { flex: 1, gap: 2 },
   name: { ...text.body, fontFamily: font.bold, color: color.ink },
   // The way this choice adds in ink, as the name; gold is for clock times alone (P04 ticket 85).

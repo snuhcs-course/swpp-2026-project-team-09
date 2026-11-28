@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -25,6 +26,9 @@ import { NOT_ANSWERED } from './use-plan-ask';
 import type { MainMap } from './use-main-map';
 import { INVITATION_GONE } from './use-received-invitation';
 import type { Selection } from './use-selection';
+
+// What a row or a push of a 파티 gone says when pressed: its card, `party-gone:<questId>`, is on no map.
+export const PARTY_GONE = '이미 없는 파티예요';
 
 // What a party's address opens in the chat: the answer of studying together its request was sent from, while that is
 // out (P10 ticket 13), in place of the party's card, so true; else its waiting room card, if this phone has one.
@@ -55,7 +59,8 @@ function usePartyAddress(chat: ChatSheetControl): (questId: string) => boolean {
 // invitations are all cards: one that no card holds has ended, once a read of the list under way and one more read
 // after the push (the list may be older than it) hold no card of it either; when the list cannot be read, 파티 opens at
 // 초대. A party's card whose room request waited for the booking window also opens its room card in the chat. A booking
-// party whose request of studying together is out opens that answer again in place of its card (P10 ticket 13).
+// party whose request of studying together is out opens that answer again in place of its card (P10 ticket 13). A 파티
+// gone, one the Leader ended or removed the User from, says so.
 export function useAskedCard(
   cards: readonly CardView[] | null,
   map: MainMap,
@@ -97,7 +102,9 @@ export function useAskedCard(
       return;
     }
     if (address?.kind === 'invitation' && !isError) {
-      showToast(INVITATION_GONE);
+      showToast(INVITATION_GONE, undefined, 'alert');
+    } else if (address?.kind === 'party-gone') {
+      showToast(PARTY_GONE, undefined, 'alert');
     } else if (address !== null) {
       router.navigate(fallbackFor(address));
     }

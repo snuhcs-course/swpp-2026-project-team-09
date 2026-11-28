@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -10,7 +11,7 @@ import { koreaTime } from '../assistant/korea-time.js';
 import { type Position } from '../common/geometry.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { QUEST_INCLUDE, subQuestsAheadWhere, toQuestSummaryDto } from '../quests/dto/quest.dto.js';
+import { HOLDER_SELECT, QUEST_INCLUDE, subQuestsAheadWhere, toQuestSummaryDto } from '../quests/dto/quest.dto.js';
 import { notFound } from '../quests/refusals.js';
 import { type InvitationCardDto } from './dto/invitation-card.dto.js';
 import { placePoint } from './own-way.js';
@@ -30,7 +31,7 @@ export class InvitationCardService {
   async read(userId: string, invitationId: string, position: Position | null): Promise<InvitationCardDto> {
     const invitation = await this.prisma.questInvitation.findFirst({
       where: { id: invitationId, userId, quest: subQuestsAheadWhere(this.clock.now()) },
-      include: { quest: { include: QUEST_INCLUDE } },
+      include: { quest: { include: QUEST_INCLUDE }, invitedBy: { select: HOLDER_SELECT } },
     });
     if (invitation === null) {
       throw notFound('QUEST_INVITATION_NOT_FOUND', 'No such invitation waits.');
@@ -42,6 +43,7 @@ export class InvitationCardService {
       id: invitation.id,
       sentAt: invitation.sentAt.toISOString(),
       quest: toQuestSummaryDto(quest),
+      invitedBy: invitation.invitedBy ?? quest.leader,
       holders: quest.holders
         .map(({ user }) => ({ id: user.id, name: user.name }))
         .toSorted((a, b) => Number(b.id === quest.leaderId) - Number(a.id === quest.leaderId)),

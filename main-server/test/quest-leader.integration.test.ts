@@ -3,15 +3,19 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
+import request from 'supertest';
 import { inject } from 'vitest';
 import { z } from 'zod';
 import { signInUser, TestUser } from './friends.js';
 import { answerJoinRequest, changeQuest, handOver, joinRequestOf, removeHolder } from './quest-recruiting.js';
 import { dropQuest, getQuest, getQuests, joinQuest, markDone, ownQuest } from './quests.js';
+import { withAccessToken } from './sign-in.js';
 import { refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
 
@@ -40,6 +44,18 @@ async function joinedQuest(): Promise<{ questId: string; holders: [TestUser, Tes
   return { questId, holders };
 }
 
+function signalNames(user: TestUser): string[] {
+  return watcher.for(user).map(({ name }) => name);
+}
+
+async function notificationKinds(user: TestUser): Promise<string[]> {
+  const response = await withAccessToken(request(app.getHttpServer()).get('/notifications'), user.accessToken);
+  return z
+    .array(z.looseObject({ kind: z.string() }))
+    .parse(response.body)
+    .map(({ kind }) => kind);
+}
+
 describe('The Holders of a Quest', () => {
   it('are in the order they entered', async () => {
     const { questId, holders } = await joinedQuest();
@@ -65,8 +81,11 @@ describe('The Leader dropping the Quest', () => {
       holders: [{ id: second.id }, { id: third.id }],
     });
     await vi.waitFor(() => {
-      // Its joining, the third's joining and the drop.
-      expect(watcher.for(second)).toHaveLength(3);
+      // Its joining, the third's joining and the drop, and 알림's word that it leads now (P06 ticket 32).
+      expect(watcher.for(second).map(({ name }) => name)).toEqual(
+        expect.arrayContaining(['quests-changed', 'quests-changed', 'quests-changed', 'notice']),
+      );
+      expect(watcher.for(second)).toHaveLength(4);
     });
   });
 });
@@ -126,10 +145,13 @@ describe('The Leader removing a Holder', () => {
       holders: [{ id: leader.id }, { id: third.id }],
     });
     await vi.waitFor(() => {
-      // Its joining, the third's joining and the removal.
-      expect(watcher.for(second)).toHaveLength(3);
-      expect(watcher.for(third)).toHaveLength(2);
+      // Its joining, the third's joining and the removal, then the one Notification the one removed is kept.
+      expect(signalNames(second)).toEqual(['quests-changed', 'quests-changed', 'quests-changed', 'notice']);
+      expect(signalNames(third)).toEqual(['quests-changed', 'quests-changed']);
     });
+    // One push for one removal, and none for the Holders who stay.
+    expect(await notificationKinds(second)).toEqual(['party-removed']);
+    expect(await notificationKinds(third)).toEqual([]);
   });
 
   it('takes the Holder’s progress, which the User does not get back on being accepted again', async () => {

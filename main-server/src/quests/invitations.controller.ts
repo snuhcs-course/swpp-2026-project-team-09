@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
@@ -10,7 +11,7 @@ import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { type UserIdDto, userIdSchema } from './dto/quest-requests.dto.js';
 import { QuestDto } from './dto/quest.dto.js';
-import { WaitingDto, WaitingUserDto } from './dto/waiting.dto.js';
+import { ReceivedInvitationDto, WaitingUserDto } from './dto/waiting.dto.js';
 import { InvitationsService } from './invitations.service.js';
 
 @Controller()
@@ -48,7 +49,7 @@ export class InvitationsController {
   }
 
   @Get('quest-invitations')
-  list(@CurrentUser() user: SignedInUser): Promise<WaitingDto[]> {
+  list(@CurrentUser() user: SignedInUser): Promise<ReceivedInvitationDto[]> {
     return this.invitations.list(user.id);
   }
 

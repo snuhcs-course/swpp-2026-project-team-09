@@ -4,23 +4,30 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AccessibilityActionInfo, ViewStyle } from 'react-native';
 import { Gesture, type PanGesture } from 'react-native-gesture-handler';
-import {
-  type SharedValue,
-  useAnimatedReaction,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import { type SharedValue, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { space } from '@/design-system';
 import { useReduceMotionSetting } from '@/hooks/use-reduce-motion';
 import { CARRY_S, FLING_SPEED } from './card-levels';
 import { SETTLE } from './card-run';
+import {
+  type GripPlace,
+  placeOfStop,
+  placesOf,
+  pressedPlace,
+  readerActions,
+  readerPlace,
+  stopOfPlace,
+} from './grip-places';
+import { type Moved, useFoldUnder, useFollowSheet, useGripStyles, useLift } from './grip-sheet';
 import type { SheetLink } from './sheet-link';
+import type { TopStops } from './top-stops';
 
 // The time card's grip (P04 ticket 61, boards k1–k4 and p): the card stands at one of its places, and a drag on its
 // grip's strip, the card's whole width under its hairline, moves it between them with the finger. Pushed up it slides
@@ -39,12 +46,7 @@ export const STRIP_SLOP = { bottom: 24 };
 // A drag starts past this many points, so that a press stays a press.
 const PAN_STARTS = 8;
 
-export const TUCK_LABEL = '시간 카드 접기';
-export const UNTUCK_LABEL = '시간 카드 펴기';
-
-export type GripPlace = 'tucked' | 'shown' | 'open';
-
-const PLACES: readonly GripPlace[] = ['tucked', 'shown', 'open'];
+export type { GripPlace } from './grip-places';
 
 interface GripInput {
   // The card's height folded, and its top from the stage's top, which is under the status bar.
@@ -54,9 +56,10 @@ interface GripInput {
   rows: number;
   // The answer sheet under it: opening brings a high sheet down, and the sheet rising to high folds the card.
   sheet: SheetLink;
+  // Under the bar of several requests (P01 ticket 22): the top's stops, which the card's place tells and starts from,
+  // and the bar's lift, which the card moves on the UI thread once it is pushed past its place behind the bar.
+  under?: TopStops;
 }
-
-type Moved = ReturnType<typeof useAnimatedStyle<ViewStyle>>;
 
 export interface TimeCardGrip {
   place: GripPlace;
@@ -108,12 +111,13 @@ export function gripLanding(at: number, velocity: number, stops: readonly number
 }
 
 // A drag on the strip. One that starts with the sheet high and can open the card has the sheet follow it (`sheet-link`)
-// until it is let go: let go open, the sheet's own run to middle takes it from where it stands.
+// until it is let go: let go open, the sheet's own run to middle takes it from where it stands. Under the bar of several
+// requests one drag goes through every place in turn, the bar going up with the card past its place behind it.
 function useGripPan(
   y: SharedValue<number>,
   stops: readonly number[],
   settle: (index: number, velocity: number) => void,
-  { grab, sheet }: { grab: () => void; sheet: SheetLink },
+  { grab, sheet, open }: { grab: () => void; sheet: SheetLink; open: number },
 ): PanGesture {
   const from = useSharedValue(0);
   // A drag that began while the sheet's move leads is let pass: the card only follows then.
@@ -121,7 +125,7 @@ function useGripPan(
   const low = stops[0] ?? 0;
   const high = stops.at(-1) ?? 0;
   const { following, sheetLeads } = sheet;
-  const follows = sheet.high && stops.length > PLACES.indexOf('open');
+  const follows = sheet.high && stops.length > open;
   return Gesture.Pan()
     .withTestId('time-card-grip-drag')
     .activeOffsetY([-PAN_STARTS, PAN_STARTS])
@@ -152,30 +156,10 @@ function useGripPan(
       const to = gripLanding(y.value, velocityY, stops);
       // Let go open, the sheet's own run to middle takes it; let go short, it follows the card back until it is high.
       if (following !== undefined && following.value === 1) {
-        following.value = PLACES[to] === 'open' || y.value <= 0 ? 0 : 2;
+        following.value = to === open || y.value <= 0 ? 0 : 2;
       }
       scheduleOnRN(settle, to, velocityY);
     });
-}
-
-function useGripStyles(
-  y: SharedValue<number>,
-  rows: number,
-  pull?: SharedValue<number>,
-): { moved: Moved; grown: Moved } {
-  // How far the card is pulled open, for the sheet under it.
-  useAnimatedReaction(
-    () => (rows > 0 ? clamp(y.value / rows, 0, 1) : 0),
-    (share) => {
-      if (pull !== undefined) {
-        pull.value = share;
-      }
-    },
-    [rows, pull],
-  );
-  const moved = useAnimatedStyle<ViewStyle>(() => ({ transform: [{ translateY: Math.min(0, y.value) }] }));
-  const grown = useAnimatedStyle<ViewStyle>(() => ({ height: clamp(y.value, 0, rows) }));
-  return { moved, grown };
 }
 
 interface Settling {
@@ -198,20 +182,31 @@ interface Running {
   run: (index: number, velocity: number) => void;
 }
 
-// The run to the place a let-go or a press settles at.
-function useRun(stops: readonly number[], y: SharedValue<number>): Running {
-  const [place, setPlace] = useState<GripPlace>('shown');
+// Which places the card has, and the top's stops it tells under the bar of several requests.
+interface Placing {
+  places: readonly GripPlace[];
+  under?: TopStops;
+}
+
+// The run to the place a let-go or a press settles at. Under the bar of several requests the place it arrives at is the
+// top's stop, and the place it starts at is the stop's (P01 ticket 22): the card stays mounted and stops short, so there
+// is never a second shape to swap in.
+function useRun(stops: readonly number[], y: SharedValue<number>, { places, under }: Placing): Running {
+  const [place, setPlace] = useState<GripPlace>(() => (under === undefined ? 'shown' : placeOfStop(under.stop)));
   const [moving, setMoving] = useState(false);
   const heading = useRef<number | null>(null);
   const reduce = useReduceMotionSetting() !== false;
+  const setStop = under?.setStop;
   const run = useCallback(
     (index: number, velocity: number): void => {
       const to = stops[index] ?? 0;
       heading.current = index;
       const done = (): void => {
         heading.current = null;
-        setPlace(PLACES[index] ?? 'shown');
         setMoving(false);
+        const arrived = places[index] ?? 'shown';
+        setPlace(arrived);
+        setStop?.(stopOfPlace(arrived));
       };
       if (reduce) {
         y.value = to;
@@ -226,7 +221,7 @@ function useRun(stops: readonly number[], y: SharedValue<number>): Running {
         }
       });
     },
-    [stops, reduce, y],
+    [stops, reduce, y, places, setStop],
   );
   return { place, moving, setMoving, heading, run };
 }
@@ -234,12 +229,13 @@ function useRun(stops: readonly number[], y: SharedValue<number>): Running {
 // The card's place, and the run to the place a let-go or a press settles at. Laid out again at rest, as when the rows'
 // height changes open, the card stays at its place; laid out again on its way, as picking's rows are a frame after the
 // opening begins, the run heads for the new height (P04 ticket 67).
-function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: SheetLink): Settling {
+function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: SheetLink, placing: Placing): Settling {
   const { onOpen, following } = sheet;
-  const { place, moving, setMoving, heading, run } = useRun(stops, y);
+  const { places } = placing;
+  const { place, moving, setMoving, heading, run } = useRun(stops, y, placing);
   const settle = useCallback(
     (index: number, velocity = 0): void => {
-      if (PLACES[index] === 'open') {
+      if (places[index] === 'open') {
         if (following !== undefined) {
           following.value = 0;
         }
@@ -247,7 +243,7 @@ function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: Sh
       }
       run(index, velocity);
     },
-    [run, onOpen, following],
+    [run, onOpen, following, places],
   );
   const laid = useRef(stops);
   useEffect(() => {
@@ -256,10 +252,10 @@ function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: Sh
     if (changed && heading.current !== null) {
       run(heading.current, 0);
     } else if (!moving) {
-      y.value = stops[PLACES.indexOf(place)] ?? 0;
+      y.value = stops[places.indexOf(place)] ?? 0;
     }
-  }, [moving, place, stops, y, heading, run]);
-  const aim = (): GripPlace => (heading.current === null ? place : (PLACES[heading.current] ?? place));
+  }, [moving, place, stops, y, heading, run, places]);
+  const aim = (): GripPlace => (heading.current === null ? place : (places[heading.current] ?? place));
   const grab = useCallback((): void => {
     heading.current = null;
     setMoving(true);
@@ -267,56 +263,59 @@ function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: Sh
   return { place, moving, aim, grab, settle };
 }
 
-// While the sheet's move leads (`sheet-link`) and the card was open when it began, its open height follows the sheet
-// on the UI thread: open at middle, folded at high. Arrived at high, React folds it (`useFoldUnder`); back at middle,
-// it stands open as it rests.
-function useFollowSheet(y: SharedValue<number>, rows: number, sheet: SheetLink, place: GripPlace): SharedValue<number> {
-  const open = useSharedValue(place === 'open' ? 1 : 0);
-  useEffect(() => {
-    open.value = place === 'open' ? 1 : 0;
-  }, [open, place]);
-  const tracking = useSharedValue(0);
-  const { rise, sheetLeads } = sheet;
-  useAnimatedReaction(
-    () => [sheetLeads?.value ?? 0, rise?.value ?? 0] as const,
-    ([leads, share], previous) => {
-      if (leads === 1 && previous?.[0] !== 1) {
-        tracking.value = open.value;
-      }
-      if (tracking.value === 1 && rows > 0) {
-        y.value = rows * (1 - share);
-      }
-      if (leads !== 1) {
-        tracking.value = 0;
-      }
-    },
-    [rows],
-  );
-  return tracking;
-}
-
-// The sheet rising to high folds an open card back to its place; the card touched last wins, so only the rise does.
-function useFoldUnder(high: boolean, place: GripPlace, settle: (index: number) => void): void {
-  const wasHigh = useRef(high);
-  useEffect(() => {
-    if (high && !wasHigh.current && place === 'open') {
-      settle(PLACES.indexOf('shown'));
-    }
-    wasHigh.current = high;
-  }, [high, place, settle]);
-}
-
-export function useTimeCardGrip({ height, top, rows, sheet }: GripInput): TimeCardGrip {
-  // How far up the card goes: until its last TUCK_STRIP points stand at the stage's top, under the status bar.
+// Each place's translation, lowest first. Tucked, the card goes up until its last TUCK_STRIP points stand at the
+// stage's top, under the status bar; behind the bar of several requests, until they stand under the bar's bottom edge,
+// the gap over the card (`StepsTop`) above them.
+function useStops(
+  places: readonly GripPlace[],
+  { height, top, rows }: Pick<GripInput, 'height' | 'top' | 'rows'>,
+): { stops: readonly number[]; behind: number } {
   const reach = Math.max(0, top + height - TUCK_STRIP);
-  const stops = useMemo(() => [-reach, 0, rows], [reach, rows]);
-  const y = useSharedValue(0);
-  const { place, moving, aim, grab, settle } = useSettling(stops, y, sheet);
-  useFoldUnder(sheet.high, place, settle);
+  const behind = Math.max(0, space[2] + height - TUCK_STRIP);
+  const stops = useMemo(
+    () => places.map((place) => ({ tucked: -reach, behind: -behind, shown: 0, open: rows })[place]),
+    [places, reach, behind, rows],
+  );
+  return { stops, behind };
+}
+
+// Where the card rests, which React holds so that a commit of React's lays it there again. Under the bar of several
+// requests, past its place behind the bar it rests there in its frame, which the bar's lift takes up (`TimeCard`). A
+// card that starts folded, as when it comes back for a step at stop 0 or 1, is drawn only once its height is known: in
+// the same commit as the place that height gives it, so that it never shows a frame at its unfolded place.
+function restedAt(at: number, { behind, drawn }: { behind: number | null; drawn: boolean }): ViewStyle {
+  return {
+    transform: [{ translateY: behind === null ? Math.min(0, at) : Math.max(Math.min(0, at), -behind) }],
+    opacity: drawn ? 1 : 0,
+  };
+}
+
+export function useTimeCardGrip({ height, top, rows, sheet, under }: GripInput): TimeCardGrip {
+  const alone = under === undefined;
+  const places = useMemo(() => placesOf(!alone), [alone]);
+  const { stops, behind } = useStops(places, { height, top, rows });
+  const start = alone ? 'shown' : placeOfStop(under.stop);
+  const y = useSharedValue(stops[places.indexOf(start)] ?? 0);
+  const placing = useMemo(() => ({ places, under }), [places, under]);
+  const { place, moving, aim, grab, settle } = useSettling(stops, y, sheet, placing);
+  const settleTo = (to: GripPlace): void => {
+    if (to !== aim() && places.includes(to)) {
+      settle(places.indexOf(to));
+    }
+  };
+  useFoldUnder(sheet.high, place, settleTo, !alone);
+  useLift(y, behind, height > 0, under);
   const followsSheet = useFollowSheet(y, rows, sheet, place);
-  const pan = useGripPan(y, stops, settle, { grab, sheet });
-  const styles = useGripStyles(y, rows, sheet.pull);
-  const rested = useMemo(() => ({ transform: [{ translateY: place === 'tucked' ? -reach : 0 }] }), [place, reach]);
+  const pan = useGripPan(y, stops, settle, { grab, sheet, open: places.indexOf('open') });
+  const styles = useGripStyles(y, rows, { pull: sheet.pull, behind: alone ? null : behind });
+  const rested = useMemo(
+    () =>
+      restedAt(stops[places.indexOf(place)] ?? 0, {
+        behind: alone ? null : behind,
+        drawn: height > 0 || place === 'shown' || place === 'open',
+      }),
+    [stops, places, place, alone, behind, height],
+  );
   const grownRest = useMemo(() => ({ height: place === 'open' ? rows : 0 }), [place, rows]);
   return {
     place,
@@ -327,17 +326,13 @@ export function useTimeCardGrip({ height, top, rows, sheet }: GripInput): TimeCa
     ...styles,
     followsSheet,
     toggle: () => {
-      settle(aim() === 'shown' ? 2 : 1);
+      settleTo(pressedPlace(aim(), !alone));
     },
-    settleTo: (to: GripPlace) => {
-      if (to !== aim()) {
-        settle(PLACES.indexOf(to));
-      }
-    },
-    actions: [place === 'tucked' ? { name: 'untuck', label: UNTUCK_LABEL } : { name: 'tuck', label: TUCK_LABEL }],
+    settleTo,
+    actions: readerActions(place, !alone),
     onAction: (name: string): void => {
       if (name === 'tuck' || name === 'untuck') {
-        settle(name === 'tuck' ? 0 : 1);
+        settleTo(readerPlace(name, place, !alone));
       }
     },
   };

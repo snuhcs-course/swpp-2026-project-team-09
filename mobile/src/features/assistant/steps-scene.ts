@@ -2,13 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { LibrarySpace, MapScene, ReplyStep } from '@/api/assistant-types';
+import type { AnswerReply, LibrarySpace, MapScene, Plan, ReplyStep } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { koreaClock, koreaDayWord } from '@/korea-time';
 import { seatWords } from '@/library/cards/bookings';
-import type { Draft } from './answer-groups';
+import type { Slot } from '@/library/cards/payloads';
+import { clockOf, minutesOf } from '@/library/cards/times';
+import { type Draft, inKind } from './answer-groups';
+import { stepTone } from './answer-tone';
 import { bookingTitle } from './booking-scene';
 import { meAndWalk } from './proposal-scene';
 import { turnOf } from './turn';
@@ -21,13 +26,71 @@ export interface ShownSteps {
   steps: readonly ReplyStep[];
 }
 
+// The app's own bubbles after the reply, a booking's done message, 예약 안 함, or a card it adds, keep the steps, as
+// they keep the booking (P10 ticket 29); a reply of the Assistant or a new turn ends them.
 export function shownStepsOf(bubbles: readonly ChatBubble[]): ShownSteps | null {
-  const after = turnOf(bubbles)?.after ?? [];
-  const [reply] = after;
+  const [reply, ...later] = turnOf(bubbles)?.after ?? [];
   const steps = reply?.steps;
-  return after.length !== 1 || reply === undefined || steps === undefined || steps.length < 2
+  return reply === undefined || steps === undefined || steps.length < 2 || later.some(({ own }) => own !== true)
     ? null
     : { bubbleId: reply.id, steps };
+}
+
+// What the steps are drawn over now (P10 ticket 29): the reply's answer, the answer on screen and its Plan, and the
+// booking card on screen with the time it holds.
+export interface StepsNow {
+  reply: AnswerReply | null;
+  answer: AnswerReply | null;
+  plan: Plan | null;
+  index: number;
+  card: { key: string; slot: Slot } | null;
+  // When the steps name their answers by key (P03 ticket 21): each step's answer as on screen, its Plan, and whether
+  // either moved from the reply's. Left out, the one answer above stands for every answer step.
+  answerOf?: (key: string) => { answer: AnswerReply; plan: Plan | null; moved: boolean } | null;
+}
+
+// The answer's step at the Plan on screen, as the main server makes it of a Plan (`answerStep`), or not done with the
+// answer's reasons once it has none.
+function answerStepAt(step: ReplyStep, answer: AnswerReply, plan: Plan | null): ReplyStep {
+  if (plan === null) {
+    const reasons = (answer.noPlan?.lines ?? []).map((line) => line.map(({ text }) => text).join('')).join(' ');
+    return { ...step, place: null, from: null, endAt: null, status: 'not-done', reason: reasons || step.reason };
+  }
+  const from = plan.parts[0]?.origin?.place ?? step.from;
+  const { title, place, startAt, endAt } = plan;
+  return { ...step, title, place, from, startAt, endAt, status: 'shown', reason: null };
+}
+
+// A card's slot on its day in Korea, as the main server writes a step's times; a library's day ends before midnight.
+function slotStretch({ date, start, minutes }: Slot): Pick<ReplyStep, 'startAt' | 'endAt'> {
+  const end = clockOf(minutesOf(start) + minutes);
+  return { startAt: `${date}T${start}:00+09:00`, endAt: `${date}T${end}:00+09:00` };
+}
+
+// The steps as they stand now (P10 ticket 29). The reply's steps are the main server's of the moment it answered: the
+// answer's step is of the reply's first Plan, and a booking's of the time its card offered. Once the Plan on screen is
+// another, a candidate browsed or an answer recalculated by a band moved or Friends added, the answer's step is drawn at
+// it; a booking's step is drawn at the time its card holds. Steps that name their answers by key are each drawn at their
+// own answer (P03 ticket 21).
+export function liveStepsOf(shown: ShownSteps, now: StepsNow): ShownSteps {
+  const { reply, answer, plan, index, card, answerOf } = now;
+  const moved = answer !== null && (answer !== reply || index !== 0);
+  const steps = shown.steps.map((step) => {
+    const key = step.shows?.kind === 'answer' ? step.shows.key : undefined;
+    if (key !== undefined && answerOf !== undefined) {
+      const own = answerOf(key);
+      return own?.moved === true ? answerStepAt(step, own.answer, own.plan) : step;
+    }
+    if (step.shows?.kind === 'answer') {
+      return moved ? answerStepAt(step, answer, plan) : step;
+    }
+    if (card === null || step.shows?.kind !== 'card' || step.shows.key !== card.key || step.status !== 'shown') {
+      return step;
+    }
+    const held = slotStretch(card.slot);
+    return held.startAt === step.startAt && held.endAt === step.endAt ? step : { ...step, ...held };
+  });
+  return steps.every((step, at) => step === shown.steps[at]) ? shown : { ...shown, steps };
 }
 
 export const STEP_ID = 'answer:step:';
@@ -65,13 +128,15 @@ export function stepTitle(step: ReplyStep, space: LibrarySpace | null): string {
 }
 
 // A step's flag line: the seat for the step due when its card offers one, the day word when it is not today, and its
-// time; a step not done says so.
-export function stepLine(step: ReplyStep, seat: string | null, now: Date): string {
+// time, then "예약됨" once its booking is made, as a lone booking's label says (P10 ticket 29); a step not done says
+// so.
+export function stepLine(step: ReplyStep, seat: string | null, now: Date, booked = false): string {
   if (step.status === 'not-done') {
     return '못 했어요';
   }
   const day = step.startAt === null ? '' : koreaDayWord(step.startAt, now);
-  return [seat === null ? '' : seatWords(seat), day, stepClock(step) ?? ''].filter((words) => words !== '').join(' ');
+  const line = [seat === null ? '' : seatWords(seat), day, stepClock(step) ?? ''].filter((words) => words !== '');
+  return booked ? `${line.join(' ')} · 예약됨` : line.join(' ');
 }
 
 // The User at `me` with a walk to the first step with a place, then a way from each step with a place to the next.
@@ -95,6 +160,20 @@ export function stepsScene(steps: readonly ReplyStep[], me: LatLng | null): MapS
   return { people: mine, places: [], routes: [...walk, ...between], flags: [] };
 }
 
+// The user's choices for the steps' marks, awaiting his decision from use (2026-11-28, P03 ticket 24), one function
+// each. Their colour is `stepTone`'s, the one table of each kind's colour (`kindTone`), as the same answer's mark alone;
+// choice 2, a room's step in the study colour as a seat's, is that table's (`answerTone`).
+// Choice 1: what a seat's or a room's round holds: its number, as every step's, not the 관정 booking pick's book.
+export function bookingStepHolds(): 'number' | 'book' {
+  return 'number';
+}
+
+// Choice 3: how a step's round is drawn: solid, as a pick, for every step done, the chosen one or not; grey for one
+// not done.
+export function stepMarkRole({ status }: Pick<ReplyStep, 'status'>): 'pick' | 'dropped' {
+  return status === 'shown' ? 'pick' : 'dropped';
+}
+
 // Each step with a place as a numbered flag: ① ② by the steps' order, its title with "›" when a press does something,
 // its line, and faded when it was not done.
 export function stepDrafts(
@@ -110,22 +189,23 @@ export function stepDrafts(
       return [];
     }
     const number = index + 1;
-    const done = step.status === 'shown';
+    const role = stepMarkRole(step);
+    const book = (step.kind === 'seat' || step.kind === 'room') && bookingStepHolds() === 'book';
     const title = (opens[index] ?? true) ? `${titles[index] ?? step.title} ›` : (titles[index] ?? step.title);
     const line = lines[index] ?? null;
-    return [
-      {
-        id: `${STEP_ID}${String(number)}`,
-        name: `${String(number)} ${title} · ${line ?? ''}`,
-        position: { latitude: place.latitude, longitude: place.longitude },
-        planId: null,
-        group: done ? 'pick' : 'dropped',
-        symbol: { type: 'dot', role: done ? 'pick' : 'dropped', number },
-        tone: done ? 'pick' : 'dropped',
-        title,
-        line,
-        number,
-      },
-    ];
+    const draft: Draft = {
+      id: `${STEP_ID}${String(number)}`,
+      name: `${String(number)} ${title} · ${line ?? ''}`,
+      position: { latitude: place.latitude, longitude: place.longitude },
+      planId: null,
+      group: role,
+      symbol: { type: 'dot', role, number: book ? null : number, ...(book ? { study: true } : {}) },
+      tone: role,
+      title,
+      line,
+      number,
+    };
+    // A step done in its kind's colour, as its answer's pick; one not done grey.
+    return [inKind(draft, stepTone(step))];
   });
 }

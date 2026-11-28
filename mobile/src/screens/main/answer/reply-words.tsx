@@ -8,10 +8,12 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
+import { holdsAnswer } from '@/features/assistant/answer-holder';
 import { modelWordsOf } from '@/features/assistant/model-words';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import { turnsOf } from '@/features/assistant/turn';
@@ -28,13 +30,11 @@ import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
-import { StepsTop } from './steps-bar';
-import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 import type { TellAct } from '../library/act-stage';
 import type { LibraryCardActions } from '../library/use-library-call';
-import { offeredAnswer } from '@/features/assistant/meal-offered';
 import { SENTENCE } from './line-types';
+import { useSlotHeld } from './sentence-slot';
 
 // Which card a reply's words are: the Plan's, or the made Quest's once its Plan was made into one, for the reply the
 // answer on screen came from, the Lookup on screen for its reply, or the reply's own.
@@ -59,8 +59,7 @@ function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
 
 export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
   const { shown, invitation } = onScreen;
-  const { answer } = bubble;
-  const fromReply = answer !== undefined && answer !== null && offeredAnswer(answer) === shown.source;
+  const fromReply = holdsAnswer(bubble, shown.source);
   // A plan chosen in words is the plan's card, opened at its Restaurant (P05 ticket 56).
   const chosen = bubble.select !== undefined && shown.answer?.plans.some(({ id }) => id === bubble.select) === true;
   if ((fromReply || keepsShown(bubble) || chosen) && shown.answer !== null) {
@@ -123,15 +122,16 @@ interface WordsProps extends OnScreen {
 
 // The card of the answer on screen a reply's words are, by `wordsKindOf`, with a refusal's lines over the Plan's when
 // the refusal keeps what is on screen; null when they are not one.
-function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
+function onScreenCard(props: WordsProps, kind: WordsKind, held: boolean): ReactElement | null {
   const { bubble, shown, invitation, room, onClose, focus } = props;
   const over = keepsShown(bubble) ? bubble.refusal?.lines : undefined;
   const { answer, plan } = shown;
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
     const steps = (bubble.steps?.length ?? 0) > 1;
-    // A choice's words are not the card's: the history list keeps them (P05 ticket 56).
-    const said = bubble.select === undefined ? bubble.text : '';
+    // A choice's words are not the card's: the history list keeps them (P05 ticket 56). Nor are they under a later
+    // bubble that holds the slot (P10 ticket 29).
+    const said = bubble.select === undefined && !held ? bubble.text : '';
     const group = { act: props.group?.act, bubbleId: bubble.id, library: props.group?.library };
     return <PlanCard {...card} {...group} focus={focus} said={said} steps={steps} />;
   }
@@ -149,7 +149,7 @@ export function Words(props: WordsProps): ReactElement {
   const { bubble, onAsk, addRecalculated } = props;
   const { answer, refusal = null } = bubble;
   const kind = wordsKindOf(bubble, props);
-  const own = onScreenCard(props, kind);
+  const own = onScreenCard(props, kind, useSlotHeld());
   if (own !== null) {
     return own;
   }
@@ -186,45 +186,6 @@ export function Words(props: WordsProps): ReactElement {
   const lines =
     answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? (modelWordsOf(bubble.text) === '' ? lookup?.lines : undefined);
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
-}
-
-interface TopBarProps {
-  control: ChatSheetControl;
-  focus: BandFocus;
-  onClose: () => void;
-  onHeight: (height: number) => void;
-}
-
-// The time bar of the turn on screen, while it has a time, a booking's on the map first (P04 ticket 07): none once 그대로 두기 left a Quest already set as it is, for
-// the Plan is gone (P04 ticket 20).
-export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): ReactElement | null {
-  const { answer: shown, invitation, booking, steps } = control;
-  if (steps !== null) {
-    return <StepsTop control={control} focus={focus} onClose={onClose} onHeight={onHeight} />;
-  }
-  if (booking !== null) {
-    return <BookingBar booking={booking} chat={control.chat} onHeight={onHeight} />;
-  }
-  const bar = barOf(control.chat.bubbles, onScreenOf(control));
-  if (bar === null) {
-    return null;
-  }
-  if (bar.kind === 'lookup') {
-    return <LookupBar lookup={bar.lookup} onHeight={onHeight} />;
-  }
-  const leftAlone = invitation.left !== null && invitation.made === null && invitation.changed === null;
-  // An answer with no Plan keeps the time card it was asked in (P01 ticket 31).
-  return shown.answer === null || shown.frame === null || leftAlone ? null : (
-    <PlanBar
-      answer={shown.answer}
-      focus={focus}
-      invitation={invitation}
-      onClose={onClose}
-      onHeight={onHeight}
-      plan={shown.frame}
-      shown={shown}
-    />
-  );
 }
 
 const styles = StyleSheet.create({

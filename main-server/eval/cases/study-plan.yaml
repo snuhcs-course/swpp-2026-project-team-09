@@ -6,8 +6,8 @@
 
 # "공부할 자리 있어?" answered as ranked study places (P10 tickets 04 and 05), from the app that says `study-plan`
 # (`capabilities: study-app`), in the P6 world on Wednesday 2026-11-04 at 10:05. A place to study asked for without a
-# 관정도서관 space or a booking goes to planStudy, never to a library tool; a named 관정 space or a booking stays with
-# the library tools; 근처 is planStudy with near over the visible area; a choice by number over the answer on screen is
+# 관정도서관 space or a booking goes to planStudy, never to a library tool; 관정 named as the place to study (P10 ticket
+# 28), a named 관정 space or a booking stays with the library tools; 근처 is planStudy with near over the visible area; a choice by number over the answer on screen is
 # choosePlan's; and 예약해 줘 with 관정관's plan shown books its seat. Written, and not run: no model key on the machine
 # they were written on.
 
@@ -35,6 +35,19 @@
   repeat: 3
   turns:
     - user: 관정 7층 예약해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      forbidden: [planStudy]
+
+- id: study-plan-kwanjeong-named
+  category: study-plan
+  world: p6-answer
+  capabilities: study-app
+  repeat: 3
+  turns:
+    - user: 관정에서 공부할래
   expect:
     actions: [TOOL]
     tools:

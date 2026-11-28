@@ -4,11 +4,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type KeptQuestDto } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { type DayAnswer } from './day-lookup.js';
 import { type DayLookupService } from './day.service.js';
@@ -45,9 +47,7 @@ export function findDay(days: DayLookupService): Tool {
       if (answer.result === 'none') {
         return noneFound(NONE_WORDS[answer.reason](date));
       }
-      presented.lookup = answer.lookup;
-      presented.answer = null;
-      presented.mapButtons.length = 0;
+      presentLookup(presented, answer.lookup);
       const offered = capabilities.has('plan-set') && changeableAsked(answer.lookup.kept, now);
       return { result: 'found', ...answer.words, ...(offered ? { note: CHANGE_OFFERED } : {}) };
     },

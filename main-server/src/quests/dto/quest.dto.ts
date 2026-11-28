@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -127,10 +128,12 @@ export interface QuestSummaryDto {
   createdAt: string;
 }
 
+// The first Sub Quest ahead of a Quest, which tells one who does not hold it when and where it meets.
+export type NextSubQuestDto = Pick<SubQuestDto, 'id' | 'attending' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
+
 // A Quest in the list of recruiting Quests.
 export interface RecruitingQuestDto extends QuestSummaryDto {
-  // The first Sub Quest ahead.
-  nextSubQuest: Pick<SubQuestDto, 'id' | 'attending' | 'title' | 'startsAt' | 'endsAt' | 'place'>;
+  nextSubQuest: NextSubQuestDto;
 }
 
 // A Sub Quest's content, the attending one's read from its Global Event, with its Quest's title.
@@ -289,19 +292,24 @@ export function toQuestDto(quest: StoredQuest, userId: string, now: Date, rooms:
   };
 }
 
-// Null for a Quest without a Sub Quest ahead, which is not in the list.
-export function toRecruitingQuestDto(quest: StoredQuest, now: Date): RecruitingQuestDto | null {
-  const { globalEvent } = quest;
-  for (const subQuest of quest.subQuests) {
+// The first of the Quest's Sub Quests, in QUEST_INCLUDE's order, that has not passed at `now`; null when none is ahead.
+export function nextSubQuestOf(
+  { globalEvent, subQuests }: { globalEvent: GlobalEvent | null; subQuests: StoredSubQuest[] },
+  now: Date,
+): NextSubQuestDto | null {
+  for (const subQuest of subQuests) {
     const { cancelled, ...content } = contentOf(subQuest, globalEvent);
     if (!passed({ cancelled, endsAt: content.endsAt }, now)) {
-      return {
-        ...toQuestSummaryDto(quest),
-        nextSubQuest: { id: subQuest.id, attending: subQuest.attending, ...content },
-      };
+      return { id: subQuest.id, attending: subQuest.attending, ...content };
     }
   }
   return null;
+}
+
+// Null for a Quest without a Sub Quest ahead, which is not in the list.
+export function toRecruitingQuestDto(quest: StoredQuest, now: Date): RecruitingQuestDto | null {
+  const nextSubQuest = nextSubQuestOf(quest, now);
+  return nextSubQuest === null ? null : { ...toQuestSummaryDto(quest), nextSubQuest };
 }
 
 export function toQuestSummaryDto(

@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentLookup } from '../presented.js';
 import { type StudyAnswer } from './study-lookup.js';
 import { type StudyAreaService } from './study.service.js';
 
@@ -42,9 +43,7 @@ export function findStudyNearby(studyAreas: StudyAreaService): Tool {
         const none = noneFound(NONE_REASONS[answer.reason]);
         return answer.reason === 'none-usable' ? { ...none, restricted: answer.restricted } : none;
       }
-      presented.lookup = answer.lookup;
-      presented.answer = null;
-      presented.mapButtons.length = 0;
+      presentLookup(presented, answer.lookup);
       return { result: 'found', ...answer.words };
     },
   });

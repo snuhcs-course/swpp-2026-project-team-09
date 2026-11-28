@@ -8,16 +8,18 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AnswerReply, Cuisine, Plan, PlanInput } from '@/api/assistant-types';
+import type { AnswerReply, Cuisine, LeftOutClass, Plan, PlanInput } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import {
   type AnswerState,
   arrivedState,
+  type ChosenAnswer,
   type ChangeBy,
   firstState,
   replaced,
@@ -28,7 +30,7 @@ import { type Frame, frameOf } from './answer-frame';
 import { showing, withKind } from './meal-kinds';
 import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
-import { withPerson } from './plan-input';
+import { withoutSkipped, withPerson } from './plan-input';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
 
@@ -74,6 +76,9 @@ export interface ShownAnswer {
   // replaces the one on screen. Without an answer on screen, or when `alter` gives the same conditions back, it does
   // nothing.
   change: (alter: (input: PlanInput) => PlanInput, by?: ChangeBy) => void;
+  // A Class left out put back by a time card's ✕, of any kind of answer (P01 ticket 40): out of the conversation's list,
+  // and the answer recalculated without it.
+  putBack: (classId: string) => void;
   // Asks for the answer to the same conditions from where the User is now, as `change` does (P04 ticket 86).
   again: () => void;
   // Adds a Friend to the conditions as `change` does, chosen in the list or on the map, and holds them as the pending
@@ -104,6 +109,10 @@ export interface Recalculation {
   // Left out as null.
   locationMissing?: LocationMissing;
   onFailed: () => void;
+  // The conversation's Classes left out when the recalculation is sent (P01 ticket 40); none when left out.
+  skipped?: () => readonly LeftOutClass[];
+  // Takes one out of the conversation's list, before the recalculation that a ✕ asks reads it.
+  putBack?: (classId: string) => void;
 }
 
 function sayNothing(): void {
@@ -114,7 +123,7 @@ const NO_RECALCULATION: Recalculation = { location: null, onFailed: sayNothing }
 
 // A reply that only refuses to answer for a Friend, which the server never sends with an answer or a Lookup, keeps
 // what is on screen, and the card puts its lines over the kept card's (board n8b).
-export const keepsShown = ({ refusal }: ChatBubble): boolean => refusal?.kind === 'for-someone-else';
+export const keepsShown = ({ refusal }: Pick<ChatBubble, 'refusal'>): boolean => refusal?.kind === 'for-someone-else';
 
 // A failure, the app's own bubble, and a reply that keeps what is on screen are no reply.
 export function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefined {
@@ -221,7 +230,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
   return (alter, by, adds, asked) => {
     const {
       current: { answer, epoch },
-      recalculation: { location, locationMissing = null, onFailed },
+      recalculation: { location, locationMissing = null, onFailed, skipped },
     } = live.current;
     const input = answer === null ? null : alter(answer.input);
     if (input === null || input === answer?.input || flight.current === epoch) {
@@ -240,7 +249,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
       setStored((last) => (late || last.epoch !== epoch ? last : update(last)));
       return !late;
     };
-    apiClient.recalculateAnswer(input, location, locationMissing).then(
+    apiClient.recalculateAnswer(input, location, locationMissing, skipped?.() ?? []).then(
       (next) => {
         settle((last) => replaced(last, next, by));
       },
@@ -253,20 +262,51 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
   };
 }
 
-// The answer on screen and the Plan on screen, which the map and the card read. The conversation's last reply gives
-// the source: a new one, told by its bubble since a reply may bring the same object again, shows its first Plan with
-// the basis closed and drops anything a recalculation brought. A recalculation's answer replaces the one on screen,
-// unless a new reply came while it was on its way.
-export function useShownAnswer(
-  bubbles: readonly ChatBubble[],
-  recalculation: Recalculation = NO_RECALCULATION,
-): ShownAnswer {
+// The changes the card asks of the conditions: the same again, a Friend added, and a Class left out put back, which
+// leaves the conversation's list first (P01 ticket 40).
+function changesOf(
+  ask: Ask,
+  held: Pick<ShownAnswer, 'change'>,
+  recalculation: Recalculation,
+): Pick<ShownAnswer, 'again' | 'add' | 'putBack'> {
+  return {
+    again: () => {
+      // A copy, which `ask` takes for a change.
+      ask((input) => ({ ...input }), undefined, null);
+    },
+    add: (userId) => {
+      ask((input) => withPerson(input, userId), undefined, userId);
+    },
+    putBack: (classId) => {
+      recalculation.putBack?.(classId);
+      held.change((input) => withoutSkipped(input, classId));
+    },
+  };
+}
+
+// The state of the answer on screen: a new reply's, or the step chosen's, as each arrives.
+function useAnswerState(bubbles: readonly ChatBubble[], step: ChosenAnswer | null): [AnswerState, SetStored] {
   const reply = lastReply(bubbles);
-  const [stored, setStored] = useState<AnswerState>(() => firstState(reply, bubbles));
-  const current = stored.replyId === (reply?.id ?? null) ? stored : arrivedState(reply, stored, bubbles);
+  const [stored, setStored] = useState<AnswerState>(() => firstState(reply, bubbles, step));
+  const same = stored.replyId === (reply?.id ?? null) && stored.key === (step?.key ?? null);
+  const current = same ? stored : arrivedState(reply, stored, bubbles, step);
   if (current !== stored) {
     setStored(current);
   }
+  return [current, setStored];
+}
+
+// The answer on screen and the Plan on screen, which the map and the card read. The step chosen among several gives its
+// own answer (`step`, P03 ticket 21), as a new reply does; otherwise the conversation's last reply gives the source: a
+// new one, told by its bubble since a reply may bring the same object again, shows its first Plan with the basis closed
+// and drops anything a recalculation brought. A recalculation's answer replaces the one on screen, unless a new reply
+// or another step came while it was on its way.
+export function useShownAnswer(
+  bubbles: readonly ChatBubble[],
+  recalculation: Recalculation = NO_RECALCULATION,
+  step: ChosenAnswer | null = null,
+): ShownAnswer {
+  const [current, setStored] = useAnswerState(bubbles, step);
   const ask = useChange(current, setStored, recalculation);
   const browsing = useBrowsing(setStored);
   const chooseKind = useKindChoice(setStored);
@@ -287,14 +327,7 @@ export function useShownAnswer(
     basisOpen: current.basisOpen,
     adding: current.adding,
     recalculating: current.recalculating,
-
-    again: () => {
-      // A copy, which `ask` takes for a change.
-      ask((input) => ({ ...input }), undefined, null);
-    },
-    add: (userId) => {
-      ask((input) => withPerson(input, userId), undefined, userId);
-    },
+    ...changesOf(ask, held, recalculation),
     picked: current.picked,
     pickOrder: current.pickOrder,
     asked: current.asked,

@@ -20,10 +20,12 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
+import { now } from '@/clock';
 import type { OnboardingAnswers, Profile } from '@/api/types';
 import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
@@ -35,7 +37,7 @@ import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
-import { QUEST_INVITATIONS } from './data/waiting';
+import { KEPT_NOTIFICATIONS, questInvitationsAt } from './data/waiting';
 import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
@@ -224,8 +226,8 @@ export const mockClient: ApiClient = {
   listPositions: () => answer('listPositions', friendships.listPositions, []),
   listFriendStatuses: () => answer('listFriendStatuses', () => FRIEND_STATUSES, []),
   listQuests: () => answer('listQuests', () => [...QUESTS, ...mockMadeQuests()], []),
-  listQuestInvitations: () => answer('listQuestInvitations', () => QUEST_INVITATIONS, []),
-  listNotifications: () => answer('listNotifications', () => [], []),
+  listQuestInvitations: () => answer('listQuestInvitations', () => questInvitationsAt(now()), []),
+  listNotifications: () => answer('listNotifications', () => KEPT_NOTIFICATIONS, []),
   // The User leads no Quest of the mock's.
   listJoinRequests: () => answer('listJoinRequests', () => [], []),
   listClasses: () => answer('listClasses', timetable.listClasses, []),

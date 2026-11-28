@@ -10,6 +10,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -46,9 +47,9 @@ export interface PartyActions {
   join: (post: PostView) => Promise<void>;
   // Withdraws the request to join the Quest `questId`, from 보낸 신청 or the post.
   withdraw: (requestId: string, questId: string) => Promise<void>;
-  // Each gives whether the main server did it.
-  accept: (invitation: QuestInvitation) => Promise<boolean>;
-  decline: (invitation: QuestInvitation) => Promise<boolean>;
+  // Each gives whether the main server did it. An invitation's card on the map passes itself, which carries no plan.
+  accept: (invitation: Pick<QuestInvitation, 'id'>) => Promise<boolean>;
+  decline: (invitation: Pick<QuestInvitation, 'id'>) => Promise<boolean>;
 }
 
 // The 파티 tab at one of its tabs, closing the screens above it.

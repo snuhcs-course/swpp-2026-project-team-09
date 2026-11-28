@@ -21,6 +21,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -33,6 +34,7 @@ import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
+import { type PickedEvent, useEventSheetsOver } from '@/screens/events/event-sheets';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
 import { useFriendPanelShown } from './friend-panel';
@@ -83,6 +85,8 @@ interface SelectedCardProps {
   // The shuttle's line, which "노선 보기" brings into view.
   shuttleLine: readonly LatLng[];
   onActiveParty: () => void;
+  // "같이 갈 사람 찾기" of an event that 파티 gather for: their sheet, as the 행사 tab opens it.
+  onEventParties: (event: PickedEvent) => void;
   // 좌석 현황 of 관정관's card asks the Assistant in the chat. No card is shown while the answer frame is.
   chat: ChatSheetControl;
   onHeight: (height: number) => void;
@@ -114,11 +118,12 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
 // The card of the selected thing, if any, with what its buttons do. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. 관정관's "좌석 현황" closes the card and asks the Assistant for
 // its seats in the chat. "노선 보기" brings the shuttle's whole line into view and closes
-// the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" 파티 만들기 for the Global Event, and a
+// the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" the sheet of the 파티 gathering for the Global
+// Event, or 파티 만들기 for it when none does, and a
 // Friend's "파티 만들기" 파티 만들기 as 비공개 with the Friend invited. Every other button belongs to another task and says that it is not ready. A
 // choice, such as an event at a place, opens its own card.
 function ThingCard(props: SelectedCardProps): ReactElement | null {
-  const { selection, map, route, shuttleLine, onActiveParty, chat, onHeight, top } = props;
+  const { selection, map, route, shuttleLine, onActiveParty, onEventParties, chat, onHeight, top } = props;
   const showNotReady = useNotReadyToast();
   const openPartyCreate = useOpenPartyCreate();
   const { top: inset } = useSafeAreaInsets();
@@ -148,6 +153,8 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
           router.push(primary.action === 'room' ? `/room/${primary.questId}` : `/post/${primary.questId}`);
         } else if (primary.action === 'active-party') {
           onActiveParty();
+        } else if (primary.action === 'recruit' && primary.recruiting > 0) {
+          onEventParties({ id: primary.eventId, title: card.title });
         } else if (primary.action === 'recruit') {
           openPartyCreate(primary.eventId);
         } else if (primary.action === 'private-party') {
@@ -302,6 +309,8 @@ export function MainScreen(): ReactElement {
   const { map, me, layers, selection, party, tutorial, pin, guided, view, ...framedRoom } = useMainParts();
   const { stack, shuttle, chat, route } = layers;
   const { unasked, framed, taken, firstRun, room, ...bottom } = framedRoom;
+  // The sheet of the 파티 gathering for an event, which its card's "같이 갈 사람 찾기" opens over the map.
+  const eventSheets = useEventSheetsOver();
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
@@ -314,6 +323,7 @@ export function MainScreen(): ReactElement {
             hidden={guided}
             map={map}
             onActiveParty={party.open}
+            onEventParties={eventSheets.open}
             onHeight={bottom.setCardHeight}
             route={route}
             selection={selection}
@@ -338,6 +348,7 @@ export function MainScreen(): ReactElement {
         </OverMap>
       </View>
       {party.sheet}
+      {eventSheets.sheet}
       <LocationExplanation blocked={me.blocked} onAllow={me.allow} onLater={me.later} visible={me.explaining} />
       <RoomRequestInbox />
     </View>

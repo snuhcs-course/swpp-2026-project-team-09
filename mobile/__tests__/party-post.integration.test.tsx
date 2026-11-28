@@ -8,6 +8,8 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -130,6 +132,35 @@ describe('asking to join on 파티 모집글', () => {
   });
 });
 
+describe('파티 모집글 of a full 파티', () => {
+  it('shows 정원이 다 찼어요 in place of 참여하기, and it takes no press', async () => {
+    setAnswers({ recruiting: [{ ...RUN, holderCount: 8 }, CODING, JAZZ] });
+    await openAt(`/post/${RUN.id}`);
+
+    expect(screen.getByText('8/8명')).toBeVisible();
+    expect(screen.getByRole('button', { name: '정원이 다 찼어요' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '참여하기' })).toBeNull();
+  });
+
+  it('shows 정원이 다 찼어요 in place of 참여 신청 for an Approval Quest', async () => {
+    setAnswers({ recruiting: [RUN, { ...CODING, holderCount: 4 }, JAZZ] });
+    await openAt(`/post/${CODING.id}`);
+
+    expect(screen.getByRole('button', { name: '정원이 다 찼어요' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '참여 신청' })).toBeNull();
+  });
+
+  it('still waits with 신청 취소 when the User’s request waits', async () => {
+    const full = { ...CODING, holderCount: 4 };
+    setAnswers({ recruiting: [RUN, full, JAZZ], requests: [requestFor(full)] });
+    await openAt(`/post/${CODING.id}`);
+
+    expect(screen.getByText('참여 신청을 기다리는 중이에요')).toBeVisible();
+    expect(screen.getByRole('button', { name: '신청 취소' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: '정원이 다 찼어요' })).toBeNull();
+  });
+});
+
 describe('관심 없음 on 파티 모집글', () => {
   it('asks in a dialog, and 숨기기 hides the post and goes back to 찾기', async () => {
     const user = await openAt('/party');
@@ -186,5 +217,27 @@ describe('파티 모집글 of a Quest the User holds', () => {
 
     expect(screen.getByRole('header', { name: '모집글 수정' })).toBeVisible();
     expect(screen.getByDisplayValue(MY_HIKE.title)).toBeVisible();
+  });
+});
+
+describe('the place of a 파티 picked on the map', () => {
+  it('opens a small map with its pin from its words on the 모집글, which show the › of a line that opens', async () => {
+    const user = await openAt(`/post/${RUN.id}`);
+    expect(screen.getByTestId('place-chevron', { includeHiddenElements: true })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: '버들골 (100동) 입구' }));
+    await pass(500);
+
+    const sheet = within(screen.getByLabelText('장소'));
+    expect(sheet.getByLabelText('장소 · 버들골 (100동) 입구')).toBeVisible();
+    expect(sheet.getByText('버들골 (100동) 입구')).toBeVisible();
+  });
+
+  it('leaves 장소 미정 as words', async () => {
+    await openAt(`/post/${CODING.id}`);
+
+    expect(screen.getByText('장소 미정')).toBeVisible();
+    expect(screen.queryByRole('button', { name: '장소 미정' })).toBeNull();
+    expect(screen.queryByTestId('place-chevron', { includeHiddenElements: true })).toBeNull();
   });
 });

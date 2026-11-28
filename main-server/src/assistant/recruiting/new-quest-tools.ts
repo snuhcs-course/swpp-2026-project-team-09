@@ -5,13 +5,16 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
 import { type NewQuestInput, type Plan, QUEST_IDS_MAX } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
-import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
+import { presentAnswer } from '../presented.js';
+import { clockTime, dateInput, outOfReach } from '../free-time/tool-parts.js';
+import { outOfReachDay } from '../taken-off.js';
 import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
@@ -133,7 +136,7 @@ export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayServic
     run: async (given, context) => {
       const { userId, now, context: request, presented } = context;
       if (outOfReach(given.date, now)) {
-        return outOfReachDay(given.date, presented);
+        return outOfReachDay(given.date, context, { kind: 'new-quest' });
       }
       refuseUnseen(context, given);
       const placeId = given.globalEventId === undefined ? await placeOf(plans, userId, given, now) : null;
@@ -163,9 +166,7 @@ export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayServic
         const friendIds = free.slice(0, FREE_FRIENDS_MAX).map(({ userId: id }) => id);
         answer = await plans.newQuests.plan(userId, inputOf(userId, given, placeId, friendIds), at);
       }
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       const [plan] = answer.plans;
       if (plan === undefined) {
         return { ...noneFound('Not everyone of the 파티 can be there then.'), ...skip.said };

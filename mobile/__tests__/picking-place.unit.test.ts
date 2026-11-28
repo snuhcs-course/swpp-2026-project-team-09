@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -43,6 +44,8 @@ describe('the time card after picking', () => {
     ['shown', 'shown'],
     ['open', 'open'],
     ['tucked', 'shown'],
+    // Behind the bar of several requests (P01 ticket 22), as from tucked.
+    ['behind', 'shown'],
   ])('goes back from %s to %s', async (before, after) => {
     const held = await heldFrom(before);
 

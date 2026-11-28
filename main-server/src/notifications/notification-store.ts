@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -40,6 +41,16 @@ export class NotificationStore {
       where: { userId_kind_cardKind_cardId_about: key },
       create: { ...key, ...fieldsOf(kept) },
       update: { ...fieldsOf(kept), sentAt: null },
+    });
+  }
+
+  // Keeps it as `keep` does, but one kept already keeps whether it was sent: it rings once while it is kept.
+  async renew(userId: string, kept: Kept): Promise<void> {
+    const key = keyOf(userId, kept.kind, kept.card, kept.about);
+    await this.prisma.notification.upsert({
+      where: { userId_kind_cardKind_cardId_about: key },
+      create: { ...key, ...fieldsOf(kept) },
+      update: fieldsOf(kept),
     });
   }
 

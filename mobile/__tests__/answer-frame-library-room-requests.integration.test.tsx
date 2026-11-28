@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -196,6 +197,9 @@ describe("the booking party, gone with the User's own cancel", () => {
     await pass(500);
 
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/cancelled`)).toHaveLength(1);
-    expect(screen.queryByText(`${party.title} 파티에서 빠졌어요`)).toBeNull();
+    // No word of a 파티 gone, whichever the main server could tell (P06 ticket 22).
+    for (const words of ['파티에서 빠졌어요', '파티가 없어졌어요', '파티에서 내보내졌어요']) {
+      expect(screen.queryByText(`${party.title} ${words}`)).toBeNull();
+    }
   });
 });

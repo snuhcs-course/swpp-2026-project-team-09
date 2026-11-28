@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
@@ -169,8 +170,9 @@ describe('An invited User who leaves the party', () => {
 
     expect((await leave(questId, friend)).status).toBe(204);
 
+    // A User removed is told so (P06 ticket 22); the time to leave is gone either way.
     await vi.waitFor(async () => {
-      expect((await getNotifications(friend)).body).toEqual([]);
+      expect((await getNotifications(friend)).body).not.toContainEqual(expect.objectContaining({ kind: 'leave-by' }));
     });
   });
 });
@@ -181,8 +183,9 @@ describe('Ending a party an invited User accepted', () => {
 
     expect((await endQuest(stage.app, stage.asker, questId)).status).toBe(204);
 
+    // The party is gone, which is told (P06 ticket 22), and its time to leave with it.
     await vi.waitFor(async () => {
-      expect((await getNotifications(friend)).body).toEqual([]);
+      expect((await getNotifications(friend)).body).not.toContainEqual(expect.objectContaining({ kind: 'leave-by' }));
     });
   });
 });

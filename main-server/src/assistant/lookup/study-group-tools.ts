@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { type StudyInput } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { leftOutNow, skipFor, skipParameters } from '../free-time/left-out-classes.js';
 import { dateInput } from '../free-time/tool-parts.js';
 import { gated, type LibraryServices } from '../library/library-parts.js';
@@ -86,9 +87,7 @@ export function planStudyGroup(groups: StudyGroups, library: LibraryServices): T
       const skipped = leftOutNow({ context, presented });
       const at = { now, location: context.location, skipped };
       const { answer, otherDays } = await groups.plan(userId, studyInput, at, dates);
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       return { ...studyGroupWords(answer, otherDays), ...skip.said };
     },
   });

@@ -1077,7 +1077,17 @@ the requests to join, which also wait for the User. A new match of a watched int
 떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. What a party's members would have said, for the room has no chat, is kept too: a step changed
 (`step-changed`, a calendar) as an acceptance's, a member arrived at the step's point (`arrived`, a pin) on the navy
 round, and a member late (`late`, a clock) in the colour of the requests to join; the room's row of a late member
-starts with "N분 늦어요". A kind
+starts with "N분 늦어요". The Leader's answer to the User's request to join is kept as an acceptance's: accepted
+(`join-accepted`, a group), which opens the party's card, and declined (`join-declined`, a person, on a muted grey
+round), whose address `/main?card=find-parties:<questId>` ends at 파티's 찾기. Each leads with the answer, "참여 신청이
+수락됐어요", and names the 파티 in its line, so that a long title of the 파티 is what the row cuts. The Leader's own Notification of the requests
+waiting (`join-asked`) is left out: it is the push's copy of the row "참여 신청 {n}명" below. A 파티 gone is kept on
+the muted grey round, as a declined request is, with the same order of words: ended (`party-ended`, a group), the User removed (`party-removed`, a
+person), a request that waited on it (`join-cancelled`, a group) and an invitation that waited on it
+(`invitation-cancelled`, a calendar). Their address, `/main?card=party-gone:<questId>`, is on no map, and pressing it
+says "이미 없는 파티예요", with the alert icon. The member who becomes a 파티's Leader (`became-leader`, a person on the
+navy round) is told "파티장이 됐어요", with the 파티 and who left it or handed it over in the line; it opens the party's
+card. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
@@ -1111,9 +1121,11 @@ It reads the Quest (`GET /quests/:questId`), the User's Party and the listed Par
 feature, `room-adapter.ts`), and closes once the main server no longer answers the Quest, after a removal, a drop on
 another phone or the Leader's end. `GoneQuestsWatch` (`src/features/quests/gone-watch.tsx`), in the signed-in layout,
 tells it on whatever screen is shown: a Quest that was in `GET /quests` and is not when the list comes again, and that
-`GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), says "{title} 파티에서 빠졌어요" once. A Quest that only left the
+`GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), is told once: "{title} 파티에서
+내보내졌어요" when `GET /quest-removals` lists the Quest, "{title} 파티가 없어졌어요" when the Quest is not found
+otherwise, and "{title} 파티에서 빠졌어요" when the main server cannot say, each with the alert icon. A Quest that only left the
 list because all its Sub Quests ended, a Class Quest, and the User's own 나가기 or 파티 없애기 on this phone, which
-mark the Quest while they run, are not told; nor is what happened before the app started. From the top:
+mark the Quest while they run, are not told; what happened before the app started is told by its Notification in 알림. From the top:
 
 - in the app bar, "모집글 보기" for an Open or Approval Quest, which opens its post, and "수정" for the Leader, which
   opens 파티 만들기 in its edit mode;
@@ -1139,7 +1151,9 @@ mark the Quest while they run, are not told; nor is what happened before the app
 - `신청 {n}` and `초대 중 {n}` for the Leader, and `멤버 {n}` with what the User sees of each Holder while in the
   Party, and a press that shows a seen member on the map. Another member's row has icons of 40 in a line: 친구 추가
   (`usersPlus`; dimmed once a request is sent, the words "수락" when the member sent one, none for a Friend) and,
-  for the Leader, 파티장 넘기기 (`crown`) and 내보내기 (`userMinus`, red). Each asks first in a dialog with "취소";
+  for the Leader, 파티장 넘기기 (`crown`) and 내보내기 (`userMinus`, red). Each asks first in a dialog with "취소".
+  내보내기 is `DELETE /quests/:questId/holders/:userId` alone: the main server takes the Holder out of the Quest's
+  activation in the same change;
 - the footer's "나가기" (`DELETE /quests/:questId`, after leaving the Party when it is the Quest's) or, for the Leader,
   "파티 없애기" (`POST /quests/:questId/end`, after ending or leaving the Party).
 

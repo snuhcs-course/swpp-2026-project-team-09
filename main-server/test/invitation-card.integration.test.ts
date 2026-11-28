@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import request from 'supertest';
@@ -107,6 +108,7 @@ const questOf = (questId: string): object => ({
     description: '',
     createdAt: ANY_STRING,
   },
+  invitedBy: { id: stage.asker.id, name: '유상', department: '컴퓨터공학부' },
   holders: [{ id: stage.asker.id, name: '유상' }],
 });
 

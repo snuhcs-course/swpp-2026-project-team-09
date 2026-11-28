@@ -1,7 +1,7 @@
 # 26: A time away from today says its day
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: a main server Release and an app OTA update.

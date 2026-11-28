@@ -3,10 +3,11 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
-import type { AnswerReply, PlanInput } from '@/api/assistant-types';
+import type { AnswerReply, LeftOutClass, PlanInput } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
@@ -37,10 +38,22 @@ export interface Held {
   onFailed: jest.Mock<void, []>;
 }
 
-export async function hold(bubbles: readonly ChatBubble[]): Promise<Held> {
+// `skipped`, when given, is the conversation's Classes left out, read when a recalculation is sent, and `putBack` how a
+// ✕ takes one out of it (P01 ticket 40).
+export async function hold(
+  bubbles: readonly ChatBubble[],
+  skipped?: () => readonly LeftOutClass[],
+  putBack?: (classId: string) => void,
+): Promise<Held> {
   const onFailed = jest.fn<void, []>();
+  const recalculation = {
+    location: HERE,
+    onFailed,
+    ...(skipped === undefined ? {} : { skipped }),
+    ...(putBack === undefined ? {} : { putBack }),
+  };
   const { result, rerender } = await renderHook(
-    (given: readonly ChatBubble[]) => useShownAnswer(given, { location: HERE, onFailed }),
+    (given: readonly ChatBubble[]) => useShownAnswer(given, recalculation),
     { initialProps: bubbles },
   );
   return {

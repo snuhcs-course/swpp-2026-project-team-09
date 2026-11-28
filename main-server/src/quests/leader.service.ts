@@ -11,18 +11,24 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, Prisma, Quest } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { VisibilityService } from '../location-sharing/visibility.service.js';
+import { type GoneKind, type NewLeader, type PartyGone } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
+import { CLOCK, type Clock } from './clock.js';
 import { fitsJoinPolicy, type UpdateQuestDto } from './dto/quest-requests.dto.js';
 import { QuestDto } from './dto/quest.dto.js';
+import { newLeaderTold, tellNewLeader } from './new-leader.js';
+import { QuestParty } from './quest-party.js';
 import { QuestsService } from './quests.service.js';
 import { conflict, notFound, notLeader, questNotFound, takenAloneRefused } from './refusals.js';
 
@@ -42,6 +48,9 @@ export class LeaderService {
     private readonly classQuests: ClassQuestsService,
     private readonly roomRequests: RoomRequestSync,
     private readonly notifications: NotificationsService,
+    @Inject(CLOCK) private readonly clock: Clock,
+    private readonly questParty: QuestParty,
+    private readonly visibility: VisibilityService,
   ) {}
 
   // Refuses unless the User holds and leads the Quest. Read without a lock, so that the Leader's actions are refused in
@@ -92,55 +101,117 @@ export class LeaderService {
   }
 
   // Ends the Quest for every Holder at once, as when its last Holder drops it: it is deleted with its Sub Quests, the
-  // Holders' progress, its requests to join and its invitations. Tells the Holders and the Users who waited.
+  // Holders' progress, its requests to join and its invitations. Tells the Holders and the Users who waited, and keeps
+  // each of them but the Leader a Notification that it is gone; the Leader's of the requests waiting goes with it. Its
+  // Party, if one runs, is closed with it, and its members stop seeing each other by it.
   async end(userId: string, questId: string): Promise<void> {
-    const { told, holderIds } = await this.prisma.$transaction(async (tx) => {
-      await this.lockLed(questId, userId, tx);
-      const { holders, joinRequests, invitations } = await tx.quest.delete({
-        where: { id: questId },
-        select: { holders: true, joinRequests: true, invitations: true },
-      });
-      return {
-        told: [...holders, ...joinRequests, ...invitations].map((one) => one.userId),
-        holderIds: holders.map((one) => one.userId),
-      };
-    });
+    const memberIds = await this.questParty.memberIdsOf(questId);
+    const { told, holderIds, gone, partyAudience } = await this.visibility.announceRemovals(memberIds, () =>
+      this.prisma.$transaction(async (tx) => {
+        await this.questParty.lockMembers(memberIds, tx);
+        await this.lockLed(questId, userId, tx);
+        const closed = await this.questParty.close(questId, tx);
+        const { title, leader, holders, joinRequests, invitations } = await tx.quest.delete({
+          where: { id: questId },
+          select: {
+            title: true,
+            leader: { select: { name: true } },
+            holders: true,
+            joinRequests: true,
+            invitations: true,
+          },
+        });
+        const kept = (kind: GoneKind, users: { userId: string }[]): [string, PartyGone][] =>
+          users
+            .filter((one) => one.userId !== userId)
+            .map((one) => [one.userId, { kind, questId, questTitle: title, leaderName: leader.name }]);
+        return {
+          told: [...holders, ...joinRequests, ...invitations].map((one) => one.userId),
+          holderIds: holders.map((one) => one.userId),
+          gone: [
+            ...kept('party-ended', holders),
+            ...kept('join-cancelled', joinRequests),
+            ...kept('invitation-cancelled', invitations),
+          ],
+          partyAudience: closed,
+        };
+      }),
+    );
     this.signals.send([...new Set(told)], 'quests-changed');
+    this.signals.send(partyAudience, 'party-changed');
+    for (const [goneId, goneTold] of gone) {
+      this.tellGone(goneId, goneTold);
+    }
+    await this.notifications.cancel(userId, 'join-asked', { kind: 'party', id: questId }).catch((error: unknown) => {
+      this.logger.warn(`The Leader's Notification of the requests waiting was not cancelled: ${String(error)}`);
+    });
     await Promise.all(holderIds.map((holderId) => this.forgetTimeToLeave(holderId, questId)));
     await this.roomRequests.questChanged(questId);
   }
 
+  // The new Leader is told in 알림; a Leader who names themselves is told nothing.
   async handOver(userId: string, questId: string, newLeaderId: string): Promise<void> {
+    const handed: { told?: NewLeader } = {};
     await this.changeAsLeader(userId, questId, async (tx, _quest, holderIds) => {
       if (!holderIds.includes(newLeaderId)) {
         throw notHolder();
       }
+      if (newLeaderId !== userId) {
+        handed.told = await newLeaderTold(questId, userId, 'handed', tx);
+      }
       await tx.quest.update({ where: { id: questId }, data: { leaderId: newLeaderId } });
     });
+    if (handed.told !== undefined) {
+      tellNewLeader(
+        { notifications: this.notifications, logger: this.logger },
+        newLeaderId,
+        handed.told,
+        this.clock.now(),
+      );
+    }
   }
 
   // The Holder goes as one who dropped the Quest, with their progress. The removal is kept, so that the User comes back
-  // only by the Leader's approval (QuestRemoval).
+  // only by the Leader's approval (QuestRemoval). A Holder in the Quest's Party leaves it too, so that its members no
+  // longer see them by it.
   async remove(userId: string, questId: string, holderId: string): Promise<void> {
-    await this.changeAsLeader(
-      userId,
-      questId,
-      async (tx, _quest, holderIds) => {
-        if (!holderIds.includes(holderId)) {
-          throw notHolder();
-        }
-        await this.quests.removeHolder(questId, holderId, tx);
-        // A row a seed left behind keeps its time.
-        await tx.questRemoval.upsert({
-          where: { questId_userId: { questId, userId: holderId } },
-          create: { questId, userId: holderId },
-          update: {},
-        });
-      },
-      holderId,
+    // What the one removed is told, and who hears that the Party changed, read with the change.
+    const removed: { told?: PartyGone; partyAudience: string[] } = { partyAudience: [] };
+    await this.visibility.announceRemovals(holderId, () =>
+      this.changeAsLeader(
+        userId,
+        questId,
+        async (tx, quest, holderIds) => {
+          const { name } = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
+          removed.told = { kind: 'party-removed', questId, questTitle: quest.title, leaderName: name };
+          if (!holderIds.includes(holderId)) {
+            throw notHolder();
+          }
+          removed.partyAudience = await this.questParty.leave(questId, holderId, tx);
+          await this.quests.removeHolder(questId, holderId, tx);
+          // A row a seed left behind keeps its time.
+          await tx.questRemoval.upsert({
+            where: { questId_userId: { questId, userId: holderId } },
+            create: { questId, userId: holderId },
+            update: {},
+          });
+        },
+        holderId,
+      ),
     );
+    this.signals.send(removed.partyAudience, 'party-changed');
+    if (removed.told !== undefined) {
+      this.tellGone(holderId, removed.told);
+    }
     await this.forgetTimeToLeave(holderId, questId);
     await this.roomRequests.questChanged(questId);
+  }
+
+  // Not awaited: the Notification never fails the Leader's change.
+  private tellGone(userId: string, told: PartyGone): void {
+    this.notifications.schedule(userId, told, this.clock.now()).catch((error: unknown) => {
+      this.logger.warn(`A User was not told of a 파티 gone: ${String(error)}`);
+    });
   }
 
   // A Holder's time to leave goes with them: when the Quest ends, and when they are removed or drop it. Awaited before

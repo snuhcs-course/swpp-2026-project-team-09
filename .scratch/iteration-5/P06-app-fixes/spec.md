@@ -25,6 +25,7 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 16. **관련 행사 고르기.** Added by the user on 2026-11-26, from their notes on the 파티 form: "관련행사 고르기 했을때 UI 말도 안되게 못생김 … 일단 눌렀을때 바로 추가되는게 아니라 행사탭처럼 아래서 위로 팝업 하나띄워주고, 추가 버튼을 따로 두고 추가했으면 좋겠음. (진로/이벤트/축제 이건 누가 나누는거지?)" Settled on 2026-11-27 (`references/16-1-event-picker-wireframe.webp`).
 17. **The tabs' bars.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "파티, 행사, 내정보의 최상단 각 글씨 크기를 살짝 키우고, 글씨랑 바로 아래 선 사이 간격을 좀 줄이는건 어떤가?" Settled on 2026-11-27 with the friend panel's bar too (`references/17-1-tab-bar-wireframe.webp`).
 18. **내 파티's cards.** Added by the user on 2026-11-26, from their notes on the 파티 tab: "파티/내 파티 시간, 장소, 행사태그 이런거 한줄로 이어지게 적혀있는거 같은데, 나누는게 좋지 않을까? … 내가 방장인 파티는 간단하게라도 표시해서 식별되도록 하는건 어떤가." Settled on 2026-11-27 (`references/18-1-mine-wireframe.webp`, with the options in `18-2` and `18-3`).
+19. **파티's room.** Added by the user on 2026-11-26, from their notes on the 파티 tab (wireframe items 3 and 4, one screen). Settled over four rounds on 2026-11-27 on one image of the room's every branch and the change (`references/19-1-room-wireframe.webp`): "배지는 전부 삭제", "활성화에 대한 카드를 따로 두고, 거기에 나도 참여하는 버튼을 그 카드 안에", "전체 위치 공유를 키라는 단계를 먼저 두는게 맞는 것 같아", "체크표시 빼버리고 싶어".
 20. **A request to join, answered.** Added by the user on 2026-11-27, after a read-only audit of the code for what users of 파티 and 행사 cannot know: the one who asked hears nothing when the Leader accepts or declines, and the Leader gets no push for a new request. "'참여 신청이 거절되었을 때' 인 앱 알림 종모양 거기에 숫자 하나 더하고 알림 띄워주는 건 쉽지? … 푸시 알림으로 거절된 거나 새 신청 이거 오게 하는 거 어려운가?"
 21. **No push on activation.** From the same audit: the ask on `5.0/Main` says members are told, and they are not. Ticket 19 (PR 688) changes the ask to say it shows in 알림 and adds no push; the user asked on 2026-11-27 for a push, so 21 proposes it as a change to 19's decision.
 22. **A 파티 gone, or the User removed, told apart.** From the same audit: one toast for both, only while the app runs.
@@ -39,6 +40,8 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 31. **An invitation's inviter and a full 파티.** "초대한 사람 이름으로 나오게 … '초대하는 시점'에 다 차있으면 다 차서 초대할 수 없다고 문구 … '1/8' 상황에서 10명 초대하는 건 가능."
 32. **A new Leader.** From the same audit: a hand-over is told to nobody.
 33. **A full 파티's 모집글.** "참여하기 대신 '정원 초과' 등의 문구로 … 비활성화 느낌의 버튼."
+34. **파티 만들기.** Added by the user on 2026-11-26, from their notes on the 파티 form (wireframe item 8). Settled over four rounds on 2026-11-27 (`references/34-1-form-wireframe.webp`): the form as a preview of its 모집글, title and text typed in place, the settings changed in place, a building search with a badge for what the place matched, and no photo or tags ("태그가 어차피 지금 서버로 안간다고 했잖아 … 일단은 빼고").
+35. **Sheets that close.** Added by the user on 2026-11-27, with no wireframe: every sheet slides down instead of vanishing, and closes by a tap on its handle, a tap above it, or a swipe down from anywhere on it, "대신 … 스크롤이 최상단이 아니면 내려가면 안돼".
 
 Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 and items 17 and 18 against 6edb1b61 on 2026-11-27, and items 20 to 33 against 331adc64 on 2026-11-27: none was fixed then.
 
@@ -65,6 +68,7 @@ One ticket per item, numbered as the items:
 16. [16: 관련 행사 고르기: one list without 진로 / 이벤트 / 축제, rows like 행사's, and an event chosen only from its sheet](issues/16-event-picker-one-list.md)
 17. [17: The tab bars of 파티, 행사 and 내 정보, and the friend panel's: a larger title, closer to its line](issues/17-tab-bar-title.md)
 18. [18: 내 파티's cards like 찾기's: a board or 비공개 tag, a crown for the 파티 the User leads, the time, the place and the event on their own lines, and tighter groups](issues/18-mine-cards-like-find.md)
+19. [19: 파티 상세 as one page: the 모집글 inside, no badges, the event in the time-and-place box, an activation card with a red light and no 거절, 전체 위치 공유 asked first, 일정 without ✓, and leaner rows](issues/19-room-one-page.md)
 20. [20: A request to join is answered in 알림 and by a push, and a new one reaches the Leader by a push](issues/20-join-request-notices.md)
 21. [21: Activating a 파티 rings its members (a change to ticket 19's decision)](issues/21-activation-push.md)
 22. [22: A 파티 that ends and a member who is removed are told apart, by a push and in 알림](issues/22-party-gone-notices.md)
@@ -79,6 +83,8 @@ One ticket per item, numbered as the items:
 31. [31: An invitation names who invited, and a full 파티 cannot invite](issues/31-inviter-and-full.md)
 32. [32: The member who becomes Leader is told, in 알림](issues/32-new-leader-notice.md)
 33. [33: A full 파티's 모집글 says so on its button](issues/33-full-post-button.md)
+34. [34: 파티 만들기 as a preview of its 모집글: title and text typed in place, time, place and event in one box, the settings changed in place, a building search for the place, and no photo or tags](issues/34-form-as-post-preview.md)
+35. [35: Every sheet slides down when it closes, and closes by a tap or a drag on its handle, or a tap above it](issues/35-sheets-slide-down.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -98,12 +104,16 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-27 and built at once: 17. It changes `AppBar`'s tab form (`design-system/app-bar.tsx`) and 행사's search bar (`screens/events/events-bar.tsx`); no open ticket touches them.
 - Added on 2026-11-27 and built at once: 11a, a change to 11 (PR 594). It changes the class form's day buttons (`screens/timetable/class-fields.tsx`, `slot-card.tsx`) and `features/timetable/class-form.ts`; no open ticket touches them.
 - Added on 2026-11-27 and built at once: 18. It changes 내 파티's card and list (`screens/party/mine-card.tsx`, `mine-tab.tsx`) and its view (`features/party/mine.ts`), reusing 찾기's `PostTop` and `InfoLine`; no open ticket touches them.
+- Added on 2026-11-27 and built at once: 19. It changes the room (`screens/room/`), `features/quests/room-adapter.ts`, the step rule behind `features/party/making.ts`, and the main server's list of visible Parties (`main-server/src/parties/`). No open ticket touches them; PR 662 (P10) touches `features/party/mine.ts`, which 19 leaves alone.
 - Added on 2026-11-27 and reviewed in PR 692: 20 to 33, set `ready-for-agent` the same day (21 still waits for ticket 19's owner). Of an audit's findings, only those the user took up are here; the rest are held (Out of Scope). They are numbered after ticket 19 (PR 688, the room as one page). Order and shared files once taken up:
   - 20, 21, 22 and 32 each add Notification kinds (`main-server/src/notifications/`, the app's `features/notifications/adapter.ts`): one after another.
   - 26 before 25 (25's words use 26's day words), and 24 shows its time with them.
   - 23 and 22 both change `leader.service.ts`: one after another.
   - 27, 28, 29, 30 and 33 are app only and can run beside the server ones.
   - After 19: 19 rewrites the room (`screens/room/`: `activation-box.tsx`, `people-sections.tsx`, `use-room-actions.ts`, `room-adapter.ts`, `plan-section.tsx`). 21, 23, 26 and 30 touch those files, so they are checked again against the code once 19 has merged, and never run beside it.
+
+- Added on 2026-11-27 and built at once: 34. It changes the 파티 form (`screens/party/form/`), `features/party/making.ts`, the stand-in photos and tags (`api/quest-parts/`), 찾기's search and order and 추천 이유 (`features/party/finding.ts`, `screens/party/post-reasons.tsx`), and the room's tag chips after 19. Tickets 28 and 31 also touch `use-send.ts` and `making.ts`; whichever lands second merges `5.0/Main` first.
+- Added on 2026-11-27 and built at once: 35. After the phone checks of 2026-11-28 it changes only `BottomSheet` (`design-system/bottom-sheet.tsx`, `sheet-pull.ts`) and where the time wheel is mounted, so sheets added on `BottomSheet` later need nothing from it.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -145,6 +155,9 @@ When the held tickets are taken up, tickets touching the same files never run at
 30. As a User moving between the tabs, I want each tab's title a little larger and closer to the line under it, so that the top of the screen reads as one firm heading.
 31. As a User looking through 내 파티, I want its cards to read like 찾기's, with the 파티 I lead marked, so that I can tell at a glance what each is, when and where it is, and which ones I run.
 32. As a User whose class meets twice on one day, I want to give that day to two time slots, at hours that do not cross.
+33. As a User in a 파티's room, I want the post's words, the time, the place and the event at the top, without badges, so that the room reads as one page instead of a page and a post.
+34. As a member, I want to see who is in a running activation and join it with one press, with 전체 위치 공유 turned on first when it is off, so that joining always means we see each other.
+35. As a member, I want 일정 to grey a step once the next one starts, without marking it done, so that the orange step is always the one we are on.
 36. As a User who asked to join a 파티, I want to be told when the Leader accepts or declines, even with the app closed.
 37. As a Leader, I want a push when someone asks to join my 파티.
 38. As a member, I want a push when my 파티 is activated, so that I can join it while it matters.
@@ -160,6 +173,9 @@ When the held tickets are taken up, tickets touching the same files never run at
 48. As an invited User, I want to see who invited me; as a Leader, to be stopped from inviting into a full 파티.
 49. As a member who becomes Leader, I want to be told.
 50. As a User opening a full 파티, I want its button to say it is full.
+51. As a User making a 파티, I want the form to look like the 모집글 it makes and to fit on one screen, typing the title and text in place and changing the settings without leaving it, so that I see what others will see.
+52. As a User naming a place, I want to pick a building from a search and to see whether my place is a known building, a point on the map or only my words.
+53. As a User closing a sheet, I want it to slide down, and to close it by a tap or a drag on its handle or by a tap above it.
 
 ## Implementation Decisions
 
@@ -183,6 +199,13 @@ Decided on 2026-11-22:
 - 16 (2026-11-27): the picker loses its 진로 / 이벤트 / 축제 tabs and lists every event by date with its search. Its rows follow the 행사 list's: two-line titles, time and place lines with icons, padding 12. A press opens `EventDetailSheet` with 원문 보기 and 이 행사 추가, or a disabled 선택됨 for the event already chosen. The kind rules (`event-kinds.ts`: regular expressions over an event's words, a stopgap) are deleted with their uses: the tabs, the chosen box's kind line and the tags added on picking. Nothing else reads them.
 - 17 (2026-11-27): `AppBar`'s tab form (파티, 행사, 내 정보 and the friend panel) has its title in 25 Bold (line height 32) and its row 50 high with 4 on top, so the title is 7 from its line (was 13). The sub-screen form and the shared `text.titleLg` and `size.appBar` stay. 행사's search bar follows the new height so the filters do not move. 파티's bar keeps ticket 12's centred `+ 만들기` and no magnifier; the ? help stays on hold.
 - 18 (2026-11-27): 내 파티's cards lose the kind column and follow 찾기's card: a board tag, or "비공개" in the same tag; the count at the right with a crown before it on a Quest the User leads (option C); the title on up to two lines; the time, the place and the event (blue, opening nothing) on their own lines. The strip, the live outline and the waiting circle stay. A group's last card is 20 from the next header (was 32). The map entry is option D, the room's place row, and waits with the event link; the card gets none.
+- 19 (2026-11-27): the room as one page (`references/19-1-room-wireframe.webp`).
+  - 모집글 보기 goes. Under the title stand the 모집글's Leader row (no "· 모집자", no other mark), the text for every Quest (no quote box), the tags, and the time-and-place box with no map button. The event is a blue line with › in that box, opening the event sheet. The badges and the separate event card go.
+  - Not running, 파티 활성화 has a ? with its help. Running, a white card with 내 파티's blinking red dot shows who is in by name: 나도 참여 when out, with no 거절; the live outline and 활성화 끄기 / 나가기 when in. The 내 위치 공유 switch goes, since Party sight is mutual.
+  - With 전체 위치 공유 off the User counts as not in. Activating or joining first asks to turn it on, then goes ahead at once. `GET /parties` names a held Quest's Party's members.
+  - `openAsk` and the toast stop promising a notice to n members; activation sends no push, and none is added yet.
+  - 일정 loses ✓. A step is grey once a later one starts, its end passes or it is cancelled; the first other step is orange. The same rule replaces `done` in 내 파티's time and place and in the 파티 form's edited step. 일정 has a ? with its help.
+  - 신청 rows lose their line, 멤버 shows 찾기's orange "3/4명" and loses the lock line and the location-off toast, the Leader keeps only the crown, 초대 중 loses '응답 대기', and the lists' titles get icons and lose their last line.
 
 Decided on 2026-11-27 (20 to 33):
 
@@ -194,11 +217,13 @@ Decided on 2026-11-27 (20 to 33):
 - 28: `+ 파티 모집` with a 파티 held alone opens its edit form, not a warning.
 - 30: an event's count is the 파티 the User could enter; a 파티's size is Holders over the Quest's capacity; a sharing count includes the User.
 - 31: inviting is refused only into a 파티 full at that moment; 31 adds one database migration, the exception to the rule below. 20 to 26, 31 and 32 need a main server Release.
+- 34 (2026-11-27): 파티 만들기 is a preview of its 모집글. The title and text are typed in place with no confirm button; the time, the place and the event share one label-less box whose rows open sheets; the place sheet searches buildings and the row's badge says 건물, 지도 or 직접 입력; 인원, 공개 범위, 참여 방식 and 게시판 change in place and 친구 초대 opens a sheet; the button stays pressable and marks empty required fields; picking an event leaves the title empty. Photos and tags go with everything that ran on their stand-ins (the room's chips, 찾기's tag search and order, 추천 이유's 관심사), and the pull request records why and what bringing them back needs.
+- 35 (2026-11-27): every `BottomSheet` slides down with its last content when it closes, and closes by a tap on its handle, a tap on the scrim, Android's back, or a swipe down from anywhere on it that follows the finger and closes past a threshold or on a flick. A swipe that starts inside a vertical scroll area closes only if that area was at its top when the finger went down; otherwise it only scrolls, even after reaching the top. The centre `Dialog`, the full-screen `Modal`s and the Assistant's answer sheet are left as they are. Changed after the phone checks (2026-11-28): the user dropped the swipe from the body and its list rule. The sheet closes by a tap or a drag on its handle bar, the drag let go by the way the finger moves, by a tap on the scrim, or by Android's back, and its lists scroll natively.
 
 For all tickets:
 
 - "Ended" is the server's existing rule: no Sub Quest ahead (`hasSubQuestsAhead`, with its query form `subQuestsAheadWhere`).
-- No native file changes and no database migration. Every ticket ships as an app OTA update; 06 and 07 also need a main server Release. Native changes found necessary stop the work and go to the orchestrator first.
+- No native file changes and no database migration. Every ticket ships as an app OTA update; 06, 07 and 19 also need a main server Release. Native changes found necessary stop the work and go to the orchestrator first.
 - Screen words are Korean as written in the tickets. A wording a ticket leaves open is decided while building and shown at the screen review.
 
 ## Testing Decisions
@@ -247,7 +272,10 @@ Every item received and where it went:
 | 16 관련 행사 고르기의 UI, 누르면 팝업과 추가 버튼, 진로/이벤트/축제 (added 2026-11-26) | Ticket 16, with the kind rules deleted (added 2026-11-27) |
 | 17 파티·행사·내 정보 상단 제목 크기와 아래 선 간격 (added 2026-11-26) | Ticket 17, with the friend panel's bar (added 2026-11-27). The ? help beside the titles is on hold |
 | 18 내 파티 카드의 시간/장소/행사 줄, 방장 표시, 지도에서 위치 보기 (added 2026-11-26) | Ticket 18, with the board or 비공개 tag and tighter groups (added 2026-11-27). The map entry waits for the room, with the event link |
+| 3·4 파티 상세 (행사가 태그된 파티, 멤버가 있는 파티) (added 2026-11-26) | Ticket 19, settled over four rounds on 2026-11-27 (the badges, the 모집글 merged in, the event line, the activation card and 전체 위치 공유 first, 일정 without ✓, the rows) |
 | 20–33 파티·행사에서 사용자가 알 수 없는 것 (code audit, 2026-11-27) | Tickets 20 to 33, those the user took up; the rest held (Out of Scope) |
+| 8 파티 만들기 (added 2026-11-26) | Ticket 34, settled over four rounds on 2026-11-27 (the preview, typing in place, settings in place, the building search and its badge, no photo or tags) |
+| 팝업창이 부드럽게 내려가고, 바·빈 공간·스와이프로 닫히기 (added 2026-11-27) | Ticket 35 |
 
 Notes for the tickets:
 

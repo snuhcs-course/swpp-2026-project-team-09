@@ -175,7 +175,7 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      return this.answered(userId, reply, context.skipped === undefined ? undefined : keptOut);
+      return this.answered(userId, reply, capabilities, context.skipped === undefined ? undefined : keptOut);
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
@@ -183,9 +183,14 @@ export class AssistantService {
   }
 
   // The reply as the app reads it, once the Assistant has answered, with its usage event (README.md: Usage data).
-  private answered(userId: string, reply: FeatureReply, sent?: readonly LeftOutClass[]): AssistantReplyDto {
+  private answered(
+    userId: string,
+    reply: FeatureReply,
+    capabilities: readonly ClientCapability[],
+    sent?: readonly LeftOutClass[],
+  ): AssistantReplyDto {
     this.usage.sent(userId, 'assistant_reply_completed', {});
-    return replyBody(reply, sent);
+    return replyBody(reply, sent, capabilities);
   }
 
   private chatFor(capabilities: readonly ClientCapability[]): Feature {

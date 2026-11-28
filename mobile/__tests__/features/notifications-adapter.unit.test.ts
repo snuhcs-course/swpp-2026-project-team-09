@@ -5,6 +5,8 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each kind of 알림 row, with and without what it names, a list that failed, the rows' order, the kept
@@ -57,7 +59,7 @@ const FRIEND_REQUESTS: FriendRequests = {
   sent: [{ id: 'fr2', receiver: { name: '이서연', department: '경영학과' }, sentAt: '2026-10-06T03:00:00Z' }],
 };
 
-const INVITATION: QuestInvitation = {
+const INVITATION: Omit<QuestInvitation, 'nextSubQuest'> = {
   id: 'inv1',
   quest: {
     id: 'q2',
@@ -72,6 +74,7 @@ const INVITATION: QuestInvitation = {
     createdAt: '2026-10-05T09:00:00.000Z',
   },
   sentAt: '2026-10-06T03:00:00Z',
+  invitedBy: MIN_JUN,
 };
 
 const JOIN_REQUEST: JoinRequest = { id: 'jr1', user: MIN_JUN, sentAt: '2026-10-06T03:00:00Z' };

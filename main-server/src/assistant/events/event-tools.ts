@@ -4,14 +4,17 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { EVENT_IDS_MAX, type EventsInput, type Plan } from '../dto/answer.dto.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
+import { presentAnswer } from '../presented.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { skipFor, skipParameters } from '../free-time/left-out-classes.js';
-import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
+import { dateInput, outOfReach } from '../free-time/tool-parts.js';
+import { outOfReachDay } from '../taken-off.js';
 import { othersText } from '../others-text.js';
 import { type EventsPlanService } from './events-plan.service.js';
 
@@ -54,7 +57,7 @@ export function planEvents(plans: EventsPlanService): Tool {
     run: async (args, { userId, now, context, found, presented }) => {
       const { date, eventIds } = args;
       if (outOfReach(date, now)) {
-        return outOfReachDay(date, presented);
+        return outOfReachDay(date, { presented, context }, { kind: 'events' });
       }
       found.refuseUnfound('globalEvent', eventIds ?? []);
       const skip = await skipFor(plans.classesOn, { userId, date, context, presented }, args);
@@ -64,9 +67,7 @@ export function planEvents(plans: EventsPlanService): Tool {
       const planInput: EventsInput = { kind: 'events', date, eventIds: eventIds ?? null };
       const at = { now, location: context.location, skipped: skip.skipped };
       const { answer, planning } = await plans.planned(userId, planInput, at);
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
+      presentAnswer(presented, answer);
       if (answer.noPlan !== null) {
         return {
           ...noneFound('No event of that day can be attended between the User’s Classes and Quests.'),

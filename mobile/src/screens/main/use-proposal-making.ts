@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -16,7 +17,7 @@ import { useToast } from '@/design-system';
 import { holdProposal } from '@/features/party/held-proposal';
 import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
 import type { ChatBubble } from '@/features/assistant/use-chat';
-import { useSendParty } from '../party/form/use-send';
+import { sendingIcon, useSendParty } from '../party/form/use-send';
 import { showMine } from '../party/use-party-actions';
 import type { ProposalActions } from './chat-cards';
 import type { ProposalMaking } from './chat-proposal-card';
@@ -101,7 +102,7 @@ export function useProposalMaking(onMade: Made, { latest, bubbles }: Kept = EVER
     mark(bubbleId, 'making');
     const invitees = proposal.invitees.map(({ id }) => id);
     void sendParty(form, invitees, null).then((sent) => {
-      showToast(sent.toast);
+      showToast(sent.toast, undefined, sendingIcon(sent));
       if (sent.sent === 'refused') {
         sending.current.delete(bubbleId);
         mark(bubbleId, 'ready');

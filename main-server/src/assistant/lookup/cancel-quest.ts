@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { z } from 'zod';
 import { PrismaService } from '../../common/prisma.service.js';
 import { type KeptKind, keptQuestsOf } from '../../quests/kept-quests.js';
 import { defineTool, type Tool } from '../feature.js';
+import { clearDrawn } from '../presented.js';
 import { clockOf } from '../free-time/free-time.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
@@ -159,9 +161,7 @@ export function proposeCancel(cancels: Pick<QuestCancelService, 'find'>): Tool {
         return { result: 'one-at-a-time', reason: ONE_AT_A_TIME };
       }
       // The button stays only in a reply that draws nothing else.
-      presented.lookup = null;
-      presented.answer = null;
-      presented.mapButtons.length = 0;
+      clearDrawn(presented);
       const label = target.others.length > 0 ? '나가기' : '취소하기';
       const button = { kind: 'leave-quest', label, title: target.title, startsAt: koreaTime(target.start) } as const;
       presented.offers = [...(presented.offers ?? []), { ...button, questId: target.questId }];

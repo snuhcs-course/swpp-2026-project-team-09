@@ -17,6 +17,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -24,20 +25,22 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useEffect, useMemo, useRef } from 'react';
 import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { Tapped } from '@/api/lookup-types';
 import { placesQuery } from '@/api/queries';
 import { now } from '@/clock';
 import type { Place } from '@/api/types';
 import { useToast } from '@/design-system';
-import { type ShownBooking, shownBookingOf } from '@/features/assistant/booking-scene';
+import { type ShownBooking, shownBookingOf, studyBookingOf } from '@/features/assistant/booking-scene';
 import { type ShownCards, shownCardsOf } from '@/features/assistant/cards-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
-import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/steps-scene';
+import type { ConversationAnswers } from '@/features/assistant/conversation-answers';
+import { mayChooseStep, stepShowsCard } from '@/features/assistant/step-choice';
+import { liveStepsOf, type ShownSteps, shownStepsOf, type StepsNow } from '@/features/assistant/steps-scene';
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
-import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
+import type { CardOutcome, Chat, ChatBubble } from '@/features/assistant/use-chat';
 import { useAskedAgain } from '@/features/assistant/use-asked-again';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type Picking, usePicking } from '@/features/assistant/use-picking';
@@ -49,10 +52,12 @@ import { type CardRaise, useCardRaise } from './answer/card-raise';
 import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
+import { type StepAnswer, useStepAnswerOf, useStepsNow, useStepsOfReply } from './use-step-answer';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type ActStage, useActStage } from './library/act-stage';
+import { bookingKept } from './library/booking-kept';
 import { type BookingStage, useBookingStage } from './library/booking-stage';
 import { useMenuRaising } from './answer/meal-card';
 import { usePlanOutcomes } from './use-plan-outcomes';
@@ -122,21 +127,6 @@ function hidingFor(hide: () => void, turnOn: (layer: MapLayer) => void): (layer:
 const NO_PLACES: readonly Place[] = [];
 
 // The Proposal and the seat card of the turn on screen that the map draws, while the frame is shown.
-// The step whose detail and action are shown: the one pressed on the map for this reply, else the one due first.
-function useActiveStep(steps: ShownSteps | null): Pick<ChatSheetControl, 'activeStep' | 'setActiveStep'> {
-  const [pressed, setPressed] = useState<{ bubbleId: number; index: number } | null>(null);
-  const bubbleId = steps?.bubbleId ?? null;
-  const due = steps === null ? 0 : dueStepOf(steps.steps, now());
-  return {
-    activeStep: pressed !== null && pressed.bubbleId === bubbleId ? pressed.index : due,
-    setActiveStep: (index) => {
-      if (bubbleId !== null) {
-        setPressed({ bubbleId, index });
-      }
-    },
-  };
-}
-
 function useShownOnMap(
   chat: Chat,
   framed: boolean,
@@ -154,6 +144,66 @@ function useShownOnMap(
   );
 }
 
+// What the map draws of the turn on screen, the steps as their answers' keys now name them, and the answers the steps
+// show (P03 ticket 21).
+function useOnMap(
+  chat: Chat,
+  { bubbles, framed }: { bubbles: readonly ChatBubble[]; framed: boolean },
+): ReturnType<typeof useStepsOfReply<ReturnType<typeof useShownOnMap>>> {
+  return useStepsOfReply(useShownOnMap({ ...chat, bubbles }, framed), bubbles);
+}
+
+// The steps as they stand now (P10 ticket 29): the answer's step at the Plan on screen, and the booking's at the time
+// its card holds, over the reply's steps.
+function useLiveSteps(
+  { steps, booking }: Pick<ChatSheetControl, 'steps' | 'booking'>,
+  shown: ShownAnswer,
+  chat: Chat,
+  { bubbles, answerOf }: { bubbles: readonly ChatBubble[]; answerOf: StepsNow['answerOf'] },
+): ShownSteps | null {
+  const reply = steps === null ? null : (bubbles.find(({ id }) => id === steps.bubbleId)?.answer ?? null);
+  const slot = booking === null ? null : bookingKept(booking, chat).kept.slot;
+  const key = booking?.card.key ?? null;
+  const [date, start, minutes] = [slot?.date ?? null, slot?.start ?? null, slot?.minutes ?? null];
+  const { answer, plan, index } = shown;
+  return useMemo(() => {
+    if (steps === null) {
+      return null;
+    }
+    const card =
+      key === null || date === null || start === null || minutes === null
+        ? null
+        : { key, slot: { date, start, minutes } };
+    return liveStepsOf(steps, { reply, answer, plan, index, card, answerOf });
+  }, [steps, reply, answer, plan, index, key, date, start, minutes, answerOf]);
+}
+
+// The steps as they stand, each drawn at its own answer when they name them by key (P03 ticket 21), kept in `stepsNow`
+// for the next request, and the step chosen, which no press changes while Friends are being picked (rule 6).
+function useStepsShown(
+  onMap: Pick<ChatSheetControl, 'steps' | 'booking'>,
+  {
+    stepAnswer,
+    shown,
+    stepsNow,
+  }: { stepAnswer: StepAnswer; shown: ShownAnswer; stepsNow: RefObject<ConversationAnswers | null> },
+  chat: Chat,
+  bubbles: readonly ChatBubble[],
+): Pick<ChatSheetControl, 'steps' | 'activeStep' | 'setActiveStep'> {
+  const answerOf = useStepAnswerOf(stepAnswer, shown);
+  const steps = useLiveSteps(onMap, shown, chat, { bubbles, answerOf });
+  useStepsNow(stepsNow, stepAnswer, steps);
+  return {
+    steps,
+    activeStep: stepAnswer.activeStep,
+    setActiveStep: (index) => {
+      if (mayChooseStep(shown)) {
+        stepAnswer.setActiveStep(index);
+      }
+    },
+  };
+}
+
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
 // The answer on screen, kept in `shownNow` for the context of the next request, and the Quest made from its Plan.
@@ -161,6 +211,8 @@ function useAnswerOnScreen(
   bubbles: readonly ChatBubble[],
   { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
+  { leftOut, putBack }: Pick<Chat, 'leftOut' | 'putBack'>,
+  step: StepAnswer,
 ): Pick<ChatSheetControl, 'answer' | 'invitation'> {
   const showToast = useToast();
   const recalculation = {
@@ -169,14 +221,35 @@ function useAnswerOnScreen(
     onFailed: (): void => {
       showToast(NOT_RECALCULATED);
     },
+    // The conversation's Classes left out, read when the recalculation is sent, and one put back (P01 ticket 40).
+    skipped: leftOut,
+    putBack,
   };
-  const shown = useShownAnswer(bubbles, recalculation);
+  const shown = useShownAnswer(bubbles, recalculation, step.chosen);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
   useAskedAgain(shown, position, invitation);
+  const { keep } = step;
   useEffect(() => {
     shownNow.current = shown;
+    keep(shown);
   });
   return { answer: shown, invitation };
+}
+
+// The booking on the map: the seat card the reply gave alone, else a study answer's 관정관 opened (P10 ticket 27). None
+// while the answer is hidden, as every part of the scene (`useShownOnMap`), though the opened place stays open.
+function useStudyBooking(
+  replied: ShownBooking | null,
+  shown: ShownAnswer,
+  { bubbles, framed }: { bubbles: readonly ChatBubble[]; framed: boolean },
+  { outcomes }: Pick<Chat, 'outcomes'>,
+): ShownBooking | null {
+  const places = useQuery(placesQuery).data ?? NO_PLACES;
+  const { plan, menuFor, source } = shown;
+  return useMemo(() => {
+    const outcomeOf = (place: string): CardOutcome | null => outcomes.get(place) ?? null;
+    return framed ? (replied ?? studyBookingOf({ plan, menuFor, source }, bubbles, places, outcomeOf)) : null;
+  }, [framed, replied, plan, menuFor, source, bubbles, places, outcomes]);
 }
 
 // What the seat card whose booking the map draws learns of it: its place, how it tells what it offers, whether it is
@@ -184,11 +257,12 @@ function useAnswerOnScreen(
 function useBookingLeaving(
   onMap: Pick<ChatSheetControl, 'booking' | 'steps'>,
   { tell, walk }: BookingStage,
+  active: number,
 ): NonNullable<CardLeaving['booking']> {
   const place = onMap.booking?.place ?? null;
-  const steps = onMap.steps !== null;
+  const alone = onMap.booking !== null && stepShowsCard(onMap.steps, active, onMap.booking.card.key);
   const point = onMap.booking?.point ?? null;
-  return useMemo(() => ({ place, tell, steps, point, walk }), [place, tell, steps, point, walk]);
+  return useMemo(() => ({ place, tell, alone, point, walk }), [place, tell, alone, point, walk]);
 }
 
 // The conversation, every request of which carries the context at `where` the User is, and what the answer frame
@@ -199,19 +273,22 @@ function useBookingLeaving(
 // `start` and leaves the frame once it started. Leaving keeps the conversation (`useKeptConversation`).
 export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, start: StartGuidance): ChatSheetControl {
   const shownNow = useRef<ShownAnswer | null>(null);
-  const { chat: said, ...pressing } = useContextChat(where, shownNow);
+  const { chat: said, stepsNow, ...pressing } = useContextChat(where, shownNow);
   const { chat, ...kept } = useKeptConversation(said);
   const proposals = useProposalMaking(said.proposalMade, { latest: kept.latest, bubbles: said.bubbles });
   // The map's scene reads the latest turn that draws one: a follow-up answered with words alone keeps the answer
   // before it on the map, its bar, marks, and main button, while the card says the new words (P04 ticket 46).
   const sceneBubbles = useMemo(() => sceneBubblesOf(chat.bubbles), [chat.bubbles]);
-  const onMap = useShownOnMap({ ...chat, bubbles: sceneBubbles }, kept.framed);
+  const scene = { bubbles: sceneBubbles, framed: kept.framed };
+  const { onMap, stepAnswer } = useOnMap(chat, scene);
   const bookingStage = useBookingStage();
   const libraryAct = useActStage();
   const card = useCardRaise(kept.framed);
-  const booking = useBookingLeaving(onMap, bookingStage);
-  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
+  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow, chat, stepAnswer);
+  const shown = { ...onMap, booking: useStudyBooking(onMap.booking, onScreen.answer, scene, chat) };
+  const booking = useBookingLeaving(shown, bookingStage, stepAnswer.activeStep);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
+  const steps = useStepsShown(shown, { stepAnswer, shown: onScreen.answer, stepsNow }, chat, sceneBubbles);
   const pick = usePicking(chat);
   return {
     chat,
@@ -231,8 +308,8 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     ...onScreen,
     answer: useMenuRaising(onScreen.answer, card.setRaised, chat.bubbles),
     lookup: useShownLookup(sceneBubbles, start, kept.hide),
-    ...onMap,
-    ...useActiveStep(onMap.steps),
+    ...shown,
+    ...steps,
     bookingStage,
     libraryAct,
     leave: useQuestLeaving(),

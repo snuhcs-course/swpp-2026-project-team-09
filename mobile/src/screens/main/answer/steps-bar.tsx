@@ -3,10 +3,13 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useEffect, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, use, useCallback, useEffect, useState } from 'react';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReplyStep } from '@/api/assistant-types';
 import { now } from '@/clock';
@@ -15,8 +18,11 @@ import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_TOP } from '../layout';
 import type { ChatSheetControl } from '../chat-sheet';
-import { barTop, PlanBar } from './time-bar';
-import type { BandFocus } from './use-corrections';
+import { barTop } from './time-bar';
+import { SheetLinkContext } from './sheet-link';
+import { StepsStrip } from './steps-strip';
+import { TUCK_STRIP } from './time-card-grip';
+import { restingLift, type TopStop, type TopStops } from './top-stops';
 
 const MINUTE = 60_000;
 // The bar's ends stand this far before the first step and after the last.
@@ -63,6 +69,22 @@ function percent(share: number): `${number}%` {
   return `${share}%`;
 }
 
+// Where a time falls on the bar, as a share (0–100) of its range, which runs from the first step's start to the last
+// one's end with the margin before and after.
+function shareOf(spans: Span[]): (at: number) => number {
+  const from = Math.min(...spans.map(({ start }) => start)) - MARGIN;
+  const to = Math.max(...spans.map(({ end }) => end)) + MARGIN;
+  return (at) => ((at - from) / (to - from)) * 100;
+}
+
+// Where the time card's caret points (P01 ticket 23): the chosen step's span's middle, as a share of the bar's range;
+// left out when that step has no time.
+export function caretOf(steps: readonly ReplyStep[], active: number): number | undefined {
+  const spans = spansOf(steps);
+  const span = spans.find(({ index }) => index === active);
+  return span === undefined ? undefined : shareOf(spans)((span.start + span.end) / 2);
+}
+
 // The track with one span a step.
 function Track({
   spans,
@@ -96,28 +118,40 @@ interface StepsBarProps {
   active: number;
   onStep: (index: number) => void;
   onHeight: (height: number) => void;
+  // The top's stops, whose lift takes the bar up past stop 1 (P01 ticket 22).
+  stops?: TopStops;
+}
+
+// Where the bar stands as the top folds: moved on the UI thread by the lift, resting where its stop puts it.
+function useLifted(
+  stops: TopStops | undefined,
+  top: number,
+): { moved: ReturnType<typeof useAnimatedStyle<ViewStyle>>; rested: ViewStyle } {
+  const lift = stops?.lift;
+  const moved = useAnimatedStyle<ViewStyle>(() => ({ transform: [{ translateY: lift?.value ?? 0 }] }));
+  const at = stops === undefined ? 0 : restingLift(stops.stop, barTop(top) + stops.stepsHeight);
+  return { moved, rested: { transform: [{ translateY: at }] } };
 }
 
 // The bar of several requests (P04 ticket 09, board 12): one span a step with a time, numbered as its flag, and the
 // steps' words over them; a press on a step's words or span makes it the step shown. A step not done is faint. Its
 // time is changed on the step's own card.
-export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): ReactElement | null {
+export function StepsBar({ steps, active, onStep, onHeight, stops }: StepsBarProps): ReactElement | null {
   const { top } = useSafeAreaInsets();
+  const lifted = useLifted(stops, top);
   const spans = spansOf(steps);
   const [first] = spans;
   if (first === undefined) {
     return null;
   }
-  const from = Math.min(...spans.map(({ start }) => start)) - MARGIN;
-  const to = Math.max(...spans.map(({ end }) => end)) + MARGIN;
-  const share = (at: number): number => ((at - from) / (to - from)) * 100;
+  const share = shareOf(spans);
   const day = koreaDayWord(first.step.startAt ?? '', now());
   return (
-    <View
+    <Reanimated.View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, { top: barTop(top) }]}
+      style={[styles.bar, { top: barTop(top) }, lifted.moved, lifted.rested]}
       testID="time-bar"
     >
       <View style={styles.words}>
@@ -139,11 +173,14 @@ export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): Re
       </View>
       <Track active={active} share={share} spans={spans} />
       {day === '' ? null : <Text style={styles.day}>{day}</Text>}
-    </View>
+    </Reanimated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  // The stage under the status bar, which the top's cards are drawn within: gone up at stop 0, nothing of them shows
+  // behind the status bar but the strip below it (P01 ticket 22).
+  stage: { ...StyleSheet.absoluteFill, overflow: 'hidden', pointerEvents: 'box-none' },
   bar: {
     position: 'absolute',
     right: ANSWER_TOP.side,
@@ -154,6 +191,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     backgroundColor: color.surface,
     boxShadow: shadow.float,
+    // Over the time card, which folds behind it (P01 ticket 22).
+    zIndex: 1,
   },
   // From the bar's left edge, "←" being under the bar (P04 ticket 52).
   words: {
@@ -162,7 +201,8 @@ const styles = StyleSheet.create({
     columnGap: space[3],
   },
   word: { ...text.label, color: color.inkMuted },
-  wordActive: { fontFamily: font.semiBold, color: color.snuBlue },
+  // The chosen step in the time card's gold, its span drawn as the card's band (P01 ticket 23).
+  wordActive: { fontFamily: font.semiBold, color: color.quest },
   faint: { color: color.inkSubtle },
   track: { height: TRACK, borderRadius: radius.full, backgroundColor: color.border },
   span: {
@@ -173,58 +213,82 @@ const styles = StyleSheet.create({
     backgroundColor: color.snuBlue,
     opacity: 0.55,
   },
-  spanActive: { opacity: 1 },
+  spanActive: { opacity: 1, borderWidth: 2, borderColor: color.quest, backgroundColor: color.questSoft },
   spanNot: { backgroundColor: color.inkSubtle },
   day: { ...text.caption, color: color.inkMuted },
 });
 
-interface StepsTopProps {
-  control: ChatSheetControl;
-  focus: BandFocus;
-  onClose: () => void;
+// Where the chosen step's top card stands under the steps card: how far below its place, where its caret points (P01
+// ticket 23), and the height it tells.
+export interface CardPlace {
+  offset: number;
+  caret: number | undefined;
   onHeight: (height: number) => void;
 }
 
-// The bar of several requests, and under it, while the step shown is the reply's Plan, that Plan's bar with its
-// handles and its meal's tick, as on a reply to one request (PR 462's review). The height told is both.
-export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): ReactElement | null {
-  const [heights, setHeights] = useState({ steps: 0, plan: 0 });
-  const { steps, activeStep, setActiveStep, answer: shown, invitation } = control;
-  const step = steps?.steps[activeStep];
-  const planStep = step !== undefined && step.status === 'shown' && step.kind !== 'seat' && step.kind !== 'room';
-  const { answer, plan } = shown;
-  const withPlan = planStep && answer !== null && plan !== null;
-  const told = heights.steps + (withPlan ? heights.plan + space[2] : 0);
-  useEffect(() => {
-    onHeight(told);
-  }, [told, onHeight]);
+interface StepsTopProps {
+  control: Pick<ChatSheetControl, 'steps' | 'activeStep' | 'setActiveStep'>;
+  // The chosen step's top card, drawn where it is placed; null for a step with none (`stepTopCardOf`).
+  drawCard: ((place: CardPlace) => ReactElement | null) | null;
+  onHeight: (height: number) => void;
+}
+
+// The bar of several requests, and under it the chosen step's top card, the one its answer draws alone (P03 ticket 23):
+// a Plan's bar with its handles and its meal's tick, or a seat's booking card. The height told is what stands at the
+// top. The top folds in stops (P01 ticket 22, `top-stops.tsx`): the card folds behind the steps card to its grip
+// strip, then takes the steps card up with it to the stage's top, out of sight above it; both stay mounted, moved on
+// the UI thread. A step with no top card has a strip of its own in that place (`steps-strip.tsx`), which folds the
+// same way and opens nothing downward.
+export function StepsTop({ control, drawCard, onHeight }: StepsTopProps): ReactElement | null {
+  const stops = use(SheetLinkContext).top;
+  const { heights, onSteps, onCard } = useHeights(stops?.setStepsHeight);
+  const { steps, activeStep, setActiveStep } = control;
+  useTold(toldOf(stops?.stop ?? 2, heights, drawCard !== null), onHeight);
   if (steps === null) {
     return null;
   }
+  const place = { offset: heights.steps + space[2], caret: caretOf(steps.steps, activeStep), onHeight: onCard };
   return (
-    <>
-      <StepsBar
-        active={activeStep}
-        onHeight={(height) => {
-          setHeights((last) => ({ ...last, steps: height }));
-        }}
-        onStep={setActiveStep}
-        steps={steps.steps}
-      />
-      {withPlan ? (
-        <PlanBar
-          answer={answer}
-          focus={focus}
-          invitation={invitation}
-          offset={heights.steps + space[2]}
-          onClose={onClose}
-          onHeight={(height) => {
-            setHeights((last) => ({ ...last, plan: height }));
-          }}
-          plan={plan}
-          shown={shown}
-        />
-      ) : null}
-    </>
+    <View style={styles.stage} testID="steps-top">
+      <StepsBar active={activeStep} onHeight={onSteps} onStep={setActiveStep} steps={steps.steps} stops={stops} />
+      {drawCard === null ? stops === undefined ? null : <StepsStrip stops={stops} /> : drawCard(place)}
+    </View>
   );
+}
+
+// What stands at the top, told: the strip alone at 0; the steps card with the top card under it at 2, else with the
+// strip under it.
+function toldOf(stop: TopStop, heights: { steps: number; card: number }, withCard: boolean): number {
+  if (stop === 0) {
+    return TUCK_STRIP;
+  }
+  return heights.steps + (stop === 2 && withCard ? heights.card + space[2] : TUCK_STRIP);
+}
+
+// The two cards' heights as laid out, kept by callbacks that stay the same from render to render and keep the same
+// state for the same height: the top card tells its height in an effect whenever its callback changes
+// (`folded-height.ts`), so a new callback or a new state each render told it again without end.
+function useHeights(setStepsHeight?: (height: number) => void): {
+  heights: { steps: number; card: number };
+  onSteps: (height: number) => void;
+  onCard: (height: number) => void;
+} {
+  const [heights, setHeights] = useState({ steps: 0, card: 0 });
+  const onSteps = useCallback(
+    (height: number): void => {
+      setHeights((last) => (last.steps === height ? last : { ...last, steps: height }));
+      setStepsHeight?.(height);
+    },
+    [setStepsHeight],
+  );
+  const onCard = useCallback((height: number): void => {
+    setHeights((last) => (last.card === height ? last : { ...last, card: height }));
+  }, []);
+  return { heights, onSteps, onCard };
+}
+
+function useTold(told: number, onHeight: (height: number) => void): void {
+  useEffect(() => {
+    onHeight(told);
+  }, [told, onHeight]);
 }

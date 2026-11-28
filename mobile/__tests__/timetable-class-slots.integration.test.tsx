@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -198,9 +199,10 @@ describe('removing a slot', () => {
     await user.press(screen.getByRole('button', { name: '월 삭제' }));
 
     expect(screen.queryByRole('button', { name: /삭제$/u })).toBeNull();
-    expect(screen.getByRole('togglebutton', { name: '월' }).props).toMatchObject({
-      accessibilityState: { checked: false, disabled: false },
-    });
+    // No day is held by another slot any more (P06-11a): the day is off and can be pressed.
+    const monday = screen.getByRole('togglebutton', { name: '월' });
+    expect(monday.props).toMatchObject({ accessibilityState: { checked: false } });
+    expect(monday).toBeEnabled();
     expect(screen.getByText('요일마다 시간이나 강의실이 다르면 시간대를 추가하세요')).toBeVisible();
   });
 });

@@ -12,6 +12,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -35,7 +36,7 @@ import {
 } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
 import { type RecruitingSearch, recruitingSearchCounts, recruitingSearchHits } from './recruiting-search.js';
-import { alreadyHolder, conflict, notRecruiting, removedAsk, sharedQuestHeld } from './refusals.js';
+import { alreadyHolder, conflict, notRecruiting, questFull, removedAsk, sharedQuestHeld } from './refusals.js';
 import { wasRemoved } from './removals.js';
 
 // A Quest of the list that the reader can still enter, with all its Sub Quests.
@@ -205,7 +206,7 @@ export class RecruitingService {
       throw conflict('QUEST_ENDED', 'This Quest has no Sub Quest ahead.');
     }
     if (quest.holders.length >= quest.capacity) {
-      throw conflict('QUEST_FULL', 'This Quest is full.');
+      throw questFull();
     }
     if (globalEventId !== null && !(await this.quests.freeForSharedQuest(userId, globalEventId, tx))) {
       throw sharedQuestHeld();
