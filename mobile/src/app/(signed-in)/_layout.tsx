@@ -64,8 +64,9 @@ const ABOVE_TABS: readonly (readonly [name: string, edge: Edge])[] = [
   ['party-form', 'right'],
 ];
 
-// The screens above the tabs drawn on glass, which the stack shows over the screen under them, so that the map shows
-// through (A04 ticket 08): the Quest list on the whole screen.
+// The screens above the tabs that may be drawn on glass, which the stack shows over the screen under them, so that the
+// map shows through (A04 ticket 08): the Quest list on the whole screen, on glass only when opened from the map, and
+// white, covering what is under it, when opened from 내 정보.
 const OVER_THE_MAP: ReadonlySet<string> = new Set(['quests']);
 
 // A screen above the tabs slides in from its edge, and appears without sliding where the phone asks for less motion.

@@ -20,6 +20,7 @@ The user chose a whole screen of glass over the map, rather than a side panel li
 ## What to build
 
 - `FullScreenPanel` gains `glass`. The screen lies on the glass layer's `panel` instead of white, and its app bar is clear, as the friend panel's is. On Android this is white at 80% with no blur (A04-03); on iOS 26 it is Liquid Glass.
+- Only when opened from the map's Quest list (`/quests?over=map`) does the list lie on glass and ask the map's floating parts to give way. Opened from 내 정보's 내 퀘스트, it is white as before and covers 내 정보, which would otherwise show through (PR #759's review).
 - The stack shows `/quests` as a transparent modal over the screen under it, with no card colour or dimming of its own, on Android's JS stack and on iOS's native stack. The map stays drawn under it, as it is.
 - The friend panel's rule that the map's floating parts and the tab bar give way moves to `screens/main/map-cover.ts` (`useCoverMap`, `useMapCovered`). The friend panel and the Quest list both use it, so only the map shows through either.
 - The map under the glass does not move: the list takes every touch. Live marks, such as a Friend's position, still change under it.
@@ -35,6 +36,7 @@ The user chose a whole screen of glass over the map, rather than a side panel li
 
 - [x] The Quest list lies on the glass panel (white at 80% where there is no Liquid Glass). (Unit and integration tests, which fail before the change.)
 - [x] While it is open, the map's floating parts give way, and come back when it closes. (Integration test, which fails before the change.)
+- [x] Opened from 내 정보, it is white. (Integration test.)
 - [x] Android shows the map through it: emulator, mock build. After: `references/after/08-quests-over-map.jpg`, beside the friend panel (`references/after/08-friend-panel-alike.jpg`).
 - [ ] Checked on the user's phone after the app OTA update.
 - [x] No native file changes; lint (type-aware) and format pass on the changed files. jest and tsc run in CI.

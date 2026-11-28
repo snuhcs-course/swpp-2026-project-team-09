@@ -180,3 +180,17 @@ describe("the Quest list on the whole screen's states", () => {
     expect(screen.getByRole('button', { name: CLASS })).toBeVisible();
   });
 });
+
+describe('the Quest list opened from 내 정보', () => {
+  it('is white, since 내 정보 and not the map lies under it (A04 ticket 08)', async () => {
+    const user = await openMain();
+    await user.press(screen.getByRole('tab', { name: '내 정보' }));
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: '내 퀘스트' }));
+    await pass(0);
+
+    expect(screen.getByRole('header', { name: '퀘스트 3' })).toBeVisible();
+    expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ backgroundColor: '#FFFFFF' });
+  });
+});

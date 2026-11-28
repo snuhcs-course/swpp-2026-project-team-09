@@ -11,7 +11,7 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
@@ -98,12 +98,15 @@ function Groups({ rows, onPress }: GroupsProps): ReactElement {
   );
 }
 
-// The User's Quests on the whole screen, the `MainQuests` frame, on glass over the map (A04 ticket 08): every Quest that has not ended, by the day it starts, with chips that filter classes and Parties. A Quest taken alone
+// The User's Quests on the whole screen, the `MainQuests` frame, on glass over the map when opened from it (A04 ticket 08): every Quest that has not ended, by the day it starts, with chips that filter classes and Parties. A Quest taken alone
 // is under 전체 only.
 export function QuestsScreen(): ReactElement {
   const { data, isPending, refetch } = useQuestRows();
   const [filter, setFilter] = useState<Filter>('all');
-  useCoverMap(true);
+  // Opened from the map's Quest list (`?over=map`), it lies on glass over the map; from 내 정보's 내 퀘스트 it is white,
+  // since 내 정보 would show through.
+  const overMap = useLocalSearchParams<{ over?: string }>().over === 'map';
+  useCoverMap(overMap);
   const quests = data?.filter(({ ended }) => !ended);
   const classes = quests?.filter(({ kind }) => kind === 'class') ?? [];
   const parties = quests?.filter(({ kind }) => kind === 'party') ?? [];
@@ -111,7 +114,7 @@ export function QuestsScreen(): ReactElement {
   return (
     <FullScreenPanel
       count={quests === undefined ? undefined : quests.length}
-      glass
+      glass={overMap}
       leave={{ kind: 'close', onPress: router.back }}
       title="퀘스트"
       under={
