@@ -28,7 +28,7 @@ The map is framed once for each event that asks for framing, and the User's pan 
 - [x] After a meal answer is framed, opening the menu of the place shown and going back to the list each frame again. (Integration test; the menu's opening failed before.)
 - [x] A recalculation that keeps the places moves nothing once the framing has rested; one that brings another place frames once its card has stayed the same for 120 ms. A change of the card frames again only before the map rests. (Unit tests of the hook.)
 - [x] Whole lint, format and types of the app.
-- [ ] The user checks on the phone, in the preview build, that the map moves freely after the first zoom in a study answer and with 관정관 open.
+- [ ] The user checks in the released app that the map moves freely after the first zoom in a study answer and with 관정관 open.
 
 ## Comments
 
@@ -40,3 +40,8 @@ TaeHyun79's review found two keys that missed a press: the steps' places (above)
 
 - Agent time: about 2 hours, an estimate, in one session. About half of it was spent waiting for the app's integration files, which ran slowly while the Mac was heavily loaded (load average 20 to 50).
 - Tokens: input 75.9M, of which 75.7M cache reads, 0.18M cache writes and about 200 uncached; output about 104k. No subagents.
+
+### Agent usage (2026-11-28, after the review)
+
+- Agent time: about 50 minutes (an estimate), in the same session, from 10:45 KST: taking `5.0/Main` in, the two must-fixes of TaeHyun79's review, and one run of the camera files, most of it waiting for the integration files.
+- Tokens: 138 input, 43,248 output; cache reads 12,657,415, cache writes 184,571. No subagents.
