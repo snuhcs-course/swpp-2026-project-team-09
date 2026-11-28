@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { ReplyStep } from '@/api/assistant-types';
-import { dueStepOf } from './steps-scene';
+import { dueStepOf, type ShownSteps } from './steps-scene';
 import type { ChatBubble } from './use-chat';
 
 // Which step of several is chosen, when the steps name their answers by key (P03 ticket 21). The user decided these
@@ -65,6 +65,38 @@ export function chosenOnReply(
   }
   const kept = indexOf(steps, before);
   return kept >= 0 ? kept : due;
+}
+
+// Rule 7: a Lookup the steps' reply gave takes the map for that turn, and its card stands under the steps card, which
+// stays with its step chosen; the step's answer comes back with the next reply that draws one (P03 ticket 23). Words
+// alone keep the steps and put no card under them. Only for steps that name their answers by key, which an app that
+// says `answers` gets: a main server before it can send a booking's steps beside a Lookup, which stay as they were
+// (TaeHyun79's review of #729).
+export const lookupTakesTheMap = (reply: Pick<ChatBubble, 'lookup' | 'steps'> | undefined): boolean =>
+  (reply?.lookup ?? null) !== null &&
+  (reply?.steps ?? []).some(({ shows }) => shows?.kind === 'answer' && shows.key !== undefined);
+
+// Whether a booking on the map stands as it does alone: with no steps, or with its own card's step chosen. Its band is
+// then on the bar and its card holds the ticket alone, as since P10 ticket 27, never a second time axis (P03 ticket 23).
+export function stepShowsCard(steps: ShownSteps | null, active: number, cardKey: string): boolean {
+  const shows = steps?.steps[active]?.shows;
+  return steps === null || (shows?.kind === 'card' && shows.key === cardKey);
+}
+
+// What of a reply of several requests the card shows: the chosen step's own answer, as it shows alone (P03 ticket 23).
+// A seat's or a room's step, the reply's sentence and that step's own card, its ticket; an answer step, its answer's
+// card, which holds the sentence, and no ticket. A step refused, or a reply whose steps are not on the map, as it is.
+export function stepPartsOf(bubble: ChatBubble, steps: ShownSteps | null, active: number): ChatBubble {
+  const shows = steps?.bubbleId === bubble.id ? steps.steps[active]?.shows : undefined;
+  if (shows === undefined || shows === null) {
+    return bubble;
+  }
+  const own = (card: ChatBubble['cards'][number]): boolean =>
+    card.kind !== 'library' ||
+    card.library.action !== 'book' ||
+    (shows.kind === 'card' && card.library.key === shows.key);
+  const cards = bubble.cards.filter((card) => own(card));
+  return shows.kind === 'card' ? { ...bubble, cards, answer: null, answers: [] } : { ...bubble, cards };
 }
 
 // Rule 6: no other step is chosen while Friends are being picked in the time card ("+ 같이").

@@ -5,7 +5,6 @@
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { stepsReplyOn } from '@/api/mock/data/steps-answer';
 import { radius, space } from '@/design-system';
@@ -20,7 +19,23 @@ import { hideKeyboard } from './support/keyboard';
 import { layStage } from './support/lists';
 import { openMain } from './support/main';
 import { layFolded, stepGrip } from './support/time-card';
-import { type Found, highHeight, pull, shiftOf, styleOf } from './support/top-stops';
+import {
+  atStep,
+  BEHIND,
+  FOLDED,
+  frame,
+  highHeight,
+  layStepsCard,
+  pressGrip,
+  pull,
+  shiftOf,
+  STEPS,
+  STRIP,
+  stepsBottom,
+  stepsCard,
+  styleOf,
+  timeCard,
+} from './support/top-stops';
 
 // The top of an answer to several requests folds upward in stops (P01 ticket 22, the user's choice of 2026-11-27,
 // "이 안으로"): 2, the steps card with the time card under it; 1, the time card wholly behind the steps card with only
@@ -47,11 +62,6 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 // The reply of several requests takes 40 to 70 seconds a case on a loaded runner, past Jest's 60.
 jest.setTimeout(150000);
 
-const STEPS = 120;
-const FOLDED = 100;
-const STRIP = 20;
-const BEHIND = space[2] + FOLDED - STRIP;
-
 let server: FakeServer;
 
 beforeEach(async () => {
@@ -63,51 +73,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-type User = Awaited<ReturnType<typeof openMain>>;
-
 // The reply to several requests on screen, its dinner (②) shown and both cards laid out.
-async function atDinner(): Promise<User> {
-  await markLibraryLoggedIn();
-  server.on('POST /assistant/messages', { status: 200, body: stepsReplyOn('2026-11-02') });
-  const user = await openMain();
-  await layStage(390, 760);
-  await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
-  await hideKeyboard();
-  await user.press(screen.getByRole('button', { name: /^2번/u }));
-  await pass(50);
-  await layStepsCard();
-  await layFolded(FOLDED);
-  await pass(50);
-  return user;
-}
-
-async function layStepsCard(): Promise<void> {
-  await fireEvent(stepsCard(), 'layout', { nativeEvent: { layout: { x: 16, y: 8, width: 358, height: STEPS } } });
-  await pass(50);
-}
-
-// The cards at the top, both named `time-bar`: the steps card first, the time card after it.
-function stepsCard(): Found {
-  const [steps] = screen.getAllByTestId('time-bar');
-  if (steps === undefined) {
-    throw new Error('no steps card');
-  }
-  return steps;
-}
-
-function timeCard(): Found | undefined {
-  return screen.queryAllByTestId('time-bar')[1];
-}
-
-const frame = (): Found => screen.getByTestId('time-card-frame');
-
-// The steps card's bottom edge from the stage's top, where stop 0 takes it up to.
-const stepsBottom = (): number => Number(styleOf(stepsCard()).top) + STEPS;
-
-async function pressGrip(testID = 'time-card-grip'): Promise<void> {
-  await fireEvent.press(screen.getByTestId(testID));
-  await pass(50);
-}
+const atDinner = (): ReturnType<typeof atStep> => atStep(server, 2);
 
 // The emulator, 2026-11-28: the stage starts under the status bar, and the steps card gone up above it at stop 0 showed
 // behind the status bar. The top's cards are drawn within the stage, which clips above its top.
@@ -168,26 +135,9 @@ describe('the top of several requests', () => {
   });
 });
 
-// Partitions: a step with no time card (the seat, ①), and back to the Plan at a folded stop.
-describe('a seat step at the top', () => {
-  it('has a strip of its own under the steps card, which folds to the stage top and opens nothing downward', async () => {
-    const user = await atDinner();
-    await user.press(screen.getByRole('button', { name: /^1번/u }));
-    await pass(50);
-
-    expect(timeCard()).toBeUndefined();
-    expect(Number(styleOf(screen.getByTestId('steps-strip')).top)).toBe(stepsBottom() - radius.xl);
-    await pressGrip('steps-strip-grip');
-    await pull('steps-strip-drag', 200);
-    expect(timeCard()).toBeUndefined();
-    expect(shiftOf(stepsCard())).toBe(0);
-
-    await pull('steps-strip-drag', -400);
-    expect(shiftOf(stepsCard())).toBe(-stepsBottom());
-    await pressGrip('steps-strip-grip');
-    expect(shiftOf(stepsCard())).toBe(0);
-  });
-
+// Partitions: back to the Plan at a folded stop, after the seat's step (①), which has a time card of its own (P03
+// ticket 23, `answer-step-top-card`).
+describe('a step chosen at a folded stop', () => {
   it('brings the Plan back at the stop the top stands at, drawn only once it stands there', async () => {
     const user = await atDinner();
     await stepGrip('tuck');

@@ -16,7 +16,13 @@ import {
   keptWith,
   recalculatedConversation,
 } from '@/features/assistant/kept-answers';
-import { chosenOnReply, firstSeenIndex, renamedChoice, stepIdOf } from '@/features/assistant/step-choice';
+import {
+  chosenOnReply,
+  firstSeenIndex,
+  lookupTakesTheMap,
+  renamedChoice,
+  stepIdOf,
+} from '@/features/assistant/step-choice';
 import { dueStepOf, type ShownSteps, type StepsNow } from '@/features/assistant/steps-scene';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -32,8 +38,11 @@ export interface StepAnswer {
   conversation: ConversationAnswers;
   activeStep: number;
   setActiveStep: (index: number) => void;
-  // The answer the step chosen shows, for the answer on screen; null for the reply's one answer, as before.
+  // The answer the step chosen shows, for the answer on screen; null for the reply's one answer, as before, and while a
+  // Lookup takes the map (rule 7).
   chosen: ChosenAnswer | null;
+  // Whether the steps on screen name their answers by key, which the next request tells (P03 ticket 20).
+  keyed: boolean;
   // Keeps what the answer on screen became, under the key of the step chosen.
   keep: (shown: Pick<ShownAnswer, 'source' | 'answer' | 'index'>) => void;
   // The answer of another step, as last on screen: the answer and the plan, and whether either moved from the reply's.
@@ -192,7 +201,18 @@ export function useStepAnswer(bubbles: readonly ChatBubble[], replied: ShownStep
   );
   const keep = useKeep(chosen, bubbles, { setKept, rename });
   const keptOf = useKeptOf(kept, conversation);
-  return { steps, conversation, activeStep, setActiveStep, chosen, keep, keptOf };
+  const lookupTurn = lookupTakesTheMap(bubbles.find(({ id }) => id === steps?.bubbleId));
+  const shown = lookupTurn ? null : chosen;
+  return {
+    steps,
+    conversation,
+    activeStep,
+    setActiveStep,
+    chosen: shown,
+    keyed: keyed && steps !== null,
+    keep,
+    keptOf,
+  };
 }
 
 function firstKeyOf(steps: ShownSteps | null): string | null {
@@ -225,11 +245,11 @@ export function useStepAnswerOf(
 // steps as they stand; null for the reply's one answer.
 export function useStepsNow(
   ref: RefObject<ConversationAnswers | null>,
-  { chosen, conversation }: Pick<StepAnswer, 'chosen' | 'conversation'>,
+  { keyed, conversation }: Pick<StepAnswer, 'keyed' | 'conversation'>,
   live: ShownSteps | null,
 ): void {
   useEffect(() => {
-    ref.current = chosen === null ? null : { answers: conversation.answers, steps: live?.steps ?? conversation.steps };
+    ref.current = keyed ? { answers: conversation.answers, steps: live?.steps ?? conversation.steps } : null;
   });
 }
 
