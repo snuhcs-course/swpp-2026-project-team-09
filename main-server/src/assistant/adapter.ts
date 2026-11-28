@@ -27,12 +27,14 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   APICallError,
   generateText,
+  InvalidToolInputError,
   type LanguageModel,
   type LanguageModelMiddleware,
   RetryError,
   stepCountIs,
   type SystemModelMessage,
   tool,
+  type ToolCallRepairFunction,
   type ToolSet,
   wrapLanguageModel,
 } from 'ai';
@@ -252,6 +254,26 @@ function observed(
   };
 }
 
+// A tool call the SDK refused for its input, made again with the fields the model gave null left out (P05 ticket 82):
+// the model copies the conditions on screen as they are, an unset one as null, and a field that takes no null refused
+// the call each time. A field that takes null never gets here, and an input still wrong is refused as before.
+const nullsLeftOut: ToolCallRepairFunction<ToolSet> = ({ toolCall, error }) => {
+  if (!InvalidToolInputError.isInstance(error)) {
+    return Promise.resolve(null);
+  }
+  let input: unknown;
+  try {
+    input = JSON.parse(toolCall.input);
+  } catch {
+    return Promise.resolve(null);
+  }
+  if (typeof input !== 'object' || input === null || Array.isArray(input) || !Object.values(input).includes(null)) {
+    return Promise.resolve(null);
+  }
+  const set = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== null));
+  return Promise.resolve({ ...toolCall, input: JSON.stringify(set) });
+};
+
 function toolSetOf({ tools }: Feature, context: ToolContext, observer: RunObserver | undefined): ToolSet {
   return Object.fromEntries(
     Object.entries(tools).map(([name, { description, input, run }]) => {
@@ -276,6 +298,19 @@ function systemOf(feature: Feature, now: Date): SystemModelMessage[] {
   return perRequest === undefined ? [stable] : [stable, { role: 'system', content: perRequest }];
 }
 
+// What the tools of one run share: who asks and what their app knew, and what the run has presented so far.
+function toolContextOf(asker: Request, messages: readonly ChatMessage[]): ToolContext {
+  return {
+    ...asker,
+    capabilities: new Set(asker.capabilities),
+    found: foundWithMentions(asker.context.mentions),
+    shown: lastShown(messages),
+    presented: { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null, refusal: null },
+    judged: new Map(),
+    restaurants: new Map(),
+  };
+}
+
 // Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and
 // what the presenters put beside it. It throws NoAnswerError when the steps ran out on tools or the run has nothing to
 // say or show, and the SDK's errors when the model fails or the time runs out. An observer, if given, is told of each
@@ -288,20 +323,13 @@ export async function runFeature(
   { maxSteps, timeoutMs, maxOutputTokens }: RunLimits,
   observer?: RunObserver,
 ): Promise<FeatureReply> {
-  const context: ToolContext = {
-    ...asker,
-    capabilities: new Set(asker.capabilities),
-    found: foundWithMentions(asker.context.mentions),
-    shown: lastShown(messages),
-    presented: { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null, refusal: null },
-    judged: new Map(),
-    restaurants: new Map(),
-  };
+  const context = toolContextOf(asker, messages);
   const { steps, finishReason } = await generateText({
     model,
     instructions: systemOf(feature, asker.now),
     messages: messagesFor(messages, asker, feature.libraryCatalogue),
     tools: toolSetOf(feature, context, observer),
+    repairToolCall: nullsLeftOut,
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
     maxOutputTokens,
