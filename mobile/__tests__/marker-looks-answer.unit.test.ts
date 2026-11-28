@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MarkerLook } from '@/map';
@@ -203,5 +204,26 @@ describe("a meal answer's looks that differ only in how they are drawn", () => {
       label({ note: '11:00' }),
     ];
     expect(new Set(looks.map((look) => lookName(look))).size).toBe(looks.length);
+  });
+});
+
+function round(kind: 'meal' | 'event'): MarkerLook {
+  return { kind: 'answer', symbol: { type: 'dot', role: 'candidate', number: 2, meal: true, kind }, label: null };
+}
+
+function capsule(kind: 'meal' | 'event'): MarkerLook {
+  return {
+    kind: 'answer',
+    symbol: null,
+    label: { side: 'right', tone: 'minutes', title: '4분', line: null, number: 3, kind },
+  };
+}
+
+// The colour table (PR 726) draws a mark in its kind's colour, so a kind is part of the picture (P01 ticket 42): a mark
+// of one kind took the picture of another's that matched it in all else. Partitions: a dot's kind; a label's kind.
+describe("an answer's looks that differ only in their kind", () => {
+  it('have names of their own, a dot and a label alike', () => {
+    expect(lookName(round('event'))).not.toBe(lookName(round('meal')));
+    expect(lookName(capsule('event'))).not.toBe(lookName(capsule('meal')));
   });
 });
