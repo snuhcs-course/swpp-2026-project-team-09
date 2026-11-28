@@ -1,4 +1,4 @@
-# 37: The room's 일정 form sets its place with the 파티 form's place sheet and shows the same kind tag
+# 41: The room's 일정 form sets its place with the 파티 form's place sheet and shows the same kind tag
 
 Parent: [P06 spec](../spec.md)
 Status: ready-for-human (built; waits for review)
@@ -89,6 +89,6 @@ No subagents. Tokens are counted up to this entry, so this commit and the pull r
 
 | Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
-| Ticket 37 (tests first, the place row, the moved place sheet, the room tests, the draft pull request) | about 25 minutes | 11,250,909 | 11,077,435 | 173,340 | 134 | 51,267 |
+| Ticket 41 (tests first, the place row, the moved place sheet, the room tests, the draft pull request) | about 25 minutes | 11,250,909 | 11,077,435 | 173,340 | 134 | 51,267 |
 
 Without cache reads, the input is 173,474.

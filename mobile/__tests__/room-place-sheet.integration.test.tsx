@@ -20,7 +20,7 @@ import { searchPlace, setPlace } from './support/party-form';
 import { answer, answerRoom, openRoom, PICNIC } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The room's 일정 form sets 어디서 with the 파티 form's place sheet (P06 ticket 37): a row of the place's words and the
+// The room's 일정 form sets 어디서 with the 파티 form's place sheet (P06 ticket 41): a row of the place's words and the
 // grey tag of its kind opens the sheet, and what 이 장소로 정하기 sets is what 추가 and 수정 send.
 
 jest.mock('expo-location');
