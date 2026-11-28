@@ -4,13 +4,14 @@
 # 2026-11-28  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# A time of today the User named that has passed is asked back before anything is planned (P05 ticket 80): at 11:13
-# "아침 7시에 도서관 갔다가 점심" was planned at once for tomorrow. askPastTime puts the question and its two buttons,
-# 내일로 and 오늘 지금부터, under the reply; a meal named alone is planMeal's, which asks with the next meal today and the
-# same meal tomorrow. A bare hour keeps the Bare hours line, and a time still to come today, a request with no time, or
-# another day named asks nothing. The answers to the question plan the message before it. The P6 world from the app
-# that says `study-plan` (`capabilities: study-app`) on Wednesday 2026-11-04, and the P4 world from the current app on
-# Monday 2026-11-02. Written, and not run.
+# A time of today the User named that has passed is asked back before anything is planned (P05 ticket 80): at 11:13 "아침
+# 7시에 도서관 갔다가 점심" was planned at once for tomorrow. askPastTime puts the question and its two buttons, 내일로 and 오늘 지금부터,
+# under the reply; a meal named alone is planMeal's, which asks with the next meal today and the same meal tomorrow. A
+# bare hour keeps the Bare hours line, and a time still to come today, a request with no time, or another day named asks
+# nothing. The answers to the question plan the message before it. A reply that asks back shows nothing, so its case is
+# an ASK, read from the words of the server's question (지났). The P6 world from the app that says `study-plan`
+# (`capabilities: study-app`) on Wednesday 2026-11-04, and the P4 world from the current app on Monday 2026-11-02.
+# Written, and not run.
 
 - id: past-times-library-then-lunch
   category: past-times
@@ -21,12 +22,14 @@
   turns:
     - user: 아침 7시에 도서관 갔다가 점심
   expect:
-    actions: [TOOL]
+    actions: [ASK]
     tools:
       required: [askPastTime]
       forbidden: [planStudy, planMeal, proposeLibraryBooking, findLibraryFreeSlots]
     args:
       askPastTime: { at: '07:00' }
+    text:
+      mentions: [지났]
 
 - id: past-times-lunch-after-lunch
   category: past-times
@@ -37,12 +40,14 @@
   turns:
     - user: 점심 먹자
   expect:
-    actions: [TOOL]
+    actions: [ASK]
     tools:
       required: [planMeal]
       forbidden: [askPastTime, findMealRestaurants, showRestaurants, proposeQuest]
     args:
       planMeal: { date: '2026-11-02', meal: lunch }
+    text:
+      mentions: [지났]
 
 - id: past-times-bare-hour-is-ahead
   category: past-times

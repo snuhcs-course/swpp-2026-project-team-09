@@ -73,7 +73,8 @@ A meal had a check of its own on the server (P01 ticket 23): a meal asked for af
   - 저녁 7시 is planned as asked.
 - `assistant-meal-by-clock` and `assistant-meal-after-hours` (integration) now expect the meal's buttons; `assistant-cached-prefix` (unit) the Past times line among the per-request lines.
 - Before the change: 7 of these 10 integration tests failed, and the unit files did not load (no `past-time` module).
-- `main-server/eval/cases/past-times.yaml` (new, 8 cases, not run):
+- `main-server/test/eval-past-times-cases.unit.test.ts` (new, 2 tests): the two cases that ask back, scored on a correct run's reply, the server's question with nothing shown, read as an ASK and passing. Written first as TOOL, the cases scored no action (`null`) and failed.
+- `main-server/eval/cases/past-times.yaml` (new, 8 cases, not run). The two that ask back expect `ASK` with `text.mentions: [지났]`, as the eval reads a question from its words:
   - the library and lunch at 11:13 (askPastTime), and lunch at 15:00 (planMeal, which asks);
   - a bare 7시, 저녁 7시, another day named, and no time, none of which asks;
   - the two answers to the question.
@@ -99,3 +100,5 @@ After the PR opened, the orchestrating session asked to keep what the user remem
 
 - Agent time: about 10 minutes (an estimate), in the same session, from 14:13 KST.
 - Tokens: about 30 input and 25,000 output; cache reads about 5M, cache writes about 40,000. No subagents.
+
+TaeHyun79's review of #743 noted that the two cases that ask back expected `TOOL`, which a correct run, showing nothing, cannot score. They now expect `ASK`, read from the question's words, as every case of the eval that accepts an ASK does, and a unit test scores them on that reply. The scorer is unchanged.
