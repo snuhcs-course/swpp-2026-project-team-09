@@ -18,6 +18,7 @@
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -125,13 +126,16 @@ export class QuestsService {
     return created ? partyMade(this.usage, userId, await this.read(userId, questId)) : this.read(userId, questId);
   }
 
-  // A Quest of the User's own, without a Global Event.
-  async make(userId: string, { subQuest, ...settings }: MakeQuestDto): Promise<QuestDto> {
+  // A Quest of the User's own, without a Global Event. Taken alone (P05 ticket 87), it is for one and no 파티, so it
+  // counts as no 파티 made.
+  async make(userId: string, { subQuest, takenAlone = false, ...settings }: MakeQuestDto): Promise<QuestDto> {
+    const alone = takenAlone ? { capacity: ALONE_CAPACITY, takenAlone } : {};
     const questId = await this.prisma.$transaction(async (tx) =>
-      this.createWithSubQuest(await columnsOf(subQuest, tx), [userId], tx, settings),
+      this.createWithSubQuest(await columnsOf(subQuest, tx), [userId], tx, { ...settings, ...alone }),
     );
     this.signals.send([userId], 'quests-changed');
-    return partyMade(this.usage, userId, await this.read(userId, questId));
+    const made = await this.read(userId, questId);
+    return takenAlone ? made : partyMade(this.usage, userId, made);
   }
 
   // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests are all cancelled or past
